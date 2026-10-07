@@ -3200,6 +3200,50 @@ const DECALAGE_SW_V2 = 232;
 }
 
 // ------------------------------------------------------------
+// R87 — Les photos d'exercices ne sont pas noyees dans le noir.
+// Raci, 7/10 : « les images sont tres sombres ». Les photos du
+// catalogue sont sous-exposees (luminance mediane 67/255) ; la liste
+// ne les corrigeait qu'a brightness(1.08), la fiche pas du tout, et la
+// seance guidee les passait sous un voile noir de 48 a 94 %. Une
+// correction gamma (filtre SVG) les eclaircit partout, et le voile ne
+// couvre plus le mouvement.
+// ------------------------------------------------------------
+{
+  const mod = lire('app-v2/src/services/eclaircir-photos.js');
+  const sel = lire('app-v2/src/components/SelectionExercices.jsx');
+  const sg = lire('app-v2/src/components/SeanceGuidee.jsx');
+  const cssSel = lire('app-v2/src/legacy/selection-exercices.scoped.css');
+  const cssSg = lire('app-v2/src/styles/seance-guidee.css');
+  const soucis = [];
+  if (!mod) soucis.push('services/eclaircir-photos.js a disparu : plus de correction des photos');
+  else {
+    if (!/export const ID_FILTRE_PHOTOS = 'bf-eclaircir'/.test(mod)) soucis.push('le filtre des photos a change de nom');
+    if (!/color-interpolation-filters', 'sRGB'/.test(mod)) soucis.push('le filtre des photos calcule en lumiere lineaire : la correction n\'a plus l\'effet mesure');
+    const ex = (mod.match(/const EXPOSANT = ([\d.]+);/) || [])[1];
+    if (!ex) soucis.push('l\'exposant du filtre a disparu');
+    else if (+ex >= 0.8) soucis.push('l\'exposant du filtre remonte a ' + ex + ' : les photos redeviennent sombres');
+  }
+  // Le module pose le filtre a l'import : chaque ecran qui le reference
+  // doit l'importer, sinon la photo peut disparaitre.
+  if (sel && !/import '\.\.\/services\/eclaircir-photos\.js'/.test(sel)) soucis.push('le choix des exercices n\'importe plus le filtre des photos');
+  if (sg && !/import '\.\.\/services\/eclaircir-photos\.js'/.test(sg)) soucis.push('la seance guidee n\'importe plus le filtre des photos');
+  if (cssSel) {
+    if (!/\.pg-selection \.ex-photo\{ filter:url\(#bf-eclaircir\)/.test(cssSel)) soucis.push('les vignettes de la liste ne sont plus eclaircies');
+    if (!/\.exo-fiche-vue\{ filter:url\(#bf-eclaircir\)/.test(cssSel)) soucis.push('les vues de la fiche ne sont plus eclaircies');
+  }
+  if (cssSg) {
+    const photo = (cssSg.match(/\.sg-photo \{[^}]*\}/) || [''])[0];
+    if (!/filter: url\(#bf-eclaircir\)/.test(photo)) soucis.push('la photo de la seance guidee n\'est plus eclaircie');
+    const voile = (cssSg.match(/\.sg-voile \{[^}]*\}/) || [''])[0];
+    const haut = (voile.match(/rgba\(15, 15, 15, ([\d.]+)\) 100%/) || [])[1];
+    if (!voile) soucis.push('le voile de la seance guidee a disparu : le texte ne se lit plus');
+    else if (haut && +haut > 0.35) soucis.push('le voile assombrit de nouveau le haut de la photo (' + haut + ')');
+  }
+  if (soucis.length) faute('R87 photos d\'exercices lisibles', soucis.join(' ; '));
+  else passe('R87 photos d\'exercices lisibles');
+}
+
+// ------------------------------------------------------------
 // Rapport
 // ------------------------------------------------------------
 for (const r of ok) console.log(`  ok    ${r}`);

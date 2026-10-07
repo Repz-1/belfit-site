@@ -19,6 +19,8 @@ import { retourEntrainer } from './Entrainer.jsx';
 import { t } from '../i18n/index.js';
 import { GROUPES } from '../store/entrainement.js';
 import '../legacy/selection-exercices.scoped.css';
+// Pose le filtre de luminosite des photos (voir le module).
+import '../services/eclaircir-photos.js';
 import '../styles/seance-jour.css';
 import { selectionExos, poserBrouillon, abandonnerSeance, seanceRefs } from '../store/seance-active.js';
 

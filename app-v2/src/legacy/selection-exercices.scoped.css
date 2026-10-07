@@ -276,9 +276,13 @@
 
 /* 5. LES PHOTOS RESPIRENT.
    La base d'exercices est faite de photos de salle, sous-exposees et
-   grisees. Une correction legere suffit a les detacher de la carte ;
-   au-dela, les fonds sombres virent au gris laiteux. */
-.pg-selection .ex-photo{ filter:brightness(1.08) contrast(1.07) saturate(1.06); }
+   grisees (luminance mediane 67/255). brightness(1.08) ne suffisait
+   pas — Raci, 7/10 : « les images sont tres sombres » — et pousser
+   brightness() grise les fonds. Correction gamma (filtre SVG pose par
+   services/eclaircir-photos.js) : les ombres remontent, les blancs ne
+   brulent pas. Meme correction sur la fiche et pendant la seance. */
+.pg-selection .ex-photo{ filter:url(#bf-eclaircir) saturate(1.06); }
+.exo-fiche-vue{ filter:url(#bf-eclaircir) saturate(1.06); }
 
 /* ---- Focale au defilement (Raci, 5/09) ----
    La vignette au centre de l'ecran est a taille pleine, celles qui

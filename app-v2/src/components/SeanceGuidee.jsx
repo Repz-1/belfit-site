@@ -7,6 +7,8 @@ import { EXERCISES, IMG_BASE } from '../data/exercices.js';
 import { SESSION_EXOS } from '../data/sessionExos.js';
 import { retourEntrainer, allerVers } from './Entrainer.jsx';
 import '../styles/seance-guidee.css';
+// Pose le filtre de luminosite des photos (voir le module).
+import '../services/eclaircir-photos.js';
 
 // ==========================================================
 // SEANCE GUIDEE — un exercice a la fois, une serie a la fois.

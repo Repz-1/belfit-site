@@ -52,19 +52,29 @@
 .sg-fond {
   position: absolute; inset: -24px;
   background: center/cover no-repeat;
-  filter: blur(18px) brightness(.6) saturate(1.1);
+  filter: blur(18px) brightness(.7) saturate(1.1);
 }
+/* Raci, 7/10 : « les images sont tres sombres ». La photo recoit la
+   meme correction gamma que la liste (services/eclaircir-photos.js). */
 .sg-photo {
   position: absolute; inset: 0;
   background: center top/contain no-repeat;
+  filter: url(#bf-eclaircir) saturate(1.06);
 }
+/* Le voile noircissait la photo de 48 % en haut et de 70 a 94 % sur
+   tout son tiers bas. La photo (paysage, calee en haut) occupe les
+   58 % superieurs du cadre ; le texte vit dans les 40 % du bas. Le
+   voile ne garde donc que ce dont le texte a besoin : plein sous le
+   texte, nul sur le mouvement, un leger fondu en haut pour les deux
+   etiquettes — qui portent en plus une ombre de texte. */
 .sg-voile {
   position: absolute; inset: 0;
   background: linear-gradient(to top,
-    rgba(15, 15, 15, .94) 0%,
-    rgba(15, 15, 15, .82) 22%,
-    rgba(15, 15, 15, .10) 46%,
-    rgba(15, 15, 15, .48) 100%);
+    rgba(15, 15, 15, .92) 0%,
+    rgba(15, 15, 15, .80) 30%,
+    rgba(15, 15, 15, 0) 47%,
+    rgba(15, 15, 15, 0) 84%,
+    rgba(15, 15, 15, .30) 100%);
 }
 .sg-haut {
   position: absolute; top: 12px; left: 14px; right: 14px;
@@ -73,6 +83,7 @@
 .sg-haut span {
   font-size: 11px; font-weight: 800; letter-spacing: .06em;
   color: #FFF; text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .55), 0 0 10px rgba(0, 0, 0, .35);
 }
 .sg-bas { position: absolute; left: 14px; right: 14px; bottom: 13px; color: #FFF; }
 
