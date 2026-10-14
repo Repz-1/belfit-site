@@ -1,0 +1,13 @@
+/* Photos d'exercices (components/PhotoExo.jsx).
+   L'image remplit son cadre ; le cadre garde ses dimensions et son
+   arrondi, l'image ne fait que le peindre. */
+.photo-exo {
+  display: block; width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  border-radius: inherit;
+  -webkit-user-drag: none; user-select: none; pointer-events: none;
+}
+/* Secours seulement : la photo d'origine distante n'est pas
+   eclaircie, le filtre gamma la rattrape au rendu. Une photo locale
+   l'est deja — ne jamais la corriger deux fois. */
+.photo-exo[data-secours] { filter: url(#bf-eclaircir) saturate(1.06); }

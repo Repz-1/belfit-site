@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
-import { MUSCLES, EXERCISES, FILTERS, NIVEAUX, IMG_BASE,
+import { MUSCLES, EXERCISES, FILTERS, NIVEAUX,
          NIVEAUX_PRATIQUE, PROTOCOLES } from '../data/exercices.js';
 import { signal } from '@preact/signals';
 
@@ -19,8 +19,7 @@ import { retourEntrainer } from './Entrainer.jsx';
 import { t } from '../i18n/index.js';
 import { GROUPES } from '../store/entrainement.js';
 import '../legacy/selection-exercices.scoped.css';
-// Pose le filtre de luminosite des photos (voir le module).
-import '../services/eclaircir-photos.js';
+import { PhotoExo } from './PhotoExo.jsx';
 import '../styles/seance-jour.css';
 import { selectionExos, poserBrouillon, abandonnerSeance, seanceRefs } from '../store/seance-active.js';
 
@@ -278,7 +277,6 @@ export function SelectionExercices() {
           </div>
         ) : liste.map(({ ex, i }) => {
           const sel = selection[mKey].has(i);
-          const bg = ex.imgId ? { backgroundImage: `url('${IMG_BASE}${ex.imgId}/0.jpg')` } : {};
           const sets = (ex.meta || '').replace(/\s*×\s*/g, ' • ');
           return (
             <div class={'ex-item' + (sel ? ' selected' : '')} key={mKey + '-' + i}>
@@ -287,9 +285,11 @@ export function SelectionExercices() {
                   chose qu'on veut faire ; il fallait auparavant
                   l'ajouter a sa seance pour decouvrir a quoi il
                   ressemblait, donc s'engager avant de savoir. */}
-              <div class="ex-photo" style={bg} role="button" tabIndex={0}
+              <div class="ex-photo" role="button" tabIndex={0}
                 aria-label={'Voir ' + ex.nom} data-focale
-                onClick={() => setFiche(i)} />
+                onClick={() => setFiche(i)}>
+                <PhotoExo imgId={ex.imgId} taille={240} />
+              </div>
               <div class="ex-info" onClick={() => setFiche(i)}>
                 <div class="ex-name">{ex.nom}</div>
                 <div class="ex-equip">{equipLabel(ex.mat)}</div>
@@ -374,8 +374,9 @@ function FicheExercice({ mKey, ex, choisi, basculer, fermer }) {
 
         <div class="exo-fiche-vues">
           {vues.map(n => (
-            <div key={n} class="exo-fiche-vue"
-              style={{ backgroundImage: `url('${IMG_BASE}${ex.imgId}/${n}.jpg')` }} />
+            <div key={n} class="exo-fiche-vue">
+              <PhotoExo imgId={ex.imgId} n={n} taille={640} prioritaire />
+            </div>
           ))}
         </div>
 

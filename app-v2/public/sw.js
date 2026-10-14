@@ -9,13 +9,20 @@
 //    de servir du perime, et l'ouverture reste instantanee.
 // ============================================================
 const CACHE = 'belfit-v2-374';
+// Photos d'exercices (/img/exercices/, voir components/PhotoExo.jsx) :
+// cache a part, qui SURVIT aux nouvelles versions. Elles ne changent
+// pas d'une version a l'autre — les reprendre a chaque deploiement
+// couterait des Mo pour rien. Quand elles sont regenerees, leur URL
+// change (?v=PHOTOS_VERSION) ; changer aussi ce nom pour vider l'ancien.
+const CACHE_PHOTOS = 'belfit-photos-exos-1';
+const PHOTOS_MAX = 400; // ~ 4 a 10 Mo au plus
 
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then(cles => Promise.all(cles.filter(c => c !== CACHE).map(c => caches.delete(c))))
+      .then(cles => Promise.all(cles.filter(c => c !== CACHE && c !== CACHE_PHOTOS).map(c => caches.delete(c))))
       .then(() => self.clients.claim())
   );
 });
@@ -36,6 +43,26 @@ self.addEventListener('fetch', (e) => {
         const rep = await fetch(req);
         // opaque (no-cors) inclus : on le garde tel quel, il sert.
         if (rep && (rep.status === 200 || rep.type === 'opaque')) cache.put(req, rep.clone());
+        return rep;
+      }).catch(() => fetch(req)),
+    );
+    return;
+  }
+
+  // Photos d'exercices : cache d'abord. Seules les reponses 200 sont
+  // gardees — un 404 laisse PhotoExo retomber sur la photo distante.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/img/exercices/')) {
+    e.respondWith(
+      caches.open(CACHE_PHOTOS).then(async (cache) => {
+        const enCache = await cache.match(req);
+        if (enCache) return enCache;
+        const rep = await fetch(req);
+        if (rep && rep.status === 200) {
+          await cache.put(req, rep.clone());
+          // Plafond : les plus anciennes sortent d'abord.
+          const cles = await cache.keys();
+          for (const k of cles.slice(0, Math.max(0, cles.length - PHOTOS_MAX))) await cache.delete(k);
+        }
         return rep;
       }).catch(() => fetch(req)),
     );

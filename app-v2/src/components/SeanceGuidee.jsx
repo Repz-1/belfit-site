@@ -3,12 +3,11 @@ import { enregistrerSeance, supprimerSeance, seanceMemeJour } from '../store/sea
 import { poserBrouillon, demarrerSeanceActive, abandonnerSeance, marquerFaite, seanceActive, seanceRefs } from '../store/seance-active.js';
 import { planifs } from '../store/programme.js';
 import { t } from '../i18n/index.js';
-import { EXERCISES, IMG_BASE } from '../data/exercices.js';
+import { EXERCISES } from '../data/exercices.js';
 import { SESSION_EXOS } from '../data/sessionExos.js';
 import { retourEntrainer, allerVers } from './Entrainer.jsx';
 import '../styles/seance-guidee.css';
-// Pose le filtre de luminosite des photos (voir le module).
-import '../services/eclaircir-photos.js';
+import { PhotoExo } from './PhotoExo.jsx';
 
 // ==========================================================
 // SEANCE GUIDEE — un exercice a la fois, une serie a la fois.
@@ -436,10 +435,14 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
           floutee bouche les cotes quand la photo n'a pas le format du
           cadre, plutot que de la rogner. */}
       <div class="sg-scene">
-        <div class="sg-fond"
-          style={{ backgroundImage: `url('${IMG_BASE}${courant.ex.imgId}/0.jpg')` }} />
-        <div class="sg-photo"
-          style={{ backgroundImage: `url('${IMG_BASE}${courant.ex.imgId}/0.jpg')` }} />
+        {/* Le fond flou se contente de la vignette 240 : floute a
+            18 px, la grande n'apporterait rien. */}
+        <div class="sg-fond">
+          <PhotoExo imgId={courant.ex.imgId} taille={240} prioritaire />
+        </div>
+        <div class="sg-photo">
+          <PhotoExo imgId={courant.ex.imgId} taille={640} prioritaire />
+        </div>
         <div class="sg-voile" />
         <div class="sg-haut">
           <span>{NOMS_MUSCLES[courant.mKey] || ''}</span>

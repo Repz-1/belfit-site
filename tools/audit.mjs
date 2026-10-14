@@ -3202,42 +3202,56 @@ const DECALAGE_SW_V2 = 232;
 // ------------------------------------------------------------
 // R87 — Les photos d'exercices ne sont pas noyees dans le noir.
 // Raci, 7/10 : « les images sont tres sombres ». Les photos du
-// catalogue sont sous-exposees (luminance mediane 67/255) ; la liste
-// ne les corrigeait qu'a brightness(1.08), la fiche pas du tout, et la
-// seance guidee les passait sous un voile noir de 48 a 94 %. Une
-// correction gamma (filtre SVG) les eclaircit partout, et le voile ne
-// couvre plus le mouvement.
+// catalogue sont sous-exposees (luminance mediane 67/255) et la seance
+// guidee les passait sous un voile noir de 48 a 94 %. Depuis le 14/10
+// elles sont servies par BelFit (img/exercices/), eclaircies une par
+// une a la conversion (tools/convertir-images-exercices.mjs) ; le
+// filtre gamma au rendu ne sert plus qu'au secours distant.
 // ------------------------------------------------------------
 {
+  const soucis = [];
+  const ph = lire('app-v2/src/components/PhotoExo.jsx');
   const mod = lire('app-v2/src/services/eclaircir-photos.js');
+  const pcss = lire('app-v2/src/styles/photo-exo.css');
   const sel = lire('app-v2/src/components/SelectionExercices.jsx');
   const sg = lire('app-v2/src/components/SeanceGuidee.jsx');
   const cssSel = lire('app-v2/src/legacy/selection-exercices.scoped.css');
   const cssSg = lire('app-v2/src/styles/seance-guidee.css');
-  const soucis = [];
-  if (!mod) soucis.push('services/eclaircir-photos.js a disparu : plus de correction des photos');
+  const sw = lire('app-v2/public/sw.js');
+  const data = lire('app-v2/src/data/exercices.js');
+  if (!ph) soucis.push('components/PhotoExo.jsx a disparu');
   else {
-    if (!/export const ID_FILTRE_PHOTOS = 'bf-eclaircir'/.test(mod)) soucis.push('le filtre des photos a change de nom');
-    if (!/color-interpolation-filters', 'sRGB'/.test(mod)) soucis.push('le filtre des photos calcule en lumiere lineaire : la correction n\'a plus l\'effet mesure');
-    const ex = (mod.match(/const EXPOSANT = ([\d.]+);/) || [])[1];
-    if (!ex) soucis.push('l\'exposant du filtre a disparu');
-    else if (+ex >= 0.8) soucis.push('l\'exposant du filtre remonte a ' + ex + ' : les photos redeviennent sombres');
+    if (!/export const PHOTOS_BASE = '\/img\/exercices\/'/.test(ph)) soucis.push('les photos ne sont plus servies depuis /img/exercices/');
+    if (!/onError=\{\(\) => \{ if \(!secours\) setSecours\(true\); \}\}/.test(ph)) soucis.push('plus de secours vers la photo distante si le fichier local manque');
+    if (!/loading=\{prioritaire \? 'eager' : 'lazy'\}/.test(ph)) soucis.push('les vignettes ne se chargent plus a la demande');
+    if (!/width=\{w\} height=\{h\}/.test(ph)) soucis.push('les photos n\'annoncent plus leurs dimensions : la liste sautera au chargement');
   }
-  // Le module pose le filtre a l'import : chaque ecran qui le reference
-  // doit l'importer, sinon la photo peut disparaitre.
-  if (sel && !/import '\.\.\/services\/eclaircir-photos\.js'/.test(sel)) soucis.push('le choix des exercices n\'importe plus le filtre des photos');
-  if (sg && !/import '\.\.\/services\/eclaircir-photos\.js'/.test(sg)) soucis.push('la seance guidee n\'importe plus le filtre des photos');
-  if (cssSel) {
-    if (!/\.pg-selection \.ex-photo\{ filter:url\(#bf-eclaircir\)/.test(cssSel)) soucis.push('les vignettes de la liste ne sont plus eclaircies');
-    if (!/\.exo-fiche-vue\{ filter:url\(#bf-eclaircir\)/.test(cssSel)) soucis.push('les vues de la fiche ne sont plus eclaircies');
+  if (!mod || !/color-interpolation-filters', 'sRGB'/.test(mod)) soucis.push('le filtre de secours (eclaircir-photos.js) a disparu ou calcule en lumiere lineaire');
+  if (!pcss || !/\.photo-exo\[data-secours\] \{ filter: url\(#bf-eclaircir\)/.test(pcss)) soucis.push('la photo distante de secours n\'est plus eclaircie');
+  for (const [nom, c] of [['le choix des exercices', sel], ['la seance guidee', sg]]) {
+    if (!c) continue;
+    if (!/import \{ PhotoExo \} from '\.\/PhotoExo\.jsx'/.test(c)) soucis.push(nom + ' n\'utilise plus PhotoExo');
+    if (/IMG_BASE\}\$\{/.test(c)) soucis.push(nom + ' recharge la photo distante directement');
+  }
+  // Jamais deux fois : une photo locale deja eclaircie ne recoit pas le filtre.
+  for (const [nom, c] of [['selection-exercices.scoped.css', cssSel], ['seance-guidee.css', cssSg]]) {
+    if (c && /url\(#bf-eclaircir\)/.test(c)) soucis.push(nom + ' eclaircit de nouveau des photos deja corrigees');
   }
   if (cssSg) {
-    const photo = (cssSg.match(/\.sg-photo \{[^}]*\}/) || [''])[0];
-    if (!/filter: url\(#bf-eclaircir\)/.test(photo)) soucis.push('la photo de la seance guidee n\'est plus eclaircie');
     const voile = (cssSg.match(/\.sg-voile \{[^}]*\}/) || [''])[0];
     const haut = (voile.match(/rgba\(15, 15, 15, ([\d.]+)\) 100%/) || [])[1];
     if (!voile) soucis.push('le voile de la seance guidee a disparu : le texte ne se lit plus');
     else if (haut && +haut > 0.35) soucis.push('le voile assombrit de nouveau le haut de la photo (' + haut + ')');
+  }
+  if (sw && !/c !== CACHE && c !== CACHE_PHOTOS/.test(sw)) soucis.push('le service worker efface le cache des photos a chaque version');
+  // Chaque exercice du catalogue a ses quatre fichiers.
+  if (data) {
+    const ids = [...new Set([...data.matchAll(/imgId:\s*'([^']+)'/g)].map(m => m[1]))];
+    const manque = [];
+    for (const id of ids) for (const f of ['0-240', '0-640', '1-240', '1-640']) {
+      if (!existsSync(resolve(RACINE, 'img/exercices', id, f + '.webp'))) manque.push(id + '/' + f);
+    }
+    if (manque.length) soucis.push(manque.length + ' photo(s) non converties (node tools/convertir-images-exercices.mjs) : ' + manque.slice(0, 3).join(', '));
   }
   if (soucis.length) faute('R87 photos d\'exercices lisibles', soucis.join(' ; '));
   else passe('R87 photos d\'exercices lisibles');

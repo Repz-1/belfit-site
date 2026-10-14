@@ -276,13 +276,12 @@
 
 /* 5. LES PHOTOS RESPIRENT.
    La base d'exercices est faite de photos de salle, sous-exposees et
-   grisees (luminance mediane 67/255). brightness(1.08) ne suffisait
-   pas — Raci, 7/10 : « les images sont tres sombres » — et pousser
-   brightness() grise les fonds. Correction gamma (filtre SVG pose par
-   services/eclaircir-photos.js) : les ombres remontent, les blancs ne
-   brulent pas. Meme correction sur la fiche et pendant la seance. */
-.pg-selection .ex-photo{ filter:url(#bf-eclaircir) saturate(1.06); }
-.exo-fiche-vue{ filter:url(#bf-eclaircir) saturate(1.06); }
+   grisees (luminance mediane 67/255) — Raci, 7/10 : « les images
+   sont tres sombres ». Elles sont desormais eclaircies UNE PAR UNE a
+   la conversion (tools/convertir-images-exercices.mjs, mediane 117) :
+   plus aucun filtre ici, sinon elles le seraient deux fois. Le cadre
+   rogne la photo a son arrondi. */
+.pg-selection .ex-photo, .exo-fiche-vue{ overflow:hidden; }
 
 /* ---- Focale au defilement (Raci, 5/09) ----
    La vignette au centre de l'ecran est a taille pleine, celles qui
