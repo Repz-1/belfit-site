@@ -1,3 +1,14 @@
+/* Chiffres : DM Mono, HEBERGEE ICI (Raci, 14/10, « corrige tout »).
+   Fontshare ne sert pas DM Mono : la demande partait dans index.html
+   mais revenait vide, et toutes les valeurs chiffrees de l'app
+   tombaient sur la police a chasse fixe du systeme (Courier sur
+   Android). Les maquettes voulaient DM Mono — on la fournit nous-memes.
+   Licence SIL Open Font License 1.1 (src/fonts/OFL-DM-Mono.txt) :
+   redistribution libre, licence jointe. */
+@font-face{font-family:'DM Mono';font-style:normal;font-weight:400;font-display:swap;
+  src:url('./fonts/dm-mono-400.woff2') format('woff2')}
+@font-face{font-family:'DM Mono';font-style:normal;font-weight:500;font-display:swap;
+  src:url('./fonts/dm-mono-500.woff2') format('woff2')}
 *, *::before, *::after { box-sizing: border-box; }
 /* Le glissement entre onglets translate la page : sans cela, le
    debordement cree une bande blanche et un scroll lateral. */

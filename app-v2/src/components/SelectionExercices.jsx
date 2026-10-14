@@ -293,7 +293,15 @@ export function SelectionExercices() {
               <div class="ex-info" onClick={() => setFiche(i)}>
                 <div class="ex-name">{ex.nom}</div>
                 <div class="ex-equip">{equipLabel(ex.mat)}</div>
-                <div class="ex-sets">Convient à tous les niveaux</div>
+                {/* Raci, 14/10 (« corrige tout ») : la mention ne
+                    s'affiche que si l'exercice NE convient PAS a tous.
+                    Depuis le 7/08 les cartes sont neutres — le niveau
+                    regle le volume, pas le choix de l'exercice — donc
+                    aujourd'hui aucune carte ne la porte : elle repetait
+                    la meme phrase sous chaque nom. Un exercice reserve
+                    a un public declare `reserve: '<texte>'` dans
+                    data/exercices.js. */}
+                {ex.reserve && <div class="ex-sets">{ex.reserve}</div>}
               </div>
               <button class="ex-add" onClick={() => basculer(i)} aria-label="Ajouter">{sel ? '✓' : '+'}</button>
             </div>

@@ -506,10 +506,14 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
           : (faites.length + 1 >= seriesAttendues && iExo + 1 >= refs.length
             ? 'Terminer ›' : 'Suivant ›')}
       </button>
+      {/* Une rangee, des mots courts (Raci, 14/10) : en libelles
+          complets les quatre boutons passaient sur deux lignes, en
+          gris pale sur beige. Le libelle complet reste lu par les
+          lecteurs d'ecran. Toujours un seul « Suivant » ; pas de chrono. */}
       <div class="sg-sec">
-        {libre && <button onClick={() => allerVers('selection')}>{t('ms_ajouter')}</button>}
-        <button onClick={passerExercice}>Passer l'exercice</button>
-        <button onClick={() => setTermine(true)}>Terminer la séance</button>
+        {libre && <button aria-label={t('ms_ajouter')} onClick={() => allerVers('selection')}>+ Exercice</button>}
+        <button aria-label="Passer l'exercice" onClick={passerExercice}>Passer</button>
+        <button aria-label="Terminer la séance" onClick={() => setTermine(true)}>Terminer</button>
         <button class="sg-jeter" type="button" onClick={() => setJeter(true)}>
           {t('sea_abandonner')}
         </button>

@@ -152,13 +152,17 @@ button.sg-pt:active { transform: scale(.92); }
 
 /* Deux sorties permanentes : on n'est jamais coince au milieu d'une
    seance, y compris quand la salle ferme. */
-.sg-sec { display: flex; gap: 8px; margin-top: 8px; }
+/* Raci, 14/10 : une seule rangee, quatre cases egales, texte fonce
+   (contraste ~12:1 au lieu de ~3:1). Abandonner garde son rouge. */
+.sg-sec { display: flex; gap: 8px; margin-top: 10px; }
 .sg-sec button {
-  flex: 1; padding: 11px; border: none; border-radius: 12px;
-  background: #F3EFE5; color: #8A8378;
-  font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  flex: 1 1 auto; min-height: 44px; padding: 10px 6px; border: none; border-radius: 12px;
+  background: #ECE6DA; color: #2A2520;
+  font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer;
+  white-space: nowrap;
 }
-.sg-sec button:active { background: #EAE5D8; }
+.sg-sec button:active { background: #E2DACB; }
+.sg-sec .sg-jeter { margin-top: 0; width: auto; background: #ECE6DA; color: #A0301E; text-decoration: none; }
 
 /* ---- repos : un bandeau, pas un ecran (Raci, 5/09) ----
    Il s'intercale au-dessus du bouton sans rien cacher. La serie

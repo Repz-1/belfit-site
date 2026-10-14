@@ -3258,6 +3258,62 @@ const DECALAGE_SW_V2 = 232;
 }
 
 // ------------------------------------------------------------
+// R88 — Les chiffres sont en DM Mono, pas en Courier.
+// Raci, 14/10 (« corrige tout ») : Fontshare ne sert pas DM Mono, la
+// demande revenait vide et chaque valeur chiffree de l'app tombait sur
+// la police a chasse fixe du systeme. DM Mono est desormais hebergee
+// avec l'app (licence OFL jointe).
+// ------------------------------------------------------------
+{
+  const st = lire('app-v2/src/styles.css');
+  const html = lire('app-v2/index.html');
+  const soucis = [];
+  for (const w of [400, 500]) {
+    if (!existsSync(resolve(RACINE, `app-v2/src/fonts/dm-mono-${w}.woff2`))) soucis.push(`dm-mono-${w}.woff2 a disparu`);
+    if (st && !new RegExp(`font-family:'DM Mono';font-style:normal;font-weight:${w};font-display:swap;\\s*src:url\\('\\./fonts/dm-mono-${w}\\.woff2'\\)`).test(st)) soucis.push(`DM Mono ${w} n'est plus declaree dans styles.css`);
+  }
+  if (!existsSync(resolve(RACINE, 'app-v2/src/fonts/OFL-DM-Mono.txt'))) soucis.push('la licence OFL de DM Mono n\'accompagne plus la police');
+  if (html && /dm-mono/.test(html)) soucis.push('index.html redemande DM Mono a Fontshare, qui ne la sert pas');
+  if (soucis.length) faute('R88 police des chiffres', soucis.join(' ; '));
+  else passe('R88 police des chiffres');
+}
+
+// ------------------------------------------------------------
+// R89 — Seance libre, passe du 14/10 (Raci : « corrige tout »).
+// En-tete compact sur une ligne, mention de niveau seulement quand
+// elle dit quelque chose, barre « Ma seance » au jaune de l'app,
+// commandes secondaires de la seance guidee lisibles sur une rangee.
+// Ce qui ne doit PAS revenir : le chrono de cette page (retire le
+// 26/08) et un deuxieme bouton principal a cote de « Suivant ».
+// ------------------------------------------------------------
+{
+  const sel = lire('app-v2/src/components/SelectionExercices.jsx');
+  const css = lire('app-v2/src/legacy/selection-exercices.scoped.css');
+  const sg = lire('app-v2/src/components/SeanceGuidee.jsx');
+  const sgc = lire('app-v2/src/styles/seance-guidee.css');
+  const soucis = [];
+  if (sel) {
+    if (/>Convient à tous les niveaux</.test(sel)) soucis.push('« Convient a tous les niveaux » repete de nouveau sous chaque exercice');
+    if (!/muscle-grille/.test(sel) || !/hint-compte/.test(sel) || !/ex-recherche/.test(sel) || !/niv-rangee/.test(sel) || !/filter-tabs/.test(sel)) soucis.push('un controle de l\'en-tete a disparu');
+  }
+  if (css) {
+    if (!/\.pg-selection \.top h1\{ font-size:20px; white-space:nowrap;/.test(css)) soucis.push('le titre repasse sur deux lignes');
+    const barre = (css.match(/\.session-bar\.pg-selection-portail\{[^}]*\}/) || [''])[0];
+    if (!/background:#FAC408/.test(barre)) soucis.push('la barre « Ma seance » a quitte le jaune de « Suivant »');
+  }
+  if (sgc) {
+    const sec = (sgc.match(/\.sg-sec button \{[^}]*\}/) || [''])[0];
+    if (!/color: #2A2520/.test(sec) || !/white-space: nowrap/.test(sec)) soucis.push('les commandes secondaires de la seance redeviennent pales ou passent sur deux lignes');
+  }
+  if (sg) {
+    if ((sg.match(/class="sg-go"/g) || []).length > 1) soucis.push('un second bouton principal est apparu a cote de « Suivant »');
+    if (/sg-chrono|v2-timer-big/.test(sg)) soucis.push('le chrono est revenu sur la seance guidee (retire le 26/08)');
+  }
+  if (soucis.length) faute('R89 seance libre epuree', soucis.join(' ; '));
+  else passe('R89 seance libre epuree');
+}
+
+// ------------------------------------------------------------
 // Rapport
 // ------------------------------------------------------------
 for (const r of ok) console.log(`  ok    ${r}`);

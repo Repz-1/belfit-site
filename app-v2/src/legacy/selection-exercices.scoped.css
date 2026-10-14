@@ -45,7 +45,7 @@
 .pg-selection .ex-add:active{ transform:scale(.9); }
 .pg-selection .ex-item.selected .ex-add{ background:#F7B500; color:#fff; font-size:20px; box-shadow:0 2px 10px rgba(247,181,0,.4); }
 
-.session-bar.pg-selection-portail{ position:fixed; bottom:86px; left:16px; right:16px; max-width:448px; margin:0 auto; background:var(--orange,#F86A0C); color:#181818; border-radius:18px; padding:15px 20px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 8px 24px rgba(247,181,0,.4); cursor:pointer; z-index:50; }
+.session-bar.pg-selection-portail{ position:fixed; bottom:86px; left:16px; right:16px; max-width:448px; margin:0 auto; background:#FAC408; color:#151515; border-radius:18px; padding:15px 20px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 8px 24px rgba(250,196,8,.35); cursor:pointer; z-index:50; }
 .session-bar.pg-selection-portail.hidden{ display:none; }
 .session-bar.pg-selection-portail .count{ font-size:14px; font-weight:700; }
 .session-bar.pg-selection-portail .vider{ font-size:13px; font-weight:800; background:rgba(24,24,24,.12); border:none; border-radius:12px; padding:8px 10px; color:inherit; margin:0 8px 0 auto; }
@@ -403,3 +403,28 @@
    quoi que ce soit. Cette hauteur minimale l'ecrit noir sur blanc —
    si la vignette grandit encore un jour, la ligne suivra. */
 .pg-selection .ex-item{ min-height: 132px; }
+
+/* ============================================================
+   EN-TETE COMPACT — Raci, 14/10 (« corrige tout »)
+   Le premier exercice commencait a 480 px du haut : titre sur deux
+   lignes, bouton Retour surdimensionne, blocs espaces au hasard.
+   Rien n'est retire : grille des muscles (sans defilement lateral,
+   15/08), materiel, niveau, recherche et compte visible des zero
+   restent. Les blocs se separent de 22 px, comme S'entrainer ; a
+   l'interieur d'un bloc, 8 px.
+   La barre « Ma seance » (ligne 48) est passee au jaune du bouton
+   « Suivant » : elle tombait sur un orange (#F86A0C) que l'app
+   n'emploie pas ailleurs, la variable --orange n'existant pas hors
+   de .pg-selection (la barre vit dans un portail).
+   ============================================================ */
+.pg-selection .top{ gap:10px; padding:2px 0 0; margin-bottom:22px; }
+.pg-selection .top .back-btn{ padding:8px 13px !important; font-size:13.5px; }
+.pg-selection .top h1{ font-size:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.pg-selection .muscle-grille{ gap:6px; padding-bottom:8px; }
+.pg-selection .muscle-case{ padding:9px 3px; }
+.pg-selection .filter-tabs{ padding:0 0 8px; }
+.pg-selection .filter-tab{ padding:6px 12px; }
+.pg-selection .niv-rangee{ margin:0; padding-bottom:0; }
+.pg-selection .ex-recherche{ margin:22px 0 0; }
+.pg-selection .ex-recherche input{ padding:10px 8px; }
+.pg-selection .section-hint{ margin:10px 4px 14px; }
