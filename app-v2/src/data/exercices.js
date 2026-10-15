@@ -488,12 +488,13 @@ export const LIEUX = [
   { key: 'domicile', label: 'À domicile' },
 ];
 // A domicile : ce que chaque case autorise. La barre de traction
-// compte comme poids du corps (comme l'ancien filtre). Les
-// kettlebells restent EN SALLE seulement — a trancher avec Raci.
+// compte comme poids du corps (comme l'ancien filtre). Kettlebell
+// ajoute le 15/10 (33 exercices, surtout epaules, jambes, abdos).
 export const OPTIONS_DOMICILE = [
   { key: 'elastique', label: 'Élastique',      mats: ['elastique'] },
   { key: 'halteres',  label: 'Haltères',       mats: ['halteres'] },
-  { key: 'corps',     label: 'Poids du corps', mats: ['rien', 'traction'] },
+  { key: 'corps',      label: 'Poids du corps', mats: ['rien', 'traction'] },
+  { key: 'kettlebell', label: 'Kettlebell',     mats: ['kettlebell'] },
 ];
 
 /** L'exercice est-il faisable la ou l'on s'entraine ? */

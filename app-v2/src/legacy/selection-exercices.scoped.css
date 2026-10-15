@@ -452,3 +452,7 @@
 }
 .pg-selection .materiel-case.active .materiel-coche{ background:#181818; border-color:#181818; color:#FAC408; }
 .pg-selection .materiel-case:active{ transform:scale(.95); }
+
+/* Liste vide a domicile : la proposition « + Poids du corps » est le
+   geste principal. */
+.pg-selection .ex-vide-domicile button.principal{ background:#181818; color:#fff; border-color:#181818; }

@@ -316,12 +316,16 @@ export function SelectionExercices() {
           <div style="text-align:center;color:#6b7280;font-size:14px;padding:34px 20px;line-height:1.5">
             <span style="display:block;font-size:44px;margin-bottom:10px">💪</span>
             {mots.length ? 'Aucun exercice ne correspond.'
-              : lieu === 'domicile' ? `Rien pour ce muscle avec ce matériel à la maison.`
+              : lieu === 'domicile' ? `Rien pour ${MUSCLES[muscle].label.toLowerCase()} avec ce matériel.`
               : 'Aucun exercice pour ce matériel.'}
+            {/* Liste vide a domicile : on propose d'un geste ce qui en
+                donnerait — Poids du corps d'abord (rien a acheter),
+                puis le reste, chacun avec son nombre d'exercices. */}
             {!mots.length && lieu === 'domicile' && (
-              <div class="ex-ailleurs">
-                {OPTIONS_DOMICILE.filter(o => !options.includes(o.key) && nbSiOption(o.key) > 0).map(o => (
-                  <button key={o.key} onClick={() => basculerOption(o.key)}>
+              <div class="ex-ailleurs ex-vide-domicile">
+                {[...OPTIONS_DOMICILE].sort((a, b) => (b.key === 'corps') - (a.key === 'corps'))
+                  .filter(o => !options.includes(o.key) && nbSiOption(o.key) > 0).map(o => (
+                  <button key={o.key} class={o.key === 'corps' ? 'principal' : ''} onClick={() => basculerOption(o.key)}>
                     + {o.label} ({nbSiOption(o.key)})
                   </button>
                 ))}

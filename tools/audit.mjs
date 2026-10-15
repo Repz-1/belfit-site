@@ -3330,7 +3330,7 @@ const DECALAGE_SW_V2 = 232;
   if (ex) {
     if (/export const FILTERS = \[/.test(ex)) soucis.push('l\'ancienne rangee « Tout / Poids du corps / Halteres / Salle » est revenue');
     if (!/\{ key: 'salle',\s+label: 'En salle' \}/.test(ex) || !/\{ key: 'domicile', label: 'À domicile' \}/.test(ex)) soucis.push('les deux lieux ont change');
-    for (const k of ['elastique', 'halteres', 'corps']) if (!new RegExp(`\\{ key: '${k}',`).test(ex)) soucis.push('la case domicile « ' + k + ' » a disparu');
+    for (const k of ['elastique', 'halteres', 'corps', 'kettlebell']) if (!new RegExp(`\\{ key: '${k}',`).test(ex)) soucis.push('la case domicile « ' + k + ' » a disparu');
     if (!/export function materielPrecis\(ex\)/.test(ex) || !/const ELASTIQUE_IDS = new Set\(\[/.test(ex)) soucis.push('le materiel exact (elastique, kettlebell) n\'est plus releve');
     if (!/if \(lieu !== 'domicile'\) return true;/.test(ex)) soucis.push('« En salle » ne montre plus tout le catalogue');
   }
