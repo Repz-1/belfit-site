@@ -3314,6 +3314,39 @@ const DECALAGE_SW_V2 = 232;
 }
 
 // ------------------------------------------------------------
+// R90 — On choisit d'abord OU l'on s'entraine.
+// Raci, 15/10 : « Tout / Poids du corps / Halteres / Salle » n'avait
+// pas de sens — des halteres, il y en a aussi en salle. Desormais :
+// « En salle » (tout) ou « A domicile » + cases Elastique, Halteres,
+// Poids du corps. Le champ `mat` reste intact pour la seance guidee,
+// les programmes et R80 ; le materiel exact vient de materielPrecis().
+// ------------------------------------------------------------
+{
+  const ex = lire('app-v2/src/data/exercices.js');
+  const sel = lire('app-v2/src/components/SelectionExercices.jsx');
+  const cb = lire('app-v2/src/components/CoachBar.jsx');
+  const css = lire('app-v2/src/legacy/selection-exercices.scoped.css');
+  const soucis = [];
+  if (ex) {
+    if (/export const FILTERS = \[/.test(ex)) soucis.push('l\'ancienne rangee « Tout / Poids du corps / Halteres / Salle » est revenue');
+    if (!/\{ key: 'salle',\s+label: 'En salle' \}/.test(ex) || !/\{ key: 'domicile', label: 'À domicile' \}/.test(ex)) soucis.push('les deux lieux ont change');
+    for (const k of ['elastique', 'halteres', 'corps']) if (!new RegExp(`\\{ key: '${k}',`).test(ex)) soucis.push('la case domicile « ' + k + ' » a disparu');
+    if (!/export function materielPrecis\(ex\)/.test(ex) || !/const ELASTIQUE_IDS = new Set\(\[/.test(ex)) soucis.push('le materiel exact (elastique, kettlebell) n\'est plus releve');
+    if (!/if \(lieu !== 'domicile'\) return true;/.test(ex)) soucis.push('« En salle » ne montre plus tout le catalogue');
+  }
+  if (sel) {
+    if (!/localStorage\.setItem\(CLE_LIEU/.test(sel)) soucis.push('le lieu n\'est plus retenu d\'une seance a l\'autre');
+    if (!/return \{ lieu: 'salle', options: TOUTES_OPTIONS \};/.test(sel)) soucis.push('le lieu par defaut n\'est plus « En salle »');
+    if (!/if \(on && options\.length === 1\) return;/.test(sel)) soucis.push('on peut decocher tout le materiel et vider la liste');
+    if (!/nbSiOption\(o\.key\)/.test(sel)) soucis.push('liste vide a domicile sans proposition de materiel');
+  }
+  if (cb && /FILTERS/.test(cb)) soucis.push('la barre coach lit encore l\'ancien filtre');
+  if (css && !/\.pg-selection \.lieu-rangee\{ flex-wrap:wrap; overflow:visible; \}/.test(css)) soucis.push('la rangee du lieu peut de nouveau defiler de cote (15/08)');
+  if (soucis.length) faute('R90 lieu puis materiel', soucis.join(' ; '));
+  else passe('R90 lieu puis materiel');
+}
+
+// ------------------------------------------------------------
 // Rapport
 // ------------------------------------------------------------
 for (const r of ok) console.log(`  ok    ${r}`);

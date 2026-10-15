@@ -5,7 +5,7 @@ import { repas, objectifs, totauxJourAff, ajouterIngredient, ajouterEau, ajouter
 import { seanceRefs, selectionExos, abandonnerSeance, portraitSeanceDuJour, ETAT, demandeVueEntrainer, poserBrouillon } from '../store/seance-active.js';
 import { ongletActif } from './BottomNav.jsx';
 import { planifierSeance } from '../store/programme.js';
-import { EXERCISES, FILTERS } from '../data/exercices.js';
+import { EXERCISES, materielPrecis } from '../data/exercices.js';
 import { customFoods } from './Scanner.jsx';
 import { courses, origineCourses } from './Courses.jsx';
 import { DB, macrosOf } from '../data/aliments.js';
@@ -44,17 +44,23 @@ const QUESTIONS_SEANCE = [
   { cle: 'mat', titre: 'Ton matériel', choix: [['salle', 'Salle complète'], ['halteres', 'Haltères'], ['rien', 'Poids du corps']] },
   { cle: 'niveau', titre: 'Ton niveau', choix: [['debutant', 'Débutant'], ['intermediaire', 'Intermédiaire'], ['confirme', 'Avancé']] },
 ];
+const MATS_COACH = {
+  salle: ['barre', 'machine', 'halteres', 'kettlebell', 'elastique'],
+  halteres: ['halteres', 'kettlebell'],
+  rien: ['rien', 'traction'],
+};
 const MOT_DUREE = { court: ' 30 min', normal: '', long: ' 1h' };
 
 /** Compose la seance selon les 4 reponses : materiel respecte, volume selon le niveau. */
 function composerAvecReponses(phrase, rep) {
   const out = composerSeance('seance ' + phrase + MOT_DUREE[rep.duree], rep.style);
   if (!out || out.action !== 'composerSeance') return out;
-  const mats = (FILTERS.find((f) => f.key === rep.mat) || {}).mats;
-  // Les exercices a l'elastique sont ranges avec les halteres dans le
-  // catalogue : on les ecarte si la personne a dit « Halteres ».
-  const okMat = (e) => (!mats || mats.includes(e.mat) || (rep.mat === 'salle' && e.mat === 'halteres'))
-    && !(rep.mat === 'halteres' && /lastique/i.test(e.nom));
+  // Materiel exact (data/exercices.js, 15/10) : l'elastique n'est plus
+  // devine au nom. Meme resultat qu'avant — « Halteres » garde les
+  // kettlebells et ecarte l'elastique ; « Salle complete » garde tout
+  // sauf le poids du corps.
+  const mats = MATS_COACH[rep.mat];
+  const okMat = (e) => !mats || mats.includes(materielPrecis(e));
   const vus = new Set(out.refs.map((r) => r.mKey + ':' + r.i));
   const refs = out.refs.map((r) => {
     const e = (EXERCISES[r.mKey] || [])[r.i];

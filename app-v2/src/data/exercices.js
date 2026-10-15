@@ -414,17 +414,94 @@ export const EXERCISES = {
 
 
 
-// Les filtres etaient CUMULATIFS : « Salle » incluait deja les cinq
-// materiels existants, donc rendait exactement le meme resultat que
-// « Tout » — deux boutons pour un seul effet, quel que soit le
-// muscle. Chaque filtre designe desormais un materiel PRECIS, et
-// « Tout » reste leur reunion.
-export const FILTERS = [
-  { key: 'tout',     label: 'Tout',            mats: null },
-  { key: 'rien',     label: 'Poids du corps',  mats: ['rien', 'traction'] },
-  { key: 'halteres', label: 'Haltères',        mats: ['halteres'] },
-  { key: 'salle',    label: 'Salle',           mats: ['barre', 'machine'] },
+// ============================================================
+// LIEU ET MATERIEL — Raci, 15/10
+// La rangee « Tout / Poids du corps / Halteres / Salle » melangeait
+// un LIEU et des MATERIELS : des halteres, il y en a aussi en salle.
+// On choisit d'abord ou l'on s'entraine :
+//   - En salle   : tout le catalogue ;
+//   - A domicile : on coche ce qu'on a — Elastique, Halteres, Poids
+//     du corps (un ou plusieurs).
+// Le champ `mat` des exercices ne bouge pas : la seance guidee
+// (« Pas cette machine ? »), les programmes et l'audit R80 le lisent.
+// Il range elastiques et kettlebells avec les halteres ; le detail
+// vient du champ `equipment` de free-exercise-db, releve ci-dessous
+// par imgId (9 elastiques, 33 kettlebells sur 372 exercices).
+// ============================================================
+const ELASTIQUE_IDS = new Set([
+  'Back_Flyes_-_With_Bands',
+  'Band_Good_Morning',
+  'Band_Hip_Adductions',
+  'Bench_Press_-_With_Bands',
+  'Calf_Raises_-_With_Bands',
+  'Lateral_Raise_-_With_Bands',
+  'Shoulder_Press_-_With_Bands',
+  'Squats_-_With_Bands',
+  'Upright_Row_-_With_Bands',
+]);
+const KETTLEBELL_IDS = new Set([
+  'Advanced_Kettlebell_Windmill',
+  'Alternating_Hang_Clean',
+  'Alternating_Kettlebell_Row',
+  'Bent_Press',
+  'Bottoms-Up_Clean_From_The_Hang_Position',
+  'Double_Kettlebell_Jerk',
+  'Double_Kettlebell_Push_Press',
+  'Double_Kettlebell_Snatch',
+  'Double_Kettlebell_Windmill',
+  'Front_Squats_With_Two_Kettlebells',
+  'Goblet_Squat',
+  'Kettlebell_Arnold_Press',
+  'Kettlebell_Figure_8',
+  'Kettlebell_Hang_Clean',
+  'Kettlebell_One-Legged_Deadlift',
+  'Kettlebell_Pass_Between_The_Legs',
+  'Kettlebell_Pistol_Squat',
+  'Kettlebell_Thruster',
+  'Kettlebell_Turkish_Get-Up_Lunge_style',
+  'Kettlebell_Windmill',
+  'Lunge_Pass_Through',
+  'One-Arm_Kettlebell_Clean',
+  'One-Arm_Kettlebell_Clean_and_Jerk',
+  'One-Arm_Kettlebell_Jerk',
+  'One-Arm_Kettlebell_Military_Press_To_The_Side',
+  'One-Arm_Kettlebell_Push_Press',
+  'One-Arm_Kettlebell_Row',
+  'One-Arm_Kettlebell_Snatch',
+  'One-Arm_Kettlebell_Swings',
+  'One-Arm_Overhead_Kettlebell_Squats',
+  'Plyo_Kettlebell_Pushups',
+  'Two-Arm_Kettlebell_Military_Press',
+  'Two-Arm_Kettlebell_Row',
+]);
+
+/** Materiel exact : 'elastique' | 'kettlebell' | 'halteres' | 'barre' | 'machine' | 'rien' | 'traction'. */
+export function materielPrecis(ex) {
+  if (!ex) return null;
+  if (ELASTIQUE_IDS.has(ex.imgId)) return 'elastique';
+  if (KETTLEBELL_IDS.has(ex.imgId)) return 'kettlebell';
+  return ex.mat;
+}
+
+export const LIEUX = [
+  { key: 'salle',    label: 'En salle' },
+  { key: 'domicile', label: 'À domicile' },
 ];
+// A domicile : ce que chaque case autorise. La barre de traction
+// compte comme poids du corps (comme l'ancien filtre). Les
+// kettlebells restent EN SALLE seulement — a trancher avec Raci.
+export const OPTIONS_DOMICILE = [
+  { key: 'elastique', label: 'Élastique',      mats: ['elastique'] },
+  { key: 'halteres',  label: 'Haltères',       mats: ['halteres'] },
+  { key: 'corps',     label: 'Poids du corps', mats: ['rien', 'traction'] },
+];
+
+/** L'exercice est-il faisable la ou l'on s'entraine ? */
+export function convientAuLieu(ex, lieu, options) {
+  if (lieu !== 'domicile') return true;
+  const m = materielPrecis(ex);
+  return OPTIONS_DOMICILE.some(o => options.includes(o.key) && o.mats.includes(m));
+}
 
 // Niveau -> libelle + nb d'etoiles pleines (comme le v1)
 // ============================================================

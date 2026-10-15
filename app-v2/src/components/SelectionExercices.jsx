@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
-import { MUSCLES, EXERCISES, FILTERS, NIVEAUX,
+import { MUSCLES, EXERCISES, NIVEAUX, LIEUX, OPTIONS_DOMICILE,
+         convientAuLieu, materielPrecis,
          NIVEAUX_PRATIQUE, PROTOCOLES } from '../data/exercices.js';
 import { signal } from '@preact/signals';
 
@@ -12,6 +13,28 @@ export const niveauPratique = signal(
 function choisirNiveau(k) {
   niveauPratique.value = k;
   try { localStorage.setItem('belfit_niveau', k); } catch (e) {}
+}
+
+// Lieu d'entrainement (Raci, 15/10) : « En salle » ou « A domicile »,
+// et a domicile le materiel qu'on a. Retenu comme le niveau : on
+// s'entraine en general au meme endroit. Par defaut En salle, qui
+// montre tout — exactement ce que faisait l'ancien « Tout ».
+const CLE_LIEU = 'belfit_lieu';
+const TOUTES_OPTIONS = OPTIONS_DOMICILE.map(o => o.key);
+function lireLieu() {
+  try {
+    const v = JSON.parse(localStorage.getItem(CLE_LIEU) || 'null');
+    if (v && (v.lieu === 'salle' || v.lieu === 'domicile')) {
+      const options = (v.options || []).filter(k => TOUTES_OPTIONS.includes(k));
+      return { lieu: v.lieu, options: options.length ? options : TOUTES_OPTIONS };
+    }
+  } catch (e) {}
+  return { lieu: 'salle', options: TOUTES_OPTIONS };
+}
+export const lieuEntrainement = signal(lireLieu());
+function poserLieu(v) {
+  lieuEntrainement.value = v;
+  try { localStorage.setItem(CLE_LIEU, JSON.stringify(v)); } catch (e) {}
 }
 
 
@@ -47,6 +70,8 @@ const EQUIP = {
   kettlebell: 'Kettlebell', elastique: 'Élastique',
 };
 const equipLabel = (mat) => EQUIP[mat] || (mat ? mat[0].toUpperCase() + mat.slice(1) : '—');
+// Libelle du materiel EXACT : un elastique ne s'affiche plus « Halteres ».
+const equipDe = (ex) => equipLabel(materielPrecis(ex));
 
 /**
  * Effet de focale sur les vignettes de la liste.
@@ -105,7 +130,6 @@ function useFocale() {
 
 export function SelectionExercices() {
   const [muscle, setMuscle] = useState(0);          // index dans MUSCLES
-  const [filtre, setFiltre] = useState('tout');     // key dans FILTERS
   const [jeter, setJeter] = useState(false);
   // Copie locale : on n'ecrit PAS dans le signal pendant le rendu.
   const brut = selectionExos.value;
@@ -119,8 +143,18 @@ export function SelectionExercices() {
   const [fiche, setFiche] = useState(null);
 
   const mKey = MUSCLES[muscle].key;
-  const f = FILTERS.find(x => x.key === filtre);
-  const exoVisible = (ex) => !f.mats || f.mats.includes(ex.mat);
+  const { lieu, options } = lieuEntrainement.value;
+  const exoVisible = (ex) => convientAuLieu(ex, lieu, options);
+  // A domicile, on coche ce qu'on a. La derniere case ne se decoche
+  // pas : « rien du tout » ne montrerait aucun exercice.
+  const basculerOption = (k) => {
+    const on = options.includes(k);
+    if (on && options.length === 1) return;
+    poserLieu({ lieu, options: on ? options.filter(x => x !== k) : [...options, k] });
+  };
+  // Liste vide a domicile : quelles cases ajouter pour en avoir ?
+  const nbSiOption = (k) => (EXERCISES[mKey] || [])
+    .filter(ex => convientAuLieu(ex, 'domicile', [k])).length;
 
   // Recherche par MOTS, insensible aux accents, a la casse et a
   // l'ordre : « couche incline » trouve « Developpe Couche Incline
@@ -209,12 +243,29 @@ export function SelectionExercices() {
         ))}
       </div>
 
-      <div class="filter-tabs" data-sans-swipe>
-        {FILTERS.map(ft => (
-          <button key={ft.key} class={'filter-tab' + (ft.key === filtre ? ' active' : '')}
-            onClick={() => setFiltre(ft.key)}>{ft.label}</button>
+      {/* Lieu puis materiel (Raci, 15/10). Les deux rangees passent a
+          la ligne si besoin : jamais de defilement lateral (15/08). */}
+      <div class="filter-tabs lieu-rangee" role="group" aria-label="Où t'entraînes-tu ?" data-sans-swipe>
+        {LIEUX.map(l => (
+          <button key={l.key} class={'filter-tab' + (l.key === lieu ? ' active' : '')}
+            aria-pressed={l.key === lieu}
+            onClick={() => poserLieu({ lieu: l.key, options })}>{l.label}</button>
         ))}
       </div>
+      {lieu === 'domicile' && (
+        <div class="materiel-rangee" role="group" aria-label="Matériel à la maison" data-sans-swipe>
+          {OPTIONS_DOMICILE.map(o => {
+            const on = options.includes(o.key);
+            return (
+              <button key={o.key} class={'materiel-case' + (on ? ' active' : '')}
+                role="checkbox" aria-checked={on}
+                onClick={() => basculerOption(o.key)}>
+                <span class="materiel-coche" aria-hidden="true">{on ? '✓' : ''}</span>{o.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Le niveau pilote le volume de TOUS les exercices : il se
           choisit une fois ici, pas exercice par exercice. */}
@@ -264,7 +315,19 @@ export function SelectionExercices() {
         {liste.length === 0 ? (
           <div style="text-align:center;color:#6b7280;font-size:14px;padding:34px 20px;line-height:1.5">
             <span style="display:block;font-size:44px;margin-bottom:10px">💪</span>
-            {mots.length ? 'Aucun exercice ne correspond.' : 'Aucun exercice pour ce matériel.'}
+            {mots.length ? 'Aucun exercice ne correspond.'
+              : lieu === 'domicile' ? `Rien pour ce muscle avec ce matériel à la maison.`
+              : 'Aucun exercice pour ce matériel.'}
+            {!mots.length && lieu === 'domicile' && (
+              <div class="ex-ailleurs">
+                {OPTIONS_DOMICILE.filter(o => !options.includes(o.key) && nbSiOption(o.key) > 0).map(o => (
+                  <button key={o.key} onClick={() => basculerOption(o.key)}>
+                    + {o.label} ({nbSiOption(o.key)})
+                  </button>
+                ))}
+                <button onClick={() => poserLieu({ lieu: 'salle', options })}>En salle</button>
+              </div>
+            )}
             {ailleurs.length > 0 && (
               <div class="ex-ailleurs">
                 {ailleurs.map(o => (
@@ -292,7 +355,7 @@ export function SelectionExercices() {
               </div>
               <div class="ex-info" onClick={() => setFiche(i)}>
                 <div class="ex-name">{ex.nom}</div>
-                <div class="ex-equip">{equipLabel(ex.mat)}</div>
+                <div class="ex-equip">{equipDe(ex)}</div>
                 {/* Raci, 14/10 (« corrige tout ») : la mention ne
                     s'affiche que si l'exercice NE convient PAS a tous.
                     Depuis le 7/08 les cartes sont neutres — le niveau
@@ -389,7 +452,7 @@ function FicheExercice({ mKey, ex, choisi, basculer, fermer }) {
         </div>
 
         <div class="exo-fiche-meta">
-          <span>{equipLabel(ex.mat)}</span>
+          <span>{equipDe(ex)}</span>
           {groupe && (
             <span class="exo-fiche-chip-mus" style={{ background: couleur + '1f', color: couleur }}>
               {groupe.label}

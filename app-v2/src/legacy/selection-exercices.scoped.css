@@ -428,3 +428,27 @@
 .pg-selection .ex-recherche{ margin:22px 0 0; }
 .pg-selection .ex-recherche input{ padding:10px 8px; }
 .pg-selection .section-hint{ margin:10px 4px 14px; }
+
+/* ============================================================
+   LIEU PUIS MATERIEL — Raci, 15/10
+   « En salle » / « A domicile » remplacent « Tout / Poids du corps /
+   Halteres / Salle ». A domicile, une rangee de cases a cocher.
+   Les rangees passent a la ligne : jamais de defilement lateral.
+   ============================================================ */
+.pg-selection .lieu-rangee{ flex-wrap:wrap; overflow:visible; }
+.pg-selection .lieu-rangee .filter-tab{ flex:1; justify-content:center; padding:8px 12px; font-size:13px; }
+.pg-selection .lieu-rangee .filter-tab.active{ background:#181818; color:#fff; border-color:#181818; }
+.pg-selection .materiel-rangee{ display:flex; flex-wrap:wrap; gap:6px; padding:0 0 8px; }
+.pg-selection .materiel-case{
+  display:flex; align-items:center; gap:6px; padding:6px 11px 6px 7px;
+  border-radius:30px; border:1.5px solid var(--line); background:var(--card);
+  font-family:inherit; font-size:12.5px; font-weight:700; color:var(--text-dim); cursor:pointer;
+}
+.pg-selection .materiel-case.active{ background:#EDEAE4; color:#1a1a1a; border-color:#1a1a1a; }
+.pg-selection .materiel-coche{
+  width:16px; height:16px; border-radius:50%; flex:none;
+  display:inline-flex; align-items:center; justify-content:center;
+  border:1.5px solid #CFC8BC; font-size:10px; font-weight:900; line-height:1;
+}
+.pg-selection .materiel-case.active .materiel-coche{ background:#181818; border-color:#181818; color:#FAC408; }
+.pg-selection .materiel-case:active{ transform:scale(.95); }
