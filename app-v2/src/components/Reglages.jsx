@@ -459,9 +459,13 @@ export function Reglages() {
         <p class="rg-section">{t('set_sec_social')}</p>
         <div class="rg-carte">
           <Rangee titre={t('set_invite')} sous={t('set_invite_sub')} onClick={() => {
-            const txt = t('invite_text') + (code ? ' ' + code : '');
-            if (navigator.share) navigator.share({ text: txt, url: 'https://belfit.be' }).catch(() => {});
-            else { navigator.clipboard.writeText(txt + ' https://belfit.be').catch(() => {}); }
+            const txt = t('invite_text') + ' https://www.belfit.be' + (code ? ' (' + t('invite_code') + ' : ' + code + ')' : '');
+            const copier = () => {
+              if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert(t('invite_copied'))).catch(() => {});
+            };
+            // Lien DANS le texte : WhatsApp Android ignore souvent "url".
+            if (navigator.share) navigator.share({ text: txt }).catch((e) => { if (e && e.name !== 'AbortError') copier(); });
+            else copier();
           }} />
           {code && (
             <div class="rg-rangee rg-rangee--inerte">
