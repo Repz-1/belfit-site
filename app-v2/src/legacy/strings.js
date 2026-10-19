@@ -490,7 +490,7 @@ Object.assign(STRINGS_V1.nl, {
 Object.assign(STRINGS_V1.fr, {
   open:"Ouvrir", collapse:"Réduire", clear:"Effacer", later:"Plus tard",
   start:"Démarrer", pause:"Pause", resume:"Reprendre", timer:"Chronomètre",
-  support_unlock:"Soutenir BELFIT & débloquer",
+  support_unlock:"Découvrir le coaching BELFIT",
   session:"séance", sessions:"séances", set:"série", sets:"séries",
   in_month:"en", last_session:"Dernière", first_session_hint:"Ta première séance t’attend. Commence quand tu veux.",
   first_session_t:"Ta première séance t’attend", first_session_s:"Commence quand tu veux.",
@@ -603,7 +603,7 @@ Object.assign(STRINGS_V1.fr, {
 Object.assign(STRINGS_V1.en, {
   open:"Open", collapse:"Collapse", clear:"Clear", later:"Later",
   start:"Start", pause:"Pause", resume:"Resume", timer:"Timer",
-  support_unlock:"Support BELFIT & unlock",
+  support_unlock:"Discover BELFIT coaching",
   session:"workout", sessions:"workouts", set:"set", sets:"sets",
   in_month:"in", last_session:"Last", first_session_hint:"Your first session is waiting. Start whenever you like.",
   first_session_t:"Your first session is waiting", first_session_s:"Start whenever you like.",
@@ -716,7 +716,7 @@ Object.assign(STRINGS_V1.en, {
 Object.assign(STRINGS_V1.nl, {
   open:"Openen", collapse:"Inklappen", clear:"Wissen", later:"Later",
   start:"Starten", pause:"Pauze", resume:"Hervatten", timer:"Chronometer",
-  support_unlock:"Steun BELFIT & ontgrendel",
+  support_unlock:"Ontdek de BELFIT-coaching",
   session:"training", sessions:"trainingen", set:"set", sets:"sets",
   in_month:"in", last_session:"Laatste", first_session_hint:"Je eerste sessie wacht. Begin wanneer je wilt.",
   first_session_t:"Je eerste sessie wacht", first_session_s:"Begin wanneer je wilt.",

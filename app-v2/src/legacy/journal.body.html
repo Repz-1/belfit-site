@@ -2235,7 +2235,7 @@ function scanShowStatus(msg, type){
 
 function openScanner(rid){
     if(inviteBloque()) return;
-    if(!repzAcces()){ window.location.href = 'plans.html?v=7'; return; }
+    if(!repzAcces()){ window.location.href = '/v2/?onglet=premium'; return; }
     scanCurrentRid = rid;
     document.getElementById('scanModal').classList.add('show');
     document.getElementById('scanStatus').className = 'scan-status';
@@ -2626,7 +2626,7 @@ function genererCoursesBase(){
 function allerCourses(){
     if(inviteBloque()) return;
     if(!repzAcces()){
-        window.location.href = 'plans.html';
+        window.location.href = '/v2/?onglet=premium';
         return;
     }
     const base = genererCoursesBase();
@@ -3387,7 +3387,7 @@ function montrerModalePremiumRepas(){
             <div style="font-size:42px;margin-bottom:10px">🍽️</div>
             <h3 style="font-size:19px;font-weight:800;margin-bottom:10px">Les idées repas sont Premium</h3>
             <p style="font-size:14px;color:#6b7280;line-height:1.55;margin-bottom:20px">Laisse BELFIT te suggérer quoi manger selon tes envies et tes calories restantes. Tu peux toujours composer tes repas toi-même gratuitement 😊<br><br>Ton soutien fait grandir BELFIT 🙏</p>
-            <a href="plans.html?v=7" style="display:block;background:#8F6200;color:#fff;text-decoration:none;padding:14px;border-radius:14px;font-size:15px;font-weight:700;margin-bottom:10px">Soutenir BELFIT & débloquer</a>
+            <a href="/v2/?onglet=premium" style="display:block;background:#8F6200;color:#fff;text-decoration:none;padding:14px;border-radius:14px;font-size:15px;font-weight:700;margin-bottom:10px">Découvrir le coaching BELFIT</a>
             <button onclick="document.getElementById('cpPremOverlayRepas').remove()" style="background:none;border:none;color:#6b7280;font-size:14px;font-weight:600;cursor:pointer;padding:6px">Plus tard</button>
         </div>
     </div>`;
@@ -3401,7 +3401,7 @@ function montrerModalePremiumCalc(){
             <div style="font-size:42px;margin-bottom:10px">✨</div>
             <h3 style="font-size:19px;font-weight:800;margin-bottom:10px">Calcul personnalisé Premium</h3>
             <p style="font-size:14px;color:#6b7280;line-height:1.55;margin-bottom:20px">Ce calcul affine tes besoins selon ton travail ET ton sport, pour un résultat vraiment sur mesure. Le calcul simple reste gratuit juste au-dessus 😊<br><br>Ton soutien fait grandir BELFIT 🙏</p>
-            <a href="plans.html?v=7" style="display:block;background:#8F6200;color:#fff;text-decoration:none;padding:14px;border-radius:14px;font-size:15px;font-weight:700;margin-bottom:10px">Soutenir BELFIT & débloquer</a>
+            <a href="/v2/?onglet=premium" style="display:block;background:#8F6200;color:#fff;text-decoration:none;padding:14px;border-radius:14px;font-size:15px;font-weight:700;margin-bottom:10px">Découvrir le coaching BELFIT</a>
             <button onclick="document.getElementById('cpPremOverlay').remove()" style="background:none;border:none;color:#6b7280;font-size:14px;font-weight:600;cursor:pointer;padding:6px">Plus tard</button>
         </div>
     </div>`;
@@ -3441,7 +3441,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20H2"/></svg>
         <span>Stats</span>
     </a>
-    <a href="plans.html?v=7" class="bn-item bn-premium" id="bnPremium">
+    <a href="/v2/?onglet=premium" class="bn-item bn-premium" id="bnPremium">
         <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.6l1-5.8L3.5 9.7l5.9-.9z"/></svg>
         <span>Premium</span>
     </a>
@@ -3619,7 +3619,7 @@ let vocalRec = null, vocalEcoute = false, vocalProps = [], vocalDestId = null, v
 
 function ouvrirVocal(){
     if(inviteBloque()) return;
-    if(!repzAcces()){ window.location.href = 'plans.html'; return; }
+    if(!repzAcces()){ window.location.href = '/v2/?onglet=premium'; return; }
     vocalProps = []; vocalDestId = null;
     document.getElementById('vmProps').innerHTML = '';
     document.getElementById('vmInconnus').innerHTML = '';
