@@ -16,7 +16,7 @@
 // depuis le cache — celui d'AVANT la redirection vers /v2/.
 // Il fallait taper l'adresse complete a la main. Monter le nom
 // du cache force chaque navigateur a jeter l'ancienne copie.
-const CACHE = 'belfit-v608';
+const CACHE = 'belfit-v609';
 // main.html et app.html sont supprimes avec la v1. Les laisser ici
 // aurait fait echouer addAll() en entier : une seule URL absente
 // rejette la promesse, et le service worker ne s'installe pas du
