@@ -357,9 +357,11 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
                 <button type="button" class="qc-ligne qc-ligne--ouverte" onClick={() => setOuverte(-1)}>
                   <span class="qc-ic"><Icone nom={s.icone} taille={17} /></span>
                   <span class="qc-ligne-nom">{s.nom}{s.facultative && <em> · facultatif</em>}</span>
+                  <span class="qc-num">Étape {k + 1} / {sections.length}</span>
                   <span class="qc-chev"><Icone nom="chevron-up" taille={18} /></span>
                 </button>
                 <div class="qc-ouvert">
+                  {s.sous && <p class="qc-sous-sec">{s.sous}</p>}
                   {visibles(s).map(q => <Question key={q.id} q={q} rep={rep[q.id]} toutes={rep} maj={maj(q.id)} erreur={erreurs[q.id]} />)}
                   {Object.values(erreurs).some(Boolean) && <p class="qc-err qc-err--bas">Il manque une réponse plus haut.</p>}
                   <button class="qc-cta qc-cta--noir" onClick={() => valider(k)}>{k === sections.length - 1 ? 'Voir le récapitulatif' : 'Continuer'}</button>
