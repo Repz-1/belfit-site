@@ -345,7 +345,7 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
     return (
       <div class="pg-coach pg-qc">
         <Entete sansBandeau retour={onFermer} />
-        <div class="qc-haut"><span class="qc-sur">{type === 'maj' ? 'MISE À JOUR' : 'PAIEMENT REÇU'}</span><Sauve /></div>
+        <div class="qc-haut"><span class="qc-sur">{type === 'maj' ? 'MOIS SUIVANT' : 'PAIEMENT REÇU'}</span><Sauve /></div>
         <h1 class="qc-titre qc-titre--accueil">{type === 'maj' ? 'Ton bilan du mois' : 'Ton programme commence ici'}</h1>
         <div class="qc-carte qc-liste">
           {sections.map((s, k) => {

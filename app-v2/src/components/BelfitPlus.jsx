@@ -356,8 +356,8 @@ export function BelfitPlus() {
             >
               {/* 26/09 : la mise a jour se paie (60 EUR, onglet Coach) ;
                   27/09 : seulement dans les 3 mois du dernier paiement. */}
-              {majPossible ? <b>Mettre à jour mon plan</b> : <b>Commander un nouveau plan</b>}
-              <em>{majPossible ? '60 €, paiement unique' : '80 €, paiement unique'}</em>
+              {majPossible ? <b>Continuer mon coaching</b> : <b>Reprendre un mois de coaching</b>}
+              <em>{majPossible ? '60 € le mois suivant, sans abonnement' : '80 € le mois, sans abonnement'}</em>
             </button>
           </div>
 
