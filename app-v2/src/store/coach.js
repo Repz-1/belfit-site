@@ -91,3 +91,49 @@ export function finAcces(dossier, pr) {
   if (!dates.length) return null;
   return { fin: new Date(Math.max(...dates.map((d) => d.getTime()))), illimite: false };
 }
+
+// ---- Espace suivi client (20/10) ----------------------------------
+// Petits calculs de l'onglet « Mon suivi ». Aucune donnee nouvelle :
+// tout part de la commande, du plan livre, des pesees et du journal.
+
+/** Debut et fin du mois de coaching en cours (dernier paiement, ou
+ *  livraison du plan a defaut), et jours restants. null sans plan. */
+export function moisCoaching(dossier, pr, maintenant = Date.now()) {
+  const e = etatCoach(dossier, pr);
+  const base = e.payeLe || (pr && pr.livreLe);
+  if (!base) return null;
+  const debut = new Date(base);
+  if (isNaN(debut.getTime())) return null;
+  const fin = new Date(debut); fin.setMonth(fin.getMonth() + 1);
+  const restants = Math.max(0, Math.ceil((fin.getTime() - maintenant) / 86400000));
+  const total = Math.max(1, Math.round((fin - debut) / 86400000));
+  return { debut, fin, restants, total, fini: maintenant >= fin.getTime() };
+}
+
+/** Le bilan du mois s'ouvre 4 jours avant la fin du mois de coaching. */
+export function dateBilan(mois) {
+  if (!mois) return null;
+  const d = new Date(mois.fin); d.setDate(d.getDate() - 4);
+  return d;
+}
+
+/** Poids au debut du plan (derniere pesee avant la livraison, sinon la
+ *  premiere apres) et poids actuel. Points de la courbe depuis le debut. */
+export function poidsDepuisPlan(log, depuisIso) {
+  const l = (log || []).filter(p => p && p.iso && +p.kg > 0).slice().sort((a, b) => a.iso < b.iso ? -1 : 1);
+  if (!l.length) return null;
+  const d = (depuisIso || '').slice(0, 10);
+  let i = -1;
+  for (let k = 0; k < l.length; k++) if (!d || l[k].iso <= d) i = k;
+  if (i < 0) i = 0;
+  const pts = l.slice(i);
+  const debut = pts[0], actuel = pts[pts.length - 1];
+  return { debut, actuel, ecart: Math.round((actuel.kg - debut.kg) * 10) / 10, points: pts.slice(-30) };
+}
+
+/** Cle du prochain repas selon l'heure, parmi celles du plan. */
+const HEURE_FIN = { pdej: 10, dej: 14, snack: 17, diner: 22 };
+export function prochainRepas(cles, heure = new Date().getHours()) {
+  const ordre = ['pdej', 'dej', 'snack', 'diner'].filter(c => cles.includes(c));
+  return ordre.find(c => heure < HEURE_FIN[c]) || null;
+}

@@ -191,3 +191,33 @@
 .pg-qc .qc-alim-props button:last-child { border-bottom: 0; }
 .pg-qc .qc-alim .qc-puces { gap: 6px; }
 .pg-qc .qc-alim .qc-puce { padding: 7px 11px; font-size: 13px; min-height: 0; }
+
+/* ---- Onglets du coaching et espace suivi (20/10) ---- */
+.pg-coach .prog-onglets { margin: 6px 0 14px; }
+.sv .cp-profil { align-items: flex-start; }
+.sv-note { margin-top: 6px; font-size: 13.5px; line-height: 1.4; color: #3f3c36; font-style: italic; }
+.sv-pill { font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 99px; background: #FFF4C2; color: #7A5B00; white-space: nowrap; }
+.sv-barre { height: 8px; background: #EEEAE0; border-radius: 99px; margin: 10px 0 8px; overflow: hidden; }
+.sv-barre i { display: block; height: 100%; background: #F5C400; border-radius: 99px; }
+.sv-macros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 4px; }
+.sv-macros div { background: #F8F6F1; border-radius: 12px; padding: 8px 4px; text-align: center; font-size: 12px; color: #6B6559; }
+.sv-macros b { display: block; font-size: 15px; color: #191919; }
+.sv-repas { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 11px 0; border-top: 1px solid #F0EDE6; }
+.sv-macros + .sv-repas { border-top: 0; }
+.sv-repas-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sv-repas-tx b { font-size: 15px; }
+.sv-repas-tx em { font-style: normal; color: #8F6200; font-weight: 700; font-size: 13px; }
+.sv-repas-tx span { font-size: 13px; color: #6B6559; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sv-k { font-size: 13px; font-weight: 700; color: #6B6559; white-space: nowrap; }
+.sv-ok { color: #2E7D32; font-weight: 800; font-size: 17px; }
+.sv-repas .sv-ajout { flex-basis: 100%; margin-top: 6px; }
+.sv-progres { display: block; width: 100%; text-align: left; font-family: inherit; color: inherit; border: 0; cursor: pointer; }
+.sv-big { font-size: 28px; font-weight: 900; letter-spacing: -.03em; }
+.sv-courbe { display: block; width: 100%; height: 70px; margin: 8px 0 6px; }
+.sv-courbe polyline { fill: none; stroke: #F5C400; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.sv-courbe circle { fill: #191919; }
+.sv-petit { margin-top: 8px; font-size: 12px; color: #8E8B85; text-align: center; }
+.sv-seances-vide { text-align: left; }
+.pg-coach .prog-onglets { margin: 10px 0 16px; }
+.pg-coach .sv-seances { padding: 0; margin: 0; min-height: 0; background: none; }
+.pg-coach .sv-seances > * { margin-left: 0; margin-right: 0; }

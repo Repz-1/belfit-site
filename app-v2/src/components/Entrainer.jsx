@@ -156,7 +156,7 @@ function poseeCetteSemaine(today) {
   return false;
 }
 
-function CarteProgramme({ today, todayIso, allerVers }) {
+export function CarteProgramme({ today, todayIso, allerVers }) {
   const actif = programmeActif.value;
   const prog = actif && progParId(actif.id);
   const aff = prog ? normaliserJours(actif.jours, prog.seances.length) : {};

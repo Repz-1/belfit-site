@@ -12,6 +12,34 @@ import { Entete } from './Entete.jsx';
 import { PlanEnPreparation } from './PlanEnPreparation.jsx';
 import '../styles/coach-page.css';
 import { etatCoach, demandeQuestionnaire, DELAI_QUESTIONNAIRE, marquerPaye, majJusqua } from '../store/coach.js';
+import { SuiviClient } from './SuiviClient.jsx';
+import { CarteProgramme, allerVers } from './Entrainer.jsx';
+import { programmeActif } from '../store/programme.js';
+import { ongletActif } from './BottomNav.jsx';
+
+// Onglets du coaching (20/10, Raci) : visibles seulement pour un client
+// qui a un plan ou une commande. Le choix est memorise sur l'appareil.
+const CLE_VUE = 'belfit_coach_vue';
+const VUES = [['programme', 'Ton programme'], ['seances', 'Tes séances'], ['suivi', 'Mon suivi']];
+function vueMemorisee() {
+  try { const v = localStorage.getItem(CLE_VUE); return VUES.some(x => x[0] === v) ? v : null; } catch (e) { return null; }
+}
+
+/** « Tes seances » : le programme d'entrainement du client, avec les
+ *  composants de S'entrainer. Pas d'historique, pas de chrono. */
+function TesSeances() {
+  const today = new Date();
+  const iso = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  const aller = (nom, params) => { ongletActif.value = 'entrainer'; allerVers(nom, params); };
+  if (programmeActif.value) return <div class="pg-entrainer sv-seances"><CarteProgramme today={today} todayIso={iso} allerVers={aller} /></div>;
+  return (
+    <div class="cp-carte sv-seances-vide">
+      <p class="cp-nom">Pas encore de programme d'entraînement</p>
+      <p class="cp-txt">Réponds à 4 questions et l'app te propose un programme adapté à ton objectif et à ton matériel. La partie entraînement est gratuite.</p>
+      <button class="cp-bt cp-bt--or" onClick={() => aller('questionnaire')}>Créer mon programme</button>
+    </div>
+  );
+}
 
 // Liens LemonSqueezy des deux produits a paiement unique.
 // A REMPLIR par Raci une fois les produits crees. Vides : le bouton
@@ -83,6 +111,8 @@ export function CoachPage() {
   const [consent, setConsent] = useState(false);
   const [consent2, setConsent2] = useState(false);
   const [remplir, setRemplir] = useState(() => retourEnAttente);  // questionnaire ouvert
+  const [vueChoisie, setVueChoisie] = useState(vueMemorisee);
+  const choisirVue = (v) => { setVueChoisie(v); try { localStorage.setItem(CLE_VUE, v); } catch (e) { /* rien */ } };
   // Clients invites par lien (02/10) : memes verifications qu'a l'achat
   // (18 ans, trouble alimentaire, retractation), avant le questionnaire.
   const cmdInv = dossierCoach.value.commande;
@@ -124,6 +154,8 @@ export function CoachPage() {
   const majOk = !!limiteMaj && Date.now() < limiteMaj.getTime();
 
   const ouvrirAchat = t => { setAdulte(null); setTca(null); setConsent(false); setConsent2(false); setAchat(t); };
+  const aAchat = !!pr || !!payeLeEtat;
+  const vue = aAchat ? (vueChoisie || (pr ? 'suivi' : 'programme')) : 'programme';
   const viaInv = !!achat && achat.startsWith('invitation:');
   const typeAchat = viaInv ? achat.slice(11) : achat;
   const bloque = typeAchat === 'plan' && (adulte === 'non' || tca === 'oui');
@@ -165,7 +197,14 @@ export function CoachPage() {
     <div class="pg-coach">
       <Entete />
       <h1 class="cp-titre">Ton coach</h1>
-      <p class="cp-sous">L'app est gratuite. Le plan sur mesure, c'est moi.</p>
+      {aAchat ? (
+        <div class="prog-onglets" role="tablist">
+          {VUES.map(([k, l]) => <button type="button" role="tab" aria-selected={vue === k} class={vue === k ? 'actif' : ''} onClick={() => choisirVue(k)}>{l}</button>)}
+        </div>
+      ) : <p class="cp-sous">L'app est gratuite. Le plan sur mesure, c'est moi.</p>}
+      {vue === 'suivi' && <SuiviClient onContinuer={() => ouvrirAchat('maj')} onNouveau={() => ouvrirAchat('plan')} />}
+      {vue === 'seances' && <TesSeances />}
+      {vue === 'programme' && (<>
 
       <div class="cp-carte cp-profil">
         <span class="cp-avatar" aria-hidden="true">
@@ -240,6 +279,7 @@ export function CoachPage() {
       )}
 
       {!occupe && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement : tu décides de continuer. IA illimitée 30 jours incluse.</p>}
+      </>)}
 
       {achat && createPortal(
         <div class="pg-coach cp-portail"><div class="cp-voile" onClick={(e) => { if (e.target === e.currentTarget) setAchat(null); }}>
