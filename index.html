@@ -5,7 +5,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.belfit.be/">
   <meta property="og:title" content="BelFit — Coaching nutrition personnalisé">
-  <meta property="og:description" content="Un plan alimentaire coaché, personnalisé pour vous. Questionnaire dans l'app, plan livré sous 48 h. Premier plan 80 €, mise à jour 60 €.">
+  <meta property="og:description" content="Un plan alimentaire coaché et personnalisé, avec conseils sur mesure en compléments alimentaires. Plan livré sous 48 h. 80 €, mise à jour 60 €.">
   <meta property="og:image" content="https://www.belfit.be/og-belfit.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -51,7 +51,7 @@
     })();
   </script>
   <title>BelFit — Coaching nutrition personnalisé</title>
-  <meta name="description" content="BelFit : un plan alimentaire coaché, personnalisé pour vous. Questionnaire dans l'app, plan livré sous 48 h. Premier plan 80 €, mise à jour 60 €.">
+  <meta name="description" content="BelFit : plan alimentaire coaché et personnalisé, avec conseils sur mesure en compléments alimentaires. Livré sous 48 h. 80 €, mise à jour 60 €.">
   <link rel="canonical" href="https://www.belfit.be/">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="BelFit — Coaching nutrition personnalisé">
@@ -390,6 +390,31 @@
       width: fit-content;
     }
 
+    .offer-grid.single { grid-template-columns: 1fr; max-width: 560px; margin: 0 auto; }
+    .offer-update {
+      margin: 0 0 1.25rem;
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      background: rgba(143, 98, 0, 0.08);
+      border: 1px solid rgba(143, 98, 0, 0.2);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .offer-update strong { color: var(--text); }
+    .supp-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+      max-width: 760px;
+      margin: 0 auto;
+      border-left: 4px solid var(--yellow);
+    }
+    .supp-card ul { margin: 1rem 0 1rem 1.1rem; display: grid; gap: 0.4rem; }
+    .supp-card .supp-note { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem; }
+    .value-item .icon svg { width: 28px; height: 28px; color: var(--accent); }
+
     .offer-card h3 {
       font-size: 1.25rem;
       font-weight: 800;
@@ -707,44 +732,47 @@
       <div class="wrap">
         <div class="section-head">
           <p class="section-label">Offre</p>
-          <h2 class="section-title">Des plans clairs, un paiement unique</h2>
+          <h2 class="section-title">Une offre claire, un paiement unique</h2>
           <p class="section-intro">
-            Choisissez votre premier plan coaché ou une mise à jour. Paiement en ligne (Bancontact ou carte, via Mollie) ou virement sur invitation.
+            Un plan coaché et personnalisé, mis à jour quand vous en avez besoin. Paiement en ligne (Bancontact ou carte, via Mollie) ou virement sur invitation.
           </p>
         </div>
 
-        <div class="offer-grid">
+        <div class="offer-grid single">
           <article class="offer-card featured">
-            <span class="offer-badge">Recommandé</span>
-            <h3>Premier plan alimentaire coaché</h3>
+            <h3>Plan coaching personnalisé</h3>
             <div class="price">
               <span class="price-amount">80&nbsp;€</span>
               <span class="price-note">paiement unique</span>
             </div>
             <ul>
               <li>Plan nutrition personnalisé</li>
+              <li>Conseils personnalisés en compléments alimentaires</li>
               <li>Questionnaire dans l’application</li>
               <li>Livraison sous 48&nbsp;h (formulaire sous 7&nbsp;jours)</li>
               <li>Accès à l’app BelFit</li>
             </ul>
-            <a class="btn btn-accent" href="/v2/">Acheter — 80&nbsp;€</a>
+            <p class="offer-update"><strong>Besoin d’ajuster votre plan plus tard&nbsp;? Mise à jour&nbsp;: 60&nbsp;€.</strong><br>Quand vous évoluez, changez d’objectif ou stagnez, votre plan est revu à partir de votre plan existant.</p>
+            <a class="btn btn-accent" href="/v2/">Acheter mon plan, 80&nbsp;€</a>
           </article>
+        </div>
+      </div>
+    </section>
 
-          <article class="offer-card">
-            <span class="offer-badge" style="color: var(--gold); background: rgba(143,98,0,0.12);">Mise à jour</span>
-            <h3>Mise à jour de plan</h3>
-            <div class="price">
-              <span class="price-amount">60&nbsp;€</span>
-              <span class="price-note">paiement unique</span>
-            </div>
-            <ul>
-              <li>Ajustement de votre plan existant</li>
-              <li>Adapté à vos nouveaux objectifs</li>
-              <li>Même processus via l’app</li>
-              <li>Idéal pour progresser dans la durée</li>
-            </ul>
-            <a class="btn btn-secondary" href="/v2/">Acheter — 60&nbsp;€</a>
-          </article>
+    <section id="complements">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="section-label">Compléments alimentaires</p>
+          <h2 class="section-title">Un accompagnement sur mesure</h2>
+        </div>
+        <div class="supp-card">
+          <p>Quels compléments, quand et en quelle quantité&nbsp;: un spécialiste vous conseille selon votre objectif et votre alimentation. Ces conseils sont inclus dans votre plan coaching.</p>
+          <ul>
+            <li>Choix des compléments utiles pour vous, et seulement ceux-là</li>
+            <li>Moment de prise et quantités adaptés</li>
+            <li>Ajustés avec votre plan alimentaire</li>
+          </ul>
+          <p class="supp-note">Les compléments ne remplacent pas une alimentation variée et équilibrée. En cas de traitement, de grossesse ou de problème de santé, demandez l’avis de votre médecin.</p>
         </div>
       </div>
     </section>
@@ -782,19 +810,19 @@
       <div class="wrap">
         <div class="value-strip">
           <div class="value-item">
-            <div class="icon" aria-hidden="true">◆</div>
+            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
             <h3>Personnalisé</h3>
             <p>Un plan adapté à vous, pas un PDF générique.</p>
           </div>
           <div class="value-item">
-            <div class="icon" aria-hidden="true">◇</div>
+            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></div>
             <h3>App intégrée</h3>
             <p>Questionnaire et suivi directement dans BelFit.</p>
           </div>
           <div class="value-item">
-            <div class="icon" aria-hidden="true">●</div>
+            <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></div>
             <h3>Sans abonnement</h3>
-            <p>80&nbsp;€ ou 60&nbsp;€ — vous payez une fois.</p>
+            <p>80&nbsp;€ pour votre plan, payé une fois. Mise à jour à 60&nbsp;€ si besoin.</p>
           </div>
         </div>
       </div>
