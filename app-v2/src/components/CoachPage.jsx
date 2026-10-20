@@ -137,7 +137,7 @@ export function CoachPage() {
   const payer = () => {
     const lien = LIENS_COACH[achat];
     if (!lien) {
-      const sujet = achat === 'maj' ? 'Mise a jour de mon plan' : 'Mon premier plan';
+      const sujet = achat === 'maj' ? 'Continuer mon coaching (mois suivant)' : 'Mon premier mois de coaching';
       window.location.href = `mailto:${MAIL}?subject=${encodeURIComponent(sujet)}`;
     } else {
       window.location.href = urlPaiement(lien, achat);
@@ -199,7 +199,7 @@ export function CoachPage() {
           <div class="cp-carte">
             <div class="cp-ligne"><span class="cp-nom">Mon plan coach</span><span class="cp-txt">{pr.kcal} kcal</span></div>
             <p class="cp-txt">{j === null ? 'Reçu récemment' : j === 0 ? "Reçu aujourd'hui" : `Reçu il y a ${j} jour${j > 1 ? 's' : ''}`}</p>
-            {rappel && <span class="cp-tag">Ton plan a {j} jours : pense à le mettre à jour</span>}
+            {rappel && <span class="cp-tag">Ton plan a {j} jours : pense à continuer ton coaching</span>}
             <button class="cp-bt cp-bt--or" onClick={() => { progOuvert.value = true; }}>Voir mon plan</button>
           </div>
         </>
@@ -219,10 +219,10 @@ export function CoachPage() {
       {!occupe && <p class="cp-sec">TARIFS</p>}
       {!occupe && !majOk && (
         <div class="cp-carte cp-carte--or">
-          <div class="cp-ligne"><span class="cp-nom">{pr ? 'Nouveau plan' : 'Premier plan'}</span><span class="cp-prix">80 €</span></div>
+          <div class="cp-ligne"><span class="cp-nom">{pr ? 'Nouveau mois de coaching' : 'Premier mois'}</span><span class="cp-prix">80 €</span></div>
           <p class="cp-txt">{pr
-            ? 'Ta période de mise à jour est terminée : on repart d\'un bilan complet, plan écrit pour toi, livré sous 48 h.'
-            : 'Bilan complet, plan alimentaire écrit pour toi, livré sous 48 h.'}</p>
+            ? 'Ton tarif à 60 € a expiré : on repart d\'un bilan complet, plan écrit pour toi, livré sous 48 h, ajustements inclus pendant le mois.'
+            : 'Un mois de coaching : bilan complet, plan alimentaire écrit pour toi, livré sous 48 h, ajustements inclus pendant le mois.'}</p>
           {COMMANDES_OUVERTES
             ? <button class="cp-bt cp-bt--or" onClick={() => ouvrirAchat('plan')}>Demander mon plan</button>
             : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
@@ -230,22 +230,22 @@ export function CoachPage() {
       )}
       {!occupe && majOk && (
         <div class={'cp-carte' + (rappel ? ' cp-carte--or' : '')}>
-          <div class="cp-ligne"><span class="cp-nom">Mise à jour</span><span class="cp-prix">60 €</span></div>
-          <p class="cp-txt">Ton plan ajusté à ton poids, tes résultats et ton objectif. Conseillé chaque mois.</p>
+          <div class="cp-ligne"><span class="cp-nom">Mois suivant</span><span class="cp-prix">60 €</span></div>
+          <p class="cp-txt">Un mois de coaching en plus : ton plan ajusté à ton poids, tes résultats et ton objectif, ajustements inclus.</p>
           <p class="cp-txt cp-jusqua">À ce tarif jusqu'au {limiteMaj.toLocaleDateString('fr-BE', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
           {COMMANDES_OUVERTES
-            ? <button class={'cp-bt ' + (rappel ? 'cp-bt--or' : 'cp-bt--gris')} onClick={() => ouvrirAchat('maj')}>Mettre à jour mon plan</button>
+            ? <button class={'cp-bt ' + (rappel ? 'cp-bt--or' : 'cp-bt--gris')} onClick={() => ouvrirAchat('maj')}>Continuer mon coaching</button>
             : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
         </div>
       )}
 
-      {!occupe && <p class="cp-pied">Paiement unique. Sans abonnement, sans prélèvement. IA illimitée 30 jours incluse.</p>}
+      {!occupe && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement : tu décides de continuer. IA illimitée 30 jours incluse.</p>}
 
       {achat && createPortal(
         <div class="pg-coach cp-portail"><div class="cp-voile" onClick={(e) => { if (e.target === e.currentTarget) setAchat(null); }}>
           <div class="cp-modale" role="dialog" aria-modal="true">
-            <p class="cp-nom">{typeAchat === 'maj' ? 'Mise à jour · 60 €' : (pr ? 'Nouveau plan · 80 €' : 'Premier plan · 80 €')}</p>
-            <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement unique et sécurisé. Tu remplis ensuite ton questionnaire.'}</p>
+            <p class="cp-nom">{typeAchat === 'maj' ? 'Mois suivant · 60 €' : (pr ? 'Nouveau mois · 80 €' : 'Premier mois · 80 €')}</p>
+            <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>
             {/* 02/10 : avantage IA annonce explicitement avant le paiement. */}
             <p class="cp-txt cp-inclus">Inclus : analyses IA (photo et micro) illimitées pendant 30 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}.</p>
             {typeAchat === 'plan' && (
