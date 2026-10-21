@@ -8,6 +8,7 @@ import '../src/styles/journal-socle.css';
 import { utilisateur, authPrete } from '../src/services/firebase.js';
 import { donneesPretes, objectifs, repas, calculBaseFait } from '../src/store/journal.js';
 import { App } from '../src/main.jsx';
+import { programmeActif } from '../src/store/programme.js';
 import { estPremium } from '../src/components/PremiumPage.jsx';
 
 
@@ -25,6 +26,8 @@ authPrete.value = true;
 donneesPretes.value = true;
 calculBaseFait.value = true;
 try { localStorage.setItem('belfit_v2_apercu_premium', '1'); } catch (e) {}
+// Programme d'entrainement simule (onglet Coach > Tes seances).
+try { const pe = localStorage.getItem('belfit_v2_apercu_entrainement'); if (pe) programmeActif.value = JSON.parse(pe); } catch (e) {}
 
 // Firebase repond en differe et remet `utilisateur` a null : on
 // maintient la session simulee le temps du test.
