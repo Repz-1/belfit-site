@@ -320,3 +320,7 @@
 .pg-coach .sv-entete { padding: 12px 14px; }
 .pg-coach .sv-entete .sv-note { margin-top: 6px; }
 .pg-coach .sv-lien { display: block; width: 100%; margin-top: 10px; padding: 6px 0; background: none; border: 0; text-align: left; font: inherit; font-size: 13px; color: var(--texte2, #6B6B6B); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* 21/10 : 60 € tant que les commandes sont fermees, texte discret non cliquable. */
+.pg-coach .sv-lien--off { text-decoration: none; cursor: default; opacity: .8; }
+.pg-coach .sv-neutre { margin: 4px 2px 12px; }

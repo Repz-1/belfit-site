@@ -11,7 +11,7 @@ import { QuestionnaireCoach, effacerBrouillon } from './QuestionnaireCoach.jsx';
 import { Entete } from './Entete.jsx';
 import { PlanEnPreparation } from './PlanEnPreparation.jsx';
 import '../styles/coach-page.css';
-import { etatCoach, demandeQuestionnaire, DELAI_QUESTIONNAIRE, marquerPaye, majJusqua } from '../store/coach.js';
+import { etatCoach, demandeQuestionnaire, DELAI_QUESTIONNAIRE, marquerPaye } from '../store/coach.js';
 import { SuiviClient } from './SuiviClient.jsx';
 import { CarteProgramme, allerVers } from './Entrainer.jsx';
 import { programmeActif } from '../store/programme.js';
@@ -149,10 +149,6 @@ export function CoachPage() {
   const j = pr ? joursDepuis(pr.livreLe) : null;
   const { aRemplir, enPrep, tardif, type: typePaye, payeLe: payeLeEtat } = etatCoach(dossierCoach.value, pr);
   const occupe = aRemplir || enPrep;
-  const rappel = !occupe && j !== null && j >= 30;
-  // Fenetre de mise a jour : 3 mois apres le dernier paiement (27/09).
-  const limiteMaj = majJusqua(dossierCoach.value, pr);
-  const majOk = !!limiteMaj && Date.now() < limiteMaj.getTime();
 
   const ouvrirAchat = t => { setAdulte(null); setTca(null); setConsent(false); setConsent2(false); setAchat(t); };
   const aAchat = !!pr || !!payeLeEtat;
@@ -268,29 +264,16 @@ export function CoachPage() {
 
       {/* 21/10 Raci : plus de tarifs dans Ton programme pour un client qui a deja un plan. Le 60 € n'apparait que dans Mon suivi. */}
       {!occupe && !pr && <p class="cp-sec">TARIFS</p>}
-      {!occupe && !pr && !majOk && (
+      {!occupe && !pr && (
         <div class="cp-carte cp-carte--or cp-offre">
-          <div class="cp-ligne"><span class="cp-nom">{pr ? 'Nouveau mois de coaching' : 'Premier mois'}</span><span class="cp-prix">80 €</span></div>
-          <p class="cp-txt">{pr
-            ? 'Ton tarif à 60 € a expiré : on repart d\'un bilan complet, plan écrit pour toi, livré sous 48 h, ajustements inclus pendant le mois.'
-            : 'Un mois de coaching : bilan complet, plan alimentaire écrit pour toi, livré sous 48 h, ajustements inclus pendant le mois.'}</p>
+          <div class="cp-ligne"><span class="cp-nom">Premier mois</span><span class="cp-prix">80 €</span></div>
+          <p class="cp-txt">{'Un mois de coaching : bilan complet, plan alimentaire écrit pour toi, livré sous 48 h, ajustements inclus pendant le mois.'}</p>
           {COMMANDES_OUVERTES
             ? <button class="cp-bt cp-bt--or" onClick={() => ouvrirAchat('plan')}>Demander mon plan</button>
             : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
         </div>
       )}
-      {!occupe && !pr && majOk && (
-        <div class={'cp-carte cp-offre' + (rappel ? ' cp-carte--or' : '')}>
-          <div class="cp-ligne"><span class="cp-nom">Mois suivant</span><span class="cp-prix">60 €</span></div>
-          <p class="cp-txt">Un mois de coaching en plus : ton plan ajusté à ton poids, tes résultats et ton objectif, ajustements inclus.</p>
-          <p class="cp-txt cp-jusqua">À ce tarif jusqu'au {limiteMaj.toLocaleDateString('fr-BE', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-          {COMMANDES_OUVERTES
-            ? <button class={'cp-bt ' + (rappel ? 'cp-bt--or' : 'cp-bt--gris')} onClick={() => ouvrirAchat('maj')}>Continuer mon coaching</button>
-            : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
-        </div>
-      )}
-
-      {!occupe && !pr && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement : tu décides de continuer. IA illimitée 30 jours incluse.</p>}
+      {!occupe && !pr && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement : tu décides de continuer. Accès nutrition 3 mois inclus.</p>}
       </>)}
 
       {achat && createPortal(
