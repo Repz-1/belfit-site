@@ -16,6 +16,7 @@ import { SuiviClient } from './SuiviClient.jsx';
 import { CarteProgramme, allerVers } from './Entrainer.jsx';
 import { programmeActif } from '../store/programme.js';
 import { ongletActif } from './BottomNav.jsx';
+import { Icone } from './IconesCoach.jsx';
 
 // Onglets du coaching (20/10, Raci) : visibles seulement pour un client
 // qui a un plan ou une commande. Le choix est memorise sur l'appareil.
@@ -206,14 +207,23 @@ export function CoachPage() {
       {vue === 'seances' && <TesSeances />}
       {vue === 'programme' && (<>
 
-      <div class="cp-carte cp-profil">
-        <span class="cp-avatar" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
-        </span>
-        <div>
-          <p class="cp-nom">Coach BelFit</p>
-          <p class="cp-txt">Nutrition et préparation physique</p>
+      <div class="cp-carte cp-profil cp-hero cp-hero--achat">
+        <div class="cp-hero-id">
+          <span class="cp-avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
+          </span>
+          <div>
+            <p class="cp-nom">Coach BelFit</p>
+            <p class="cp-txt">Nutrition et préparation physique</p>
+          </div>
         </div>
+        {!pr && !occupe && (
+          <div class="cp-chiffres">
+            <div><b>48 h</b><span>plan livré</span></div>
+            <div><b>1 mois</b><span>ajustements inclus</span></div>
+            <div><b>0</b><span>abonnement</span></div>
+          </div>
+        )}
       </div>
 
       {aRemplir && (
@@ -247,17 +257,17 @@ export function CoachPage() {
       {!pr && !occupe && (
         <>
           <p class="cp-sec">COMMENT ÇA MARCHE</p>
-          <div class="cp-carte">
-            <div class="cp-etape"><span class="cp-n">1</span><span class="cp-txt">Tu paies ton mois de coaching en ligne (80 €).</span></div>
-            <div class="cp-etape"><span class="cp-n">2</span><span class="cp-txt">Tu réponds au questionnaire.</span></div>
-            <div class="cp-etape"><span class="cp-n">3</span><span class="cp-txt">Je t'écris ton plan, livré dans l'app sous 48 h.</span></div>
+          <div class="cp-carte cp-etapes">
+            <div class="cp-etape"><span class="cp-n"><Icone nom="bolt" taille={16} /></span><span class="cp-txt">Tu paies ton mois de coaching en ligne (80 €).</span></div>
+            <div class="cp-etape"><span class="cp-n"><Icone nom="list-check" taille={16} /></span><span class="cp-txt">Tu réponds au questionnaire.</span></div>
+            <div class="cp-etape"><span class="cp-n"><Icone nom="flame" taille={16} /></span><span class="cp-txt">Je t'écris ton plan, livré dans l'app sous 48 h.</span></div>
           </div>
         </>
       )}
 
       {!occupe && <p class="cp-sec">TARIFS</p>}
       {!occupe && !majOk && (
-        <div class="cp-carte cp-carte--or">
+        <div class="cp-carte cp-carte--or cp-offre">
           <div class="cp-ligne"><span class="cp-nom">{pr ? 'Nouveau mois de coaching' : 'Premier mois'}</span><span class="cp-prix">80 €</span></div>
           <p class="cp-txt">{pr
             ? 'Ton tarif à 60 € a expiré : on repart d\'un bilan complet, plan écrit pour toi, livré sous 48 h, ajustements inclus pendant le mois.'
@@ -268,7 +278,7 @@ export function CoachPage() {
         </div>
       )}
       {!occupe && majOk && (
-        <div class={'cp-carte' + (rappel ? ' cp-carte--or' : '')}>
+        <div class={'cp-carte cp-offre' + (rappel ? ' cp-carte--or' : '')}>
           <div class="cp-ligne"><span class="cp-nom">Mois suivant</span><span class="cp-prix">60 €</span></div>
           <p class="cp-txt">Un mois de coaching en plus : ton plan ajusté à ton poids, tes résultats et ton objectif, ajustements inclus.</p>
           <p class="cp-txt cp-jusqua">À ce tarif jusqu'au {limiteMaj.toLocaleDateString('fr-BE', { day: 'numeric', month: 'long', year: 'numeric' })}</p>

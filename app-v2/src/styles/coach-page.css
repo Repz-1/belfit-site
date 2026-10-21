@@ -221,3 +221,97 @@
 .pg-coach .prog-onglets { margin: 10px 0 16px; }
 .pg-coach .sv-seances { padding: 0; margin: 0; min-height: 0; background: none; }
 .pg-coach .sv-seances > * { margin-left: 0; margin-right: 0; }
+
+/* ---- Onglet Coach « dynamique » (21/10, Raci : trop fade) ----
+   Hero sombre avec photo BelFit, accent or + orange, chiffres en grand,
+   cartes en relief. Limite a l'onglet Coach (.pg-coach). */
+.pg-coach { --or: #F8CF01; --orange: #FF6B2C; --nuit: #14161C; --nuit2: #232733;
+  background: radial-gradient(120% 40% at 100% 0%, #FFF1C2 0%, rgba(255,241,194,0) 60%), #F4F3F0; }
+.pg-coach .cp-titre { font-size: 32px; font-weight: 900; letter-spacing: -.03em; }
+.pg-coach .cp-titre::after { content: ''; display: block; width: 44px; height: 5px; border-radius: 9px; margin-top: 6px; background: linear-gradient(90deg, var(--or), var(--orange)); }
+.pg-coach .cp-sous { font-weight: 600; color: #3F3C36; }
+.pg-coach .cp-sec { color: #191919; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+.pg-coach .cp-sec::before { content: ''; width: 4px; height: 14px; border-radius: 4px; background: linear-gradient(var(--or), var(--orange)); }
+.pg-coach .cp-carte { border: 0; border-radius: 20px; box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 10px 26px -14px rgba(20,22,28,.35); }
+
+/* Pastilles : rail sombre, onglet actif or */
+.pg-coach .prog-onglets { background: var(--nuit); padding: 5px; border-radius: 999px; gap: 4px; box-shadow: 0 10px 24px -14px rgba(0,0,0,.6); }
+.pg-coach .prog-onglets button { flex: 1; border: 0; background: transparent; color: #C9C6BE; padding: 9px 8px; transition: background .2s, color .2s; }
+.pg-coach .prog-onglets button.actif { background: linear-gradient(135deg, var(--or), #FFB800); color: #191919; border: 0; box-shadow: 0 4px 14px -4px rgba(248,207,1,.7); }
+
+/* Hero photo (coach en premier) */
+.pg-coach .cp-hero { position: relative; display: block; overflow: hidden; color: #fff; padding: 18px 16px; min-height: 150px;
+  background: linear-gradient(180deg, rgba(20,22,28,.15) 0%, rgba(20,22,28,.92) 70%), var(--photo) center 40%/cover, var(--nuit); }
+.pg-coach .cp-hero--achat { --photo: url('/img/card-creer.jpg'); min-height: 210px; display: flex; flex-direction: column; justify-content: flex-end; }
+.pg-coach .cp-hero--suivi { --photo: url('/img/card-libre.jpg'); display: flex; gap: 12px; align-items: flex-end; padding-top: 70px; }
+.pg-coach .cp-hero::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: linear-gradient(90deg, var(--or), var(--orange)); }
+.pg-coach .cp-hero-id { display: flex; gap: 12px; align-items: center; }
+.pg-coach .cp-hero .cp-avatar { background: var(--nuit2); color: var(--or); box-shadow: 0 0 0 3px var(--or), 0 0 0 6px rgba(248,207,1,.25); }
+.pg-coach .cp-hero .cp-nom { color: #fff; font-size: 18px; font-weight: 800; }
+.pg-coach .cp-hero .cp-txt { color: #E8E4DA; }
+.pg-coach .cp-hero .sv-note { color: #fff; background: rgba(255,255,255,.12); border-left: 3px solid var(--or); border-radius: 10px; padding: 8px 10px; backdrop-filter: blur(4px); }
+.pg-coach .cp-chiffres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.pg-coach .cp-chiffres div { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 14px; padding: 8px 6px; text-align: center; backdrop-filter: blur(4px); }
+.pg-coach .cp-chiffres b { display: block; font-size: 22px; font-weight: 900; letter-spacing: -.02em; color: var(--or); }
+.pg-coach .cp-chiffres span { font-size: 11px; color: #E8E4DA; }
+
+/* Etapes avec icones et fil */
+.pg-coach .cp-etapes .cp-etape { position: relative; margin: 0; padding: 8px 0; }
+.pg-coach .cp-etapes .cp-etape:not(:last-child)::after { content: ''; position: absolute; left: 15px; top: 40px; bottom: -6px; width: 2px; background: linear-gradient(var(--or), var(--orange)); opacity: .45; }
+.pg-coach .cp-etapes .cp-n { flex: 0 0 32px; height: 32px; border-radius: 11px; background: linear-gradient(135deg, var(--or), var(--orange)); color: #191919; box-shadow: 0 6px 14px -6px rgba(255,107,44,.8); }
+.pg-coach .cp-etapes .cp-txt { color: #191919; font-weight: 600; margin-top: 6px; }
+
+/* Offre : carte sombre, prix en grand */
+.pg-coach .cp-offre { background: linear-gradient(145deg, var(--nuit2) 0%, var(--nuit) 70%); color: #fff; border: 0; position: relative; overflow: hidden; padding: 18px 16px; }
+.pg-coach .cp-offre::before { content: ''; position: absolute; right: -50px; top: -60px; width: 170px; height: 170px; border-radius: 50%; background: radial-gradient(circle, rgba(255,107,44,.45), rgba(255,107,44,0) 70%); }
+.pg-coach .cp-offre.cp-carte--or { box-shadow: inset 0 0 0 2px var(--or), 0 14px 30px -16px rgba(248,207,1,.7); }
+.pg-coach .cp-offre > * { position: relative; }
+.pg-coach .cp-offre .cp-nom { color: #fff; font-size: 16px; font-weight: 800; }
+.pg-coach .cp-offre .cp-prix { font-size: 40px; font-weight: 900; letter-spacing: -.03em; background: linear-gradient(135deg, var(--or), var(--orange)); -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1; }
+.pg-coach .cp-offre .cp-txt { color: #D8D4CA; }
+.pg-coach .cp-offre .cp-jusqua { color: var(--or); }
+.pg-coach .cp-offre .cp-bt--gris { background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.22); }
+.pg-coach .cp-offre .cp-bt--gris:disabled { color: #C9C6BE; }
+.pg-coach .cp-bt { padding: 13px; font-weight: 800; }
+.pg-coach .cp-bt--or { background: linear-gradient(135deg, var(--or) 0%, #FFB800 55%, var(--orange) 130%); box-shadow: 0 8px 20px -10px rgba(255,107,44,.9); }
+.pg-coach .cp-pied { font-weight: 600; }
+
+/* Mon suivi */
+.pg-coach .sv-mois { background: linear-gradient(145deg, var(--nuit2), var(--nuit)); box-shadow: inset 0 0 0 2px var(--or), 0 14px 30px -16px rgba(0,0,0,.6); color: #fff; }
+.pg-coach .sv-mois .cp-nom { color: #fff; }
+.pg-coach .sv-mois .cp-txt { color: #D8D4CA; }
+.pg-coach .sv-jours { margin: 0 0 6px; font-size: 14px; font-weight: 700; color: #E8E4DA; }
+.pg-coach .sv-jours b { font-size: 46px; font-weight: 900; letter-spacing: -.04em; line-height: 1; margin-right: 4px; background: linear-gradient(135deg, var(--or), var(--orange)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pg-coach .sv-mois .sv-barre { height: 12px; background: rgba(255,255,255,.12); }
+.pg-coach .sv-barre i { background: linear-gradient(90deg, var(--or), var(--orange)); position: relative; overflow: hidden; }
+.pg-coach .sv-kcal { display: inline-flex; align-items: center; gap: 6px; font-size: 26px; font-weight: 900; letter-spacing: -.03em; }
+.pg-coach .sv-kcal svg, .pg-coach .sv-big svg { color: var(--orange); }
+.pg-coach .sv-macros div { background: #fff; border-radius: 14px; box-shadow: inset 0 0 0 1px #EEEAE0; position: relative; overflow: hidden; padding-top: 11px; }
+.pg-coach .sv-macros div::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; }
+.pg-coach .sv-macros div:nth-child(1)::before { background: var(--orange); }
+.pg-coach .sv-macros div:nth-child(2)::before { background: var(--or); }
+.pg-coach .sv-macros div:nth-child(3)::before { background: #2BB673; }
+.pg-coach .sv-macros b { font-size: 19px; font-weight: 900; }
+.pg-coach .sv-repas--prochain { background: linear-gradient(90deg, #FFF4CC, #FFE6D9); border-radius: 14px; padding: 11px 10px; margin: 4px -6px; border-top: 0; }
+.pg-coach .sv-repas-tx em { color: #C2410C; }
+.pg-coach .sv-ok { width: 26px; height: 26px; border-radius: 50%; background: #2BB673; color: #fff; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; }
+.pg-coach .sv-big { display: inline-flex; align-items: center; gap: 6px; font-size: 34px; }
+.pg-coach .sv-courbe { height: 80px; }
+.pg-coach .sv-courbe polyline { stroke: #FF8A00; stroke-width: 3.5; }
+.pg-coach .sv-aire { fill: url(#sv-aire); stroke: none; }
+.pg-coach .sv-progres { background: #fff; }
+.pg-coach .sv-etape { background: linear-gradient(135deg, #FFF4CC 0%, #FFE2D1 100%); }
+
+/* Micro-animations (desactivees si l'utilisateur reduit les animations) */
+@media (prefers-reduced-motion: no-preference) {
+  .pg-coach .cp-carte { animation: cpMonte .45s cubic-bezier(.2,.8,.2,1) both; }
+  .pg-coach .cp-carte:nth-of-type(2) { animation-delay: .05s; }
+  .pg-coach .cp-carte:nth-of-type(3) { animation-delay: .1s; }
+  .pg-coach .sv-barre i { animation: cpBarre 1s cubic-bezier(.2,.8,.2,1) both; transform-origin: left; }
+  .pg-coach .sv-barre i::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation: cpReflet 2.6s ease-in-out 1s infinite; transform: translateX(-100%); }
+  .pg-coach .cp-bt--or:not(:disabled):active, .pg-coach .prog-onglets button:active { transform: scale(.97); }
+  .pg-coach .cp-bt { transition: transform .15s; }
+}
+@keyframes cpMonte { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes cpBarre { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes cpReflet { to { transform: translateX(100%); } }
