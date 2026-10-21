@@ -1732,29 +1732,12 @@ exports.utiliserInvitation = onRequest(
 // DEMANDE D'AJUSTEMENT.
 //
 // Le client ne modifie pas son programme : il en demande un autre.
-// Le quota depend de la formule, proportionnellement a sa duree —
-// un abonne annuel ne paie pas quatre fois plus cher pour deux fois
-// moins de suivi.
-//
-// Le compteur est remis a zero au changement de mois civil. Il vit
+// 21/10 Raci : ajustements illimites pendant le mois de coaching, plus
+// de quota par formule. Le compteur (informatif, pour le coach) est
+// remis a zero au changement de mois civil. Il vit
 // dans users/{uid}.ajustements, ecrit uniquement par cette fonction :
-// les regles Firestore interdisent au client d'y toucher, sinon le
-// quota ne vaudrait rien.
+// les regles Firestore interdisent au client d'y toucher.
 // ============================================================
-
-/** Ajustements inclus par mois, selon la formule. */
-const QUOTA_AJUSTEMENTS = {
-  mensuel: 2,
-  trimestriel: 3,
-  annuel: 4,
-};
-
-/** Quota d'un compte. Sans formule connue (code promo, ancien
- *  compte), on applique le plancher plutot que de tout refuser. */
-function quotaDe(donnees) {
-  const f = donnees && donnees.formule;
-  return QUOTA_AJUSTEMENTS[f] || QUOTA_AJUSTEMENTS.mensuel;
-}
 
 /** Mois civil courant, au format AAAA-MM. */
 function moisCourant() {
@@ -1792,15 +1775,12 @@ exports.demanderAjustement = onRequest(
         res.status(403).json({ok: false, motif: "premium"}); return;
       }
 
-      const quota = quotaDe(d);
       const mois = moisCourant();
       const suivi = d.ajustements || {};
       const utilises = suivi.mois === mois ? (suivi.utilises || 0) : 0;
 
-      if (utilises >= quota) {
-        res.status(429).json({ok: false, motif: "quota", quota: quota, restants: 0});
-        return;
-      }
+      // 21/10 Raci : ajustements illimites pendant le mois de coaching.
+      // Plus de blocage : le compteur reste, pour information du coach.
 
       const message = String((req.body && req.body.message) || "").slice(0, 1000);
 
@@ -1832,7 +1812,7 @@ exports.demanderAjustement = onRequest(
               <p><b>${nom}</b> demande un ajustement de son programme.</p>
               <p style="color:#57514A">Compte : ${compte.email || "sans adresse"}<br>
               Formule : ${d.formule || "inconnue"}<br>
-              Ajustement ${utilises + 1} sur ${quota} ce mois-ci</p>
+              Ajustement n° ${utilises + 1} ce mois-ci</p>
               ${prog ? `<p style="color:#57514A">Programme actuel :
                 ${prog.kcal} kcal · ${prog.prot} P · ${prog.carbs} C · ${prog.lip} L</p>` : ""}
               ${message ? `<p style="background:#F4F3F0;padding:12px;border-radius:10px">
@@ -1845,7 +1825,7 @@ exports.demanderAjustement = onRequest(
         console.error("Envoi de la demande :", e);
       }
 
-      res.json({ok: true, restants: quota - utilises - 1, quota: quota});
+      res.json({ok: true, restants: null, quota: null});
     } catch (e) {
       console.error("demanderAjustement :", e);
       res.status(500).json({ok: false});
