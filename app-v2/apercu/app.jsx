@@ -6,7 +6,8 @@ import '../src/styles.css';
 import '../src/styles/design-system.css';
 import '../src/styles/journal-socle.css';
 import { utilisateur, authPrete } from '../src/services/firebase.js';
-import { donneesPretes, objectifs, repas, calculBaseFait } from '../src/store/journal.js';
+import { donneesPretes, objectifs, repas, calculBaseFait, dateJour } from '../src/store/journal.js';
+import { histoJours } from '../src/store/stats.js';
 import { App } from '../src/main.jsx';
 import { programmeActif } from '../src/store/programme.js';
 import { estPremium } from '../src/components/PremiumPage.jsx';
@@ -42,5 +43,8 @@ setInterval(() => {
   calculBaseFait.value = true;
   if (!GRATUIT) estPremium.value = true;   // l'effet Firestore le remettait a false
 }, 100);
+
+// Acces des tests Playwright (cloture de la veille, 21/10).
+window.__banc = { dateJour, repas, histoJours };
 
 render(<App />, document.getElementById('app'));
