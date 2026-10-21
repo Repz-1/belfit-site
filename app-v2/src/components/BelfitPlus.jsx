@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'preact/hooks';
-import { majJusqua } from '../store/coach.js';
 import { useRetour } from '../services/retour.js';
 import { signal, effect, computed } from '@preact/signals';
 import { Icone } from './IconesCoach.jsx';
@@ -93,7 +92,7 @@ export function chargerProgramme() {
       programme.value = faux ? JSON.parse(faux) : null;
       if (dos) dossierCoach.value = JSON.parse(dos);
       const q = localStorage.getItem('belfit_v2_apercu_ajust');
-      ajustements.value = q ? JSON.parse(q) : {restants: 2, quota: 2};
+      ajustements.value = q ? JSON.parse(q) : {restants: null, quota: null};
       programmeCharge.value = true;
       return;
     }
@@ -108,15 +107,9 @@ export function chargerProgramme() {
       const d = s.exists() ? s.data() : null;
       programme.value = (d && d.programme) || null;
       dossierCoach.value = { questionnaire: (d && d.questionnaireCoach) || null, commande: (d && d.commandeCoach) || null, brouillon: (d && d.brouillonCoach) || null, accesPro: (d && d.accesPro) || null };
-      // Le quota suit la formule ; le compteur se remet a zero au
-      // changement de mois civil, cote serveur comme ici.
-      const QUOTA = {mensuel: 2, trimestriel: 3, annuel: 4};
-      const quota = QUOTA[d && d.formule] || 2;
-      const mois = new Date().getUTCFullYear() + '-' +
-        String(new Date().getUTCMonth() + 1).padStart(2, '0');
-      const suivi = (d && d.ajustements) || {};
-      const pris = suivi.mois === mois ? (suivi.utilises || 0) : 0;
-      ajustements.value = {restants: Math.max(0, quota - pris), quota};
+      // 21/10 Raci : ajustements illimites pendant le mois de coaching,
+      // plus de compteur affiche.
+      ajustements.value = {restants: null, quota: null};
     })
     .catch(() => { programme.value = null; })
     .finally(() => { programmeCharge.value = true; });
@@ -206,10 +199,7 @@ export function BelfitPlus() {
   const dejaApplique = pr && o.kcal === pr.kcal && o.prot === pr.prot
     && o.carbs === pr.carbs && o.lip === pr.lip;
 
-  const limMaj = majJusqua(dossierCoach.value, pr);
-  const majPossible = !!limMaj && Date.now() < limMaj.getTime();
   const aRepas = !!(pr && pr.repas && pr.repas.length);
-  const aj = ajustements.value;
 
   /** Charge le programme dans le journal du jour : objectifs ET repas.
    *  Les repas existants sont remplaces — un programme est un tout,
@@ -249,7 +239,7 @@ export function BelfitPlus() {
       });
       const d = await r.json();
       if (d && d.ok) {
-        ajustements.value = {restants: d.restants, quota: d.quota};
+        ajustements.value = {restants: null, quota: null};
         setDemande('ok');
         setMotDemande('');
       } else {
@@ -354,22 +344,18 @@ export function BelfitPlus() {
               class="prog-action"
               onClick={() => setOuvertProg(false)}
             >
-              {/* 26/09 : la mise a jour se paie (60 EUR, onglet Coach) ;
-                  27/09 : seulement dans les 3 mois du dernier paiement. */}
-              {majPossible ? <b>Continuer mon coaching</b> : <b>Reprendre un mois de coaching</b>}
-              <em>{majPossible ? '60 € le mois suivant, sans abonnement' : '80 € le mois, sans abonnement'}</em>
+              {/* 21/10 Raci : aucun prix ici, le 60 € n'apparait que dans Mon suivi. */}
+              <b>Fermer</b>
             </button>
           </div>
 
           {demande === 'ok' ? (
             <p class="bp-ajust-ok">
               Demande envoyée. Ton coach te répond sous 24 à 48 h.
-              {aj.restants !== null && ` Il te reste ${aj.restants} ${aj.restants > 1 ? 'ajustements' : 'ajustement'} ce mois-ci.`}
             </p>
           ) : demande === 'quota' ? (
             <p class="bp-ajust-ko">
-              Tu as utilisé tes {aj.quota} ajustements du mois. Le compteur
-              repart le 1er. Écris à ton coach si c'est urgent.
+              Ta demande n'a pas pu être envoyée. Écris à ton coach à contact@belfit.be.
             </p>
           ) : (demande === 'ouvert' || demande === 'envoi' || demande === 'erreur') ? (
             <div class="bp-ajust">

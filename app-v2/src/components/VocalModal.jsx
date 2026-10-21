@@ -166,7 +166,7 @@ export function VocalModal({ fermer, repasId }) {
       setMsg('Analyse en cours…');
       if (rep.status === 403) { setMsg(''); setEtat('pret'); setErreur('Réservé Premium (serveur).'); return; }
       // Quota IA du jour atteint (02/10) : compte par le serveur.
-      if (rep.status === 429) { let lim = ''; try { lim = (await rep.json()).limite || ''; } catch (e) {} setMsg(''); setEtat('pret'); setErreur('Tu as utilisé tes ' + lim + ' analyses IA d\'aujourd\'hui. Reviens demain, ou profite de l\'IA illimitée 30 jours avec un plan coaching.'); return; }
+      if (rep.status === 429) { let lim = ''; try { lim = (await rep.json()).limite || ''; } catch (e) {} setMsg(''); setEtat('pret'); setErreur('Tu as utilisé tes ' + lim + ' analyses IA d\'aujourd\'hui. Reviens demain.'); return; }
       if (!rep.ok) {
         // « Serveur en échec (HTTP 502) » n'apprend rien a personne et
         // laisse croire a une panne de l'app. Le 502 le plus frequent

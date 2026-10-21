@@ -2,10 +2,11 @@
 // mois de coaching, le plan du jour, les progres et la prochaine etape.
 // Uniquement des donnees existantes. Pas de chrono, pas de « dernieres
 // seances », rien de medical : on n'affiche que ce que le client a saisi.
-import { programme, dossierCoach, ajustements, progOuvert } from './BelfitPlus.jsx';
+import { programme, dossierCoach, progOuvert } from './BelfitPlus.jsx';
+import { COMMANDES_OUVERTES } from './CoachPage.jsx';
 import { repas, totauxJour, cleDuNom, ajouterIngredient } from '../store/journal.js';
 import { weightLog } from '../store/stats.js';
-import { majJusqua, moisCoaching, dateBilan, poidsDepuisPlan, prochainRepas } from '../store/coach.js';
+import { limite60, moisCoaching, poidsDepuisPlan, prochainRepas } from '../store/coach.js';
 import { ongletActif } from './BottomNav.jsx';
 import { macrosOf } from '../data/aliments.js';
 import { Icone } from './IconesCoach.jsx';
@@ -33,10 +34,9 @@ export function SuiviClient({ onContinuer, onNouveau }) {
   const pr = programme.value;
   const dos = dossierCoach.value;
   const mois = moisCoaching(dos, pr);
-  const aj = ajustements.value;
-  const lim = majJusqua(dos, pr);
-  const majOk = !!lim && Date.now() < lim.getTime();
-  const bilan = dateBilan(mois);
+  // 21/10 : le 60 € et les dates du mois ne partent que d'un paiement reel.
+  const lim = limite60(dos);
+  const majOk = !!pr && !!mois && !!lim && Date.now() < lim.getTime();
 
   const journal = repas.value;
   const noteDans = (cle) => journal.some(r => r.cle === cle && (r.ings || []).length > 0);
@@ -45,9 +45,10 @@ export function SuiviClient({ onContinuer, onNouveau }) {
   const prochain = prochainRepas(cles.filter(c => !noteDans(c)));
   const tot = totauxJour.value || {};
 
+  // Repas du journal qui recevra les aliments ; null = bouton cache.
+  const cibleDe = (cle) => cle ? journal.find(x => x.cle === cle) || null : null;
   const ajouter = (r) => {
-    const cle = cleDuNom(r.nom);
-    const cible = journal.find(x => x.cle === cle) || journal.find(x => x.nom === r.nom);
+    const cible = cibleDe(cleDuNom(r.nom));
     if (!cible) return;
     (r.ings || []).forEach(i => ajouterIngredient(cible.id, i.name, i.portion));
   };
@@ -58,11 +59,13 @@ export function SuiviClient({ onContinuer, onNouveau }) {
     <div class="sv">
       {pr && (
         <div class="cp-carte sv-entete">
-          <p class="cp-txt">{pr.livreLe ? `Plan revu le ${dateCourte(pr.livreLe)}` : 'Ton plan arrive bientôt'}</p>
+          <p class="cp-txt">{pr.livreLe ? `Plan livré le ${dateCourte(pr.livreLe)}` : 'Ton plan arrive bientôt'}</p>
           {pr.note && <p class="sv-note">« {pr.note} »</p>}
         </div>
       )}
 
+      {/* Sans paiement reel : ni dates ni barre, une ligne neutre. */}
+      {!mois && pr && <p class="cp-txt sv-neutre">Ajustements inclus ce mois-ci.</p>}
       {mois && (
         <>
           <p class="cp-sec">MON MOIS</p>
@@ -71,8 +74,7 @@ export function SuiviClient({ onContinuer, onNouveau }) {
             <div class="cp-ligne"><span class="cp-nom">Mois en cours</span>
               {mois.fini && <span class="sv-pill">Terminé</span>}</div>
             <div class="sv-barre"><i style={{ width: Math.min(100, Math.round(100 * (mois.total - mois.restants) / mois.total)) + '%' }} /></div>
-            <p class="cp-txt">Du {dateCourte(mois.debut)} au {dateCourte(mois.fin)}
-              {aj && aj.quota ? ` · ${aj.quota - aj.restants} ajustement${aj.quota - aj.restants > 1 ? 's' : ''} utilisé${aj.quota - aj.restants > 1 ? 's' : ''} sur ${aj.quota}` : ''}</p>
+            <p class="cp-txt">Du {dateCourte(mois.debut)} au {dateCourte(mois.fin)} · Ajustements inclus ce mois-ci</p>
           </div>
         </>
       )}
@@ -89,7 +91,7 @@ export function SuiviClient({ onContinuer, onNouveau }) {
             {repasPlan.map((r, k) => {
               const cle = cles[k];
               const fait = noteDans(cle);
-              const estProchain = cle === prochain;
+              const estProchain = !!cle && cle === prochain;
               return (
                 <div class={'sv-repas' + (estProchain ? ' sv-repas--prochain' : '')} key={k}>
                   <div class="sv-repas-tx">
@@ -97,7 +99,7 @@ export function SuiviClient({ onContinuer, onNouveau }) {
                     <span>{(r.ings || []).map(i => i.name).slice(0, 3).join(', ')}</span>
                   </div>
                   {fait ? <span class="sv-ok" aria-label="Noté">✓</span> : <span class="sv-k">{kcalRepas(r)} kcal</span>}
-                  {estProchain && <button class="cp-bt cp-bt--or sv-ajout" onClick={() => ajouter(r)}>Ajouter au journal</button>}
+                  {estProchain && cibleDe(cle) && <button class="cp-bt cp-bt--or sv-ajout" onClick={() => ajouter(r)}>Ajouter au journal</button>}
                 </div>
               );
             })}
@@ -118,27 +120,31 @@ export function SuiviClient({ onContinuer, onNouveau }) {
         ) : <p class="cp-txt">Pèse-toi dans l'onglet Aujourd'hui pour suivre tes progrès ici.</p>}
       </button>
 
-      <p class="cp-sec">PROCHAINE ÉTAPE</p>
-      <div class="cp-carte sv-etape">
+      {/* Plan livre sans paiement enregistre : on ne sait rien du mois, pas de carte. */}
+      {!(pr && !mois) && <p class="cp-sec">PROCHAINE ÉTAPE</p>}
+      {!(pr && !mois) && <div class="cp-carte sv-etape">
         {majOk ? (
           <>
-            <p class="cp-nom">Ton bilan du mois</p>
-            <p class="cp-txt">{bilan && Date.now() < bilan.getTime() ? `À remplir à partir du ${dateCourte(bilan)}.` : 'Tu peux faire ton bilan du mois.'}</p>
+            <p class="cp-nom">Ton mois de coaching</p>
+            <p class="cp-txt">{mois.fini ? 'Ton mois de coaching est terminé.' : 'Ton plan et tes ajustements continuent jusqu\'à la fin du mois.'}</p>
             {/* 21/10 Raci : 60 € discret, seulement dans les 7 derniers jours du mois ou apres sa fin. */}
-            {mois && (mois.fini || mois.restants <= 7) && (
-              <button type="button" class="sv-lien" onClick={onContinuer}>Envie de continuer ? Le mois suivant est à 60 €, jusqu'au {dateCourte(lim)}.</button>
+            {(mois.fini || mois.restants <= 7) && (COMMANDES_OUVERTES
+              ? <button type="button" class="sv-lien" onClick={onContinuer}>Envie de continuer ? Le mois suivant est à 60 €, jusqu'au {dateCourte(lim)}.</button>
+              : <p class="sv-lien sv-lien--off" aria-disabled="true">Envie de continuer ? Le mois suivant à 60 € sera bientôt disponible.</p>
             )}
           </>
         ) : pr ? (
           <>
             <p class="cp-nom">Un nouveau mois de coaching</p>
             <p class="cp-txt">On repart d'un bilan complet, ajustements inclus pendant le mois.</p>
-            <button class="cp-bt cp-bt--or" onClick={onNouveau}>Reprendre · 80 €</button>
+            {COMMANDES_OUVERTES
+              ? <button class="cp-bt cp-bt--or" onClick={onNouveau}>Reprendre · 80 €</button>
+              : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
           </>
         ) : (
           <p class="cp-txt">Ton plan est en préparation, livré dans l'app sous 48 h.</p>
         )}
-      </div>
+      </div>}
     </div>
   );
 }

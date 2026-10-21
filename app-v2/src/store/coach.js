@@ -92,15 +92,31 @@ export function finAcces(dossier, pr) {
   return { fin: new Date(Math.max(...dates.map((d) => d.getTime()))), illimite: false };
 }
 
+// 21/10 Raci : Mon suivi n'affiche des dates (mois, 60 €) que pour un
+// paiement REEL enregistre par le serveur (commandeCoach.payeLe). Ni la
+// date de livraison du plan, ni un paiement note seulement sur ce
+// telephone ne suffisent.
+export function payeLeReel(dossier) {
+  const c = dossier && dossier.commande;
+  const v = c && c.payeLe;
+  return v && !isNaN(new Date(v).getTime()) ? v : null;
+}
+/** Date limite du tarif 60 €, d'apres le seul paiement reel. */
+export function limite60(dossier) {
+  const p = payeLeReel(dossier);
+  if (!p) return null;
+  const d = new Date(p); d.setMonth(d.getMonth() + MOIS_MAJ);
+  return d;
+}
+
 // ---- Espace suivi client (20/10) ----------------------------------
 // Petits calculs de l'onglet « Mon suivi ». Aucune donnee nouvelle :
 // tout part de la commande, du plan livre, des pesees et du journal.
 
-/** Debut et fin du mois de coaching en cours (dernier paiement, ou
- *  livraison du plan a defaut), et jours restants. null sans plan. */
+/** Debut et fin du mois de coaching en cours, a partir du paiement
+ *  reel seulement, et jours restants. null sans paiement. */
 export function moisCoaching(dossier, pr, maintenant = Date.now()) {
-  const e = etatCoach(dossier, pr);
-  const base = e.payeLe || (pr && pr.livreLe);
+  const base = payeLeReel(dossier);
   if (!base) return null;
   const debut = new Date(base);
   if (isNaN(debut.getTime())) return null;
