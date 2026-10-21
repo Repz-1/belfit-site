@@ -56,20 +56,16 @@ export function SuiviClient({ onContinuer, onNouveau }) {
 
   return (
     <div class="sv">
-      <div class="cp-carte cp-profil cp-hero cp-hero--suivi">
-        <span class="cp-avatar" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
-        </span>
-        <div>
-          <p class="cp-nom">Coach BelFit</p>
-          <p class="cp-txt">{pr && pr.livreLe ? `Ton plan a été revu le ${dateCourte(pr.livreLe)}` : 'Ton plan arrive bientôt'}</p>
-          {pr && pr.note && <p class="sv-note">« {pr.note} »</p>}
+      {pr && (
+        <div class="cp-carte sv-entete">
+          <p class="cp-txt">{pr.livreLe ? `Plan revu le ${dateCourte(pr.livreLe)}` : 'Ton plan arrive bientôt'}</p>
+          {pr.note && <p class="sv-note">« {pr.note} »</p>}
         </div>
-      </div>
+      )}
 
       {mois && (
         <>
-          <p class="cp-sec">MON MOIS DE COACHING</p>
+          <p class="cp-sec">MON MOIS</p>
           <div class="cp-carte cp-carte--or sv-mois">
             {!mois.fini && <p class="sv-jours"><b>{mois.restants}</b> {`jour${mois.restants > 1 ? 's' : ''} restant${mois.restants > 1 ? 's' : ''}`}</p>}
             <div class="cp-ligne"><span class="cp-nom">Mois en cours</span>
@@ -127,9 +123,11 @@ export function SuiviClient({ onContinuer, onNouveau }) {
         {majOk ? (
           <>
             <p class="cp-nom">Ton bilan du mois</p>
-            <p class="cp-txt">{bilan && Date.now() < bilan.getTime() ? `À remplir à partir du ${dateCourte(bilan)}, pour préparer le mois suivant.` : 'Tu peux faire ton bilan pour préparer le mois suivant.'}</p>
-            <button class="cp-bt cp-bt--or" onClick={onContinuer}>Continuer mon coaching · 60 €</button>
-            <p class="sv-petit">Tarif valable jusqu'au {dateCourte(lim)}. Sans abonnement.</p>
+            <p class="cp-txt">{bilan && Date.now() < bilan.getTime() ? `À remplir à partir du ${dateCourte(bilan)}.` : 'Tu peux faire ton bilan du mois.'}</p>
+            {/* 21/10 Raci : 60 € discret, seulement dans les 7 derniers jours du mois ou apres sa fin. */}
+            {mois && (mois.fini || mois.restants <= 7) && (
+              <button type="button" class="sv-lien" onClick={onContinuer}>Envie de continuer ? Le mois suivant est à 60 €, jusqu'au {dateCourte(lim)}.</button>
+            )}
           </>
         ) : pr ? (
           <>
@@ -138,7 +136,7 @@ export function SuiviClient({ onContinuer, onNouveau }) {
             <button class="cp-bt cp-bt--or" onClick={onNouveau}>Reprendre · 80 €</button>
           </>
         ) : (
-          <p class="cp-txt">Ton coach prépare ton plan, livré dans l'app sous 48 h.</p>
+          <p class="cp-txt">Ton plan est en préparation, livré dans l'app sous 48 h.</p>
         )}
       </div>
     </div>

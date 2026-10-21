@@ -315,3 +315,8 @@
 @keyframes cpMonte { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes cpBarre { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes cpReflet { to { transform: translateX(100%); } }
+
+/* 21/10 Raci : en-tete compact de Mon suivi + lien discret pour le mois suivant. */
+.pg-coach .sv-entete { padding: 12px 14px; }
+.pg-coach .sv-entete .sv-note { margin-top: 6px; }
+.pg-coach .sv-lien { display: block; width: 100%; margin-top: 10px; padding: 6px 0; background: none; border: 0; text-align: left; font: inherit; font-size: 13px; color: var(--texte2, #6B6B6B); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
