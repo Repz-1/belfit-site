@@ -36,7 +36,7 @@ function TesSeances() {
   return (
     <div class="cp-carte sv-seances-vide">
       <p class="cp-nom">Pas encore de programme d'entraînement</p>
-      <p class="cp-txt">Réponds à 4 questions et l'app te propose un programme adapté à ton objectif et à ton matériel. La partie entraînement est gratuite.</p>
+      <p class="cp-txt">Réponds à 4 questions et l'app te propose un programme adapté à ton objectif et à ton matériel. Le coaching entraînement est inclus.</p>
       <button class="cp-bt cp-bt--or" onClick={() => aller('questionnaire')}>Créer mon programme</button>
     </div>
   );
@@ -258,7 +258,7 @@ export function CoachPage() {
         <>
           <p class="cp-sec">COMMENT ÇA MARCHE</p>
           <div class="cp-carte cp-etapes">
-            <div class="cp-etape"><span class="cp-n"><Icone nom="bolt" taille={16} /></span><span class="cp-txt">Tu paies ton mois de coaching en ligne (80 €).</span></div>
+            <div class="cp-etape"><span class="cp-n"><Icone nom="bolt" taille={16} /></span><span class="cp-txt">Tu paies ton 1er mois de coaching alimentaire en ligne (80 €).</span></div>
             <div class="cp-etape"><span class="cp-n"><Icone nom="list-check" taille={16} /></span><span class="cp-txt">Tu réponds au questionnaire.</span></div>
             <div class="cp-etape"><span class="cp-n"><Icone nom="flame" taille={16} /></span><span class="cp-txt">Je t'écris ton plan, livré dans l'app sous 48 h.</span></div>
           </div>
