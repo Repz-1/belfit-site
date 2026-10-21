@@ -207,13 +207,14 @@ export function CoachPage() {
       {vue === 'seances' && <TesSeances />}
       {vue === 'programme' && (<>
 
+      {!pr && (
       <div class="cp-carte cp-profil cp-hero cp-hero--achat">
         <div class="cp-hero-id">
           <span class="cp-avatar" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
           </span>
           <div>
-            <p class="cp-nom">Coach BelFit</p>
+            <p class="cp-nom">BelFit</p>
             <p class="cp-txt">Nutrition et préparation physique</p>
           </div>
         </div>
@@ -225,6 +226,7 @@ export function CoachPage() {
           </div>
         )}
       </div>
+      )}
 
       {aRemplir && (
         <div class="cp-carte cp-carte--or">
@@ -246,9 +248,8 @@ export function CoachPage() {
         <>
           <p class="cp-sec">MON PLAN</p>
           <div class="cp-carte">
-            <div class="cp-ligne"><span class="cp-nom">Mon plan coach</span><span class="cp-txt">{pr.kcal} kcal</span></div>
+            <div class="cp-ligne"><span class="cp-nom">Mon plan</span><span class="cp-txt">{pr.kcal} kcal</span></div>
             <p class="cp-txt">{j === null ? 'Reçu récemment' : j === 0 ? "Reçu aujourd'hui" : `Reçu il y a ${j} jour${j > 1 ? 's' : ''}`}</p>
-            {rappel && <span class="cp-tag">Ton plan a {j} jours : pense à continuer ton coaching</span>}
             <button class="cp-bt cp-bt--or" onClick={() => { progOuvert.value = true; }}>Voir mon plan</button>
           </div>
         </>
@@ -265,8 +266,9 @@ export function CoachPage() {
         </>
       )}
 
-      {!occupe && <p class="cp-sec">TARIFS</p>}
-      {!occupe && !majOk && (
+      {/* 21/10 Raci : plus de tarifs dans Ton programme pour un client qui a deja un plan. Le 60 € n'apparait que dans Mon suivi. */}
+      {!occupe && !pr && <p class="cp-sec">TARIFS</p>}
+      {!occupe && !pr && !majOk && (
         <div class="cp-carte cp-carte--or cp-offre">
           <div class="cp-ligne"><span class="cp-nom">{pr ? 'Nouveau mois de coaching' : 'Premier mois'}</span><span class="cp-prix">80 €</span></div>
           <p class="cp-txt">{pr
@@ -277,7 +279,7 @@ export function CoachPage() {
             : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
         </div>
       )}
-      {!occupe && majOk && (
+      {!occupe && !pr && majOk && (
         <div class={'cp-carte cp-offre' + (rappel ? ' cp-carte--or' : '')}>
           <div class="cp-ligne"><span class="cp-nom">Mois suivant</span><span class="cp-prix">60 €</span></div>
           <p class="cp-txt">Un mois de coaching en plus : ton plan ajusté à ton poids, tes résultats et ton objectif, ajustements inclus.</p>
@@ -288,7 +290,7 @@ export function CoachPage() {
         </div>
       )}
 
-      {!occupe && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement : tu décides de continuer. IA illimitée 30 jours incluse.</p>}
+      {!occupe && !pr && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement : tu décides de continuer. IA illimitée 30 jours incluse.</p>}
       </>)}
 
       {achat && createPortal(
