@@ -3,7 +3,7 @@ import { planCoachActif } from './BelfitPlus.jsx';
 import { signal } from '@preact/signals';
 
 export const ouvrirCalcDemande = signal(false);
-import { objectifs, totauxJourAff, kcalRestantes, donneesPretes, poidsCalcul, rappelIgnoreA, dateJour, nouvelleJournee } from '../store/journal.js';
+import { repas, objectifs, totauxJourAff, kcalRestantes, donneesPretes, poidsCalcul, rappelIgnoreA, dateJour, nouvelleJournee } from '../store/journal.js';
 import { weightLog, enregistrerJour } from '../store/stats.js';
 import { IdeesRepas } from './IdeesRepas.jsx';
 import { t } from '../i18n/index.js';
@@ -120,6 +120,8 @@ export function DayDashboard() {
   const moisCourt = t('months_min').split('|');
   const isoAuj = new Date().toISOString().slice(0, 10);
   const retard = !!dateJour.value && dateJour.value !== isoAuj;
+  // Journal vide (0 kcal, aucun aliment) : rien a cloturer (21/10).
+  const journalVide = !(Math.round(tot.kcal || 0) > 0) && !repas.value.some(r => (r.ings || []).length);
   const dOuvert = retard ? new Date(dateJour.value + 'T00:00') : d;
   const dateTexte = retard
     ? `${jours[dOuvert.getDay()] || ''} ${dOuvert.getDate()} ${moisCourt[dOuvert.getMonth()] || ''}`
@@ -172,7 +174,10 @@ export function DayDashboard() {
       {retard && (
         <div class="cal-retard">{t('jour_non_cloture').replace('{j}', jourOuvert)}</div>
       )}
-      <button class="cal-reset" onClick={() => {
+      <button class="cal-reset" disabled={journalVide}
+        aria-disabled={journalVide ? 'true' : undefined}
+        onClick={() => {
+        if (journalVide) return;
         if (!confirm(t('confirm_new_day'))) return;
         enregistrerJour(totauxJourAff.value, dateJour.value);
         nouvelleJournee();

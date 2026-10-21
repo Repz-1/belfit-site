@@ -78,10 +78,14 @@ export function enregistrerJour(totaux, isoForce) {
   // isoForce : utilise par la bascule automatique de journee, qui archive
   // la journee ECOULEE (donc pas la date du jour).
   const iso = isoForce || new Date().toISOString().slice(0, 10);
+  // Jamais une journee vide a la place d'une journee deja enregistree
+  // (double clic sur « Cloturer la journee », 21/10).
+  if (!(Math.round(totaux?.kcal || 0) > 0)) return false;
   histoJours.value = { ...histoJours.value, [iso]: {
     kcal: Math.round(totaux.kcal), prot: Math.round(totaux.prot),
     carbs: Math.round(totaux.carbs), lip: Math.round(totaux.lip),
   }};
+  return true;
 }
 
 // --- Derives ---

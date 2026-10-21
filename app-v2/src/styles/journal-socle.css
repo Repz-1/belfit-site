@@ -372,6 +372,10 @@
   color: var(--texte-2); background: rgba(0, 0, 0, .03); transform: scale(.98);
 }
 
+.pg-journal .cal-reset:disabled {
+  opacity: .4; cursor: default; transform: none; background: none;
+}
+
 /* Rappel de recalcul : discret mais present, entre les macros et la
    pilule. Or BELFIT — c'est une action de l'app, pas de l'IA. */
 .pg-journal .cal-rappel {

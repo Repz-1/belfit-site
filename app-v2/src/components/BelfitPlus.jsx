@@ -279,7 +279,7 @@ export function BelfitPlus() {
       <div class="pg-plus pg-prog">
         <Entete retour={() => setOuvertProg(false)} />
         <div class="prog-corps">
-          <h1 class="prog-titre">Mon plan coach</h1>
+          <h1 class="prog-titre">Mon plan</h1>
 
           {!pret ? (
             <p class="prog-attente">Chargement…</p>
@@ -406,7 +406,7 @@ export function BelfitPlus() {
         <span class="bp-hero-trait" aria-hidden="true" />
         <p class="bp-hero-sous">Tout ce dont tu as besoin pour progresser, réuni au même endroit.</p>
         <button class="bp-hero-cta" onClick={() => setOuvertProg(true)}>
-          Mon plan coach <span aria-hidden="true">→</span>
+          Mon plan <span aria-hidden="true">→</span>
         </button>
       </section>
 
