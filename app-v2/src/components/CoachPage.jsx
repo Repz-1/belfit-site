@@ -248,7 +248,7 @@ export function CoachPage() {
         <>
           <p class="cp-sec">COMMENT ÇA MARCHE</p>
           <div class="cp-carte">
-            <div class="cp-etape"><span class="cp-n">1</span><span class="cp-txt">Tu choisis ta formule et tu paies en ligne.</span></div>
+            <div class="cp-etape"><span class="cp-n">1</span><span class="cp-txt">Tu paies ton mois de coaching en ligne (80 €).</span></div>
             <div class="cp-etape"><span class="cp-n">2</span><span class="cp-txt">Tu réponds au questionnaire.</span></div>
             <div class="cp-etape"><span class="cp-n">3</span><span class="cp-txt">Je t'écris ton plan, livré dans l'app sous 48 h.</span></div>
           </div>
