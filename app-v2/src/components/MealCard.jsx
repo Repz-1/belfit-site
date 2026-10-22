@@ -4,7 +4,7 @@ import { DB, NOMS_ALIMENTS, macrosOf, scoreRecherche, facteurCuisson, PAIRES_CUI
 import { customFoods, Scanner } from './Scanner.jsx';
 import { VocalModal } from './VocalModal.jsx';
 import { PhotoModal } from './PhotoModal.jsx';
-import { signal } from '@preact/signals';
+import { signal, effect } from '@preact/signals';
 
 // Ouverture de la bibliotheque de plats. Elle a quitte les actions
 // rapides : on n'y va que pour renommer ou supprimer un plat, ce qui
@@ -16,6 +16,18 @@ export const ouvrirMesPlats = signal(false);
 // Journal ouvre la page d'encodage plein ecran (MealPage) : le clavier
 // et la liste de resultats y disposent de tout l'ecran.
 export const repasOuvertId = signal(null);
+
+// 22/10 Raci : « Mangé autre chose » ouvre la page du repas vide. Si le
+// client la quitte sans rien noter ni toucher « Terminer », le repas
+// redevient le prevu du plan (rien n'est perdu, rien n'est invente).
+let ouvertAvant = null;
+effect(() => {
+  const id = repasOuvertId.value;
+  const prec = ouvertAvant; ouvertAvant = id;
+  if (prec === null || prec === id) return;
+  const r = repas.peek().find(x => x.id === prec);
+  if (r && r.remplace && r.prevu) remettrePrevu(prec);
+});
 
 // Ligne tout juste ajoutee : elle prend le focus sur son grammage.
 // Choisir un aliment et devoir ensuite aller chercher son champ de
@@ -32,7 +44,7 @@ import { MEAL_SVG, TYPE_SVG, MEAL_NEUTRAL_SVG } from '../data/illustrations.js';
 import {
   repas, totauxRepas, setPortion, ajouterIngredient, ajouterPlat,
   supprimerIngredient, supprimerRepas, renommerRepas, basculerCuisson,
-  fourchetteRepas, remplacerAliment, validerRepas, annulerValidation } from '../store/journal.js';
+  fourchetteRepas, remplacerAliment, validerRepas, annulerValidation, sauterRepas, mangeAutreChose, remettrePrevu } from '../store/journal.js';
 
 /** Illustration d'un repas : la sienne s'il est fixe, sinon celle de son type. */
 export function illustration(r) {
@@ -509,12 +521,15 @@ export function MealCard({ r, aSuivre, fait }) {
   const tot = totauxRepas(r);
   const vide = r.ings.length === 0;
   const [edite, setEdite] = useState(false);
+  const [choix, setChoix] = useState(false);
+  // 22/10 : etat d'un repas du plan — prevu, mange, saute, autre (remplace).
+  const choisi = r.duPlan && (r.saute || r.remplace);
   // Trois zones : vignette, contenu, actions.
   // Le crayon et le chevron sont regroupes dans la zone d'actions,
   // centres sur la meme ligne : places separement, ils se retrouvaient
   // l'un en haut, l'autre au milieu.
   return (
-    <div class={'mc' + (aSuivre ? ' mc--suivant' : '') + (fait ? ' mc--fait' : '') + (r.prevu ? ' mc--prevu' : '')}>
+    <div class={'mc' + (aSuivre ? ' mc--suivant' : '') + (fait ? ' mc--fait' : '') + (r.prevu ? ' mc--prevu' : '') + (r.saute ? ' mc--saute' : '') + (r.remplace ? ' mc--autre' : '')}>
       <div class="mc-tete" onClick={() => { if (!edite) repasOuvertId.value = r.id; }}>
 
         <div class="mc-vignette" dangerouslySetInnerHTML={{ __html: illustration(r) }} />
@@ -534,7 +549,9 @@ export function MealCard({ r, aSuivre, fait }) {
             <h3 class="mc-titre">{r.nom}</h3>
           )}
           <p class="mc-sous">{
-            !vide ? (r.prevu ? `Prévu · ${tot.kcal.toFixed(0)} kcal` : `${tot.kcal.toFixed(0)} kcal`)
+            r.saute ? 'Sauté · 0 kcal'
+            : r.remplace ? (r.prevu ? 'Autre chose · à noter' : `Autre chose · ${tot.kcal.toFixed(0)} kcal`)
+            : !vide ? (r.prevu ? `Prévu · ${tot.kcal.toFixed(0)} kcal` : `${tot.kcal.toFixed(0)} kcal`)
               : (() => {
                   const f = fourchetteRepas(r.cle);
                   return f ? `${t('mc_reco')} ${f.min} – ${f.max} kcal` : t('mc_empty');
@@ -544,7 +561,13 @@ export function MealCard({ r, aSuivre, fait }) {
 
         <div class="mc-actions">
           {/* 22/10 Raci : repas du plan coche en un geste, decochable. */}
-          {r.duPlan && !vide && (
+          {choisi && (
+            <button class="mc-annuler" aria-label={`Remettre ${r.nom} en prévu`}
+              onClick={e => { e.stopPropagation(); remettrePrevu(r.id); }}>
+              <svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5" /><path d="M4 9h10a6 6 0 010 12h-3" /></svg>
+            </button>
+          )}
+          {r.duPlan && !vide && !choisi && (
             <button
               class={'mc-coche' + (r.prevu ? '' : ' mc-coche--fait')}
               role="checkbox"
@@ -555,13 +578,19 @@ export function MealCard({ r, aSuivre, fait }) {
               <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
             </button>
           )}
-          <button
+          {r.duPlan && r.prevu && !r.remplace && (
+            <button class="mc-plus" aria-label={`Autres choix pour ${r.nom}`} aria-expanded={choix ? 'true' : 'false'}
+              onClick={e => { e.stopPropagation(); setChoix(!choix); }}>
+              <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
+            </button>
+          )}
+          {!r.duPlan && <button
             class="mc-crayon"
             onClick={e => { e.stopPropagation(); setEdite(true); }}
             aria-label="Renommer"
           >
             <svg viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
-          </button>
+          </button>}
           {!r.fixe && (
             <button
               class="mc-suppr"
@@ -572,6 +601,13 @@ export function MealCard({ r, aSuivre, fait }) {
           <span class="mc-chevron mc-chevron--nav" aria-hidden="true">›</span>
         </div>
       </div>
+      {choix && r.duPlan && r.prevu && !r.remplace && (
+        <div class="mc-choix" role="group" aria-label={`Autres choix pour ${r.nom}`}>
+          <button class="mc-choix-btn" onClick={() => { setChoix(false); sauterRepas(r.id); }}>Sauté</button>
+          <button class="mc-choix-btn" onClick={() => { setChoix(false); mangeAutreChose(r.id); repasOuvertId.value = r.id; }}>Mangé autre chose</button>
+          <button class="mc-choix-btn mc-choix-btn--discret" onClick={() => { setChoix(false); setEdite(true); }}>Renommer</button>
+        </div>
+      )}
 
     </div>
   );

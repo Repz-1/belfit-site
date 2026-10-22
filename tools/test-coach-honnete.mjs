@@ -225,4 +225,66 @@ await o.ctx.close();
   await o.ctx.close();
 }
 
+// 7) 22/10 : trois issues d'un repas du plan — mangé / sauté / mangé autre chose, et retour (DONNEES FICTIVES).
+{
+  const VIDE7 = [
+    { id: 1, nom: 'Petit déjeuner', type: 'repas', cle: 'pdej', fixe: true, ouvert: false, ings: [] },
+    { id: 2, nom: 'Déjeuner', type: 'repas', cle: 'dej', fixe: true, ouvert: false, ings: [] },
+    { id: 3, nom: 'Dîner', type: 'repas', cle: 'diner', fixe: true, ouvert: false, ings: [] },
+    { id: 4, nom: 'Collations', type: 'collation', cle: 'snack', fixe: true, ouvert: false, ings: [] } ];
+  const PL7 = { ...PLAN, kcal: 2222, livreLe: jours(0), repas: [
+    { nom: 'Petit-déjeuner', ings: [{ name: 'Flocons avoine', portion: 80 }, { name: 'Banane', portion: 120 }] },
+    { nom: 'Déjeuner', ings: [{ name: 'Riz cuit', portion: 150 }, { name: 'Poulet cuit', portion: 130 }] },
+    { nom: 'Dîner', ings: [{ name: 'Brocoli', portion: 200 }, { name: 'Saumon cuit', portion: 120 }] } ] };
+  o = await ouvrir(PL7, { commande: { payeLe: jours(3) }, questionnaire: { envoyeLe: jours(5) } }, 'choix', VIDE7);
+  const p = o.page;
+  await p.goto('http://localhost:8092/app.html'); await p.waitForTimeout(2600);
+  const kcal = async () => { await p.waitForTimeout(1500); return Number((await p.locator('.cal-cote-val').first().innerText()).replace(/\D/g, '')); };
+  const dej = () => p.locator('.mc').nth(1);
+  const r1 = () => p.evaluate(() => { const r = window.__banc.repas.value[1]; return { prevu: !!r.prevu, saute: !!r.saute, remplace: !!r.remplace, duPlan: !!r.duPlan, ings: r.ings.map(i => i.name).join('+'), plan: (r.ingsPlan || []).map(i => i.name).join('+') }; });
+  const vers = async () => { await dej().scrollIntoViewIfNeeded(); await p.waitForTimeout(500); };
+  ok(await p.locator('.mc-plus').count() === 3 && await p.locator('.mc-coche').count() === 3, 'choix : ✓ et ⋯ sur chaque repas prévu du plan');
+  ok(await p.locator('.mc-crayon').count() === 1, 'choix : crayon remplacé par ⋯ sur les repas du plan (reste sur Collations)');
+  await vers(); await p.screenshot({ path: '/workspace/shots/choix-repas-prevu.png' });
+  // menu
+  await dej().locator('.mc-plus').click(); await p.waitForTimeout(300);
+  ok(await dej().locator('.mc-choix-btn').count() === 3 && await dej().locator('.mc-plus').getAttribute('aria-expanded') === 'true', 'menu : Sauté / Mangé autre chose / Renommer');
+  const hb = await dej().locator('.mc-choix-btn').first().boundingBox(); ok(hb.height >= 44, 'menu : cibles ≥ 44 px (' + Math.round(hb.height) + ')');
+  await vers(); await p.screenshot({ path: '/workspace/shots/choix-repas-menu.png' });
+  // saute
+  await dej().locator('.mc-choix-btn', { hasText: 'Sauté' }).click(); await p.waitForTimeout(300);
+  let e = await r1(); ok(e.saute && !e.prevu && e.duPlan, 'sauté : saute:true, plus prévu');
+  ok(/Sauté · 0 kcal/.test(await dej().locator('.mc-sous').innerText()) && await dej().evaluate(n => n.classList.contains('mc--saute')), 'sauté : carte grisée « Sauté · 0 kcal »');
+  ok(await kcal() === 0, 'sauté : cadran à 0');
+  const st = await p.evaluate(() => { const k = Object.keys(localStorage).find(x => x.startsWith('belfit_v2_journal')); return k ? localStorage.getItem(k) : ''; });
+  ok(/"saute":true/.test(st), 'sauté : persisté avec le journal');
+  await vers(); await p.screenshot({ path: '/workspace/shots/choix-repas-saute.png' });
+  // semis ne touche pas un saute (nouvelle livraison le meme jour)
+  await p.evaluate(() => { const b = window.__banc.programme; b.value = { ...b.value, livreLe: new Date(Date.now() + 1000).toISOString() }; }); await p.waitForTimeout(700);
+  e = await r1(); ok(e.saute, 'semis : un repas sauté n\'est jamais écrasé');
+  await dej().locator('.mc-annuler').click(); await p.waitForTimeout(300);
+  e = await r1(); ok(e.prevu && !e.saute && e.ings === 'Riz cuit+Poulet cuit', 'sauté → retour en Prévu en un geste');
+  // mange (✓) + retour deja couverts au cas 6 ; verif rapide
+  await dej().locator('.mc-coche').click(); const kM = await kcal(); ok(kM > 0, 'mangé : le cadran reçoit le repas (' + kM + ')');
+  await dej().locator('.mc-coche').click(); ok(await kcal() === 0, 'mangé → retour en Prévu');
+  // mange autre chose : abandon sans rien noter -> redevient prevu
+  await dej().locator('.mc-plus').click(); await dej().locator('.mc-choix-btn', { hasText: 'autre' }).click(); await p.waitForTimeout(800);
+  ok(await p.locator('.rp-titre').count() === 1, 'autre : la page du repas s\'ouvre');
+  e = await r1(); ok(e.remplace && e.prevu && e.ings === '' && e.plan === 'Riz cuit+Poulet cuit', 'autre : aliments du plan mis de côté, page vide');
+  await p.locator('.rp-retour').click(); await p.waitForTimeout(800);
+  e = await r1(); ok(!e.remplace && e.prevu && e.ings === 'Riz cuit+Poulet cuit', 'autre : quitter sans noter → redevient le prévu du plan');
+  // mange autre chose : on note Lentilles cuites + Riz cuit et Terminer
+  await dej().locator('.mc-plus').click(); await dej().locator('.mc-choix-btn', { hasText: 'autre' }).click(); await p.waitForTimeout(800);
+  await p.evaluate(() => { const b = window.__banc.repas; b.value = b.value.map((r, k) => k === 1 ? { ...r, ings: [{ id: 7001, name: 'Lentilles cuites', portion: 200 }, { id: 7002, name: 'Riz cuit', portion: 100 }] } : r); });
+  await p.waitForTimeout(400); await p.locator('.rp-total-fin').click(); await p.waitForTimeout(900);
+  e = await r1(); ok(e.remplace && !e.prevu && e.duPlan && e.ings === 'Lentilles cuites+Riz cuit', 'autre : enregistré comme repas validé (duPlan + remplace gardés)');
+  const kA = await kcal(); ok(kA > 0 && /Autre chose · \d+ kcal/.test(await dej().locator('.mc-sous').innerText()), 'autre : « Autre chose » compte dans le cadran (' + kA + ')');
+  await p.evaluate(() => { const b = window.__banc.programme; b.value = { ...b.value, livreLe: new Date(Date.now() + 5000).toISOString() }; }); await p.waitForTimeout(700);
+  e = await r1(); ok(e.remplace && e.ings === 'Lentilles cuites+Riz cuit', 'semis : un repas remplacé n\'est jamais écrasé');
+  await vers(); await p.screenshot({ path: '/workspace/shots/choix-repas-autre.png' });
+  await dej().locator('.mc-annuler').click(); await p.waitForTimeout(300);
+  e = await r1(); ok(e.prevu && !e.remplace && e.ings === 'Riz cuit+Poulet cuit' && await kcal() === 0, 'autre → retour au Prévu du plan en un geste');
+  await o.ctx.close();
+}
+
 await nav.close(); try { process.kill(-srv.pid); } catch {} srv.kill(); process.exit(code);

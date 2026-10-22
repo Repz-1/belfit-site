@@ -164,7 +164,7 @@ export function totauxRepas(r) {
 export const totauxJour = computed(() => {
   const t = { kcal: 0, prot: 0, carbs: 0, lip: 0 };
   for (const r of repas.value) {
-    if (r.prevu) continue;
+    if (r.prevu || r.saute) continue;   // 22/10 : un repas saute compte 0
     const tr = totauxRepas(r);
     t.kcal += tr.kcal; t.prot += tr.prot; t.carbs += tr.carbs; t.lip += tr.lip;
   }
@@ -179,7 +179,7 @@ export const totauxJour = computed(() => {
 export const totauxJourAff = computed(() => {
   const t = { kcal: 0, prot: 0, carbs: 0, lip: 0 };
   for (const r of repas.value) {
-    if (r.prevu) continue;
+    if (r.prevu || r.saute) continue;   // 22/10 : un repas saute compte 0
     const m = totauxRepas(r);
     t.kcal += Math.round(m.kcal); t.prot += Math.round(m.prot);
     t.carbs += Math.round(m.carbs); t.lip += Math.round(m.lip);
@@ -318,16 +318,41 @@ export function semerPlan(planRepas) {
     const i = liste.findIndex(r => (cle && r.cle === cle) || nomN(r.nom) === nomN(p.nom));
     if (i < 0) { liste.push(neuf(++id)); return; }
     const r = liste[i];
+    if (r.saute || r.remplace) return;   // 22/10 : choix du client, jamais ecrase
     if (r.ings.length === 0 || (r.duPlan && r.prevu)) liste[i] = { ...neuf(r.id), fixe: r.fixe, cle: r.cle || cle };
   });
-  repas.value = liste.filter(r => !(r.duPlan && r.prevu && !cles.has(r.cle || nomN(r.nom))));
+  repas.value = liste.filter(r => !(r.duPlan && r.prevu && !r.remplace && !cles.has(r.cle || nomN(r.nom))));
 }
 
 /** 22/10 Raci : decocher un repas du plan -> il redevient « prevu » et
  *  sort du cadran (totauxJour / totauxJourAff ignorent les prevus, la
  *  cloture aussi). Seulement pour les repas venus du plan (duPlan). */
 export function annulerValidation(repasId) {
-  repas.value = repas.value.map(r => r.id === repasId && r.duPlan && !r.prevu ? { ...r, prevu: true } : r);
+  remettrePrevu(repasId);
+}
+
+/** 22/10 Raci : trois issues pour un repas du plan.
+ *  - mange (validerRepas) : prevu -> false, compte ;
+ *  - saute : saute: true, carte grisee, compte 0 (totaux, cloture) ;
+ *  - mange autre chose : remplace: true, les aliments du plan sont mis
+ *    de cote (ingsPlan) et le client note ce qu'il a vraiment mange ;
+ *    il reste « prevu » (hors cadran) jusqu'a « Terminer ».
+ *  remettrePrevu annule chacune d'un geste. Seuls les repas duPlan. */
+export function sauterRepas(repasId) {
+  repas.value = repas.value.map(r => r.id === repasId && r.duPlan ? { ...r, prevu: false, saute: true } : r);
+}
+export function mangeAutreChose(repasId) {
+  repas.value = repas.value.map(r => r.id !== repasId || !r.duPlan || r.remplace ? r
+    : { ...r, prevu: true, saute: false, remplace: true, ingsPlan: r.ings, ings: [] });
+}
+export function remettrePrevu(repasId) {
+  repas.value = repas.value.map(r => {
+    if (r.id !== repasId || !r.duPlan) return r;
+    const n = { ...r, prevu: true };
+    delete n.saute;
+    if (r.remplace) { n.ings = r.ingsPlan || []; delete n.remplace; delete n.ingsPlan; }
+    return n;
+  });
 }
 
 export function renommerRepas(repasId, nom) {
