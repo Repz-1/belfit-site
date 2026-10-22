@@ -127,6 +127,8 @@ export function SuiviClient({ onContinuer, onNouveau }) {
           <>
             <p class="cp-nom">Ton mois de coaching</p>
             <p class="cp-txt">{mois.fini ? 'Ton mois de coaching est terminé.' : 'Ton plan et tes ajustements continuent jusqu\'à la fin du mois.'}</p>
+            {/* 22/10 Raci : vraie date de fin, d'apres payeLe + 44 jours. */}
+            <p class="cp-txt sv-acces">Accès nutrition jusqu'au {dateCourte(lim)}.</p>
             {/* 21/10 Raci : 60 € discret, seulement dans les 7 derniers jours du mois ou apres sa fin. */}
             {(mois.fini || mois.restants <= 7) && (COMMANDES_OUVERTES
               ? <button type="button" class="sv-lien" onClick={onContinuer}>Envie de continuer ? Le mois suivant est à 60 €, jusqu'au {dateCourte(lim)}.</button>

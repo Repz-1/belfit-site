@@ -61,19 +61,20 @@ export function etatCoach(dossier, pr) {
   };
 }
 
-// Fenetre de mise a jour (Raci, 27/09) : chaque paiement couvre son mois
-// + 2 mois. La mise a jour a 60 EUR reste possible jusqu'a 3 mois apres
-// le DERNIER paiement ; au-dela, c'est un nouveau plan a 80 EUR.
-export const MOIS_MAJ = 3;
+// Acces nutrition (Raci, 22/10) : chaque paiement ouvre la partie
+// nutrition pendant son mois de coaching + 2 semaines, soit 44 jours
+// apres le DERNIER paiement. Le 60 EUR n'est possible que tant que cet
+// acces est ouvert ; au-dela, c'est de nouveau 80 EUR.
+// Meme valeur cote serveur : functions/index.js (JOURS_ACCES).
+export const JOURS_ACCES = 44;
+const plusJours = (base, n) => new Date(new Date(base).getTime() + n * 864e5);
 /** Date limite de la mise a jour, ou null (pas de plan, pas de paiement). */
 export function majJusqua(dossier, pr) {
   if (!pr) return null;
   const e = etatCoach(dossier, pr);
   const base = e.payeLe || pr.livreLe;
   if (!base) return null;
-  const d = new Date(base);
-  d.setMonth(d.getMonth() + MOIS_MAJ);
-  return d;
+  return plusJours(base, JOURS_ACCES);
 }
 
 // Fin de l'acces PRO (28/09) : la plus lointaine entre la fenetre du
@@ -101,13 +102,14 @@ export function payeLeReel(dossier) {
   const v = c && c.payeLe;
   return v && !isNaN(new Date(v).getTime()) ? v : null;
 }
-/** Date limite du tarif 60 €, d'apres le seul paiement reel. */
+/** Fin de l'acces nutrition = limite du tarif 60 €, d'apres le seul
+ *  paiement reel (payeLe + 44 jours). null sans paiement reel. */
 export function limite60(dossier) {
   const p = payeLeReel(dossier);
   if (!p) return null;
-  const d = new Date(p); d.setMonth(d.getMonth() + MOIS_MAJ);
-  return d;
+  return plusJours(p, JOURS_ACCES);
 }
+export const finAccesNutrition = limite60;
 
 // ---- Espace suivi client (20/10) ----------------------------------
 // Petits calculs de l'onglet « Mon suivi ». Aucune donnee nouvelle :

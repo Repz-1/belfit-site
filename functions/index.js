@@ -92,13 +92,13 @@ exports.lemonWebhook = onRequest(
               commande: body.data && body.data.id || null,
             },
           }, {merge: true});
-          // IA illimitee 30 jours apres chaque achat coaching (02/10).
-          // Prolonge a partir de la date la plus lointaine.
+          // IA illimitee 44 jours apres chaque achat coaching (22/10).
+          // Fin = paiement + 44 j (jamais raccourcie).
           const refQ = db.collection("quotasIA").doc(uid);
           const sq = await refQ.get();
           const finActuelle = sq.exists && sq.data().illimiteJusqu ? Date.parse(sq.data().illimiteJusqu) : 0;
-          const base = Math.max(Date.now(), finActuelle || 0);
-          await refQ.set({illimiteJusqu: new Date(base + IA_JOURS_COACHING * 864e5).toISOString()}, {merge: true});
+          const fin44 = Date.now() + JOURS_ACCES * 864e5;
+          await refQ.set({illimiteJusqu: new Date(Math.max(fin44, finActuelle || 0)).toISOString()}, {merge: true});
           console.log("Commande coaching:", uid, typeCoach);
           res.status(200).send("ok");
           return;
@@ -170,7 +170,7 @@ const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
  * QUOTA IA (02/10, decision Raci) : photo et micro.
  *   - 7 premiers jours apres l'inscription : 25 utilisations par jour ;
  *   - ensuite : 8 par jour ;
- *   - illimite : 30 jours apres chaque achat coaching (plan ou mise a
+ *   - illimite : 44 jours apres chaque achat coaching (plan ou mise a
  *     jour), ou acces PRO offert / code (premium:true, premiumJusqu).
  * Compte cote serveur (quotasIA/{uid}, ecriture admin seulement) :
  * impossible a remettre a zero depuis le navigateur.
@@ -179,7 +179,11 @@ const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 const IA_JOURS_DECOUVERTE = 7;
 const IA_QUOTA_DECOUVERTE = 25;
 const IA_QUOTA_JOUR = 8;
-const IA_JOURS_COACHING = 30;
+// 22/10 Raci : acces nutrition = mois paye + 2 semaines = 44 jours apres
+// le DERNIER paiement (identique a app-v2/src/store/coach.js JOURS_ACCES).
+// Pas de cumul : un nouveau paiement repousse la fin a paiement + 44 j.
+const IA_JOURS_COACHING = 44;
+const JOURS_ACCES = IA_JOURS_COACHING;
 
 function jourBruxelles() {
   return new Intl.DateTimeFormat("fr-CA", {timeZone: "Europe/Brussels"}).format(new Date());
@@ -1645,8 +1649,8 @@ exports.espaceCoach = onRequest(
         const refQ = db.collection("quotasIA").doc(uid);
         const sq = await refQ.get();
         const fin = sq.exists && sq.data().illimiteJusqu ? Date.parse(sq.data().illimiteJusqu) : 0;
-        const base = Math.max(Date.now(), fin || 0);
-        await refQ.set({illimiteJusqu: new Date(base + IA_JOURS_COACHING * 864e5).toISOString()}, {merge: true});
+        const fin44 = Date.now() + JOURS_ACCES * 864e5;
+        await refQ.set({illimiteJusqu: new Date(Math.max(fin44, fin || 0)).toISOString()}, {merge: true});
         if (cmd.commande) await db.collection("invitations").doc(cmd.commande).set({virementRecuLe: le}, {merge: true});
         res.json({ok: true, recuLe: le});
         return;
@@ -1684,7 +1688,7 @@ exports.espaceCoach = onRequest(
 // Le coach envoie belfit.be/?invitation=CODE ; la personne cree son
 // compte, l'app appelle cette fonction. Elle ecrit la commande coaching
 // (comme un paiement : le questionnaire s'ouvre) et l'IA illimitee
-// 30 jours. Un lien ne sert qu'a un seul compte.
+// 44 jours. Un lien ne sert qu'a un seul compte.
 // ============================================================
 exports.utiliserInvitation = onRequest(
     {region: "europe-west1", cors: true},
