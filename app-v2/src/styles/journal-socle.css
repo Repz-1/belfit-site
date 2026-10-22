@@ -3486,3 +3486,42 @@ html.avec-avis .pg-besoins { padding-top: var(--haut-avis, 0px); }
 .pg-journal .mc.mc--prevu { border: 1.5px dashed #E6D9B5; box-shadow: none; }
 .pg-journal .mc.mc--prevu .mc-vignette { opacity: .55; }
 .pg-journal .mc.mc--prevu .mc-sous { color: #8F6200; }
+
+/* 22/10 Raci : coche des repas du plan. Cible tactile 44 px, rond de 28 px. */
+.pg-journal .mc-coche {
+  width: 44px; height: 44px; margin: -8px -4px -8px 0; padding: 8px;
+  background: none; border: none; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent;
+}
+.pg-journal .mc-coche svg {
+  width: 28px; height: 28px; box-sizing: border-box; padding: 5px; border-radius: 50%;
+  border: 1.5px solid #D9C48E; background: #fff;
+  fill: none; stroke: #D9C48E; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+  transition: background .15s, border-color .15s, stroke .15s;
+}
+.pg-journal .mc-coche--fait svg { background: #22A06B; border-color: #22A06B; stroke: #fff; }
+.pg-journal .mc-coche:focus-visible svg { outline: 2px solid var(--or); outline-offset: 2px; }
+/* Avec la coche, actions resserrees : « Prévu · 411 kcal » tient sur une ligne. */
+.pg-journal .mc-actions:has(.mc-coche) { gap: 2px; }
+.pg-journal .mc--prevu .mc-sous { white-space: nowrap; }
+
+/* 22/10 Raci : trois issues d'un repas du plan (mangé / sauté / autre chose). */
+.pg-journal .mc-plus, .pg-journal .mc-annuler {
+  width: 44px; height: 44px; margin: -8px -6px; padding: 10px; background: none; border: none;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent; border-radius: 50%;
+}
+.pg-journal .mc-plus svg { width: 22px; height: 22px; fill: #A8925A; }
+.pg-journal .mc-annuler svg { width: 22px; height: 22px; fill: none; stroke: #8A8A8A; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.pg-journal .mc-plus:focus-visible, .pg-journal .mc-annuler:focus-visible, .pg-journal .mc-choix-btn:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+.pg-journal .mc-choix { display: flex; gap: 8px; padding: 0 14px 12px; flex-wrap: wrap; }
+.pg-journal .mc-choix-btn {
+  min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1.5px solid #E6D9B5;
+  background: #fff; color: #5C4A1E; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.pg-journal .mc-choix-btn--discret { border-color: transparent; color: #8A8A8A; font-weight: 500; }
+.pg-journal .mc.mc--saute { background: #F4F4F2; border: 1.5px solid #E4E4E0; box-shadow: none; }
+.pg-journal .mc.mc--saute .mc-vignette { opacity: .35; filter: grayscale(1); }
+.pg-journal .mc.mc--saute .mc-titre { color: #8A8A8A; text-decoration: line-through; }
+.pg-journal .mc.mc--saute .mc-sous { color: #8A8A8A; }
+.pg-journal .mc.mc--autre:not(.mc--prevu) .mc-sous { color: #2F6F9F; }

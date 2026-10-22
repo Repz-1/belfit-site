@@ -15,6 +15,9 @@ import { BandeauConfirmation } from './components/BandeauConfirmation.jsx';
 import { repas, objectifs, donneesPretes, calculBaseFait, totauxJourAff } from './store/journal.js';
 import { DayDashboard, ouvrirCalcDemande } from './components/DayDashboard.jsx';
 import { CoachBar } from './components/CoachBar.jsx';
+// 22/10 Raci : barre de saisie libre des repas masquee sur Aujourd'hui
+// (code garde ; true pour la remettre, en bas de page).
+const BARRE_REPAS_VISIBLE = false;
 import { WaterTracker } from './components/WaterTracker.jsx';
 import { MealCard, ouvrirMesPlats } from './components/MealCard.jsx';
 import { AddMealModal } from './components/AddMealModal.jsx';
@@ -66,7 +69,6 @@ export function OngletJournal() {
             panneau qui se deplie, juste sous elle. */}
         <IdeesRepas panneauSeul />
         <div class="fente-goutte" aria-hidden="true" />
-        <CoachBar />
         <WeightNote />
         <div class="jr-repas-kicker">{t('tes_repas')}</div>
         {/* Le premier repas encore vide est mis en avant : a l'ouverture
@@ -82,7 +84,7 @@ export function OngletJournal() {
           return repas.value.map(r => (
             <MealCard key={r.id} r={r}
               aSuivre={aSuivre && r.id === aSuivre.id}
-              fait={r.ings.length > 0 && !r.prevu} />
+              fait={r.ings.length > 0 && !r.prevu && !r.saute} />
           ));
         })()}
         {/* L'ajout d'un repas vit desormais dans le flux, sous le
@@ -99,6 +101,8 @@ export function OngletJournal() {
             BelFit+, et elle ouvrait aux comptes gratuits une fonction que
             le tableau comparatif de l'abonnement annonce comme Premium.
             L'unique acces est desormais la carte de BelFit+. */}
+        {/* 22/10 Raci : la barre de saisie libre, tout en bas, masquee. */}
+        {BARRE_REPAS_VISIBLE && <CoachBar />}
       </div>
 
       <div class="fab-rangee">

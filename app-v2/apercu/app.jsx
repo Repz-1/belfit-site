@@ -11,6 +11,7 @@ import { histoJours } from '../src/store/stats.js';
 import { App } from '../src/main.jsx';
 import { programmeActif } from '../src/store/programme.js';
 import { estPremium } from '../src/components/PremiumPage.jsx';
+import { programme } from '../src/components/BelfitPlus.jsx';
 
 
 utilisateur.value = { uid: 'test', email: 'coach@belfit.be', displayName: 'Raci', metadata: { creationTime: new Date().toISOString() } };
@@ -23,6 +24,9 @@ repas.value = [
   { id: 3, nom: 'Dîner', type: 'repas', cle: 'diner', fixe: true, ouvert: false, ings: [] },
   { id: 4, nom: 'Collations', type: 'collation', cle: 'snack', fixe: true, ouvert: false, ings: [] },
 ];
+// Journal du banc remplace par les tests (22/10) : ?repas -> localStorage.
+try { const rj = localStorage.getItem('belfit_v2_apercu_repas'); if (rj) repas.value = JSON.parse(rj); } catch (e) {}
+try { const dj = localStorage.getItem('belfit_v2_apercu_datejour'); if (dj) dateJour.value = dj; } catch (e) {}
 authPrete.value = true;
 donneesPretes.value = true;
 calculBaseFait.value = true;
@@ -45,6 +49,6 @@ setInterval(() => {
 }, 100);
 
 // Acces des tests Playwright (cloture de la veille, 21/10).
-window.__banc = { dateJour, repas, histoJours };
+window.__banc = { dateJour, repas, histoJours, programme };
 
 render(<App />, document.getElementById('app'));
