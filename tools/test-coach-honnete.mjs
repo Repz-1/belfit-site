@@ -49,6 +49,10 @@ let t = await txt(o.page); verifCommun(t, 'payé milieu');
 ok(/jours? restants?/.test(t) && /Du .* au /.test(t), 'payé : jours restants et dates affichés');
 ok(/Ajustements inclus ce mois-ci/.test(t), 'payé : « Ajustements inclus ce mois-ci »');
 ok(/Plan livré le/.test(t), 'payé : « Plan livré le »');
+// 22/10 : accès nutrition = payeLe + 44 jours, date réelle affichée.
+{ const fin = new Date(Date.now()-10*86400000+44*86400000).toLocaleDateString('fr-BE',{day:'numeric',month:'long'});
+  ok(t.includes("Accès nutrition jusqu'au "+fin), 'payé : « Accès nutrition jusqu\'au '+fin+' » (payeLe + 44 j)'); }
+ok(!/nutrition[^.]*3 mois|3 mois inclus/.test(t), 'payé : plus de « accès nutrition 3 mois »');
 ok(!/60 €/.test(t), 'payé milieu de mois : pas de 60 €');
 await defiler(o.page, false); await o.page.screenshot({ path: '/workspace/shots/honnete-suivi-paye-haut.png' });
 const nbAjout = await o.page.locator('.sv-ajout').count();
@@ -78,6 +82,17 @@ await defiler(o.page, true);
 await o.page.screenshot({ path: '/workspace/shots/honnete-suivi-paye-fin-bas.png' });
 await o.ctx.close();
 
+// 2b) Paye il y a 45 jours : acces ferme (44 j), plus de 60 €
+o = await ouvrir({ ...PLAN, livreLe: jours(44) }, { commande: { payeLe: jours(45), type: 'plan' }, questionnaire: { envoyeLe: jours(44) } }, 'ferme-45');
+await versSuivi(o.page);
+t = await txt(o.page);
+ok(!/60 €/.test(t), '45 jours : plus de 60 € (accès fermé)');
+ok(!/Accès nutrition jusqu'au/.test(t), '45 jours : plus de date d\'accès');
+{ const fin = new Date(Date.now()-45*86400000+44*86400000).toLocaleDateString('fr-BE',{day:'numeric',month:'long'});
+  ok(t.includes('Accès nutrition terminé le '+fin+'.'), '45 jours : « Accès nutrition terminé le '+fin+'. »'); }
+await defiler(o.page, true); await o.page.screenshot({ path: '/workspace/shots/acces44-termine.png' });
+await o.ctx.close();
+
 // 3) Plan livre SANS payeLe (ex. depose par le coach, virement non saisi)
 o = await ouvrir({ ...PLAN, repas: [...PLAN.repas, { nom: 'Repas libre XYZ', ings: [{ name: 'Pomme', portion: 100 }] }] }, { commande: null, questionnaire: { envoyeLe: jours(12) } }, 'sans-paye');
 await versSuivi(o.page);
@@ -103,7 +118,7 @@ await o.ctx.close();
 // 5) Inscrit gratuit
 o = await ouvrir(null, { commande: null, questionnaire: null }, 'gratuit');
 t = await txt(o.page); verifCommun(t, 'gratuit');
-ok(!/60 €/.test(t), 'gratuit : pas de 60 €'); ok(/Accès nutrition 3 mois inclus/.test(t), 'gratuit : « Accès nutrition 3 mois inclus »');
+ok(!/60 €/.test(t), 'gratuit : pas de 60 €'); ok(/Accès nutrition inclus pendant ton mois payé et les 2 semaines/.test(t) && !/nutrition[^.]*3 mois|3 mois inclus/.test(t), 'gratuit : accès nutrition mois + 2 semaines, plus de « 3 mois »');
 ok(!/Mon suivi/.test(t), 'gratuit : pas de bouton Mon suivi');
 await o.page.screenshot({ path: '/workspace/shots/honnete-gratuit-haut.png' });
 await defiler(o.page, true); await o.page.screenshot({ path: '/workspace/shots/honnete-gratuit-bas.png' });

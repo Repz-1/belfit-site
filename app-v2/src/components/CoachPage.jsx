@@ -273,7 +273,7 @@ export function CoachPage() {
             : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
         </div>
       )}
-      {!occupe && !pr && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement : tu décides de continuer. Accès nutrition 3 mois inclus.</p>}
+      {!occupe && !pr && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement : tu décides de continuer. Accès nutrition inclus pendant ton mois payé et les 2 semaines qui suivent.</p>}
       </>)}
 
       {achat && createPortal(
@@ -282,7 +282,7 @@ export function CoachPage() {
             <p class="cp-nom">{typeAchat === 'maj' ? 'Mois suivant · 60 €' : (pr ? 'Nouveau mois · 80 €' : 'Premier mois · 80 €')}</p>
             <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>
             {/* 02/10 : avantage IA annonce explicitement avant le paiement. */}
-            <p class="cp-txt cp-inclus">Inclus : analyses IA (photo et micro) illimitées pendant 30 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}.</p>
+            <p class="cp-txt cp-inclus">Inclus : analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>
             {typeAchat === 'plan' && (
               <div class="cp-elim">
                 <p class="cp-q">As-tu 18 ans ou plus ?</p>
