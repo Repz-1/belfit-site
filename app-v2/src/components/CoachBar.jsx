@@ -270,7 +270,7 @@ export function CoachBar({ mode = 'repas', titre }) {
       }
       const l2 = parserLocal(dit, contexte);
       setMsg((l2.aliments || []).length || l2.eauLitres
-        ? 'Pour noter un repas, utilise la barre de l\'onglet Aujourd\'hui.'
+        ? 'Pour noter un repas, ajoute-le dans l\'onglet Aujourd\'hui.'
         : 'Dis-moi les muscles à travailler, par exemple « pecs biceps » ou « jambes ».');
       setEtat('pret');
       return;
