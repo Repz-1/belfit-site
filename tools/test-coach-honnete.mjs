@@ -88,7 +88,9 @@ await versSuivi(o.page);
 t = await txt(o.page);
 ok(!/60 €/.test(t), '45 jours : plus de 60 € (accès fermé)');
 ok(!/Accès nutrition jusqu'au/.test(t), '45 jours : plus de date d\'accès');
-await defiler(o.page, true); await o.page.screenshot({ path: '/workspace/shots/acces44-suivi-ferme-45j.png' });
+{ const fin = new Date(Date.now()-45*86400000+44*86400000).toLocaleDateString('fr-BE',{day:'numeric',month:'long'});
+  ok(t.includes('Accès nutrition terminé le '+fin+'.'), '45 jours : « Accès nutrition terminé le '+fin+'. »'); }
+await defiler(o.page, true); await o.page.screenshot({ path: '/workspace/shots/acces44-termine.png' });
 await o.ctx.close();
 
 // 3) Plan livre SANS payeLe (ex. depose par le coach, virement non saisi)

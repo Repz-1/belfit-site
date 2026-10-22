@@ -139,6 +139,8 @@ export function SuiviClient({ onContinuer, onNouveau }) {
           <>
             <p class="cp-nom">Un nouveau mois de coaching</p>
             <p class="cp-txt">On repart d'un bilan complet, ajustements inclus pendant le mois.</p>
+            {/* 22/10 Raci : acces ferme (payeLe reel + 44 j), date discrete, sans 60 €. */}
+            {lim && Date.now() >= lim.getTime() && <p class="cp-txt sv-acces">Accès nutrition terminé le {dateCourte(lim)}.</p>}
             {COMMANDES_OUVERTES
               ? <button class="cp-bt cp-bt--or" onClick={onNouveau}>Reprendre · 80 €</button>
               : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
