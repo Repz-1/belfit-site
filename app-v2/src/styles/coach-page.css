@@ -272,7 +272,7 @@
 .pg-coach .cp-offre.cp-carte--or::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0; background: linear-gradient(180deg, var(--or), var(--orange)); }
 .pg-coach .cp-offre > * { position: relative; }
 .pg-coach .cp-offre .cp-nom { color: #fff; font-size: 16px; font-weight: 800; }
-.pg-coach .cp-offre .cp-prix { font-size: 40px; font-weight: 900; letter-spacing: -.03em; color: #34d399; /* 22/10 Raci : vert emeraude doux, uni */ background: none; text-shadow: none; line-height: 1; }
+.pg-coach .cp-offre .cp-prix { font-size: 40px; font-weight: 900; letter-spacing: -.03em; color: var(--or); /* 22/10 Raci : meme jaune que les chiffres 48 h / 1 mois / 0 */ background: none; text-shadow: none; line-height: 1; }
 .pg-coach .cp-offre .cp-txt { color: #D8D4CA; }
 .pg-coach .cp-offre .cp-jusqua { color: var(--or); }
 .pg-coach .cp-offre .cp-bt--gris { background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.22); }
