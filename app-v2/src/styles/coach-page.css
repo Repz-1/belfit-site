@@ -270,8 +270,8 @@
   background: linear-gradient(120deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.05) 50%, rgba(255,255,255,0) 60%),
     linear-gradient(145deg, rgba(255,107,44,.10) 0%, rgba(255,107,44,0) 45%), linear-gradient(145deg, var(--nuit2) 0%, var(--nuit) 70%); }
 .pg-coach .cp-offre.cp-carte--or::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0; background: linear-gradient(180deg, var(--or), var(--orange)); }
-.pg-coach .cp-offre .cp-ligne { position: relative; padding-bottom: 12px; margin-bottom: 4px; }
-.pg-coach .cp-offre .cp-ligne::after { content: ''; position: absolute; right: 0; bottom: 0; width: 44px; height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--orange), var(--or)); }
+/* 22/10 Raci : prix en vert emeraude doux, uni, sans barre ni lueur. */
+.pg-coach .cp-offre .cp-prix { color: #34d399; }
 .pg-coach .cp-offre > * { position: relative; }
 .pg-coach .cp-offre .cp-nom { color: #fff; font-size: 16px; font-weight: 800; }
 .pg-coach .cp-offre .cp-prix { font-size: 40px; font-weight: 900; letter-spacing: -.03em; color: #fff; background: none; text-shadow: none; line-height: 1; }
