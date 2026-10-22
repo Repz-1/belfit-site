@@ -92,8 +92,8 @@ export function animerGoutte() {
     });
     return out;
   };
-  const estLibre = (y, blocs) => !blocs.some(o =>
-    o.d > 12 && o.g < 12 + PASTILLE_L && y < o.b - 1 && y + PASTILLE_H > o.h + 1);
+  const estLibre = (y, blocs, h = PASTILLE_H) => !blocs.some(o =>
+    o.d > 12 && o.g < 12 + PASTILLE_L && y < o.b - 1 && y + h > o.h + 1);
 
   // Ou poser la pastille au repos.
   // La fente est sa place normale. Quand la carte Calories porte le
@@ -197,6 +197,29 @@ export function animerGoutte() {
     // Entiere aux deux bouts, gouttelettes entre les deux.
     cibleD = borne(Math.min(y, course - y) / 90, 0, 1);
     monte = false;
+    eviterCartes();
+  }
+
+  // 22/10 Raci : arretee a un petit defilement (premier repas amene a
+  // l'ecran), la goutte encore presque entiere restait sur « Pense a te
+  // peser » : la cible proportionnelle ignore les cartes. Si la pastille
+  // (meme a moitie formee) chevauche un bloc, on la pose dans le creux
+  // libre le plus proche ; s'il n'y en a pas, elle se disperse en
+  // gouttelettes dans la gouttiere, ou rien ne la recouvre.
+  function eviterCartes() {
+    if (cibleD >= 0.6) return;
+    const blocs = blocsColonne();
+    // hauteur reelle de la forme a moitie dispersee (+ marge d'etirement)
+    const h = melange(PASTILLE_H, AMAS_H, cibleD) * 1.1 + 4;
+    const haut = 8;
+    const bas  = plafondBarre() - h - 10;
+    const libre = (y) => y >= haut && y <= bas && estLibre(y, blocs, h);
+    if (libre(cibleY)) return;
+    for (let k = 4; k <= 160; k += 4) {
+      if (libre(cibleY - k)) { cibleY -= k; return; }
+      if (libre(cibleY + k)) { cibleY += k; return; }
+    }
+    cibleD = 1;
   }
 
   // La forme rattrape sa cible avec un retard souple : c'est cette
