@@ -32,7 +32,7 @@ import { MEAL_SVG, TYPE_SVG, MEAL_NEUTRAL_SVG } from '../data/illustrations.js';
 import {
   repas, totauxRepas, setPortion, ajouterIngredient, ajouterPlat,
   supprimerIngredient, supprimerRepas, renommerRepas, basculerCuisson,
-  fourchetteRepas, remplacerAliment } from '../store/journal.js';
+  fourchetteRepas, remplacerAliment, validerRepas, annulerValidation } from '../store/journal.js';
 
 /** Illustration d'un repas : la sienne s'il est fixe, sinon celle de son type. */
 export function illustration(r) {
@@ -543,6 +543,18 @@ export function MealCard({ r, aSuivre, fait }) {
         </div>
 
         <div class="mc-actions">
+          {/* 22/10 Raci : repas du plan coche en un geste, decochable. */}
+          {r.duPlan && !vide && (
+            <button
+              class={'mc-coche' + (r.prevu ? '' : ' mc-coche--fait')}
+              role="checkbox"
+              aria-checked={r.prevu ? 'false' : 'true'}
+              aria-label={r.prevu ? `Marquer ${r.nom} comme mangé` : `Remettre ${r.nom} en prévu`}
+              onClick={e => { e.stopPropagation(); if (r.prevu) validerRepas(r.id); else annulerValidation(r.id); }}
+            >
+              <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+            </button>
+          )}
           <button
             class="mc-crayon"
             onClick={e => { e.stopPropagation(); setEdite(true); }}

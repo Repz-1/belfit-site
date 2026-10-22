@@ -290,6 +290,46 @@ export function validerRepas(repasId) {
   repas.value = repas.value.map(r => r.id === repasId && r.prevu ? { ...r, prevu: false } : r);
 }
 
+/**
+ * 22/10 Raci : pose les repas du plan coach dans le journal du jour,
+ * en « prevus » (prevu + duPlan), SANS jamais ecraser ce que le client
+ * a deja saisi :
+ *  - repas du journal de meme nom/cle, vide ou encore « prevu » du plan
+ *    -> remplace par la version du plan (meme id) ;
+ *  - repas de meme nom/cle deja rempli ou valide -> laisse tel quel ;
+ *  - repas du plan absent -> ajoute ;
+ *  - ancien repas du plan encore « prevu » absent du nouveau plan -> retire
+ *    (jamais mange, il appartenait a l'ancienne livraison).
+ * Les autres repas (libres, collations vides...) ne bougent pas.
+ */
+export function semerPlan(planRepas) {
+  const liste = repas.value.map(r => ({ ...r }));
+  const nomN = (n) => String(n || '').trim().toLowerCase();
+  const cles = new Set();
+  let id = Math.max(0, ...liste.map(r => r.id || 0));
+  planRepas.forEach((p, k) => {
+    const cle = cleDuNom(p.nom);
+    cles.add(cle || nomN(p.nom));
+    const neuf = (rid) => ({
+      id: rid, nom: p.nom, type: cle === 'snack' ? 'collation' : 'repas',
+      prevu: true, duPlan: true, cle, fixe: false, ouvert: false,
+      ings: (p.ings || []).map((i, j) => ({ id: rid * 1000 + j, name: i.name, portion: i.portion })),
+    });
+    const i = liste.findIndex(r => (cle && r.cle === cle) || nomN(r.nom) === nomN(p.nom));
+    if (i < 0) { liste.push(neuf(++id)); return; }
+    const r = liste[i];
+    if (r.ings.length === 0 || (r.duPlan && r.prevu)) liste[i] = { ...neuf(r.id), fixe: r.fixe, cle: r.cle || cle };
+  });
+  repas.value = liste.filter(r => !(r.duPlan && r.prevu && !cles.has(r.cle || nomN(r.nom))));
+}
+
+/** 22/10 Raci : decocher un repas du plan -> il redevient « prevu » et
+ *  sort du cadran (totauxJour / totauxJourAff ignorent les prevus, la
+ *  cloture aussi). Seulement pour les repas venus du plan (duPlan). */
+export function annulerValidation(repasId) {
+  repas.value = repas.value.map(r => r.id === repasId && r.duPlan && !r.prevu ? { ...r, prevu: true } : r);
+}
+
 export function renommerRepas(repasId, nom) {
   repas.value = repas.value.map(r => r.id !== repasId ? r : { ...r, nom });
 }

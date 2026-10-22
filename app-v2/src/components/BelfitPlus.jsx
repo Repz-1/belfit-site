@@ -4,7 +4,7 @@ import { signal, effect, computed } from '@preact/signals';
 import { Icone } from './IconesCoach.jsx';
 import { getApps } from 'firebase/app';
 import { utilisateur } from '../services/firebase.js';
-import { setObjectifs, objectifs, repas, cleDuNom } from '../store/journal.js';
+import { setObjectifs, objectifs, repas, cleDuNom, semerPlan, dateJour, donneesPretes } from '../store/journal.js';
 import { macrosOf, DB } from '../data/aliments.js';
 import { ongletActif, allerOnglet } from './BottomNav.jsx';
 import { statsAvOuvertes } from './StatsAvancees.jsx';
@@ -79,6 +79,23 @@ effect(() => {
   if (!pr || !(+pr.kcal > 0)) return;
   if (o.kcal === pr.kcal && o.prot === pr.prot && o.carbs === pr.carbs && o.lip === pr.lip) return;
   setObjectifs({ kcal: pr.kcal, prot: pr.prot, carbs: pr.carbs, lip: pr.lip });
+});
+
+// 22/10 Raci : des que le plan est connu (charge a l'ouverture de l'app,
+// voir plus haut), ses repas arrivent seuls sur Aujourd'hui en « Prévu ».
+// Une fois par journee du journal (dateJour, qui change a la cloture) et
+// par livraison (livreLe) ; semerPlan n'ecrase jamais une saisie.
+const CLE_SEME = 'belfit_v2_plan_seme';
+effect(() => {
+  const pr = programme.value;
+  if (!pr || !Array.isArray(pr.repas) || !pr.repas.length) return;
+  if (!donneesPretes.value) return;   // journal du compte pas encore charge
+  const u = utilisateur.peek();
+  const cle = CLE_SEME + '_' + (u ? u.uid : 'local');
+  const marque = dateJour.value + '|' + String(pr.livreLe || '');
+  try { if (localStorage.getItem(cle) === marque) return; } catch (e) {}
+  semerPlan(pr.repas);
+  try { localStorage.setItem(cle, marque); } catch (e) {}
 });
 
 export function chargerProgramme() {
@@ -201,26 +218,14 @@ export function BelfitPlus() {
 
   const aRepas = !!(pr && pr.repas && pr.repas.length);
 
-  /** Charge le programme dans le journal du jour : objectifs ET repas.
-   *  Les repas existants sont remplaces — un programme est un tout,
-   *  le melanger avec une saisie partielle ne donnerait ni l'un ni
-   *  l'autre. L'avertissement le dit avant le clic. */
+  /** Charge le programme dans le journal du jour : objectifs ET repas
+   *  (22/10 : repas poses en « prevus » sans ecraser la saisie du jour ;
+   *  ils arrivent d'ailleurs seuls a l'ouverture, ce bouton re-seme). */
   const charger = () => {
     if (!pr) return;
     setObjectifs({ kcal: pr.kcal, prot: pr.prot, carbs: pr.carbs, lip: pr.lip });
-    if (aRepas) {
-      let n = 0;
-      repas.value = pr.repas.map((r) => ({
-        id: ++n,
-        nom: r.nom,
-        type: cleDuNom(r.nom) === 'snack' ? 'collation' : 'repas',
-        prevu: true,
-        cle: cleDuNom(r.nom),
-        fixe: false,
-        ouvert: false,
-        ings: r.ings.map((i, k) => ({ id: n * 1000 + k, name: i.name, portion: i.portion })),
-      }));
-    }
+    // 22/10 : meme regle que l'arrivee automatique, sans ecraser la saisie.
+    if (aRepas) semerPlan(pr.repas);
     marquerCharge(pr);
     setCharge(true);
   };
@@ -332,7 +337,7 @@ export function BelfitPlus() {
                 </button>
               )}
               {aRepas && (
-                <p class="bp-avis">Ils arrivent comme « prévus » : ouvre un repas et touche Terminer quand tu l'as mangé, il compte alors dans ta journée.</p>
+                <p class="bp-avis">Ils sont déjà dans ton journal en « prévus » : coche un repas quand tu l'as mangé, il compte alors dans ta journée.</p>
               )}
             </>
           )}

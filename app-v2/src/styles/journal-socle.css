@@ -3486,3 +3486,21 @@ html.avec-avis .pg-besoins { padding-top: var(--haut-avis, 0px); }
 .pg-journal .mc.mc--prevu { border: 1.5px dashed #E6D9B5; box-shadow: none; }
 .pg-journal .mc.mc--prevu .mc-vignette { opacity: .55; }
 .pg-journal .mc.mc--prevu .mc-sous { color: #8F6200; }
+
+/* 22/10 Raci : coche des repas du plan. Cible tactile 44 px, rond de 28 px. */
+.pg-journal .mc-coche {
+  width: 44px; height: 44px; margin: -8px -4px -8px 0; padding: 8px;
+  background: none; border: none; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent;
+}
+.pg-journal .mc-coche svg {
+  width: 28px; height: 28px; box-sizing: border-box; padding: 5px; border-radius: 50%;
+  border: 1.5px solid #D9C48E; background: #fff;
+  fill: none; stroke: #D9C48E; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+  transition: background .15s, border-color .15s, stroke .15s;
+}
+.pg-journal .mc-coche--fait svg { background: #22A06B; border-color: #22A06B; stroke: #fff; }
+.pg-journal .mc-coche:focus-visible svg { outline: 2px solid var(--or); outline-offset: 2px; }
+/* Avec la coche, actions resserrees : « Prévu · 411 kcal » tient sur une ligne. */
+.pg-journal .mc-actions:has(.mc-coche) { gap: 2px; }
+.pg-journal .mc--prevu .mc-sous { white-space: nowrap; }
