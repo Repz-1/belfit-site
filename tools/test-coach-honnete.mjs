@@ -149,8 +149,8 @@ await o.ctx.close();
   ok(/"belfit_v2_plan_seme_test"/.test(JSON.stringify(Object.keys(await p.evaluate(() => ({ ...localStorage }))))), 'semis : marque du jour posée');
   const kcal = async () => { await p.waitForTimeout(1600); return Number((await p.locator('.cal-cote-val').first().innerText()).replace(/\D/g, '')); };
   const vers = async () => { await p.locator('.mc').nth(1).scrollIntoViewIfNeeded(); await p.waitForTimeout(500); };
-  const coches = p.locator('.mc-coche');
-  ok(await coches.count() === 3, 'coche : une coche par repas du plan (' + await coches.count() + ')');
+  const coches = p.locator('.mc-plan-btn--mange');
+  ok(await coches.count() === 3, 'coche : un bouton « Mangé » par repas du plan (' + await coches.count() + ')');
   const k0 = await kcal(); ok(k0 === 0, 'coche : repas prévus hors cadran (' + k0 + ')');
   const obj = await p.evaluate(() => document.body.innerText); ok(/2\s?222/.test(obj), 'semis : objectif du jour = plan (2222)');
   const sous = await p.locator('.mc-sous').nth(1).innerText(); const kRepas = Number(sous.replace(/[^\d]/g, ''));
@@ -158,13 +158,13 @@ await o.ctx.close();
   await vers(); await p.screenshot({ path: '/workspace/shots/coche-prevu-avant.png' });
   await coches.nth(1).click(); const k1 = await kcal();
   ok(k1 === kRepas, 'coche : le cadran reçoit le déjeuner (' + k1 + ' = ' + kRepas + ')');
-  ok(await coches.nth(1).getAttribute('aria-checked') === 'true' && !/Prévu/.test(await p.locator('.mc-sous').nth(1).innerText()), 'coche : état coché, plus « Prévu »');
+  ok(await p.locator('.mc-coche').count() === 1 && await p.locator('.mc-coche').getAttribute('aria-checked') === 'true' && !/Prévu/.test(await p.locator('.mc-sous').nth(1).innerText()), 'coche : état coché (✓ décochable), plus « Prévu »');
   ok(await p.locator('.rp-total-fin').count() === 0, 'coche : MealPage pas ouverte');
   const st = await p.evaluate(() => { const k = Object.keys(localStorage).find(x => x.startsWith('belfit_v2_journal')); return k ? localStorage.getItem(k) : ''; });
   ok(/"duPlan":true/.test(st), 'coche : duPlan sauvegardé avec le journal');
   await vers(); await p.screenshot({ path: '/workspace/shots/coche-prevu-coche.png' });
-  await coches.nth(1).click(); const k2 = await kcal();
-  ok(k2 === 0 && await coches.nth(1).getAttribute('aria-checked') === 'false' && /Prévu/.test(await p.locator('.mc-sous').nth(1).innerText()), 'décoche : retour en prévu, cadran à 0 (' + k2 + ')');
+  await p.locator('.mc-coche').click(); const k2 = await kcal();
+  ok(k2 === 0 && await p.locator('.mc-coche').count() === 0 && /Prévu/.test(await p.locator('.mc-sous').nth(1).innerText()), 'décoche : retour en prévu, cadran à 0 (' + k2 + ')');
   await vers(); await p.screenshot({ path: '/workspace/shots/coche-prevu-decoche.png' });
 
   // 6b) meme jour, reouverture du bouton Coach : re-seme sans casser le dejeuner coche.
@@ -221,7 +221,7 @@ await o.ctx.close();
 
   o = await ouvrir(null, { commande: null, questionnaire: null }, 'sans-plan');
   await o.page.locator('.bn-item').first().click(); await o.page.waitForTimeout(1500);
-  ok(await o.page.locator('.mc-coche').count() === 0, 'sans plan : aucune coche, journal inchangé');
+  ok(await o.page.locator('.mc-plan').count() === 0, 'sans plan : aucun choix de repas, journal inchangé');
   await o.ctx.close();
 }
 
@@ -242,18 +242,34 @@ await o.ctx.close();
   const kcal = async () => { await p.waitForTimeout(1500); return Number((await p.locator('.cal-cote-val').first().innerText()).replace(/\D/g, '')); };
   const dej = () => p.locator('.mc').nth(1);
   const r1 = () => p.evaluate(() => { const r = window.__banc.repas.value[1]; return { prevu: !!r.prevu, saute: !!r.saute, remplace: !!r.remplace, duPlan: !!r.duPlan, ings: r.ings.map(i => i.name).join('+'), plan: (r.ingsPlan || []).map(i => i.name).join('+') }; });
-  const vers = async () => { await dej().scrollIntoViewIfNeeded(); await p.waitForTimeout(500); };
-  ok(await p.locator('.mc-plus').count() === 3 && await p.locator('.mc-coche').count() === 3, 'choix : ✓ et ⋯ sur chaque repas prévu du plan');
-  ok(await p.locator('.mc-crayon').count() === 1, 'choix : crayon remplacé par ⋯ sur les repas du plan (reste sur Collations)');
+  let e0; const vers = async () => { await dej().scrollIntoViewIfNeeded(); await p.waitForTimeout(500); };
+  ok(await p.locator('.mc-plan').count() === 3 && await p.locator('.mc-plan-btn').count() === 9, 'choix : 3 boutons visibles (Mangé / Sauté / Mangé autre chose) sur chaque repas prévu du plan, sans menu caché');
+  const libs = await dej().locator('.mc-plan-btn').allInnerTexts(); ok(JSON.stringify(libs) === JSON.stringify(['✓ Mangé', 'Sauté', 'Mangé autre chose']), 'choix : libellés ' + JSON.stringify(libs));
+  ok(await p.locator('.mc-crayon').count() === 1 && await p.locator('.mc-renommer').count() === 3, 'renommer : crayon discret sur chaque repas du plan (.mc-renommer) + celui de Collations (.mc-crayon)');
+  const crayonOk = async (etat) => { const c = dej().locator('.mc-renommer'); const hb = await c.boundingBox(); const ch = await dej().locator('.mc-chevron').boundingBox();
+    ok(hb && hb.width >= 40 && hb.height >= 40 && hb.x + hb.width <= ch.x + 1, 'renommer (' + etat + ') : visible, cible ≥ 40 px (' + Math.round(hb.width) + '×' + Math.round(hb.height) + '), à gauche du chevron');
+    ok(await dej().locator('.mc-tete .mc-renommer').count() === 0 && await dej().locator('.mc-plan .mc-renommer').count() === 0, 'renommer (' + etat + ') : hors de .mc-tete et hors de la rangée des 3 boutons');
+    const ba = await dej().locator('.mc-annuler, .mc-coche').boundingBox().catch(() => null); if (ba) ok(ba.x + ba.width <= hb.x + 1, 'renommer (' + etat + ') : ne recouvre pas ↺ / ✓'); };
+  await crayonOk('prévu');
   await vers(); await p.screenshot({ path: '/workspace/shots/choix-repas-prevu.png' });
-  // menu
-  await dej().locator('.mc-plus').click(); await p.waitForTimeout(300);
-  ok(await dej().locator('.mc-choix-btn').count() === 3 && await dej().locator('.mc-plus').getAttribute('aria-expanded') === 'true', 'menu : Sauté / Mangé autre chose / Renommer');
-  const hb = await dej().locator('.mc-choix-btn').first().boundingBox(); ok(hb.height >= 44, 'menu : cibles ≥ 44 px (' + Math.round(hb.height) + ')');
+  // cibles et zone cliquable : les boutons sont HORS de .mc-tete
+  for (const b of await dej().locator('.mc-plan-btn').all()) { const hb = await b.boundingBox(); ok(hb.height >= 44 && hb.width >= 44, 'boutons : cible ≥ 44 px (' + Math.round(hb.width) + '×' + Math.round(hb.height) + ')'); }
+  ok(await dej().locator('.mc-tete .mc-plan-btn').count() === 0, 'boutons : hors de la zone qui ouvre la fiche (.mc-tete)');
+  // renommer un repas du plan : le tap sur le crayon ouvre le champ, jamais la fiche
+  await dej().locator('.mc-renommer').tap(); await p.waitForTimeout(300);
+  ok(await dej().locator('.mc-titre-champ').count() === 1 && await p.locator('.rp-titre').count() === 0, 'renommer : le tap ouvre le champ de renommage sans ouvrir la fiche');
+  ok(await dej().locator('.mc-titre-champ').evaluate(n => n === document.activeElement), 'renommer : le champ a le focus');
+  await p.keyboard.press('Control+A'); await p.keyboard.type('Midi maison'); await p.keyboard.press('Enter'); await p.waitForTimeout(300);
+  ok(await dej().locator('.mc-titre').innerText() === 'Midi maison' && await p.locator('.rp-titre').count() === 0, 'renommer : nouveau nom affiché, fiche fermée');
+  e0 = await p.evaluate(() => window.__banc.repas.value.map(r => r.nom + ':' + (r.prevu ? 'P' : '-')).join('|')); ok(/Midi maison:P/.test(e0), 'renommer : le repas reste « Prévu » (' + e0 + ')');
+  await p.evaluate(() => { const b = window.__banc.programme; b.value = { ...b.value, livreLe: new Date(Date.now() + 500).toISOString() }; }); await p.waitForTimeout(800);
+  ok(await p.locator('.mc').count() === 4 && await dej().locator('.mc-titre').innerText() === 'Déjeuner', 'renommer : une nouvelle livraison remplace le repas encore « Prévu » par la version du plan (nom du plan), sans doublon');
   await vers(); await p.screenshot({ path: '/workspace/shots/choix-repas-menu.png' });
   // saute
-  await dej().locator('.mc-choix-btn', { hasText: 'Sauté' }).click(); await p.waitForTimeout(300);
+  await dej().locator('.mc-plan-btn--saute').tap(); await p.waitForTimeout(300);
+  ok(await p.locator('.rp-titre').count() === 0, 'sauté : la fiche du repas ne s\'ouvre pas');
   let e = await r1(); ok(e.saute && !e.prevu && e.duPlan, 'sauté : saute:true, plus prévu');
+  await crayonOk('sauté');
   ok(/Sauté · 0 kcal/.test(await dej().locator('.mc-sous').innerText()) && await dej().evaluate(n => n.classList.contains('mc--saute')), 'sauté : carte grisée « Sauté · 0 kcal »');
   ok(await kcal() === 0, 'sauté : cadran à 0');
   const st = await p.evaluate(() => { const k = Object.keys(localStorage).find(x => x.startsWith('belfit_v2_journal')); return k ? localStorage.getItem(k) : ''; });
@@ -265,19 +281,21 @@ await o.ctx.close();
   await dej().locator('.mc-annuler').click(); await p.waitForTimeout(300);
   e = await r1(); ok(e.prevu && !e.saute && e.ings === 'Riz cuit+Poulet cuit', 'sauté → retour en Prévu en un geste');
   // mange (✓) + retour deja couverts au cas 6 ; verif rapide
-  await dej().locator('.mc-coche').click(); const kM = await kcal(); ok(kM > 0, 'mangé : le cadran reçoit le repas (' + kM + ')');
+  await dej().locator('.mc-plan-btn--mange').tap(); const kM = await kcal(); ok(kM > 0 && await p.locator('.rp-titre').count() === 0, 'mangé : le cadran reçoit le repas, fiche non ouverte (' + kM + ')');
+  await crayonOk('mangé');
   await dej().locator('.mc-coche').click(); ok(await kcal() === 0, 'mangé → retour en Prévu');
   // mange autre chose : abandon sans rien noter -> redevient prevu
-  await dej().locator('.mc-plus').click(); await dej().locator('.mc-choix-btn', { hasText: 'autre' }).click(); await p.waitForTimeout(800);
+  await dej().locator('.mc-plan-btn--autre').click(); await p.waitForTimeout(800);
   ok(await p.locator('.rp-titre').count() === 1, 'autre : la page du repas s\'ouvre');
   e = await r1(); ok(e.remplace && e.prevu && e.ings === '' && e.plan === 'Riz cuit+Poulet cuit', 'autre : aliments du plan mis de côté, page vide');
   await p.locator('.rp-retour').click(); await p.waitForTimeout(800);
   e = await r1(); ok(!e.remplace && e.prevu && e.ings === 'Riz cuit+Poulet cuit', 'autre : quitter sans noter → redevient le prévu du plan');
   // mange autre chose : on note Lentilles cuites + Riz cuit et Terminer
-  await dej().locator('.mc-plus').click(); await dej().locator('.mc-choix-btn', { hasText: 'autre' }).click(); await p.waitForTimeout(800);
+  await dej().locator('.mc-plan-btn--autre').click(); await p.waitForTimeout(800);
   await p.evaluate(() => { const b = window.__banc.repas; b.value = b.value.map((r, k) => k === 1 ? { ...r, ings: [{ id: 7001, name: 'Lentilles cuites', portion: 200 }, { id: 7002, name: 'Riz cuit', portion: 100 }] } : r); });
   await p.waitForTimeout(400); await p.locator('.rp-total-fin').click(); await p.waitForTimeout(900);
   e = await r1(); ok(e.remplace && !e.prevu && e.duPlan && e.ings === 'Lentilles cuites+Riz cuit', 'autre : enregistré comme repas validé (duPlan + remplace gardés)');
+  await crayonOk('autre');
   const kA = await kcal(); ok(kA > 0 && /Autre chose · \d+ kcal/.test(await dej().locator('.mc-sous').innerText()), 'autre : « Autre chose » compte dans le cadran (' + kA + ')');
   await p.evaluate(() => { const b = window.__banc.programme; b.value = { ...b.value, livreLe: new Date(Date.now() + 5000).toISOString() }; }); await p.waitForTimeout(700);
   e = await r1(); ok(e.remplace && e.ings === 'Lentilles cuites+Riz cuit', 'semis : un repas remplacé n\'est jamais écrasé');

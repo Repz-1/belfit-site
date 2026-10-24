@@ -3506,20 +3506,37 @@ html.avec-avis .pg-besoins { padding-top: var(--haut-avis, 0px); }
 .pg-journal .mc--prevu .mc-sous { white-space: nowrap; }
 
 /* 22/10 Raci : trois issues d'un repas du plan (mangé / sauté / autre chose). */
-.pg-journal .mc-plus, .pg-journal .mc-annuler {
+.pg-journal .mc-annuler {
   width: 44px; height: 44px; margin: -8px -6px; padding: 10px; background: none; border: none;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent; border-radius: 50%;
 }
-.pg-journal .mc-plus svg { width: 22px; height: 22px; fill: #A8925A; }
 .pg-journal .mc-annuler svg { width: 22px; height: 22px; fill: none; stroke: #8A8A8A; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.pg-journal .mc-plus:focus-visible, .pg-journal .mc-annuler:focus-visible, .pg-journal .mc-choix-btn:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
-.pg-journal .mc-choix { display: flex; gap: 8px; padding: 0 14px 12px; flex-wrap: wrap; }
-.pg-journal .mc-choix-btn {
-  min-height: 44px; padding: 0 16px; border-radius: 22px; border: 1.5px solid #E6D9B5;
-  background: #fff; color: #5C4A1E; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+.pg-journal .mc-annuler:focus-visible, .pg-journal .mc-plan-btn:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+/* 24/10 : renommer un repas du plan — crayon discret hors de .mc-tete, a gauche du chevron.
+   La place est reservee dans la rangee d'actions pour que ↺ / ✓ ne passent pas dessous. */
+.pg-journal .mc--plan .mc-chevron { margin-left: 44px; }
+.pg-journal .mc--plan .mc-coche { margin-right: 0; }
+.pg-journal .mc-renommer {
+  position: absolute; top: 20px; right: 24px; width: 44px; height: 44px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer; color: var(--encre-6, #8A8A8A);
+  -webkit-tap-highlight-color: transparent; border-radius: 50%;
 }
-.pg-journal .mc-choix-btn--discret { border-color: transparent; color: #8A8A8A; font-weight: 500; }
+.pg-journal .mc-renommer svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pg-journal .mc-renommer:active { color: var(--or); }
+.pg-journal .mc-renommer:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+/* 24/10 : trois boutons libelles sous chaque repas « Prevu » du plan, hors de .mc-tete. */
+.pg-journal .mc-plan { display: flex; gap: 8px; padding: 0 14px 12px; }
+.pg-journal .mc-plan-btn {
+  flex: 1 1 0; min-width: 0; min-height: 44px; padding: 0 6px; border-radius: 22px;
+  border: 1.5px solid #E6D9B5; background: #fff; color: #5C4A1E;
+  font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pg-journal .mc-plan-btn--mange { background: var(--or); border-color: var(--or); color: #2B2100; }
+.pg-journal .mc-plan-btn--autre { flex: 1.7 1 0; }
+.pg-journal .mc-plan-btn:active { transform: scale(.97); }
 .pg-journal .mc.mc--saute { background: #F4F4F2; border: 1.5px solid #E4E4E0; box-shadow: none; }
 .pg-journal .mc.mc--saute .mc-vignette { opacity: .35; filter: grayscale(1); }
 .pg-journal .mc.mc--saute .mc-titre { color: #8A8A8A; text-decoration: line-through; }

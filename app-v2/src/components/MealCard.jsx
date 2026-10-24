@@ -521,7 +521,6 @@ export function MealCard({ r, aSuivre, fait }) {
   const tot = totauxRepas(r);
   const vide = r.ings.length === 0;
   const [edite, setEdite] = useState(false);
-  const [choix, setChoix] = useState(false);
   // 22/10 : etat d'un repas du plan — prevu, mange, saute, autre (remplace).
   const choisi = r.duPlan && (r.saute || r.remplace);
   // Trois zones : vignette, contenu, actions.
@@ -529,7 +528,7 @@ export function MealCard({ r, aSuivre, fait }) {
   // centres sur la meme ligne : places separement, ils se retrouvaient
   // l'un en haut, l'autre au milieu.
   return (
-    <div class={'mc' + (aSuivre ? ' mc--suivant' : '') + (fait ? ' mc--fait' : '') + (r.prevu ? ' mc--prevu' : '') + (r.saute ? ' mc--saute' : '') + (r.remplace ? ' mc--autre' : '')}>
+    <div class={'mc' + (aSuivre ? ' mc--suivant' : '') + (fait ? ' mc--fait' : '') + (r.prevu ? ' mc--prevu' : '') + (r.saute ? ' mc--saute' : '') + (r.remplace ? ' mc--autre' : '') + (r.duPlan ? ' mc--plan' : '')}>
       <div class="mc-tete" onClick={() => { if (!edite) repasOuvertId.value = r.id; }}>
 
         <div class="mc-vignette" dangerouslySetInnerHTML={{ __html: illustration(r) }} />
@@ -543,7 +542,7 @@ export function MealCard({ r, aSuivre, fait }) {
               onInput={e => renommerRepas(r.id, e.currentTarget.value)}
               onBlur={() => setEdite(false)}
               onKeyDown={e => e.key === 'Enter' && setEdite(false)}
-              autoFocus
+              ref={el => { if (el && !el.dataset.fait) { el.dataset.fait = '1'; el.focus(); } }}
             />
           ) : (
             <h3 class="mc-titre">{r.nom}</h3>
@@ -567,21 +566,15 @@ export function MealCard({ r, aSuivre, fait }) {
               <svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5" /><path d="M4 9h10a6 6 0 010 12h-3" /></svg>
             </button>
           )}
-          {r.duPlan && !vide && !choisi && (
+          {r.duPlan && !vide && !choisi && !r.prevu && (
             <button
-              class={'mc-coche' + (r.prevu ? '' : ' mc-coche--fait')}
+              class="mc-coche mc-coche--fait"
               role="checkbox"
-              aria-checked={r.prevu ? 'false' : 'true'}
-              aria-label={r.prevu ? `Marquer ${r.nom} comme mangé` : `Remettre ${r.nom} en prévu`}
-              onClick={e => { e.stopPropagation(); if (r.prevu) validerRepas(r.id); else annulerValidation(r.id); }}
+              aria-checked="true"
+              aria-label={`Remettre ${r.nom} en prévu`}
+              onClick={e => { e.stopPropagation(); annulerValidation(r.id); }}
             >
               <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-            </button>
-          )}
-          {r.duPlan && r.prevu && !r.remplace && (
-            <button class="mc-plus" aria-label={`Autres choix pour ${r.nom}`} aria-expanded={choix ? 'true' : 'false'}
-              onClick={e => { e.stopPropagation(); setChoix(!choix); }}>
-              <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
             </button>
           )}
           {!r.duPlan && <button
@@ -601,14 +594,25 @@ export function MealCard({ r, aSuivre, fait }) {
           <span class="mc-chevron mc-chevron--nav" aria-hidden="true">›</span>
         </div>
       </div>
-      {choix && r.duPlan && r.prevu && !r.remplace && (
-        <div class="mc-choix" role="group" aria-label={`Autres choix pour ${r.nom}`}>
-          <button class="mc-choix-btn" onClick={() => { setChoix(false); sauterRepas(r.id); }}>Sauté</button>
-          <button class="mc-choix-btn" onClick={() => { setChoix(false); mangeAutreChose(r.id); repasOuvertId.value = r.id; }}>Mangé autre chose</button>
-          <button class="mc-choix-btn mc-choix-btn--discret" onClick={() => { setChoix(false); setEdite(true); }}>Renommer</button>
-        </div>
+      {/* 24/10 Raci : renommer un repas du plan. Bouton HORS de .mc-tete (donc il
+          n'ouvre jamais la fiche), cale juste a gauche du chevron. */}
+      {r.duPlan && !edite && (
+        <button class="mc-renommer" aria-label={`Renommer ${r.nom}`}
+          onClick={e => { e.stopPropagation(); setEdite(true); }}>
+          <svg viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
+        </button>
       )}
 
+      {/* 24/10 Raci : les trois issues d'un repas du plan sont visibles d'emblee,
+          HORS de la zone qui ouvre la fiche (.mc-tete) : aucun clic ici n'ouvre le repas,
+          sauf « Mangé autre chose » qui ouvre la page pour noter ce qui a ete mange. */}
+      {r.duPlan && r.prevu && !r.remplace && !vide && (
+        <div class="mc-plan" role="group" aria-label={`Que s'est-il passé pour ${r.nom} ?`} onClick={e => e.stopPropagation()}>
+          <button class="mc-plan-btn mc-plan-btn--mange" onClick={e => { e.stopPropagation(); validerRepas(r.id); }}>✓ Mangé</button>
+          <button class="mc-plan-btn mc-plan-btn--saute" onClick={e => { e.stopPropagation(); sauterRepas(r.id); }}>Sauté</button>
+          <button class="mc-plan-btn mc-plan-btn--autre" onClick={e => { e.stopPropagation(); mangeAutreChose(r.id); repasOuvertId.value = r.id; }}>Mangé autre chose</button>
+        </div>
+      )}
     </div>
   );
 }

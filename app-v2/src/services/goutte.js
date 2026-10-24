@@ -207,7 +207,9 @@ export function animerGoutte() {
   // libre le plus proche ; s'il n'y en a pas, elle se disperse en
   // gouttelettes dans la gouttiere, ou rien ne la recouvre.
   function eviterCartes() {
-    if (cibleD >= 0.6) return;
+    // 0.9 (et non 0.6) : jusqu'a d = 0,86 la pastille reste visible (opacite > 0,15) ;
+    // a 0,6 elle etait encore a 40 % et se posait a demi sur une carte (24/10).
+    if (cibleD >= 0.9) return;
     const blocs = blocsColonne();
     // hauteur reelle de la forme a moitie dispersee (+ marge d'etirement)
     const h = melange(PASTILLE_H, AMAS_H, cibleD) * 1.1 + 4;

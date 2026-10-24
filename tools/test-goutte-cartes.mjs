@@ -52,7 +52,7 @@ for (const [nom, plan] of [['plan', PLAN], ['sans-plan', null]]) {
   const p = await ctx.newPage();
   p.on('pageerror', e => { console.log('ERREUR JS', e.message); code = 1; });
   await p.goto('http://localhost:8092/app.html'); await p.waitForTimeout(2600);
-  if (plan) ok(await p.locator('.mc-coche').count() === 3, nom + ' : repas du plan semés');
+  if (plan) ok(await p.locator('.mc-plan').count() === 3, nom + ' : repas du plan semés');
   // Cas du test coche : premier repas amene a l'ecran (position intermediaire).
   for (const ou of ['haut', 'milieu', 'bas', 'repas']) {
     if (ou === 'repas') { await allerA(p, 'haut'); await p.waitForTimeout(500); await p.locator('.mc').nth(1).scrollIntoViewIfNeeded(); }
