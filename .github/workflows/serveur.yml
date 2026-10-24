@@ -5,7 +5,8 @@ name: Deploy serveur (Firebase)
 # ou a la main depuis l'onglet Actions de GitHub.
 # Prerequis, une seule fois : le secret FIREBASE_SA_KEY (cle JSON d'un
 # compte de service du projet repz-baf60) et COACH_CODE (code de
-# l'espace coach) et MOLLIE_API_KEY (cle Mollie test_... puis live_...)
+# l'espace coach) et MOLLIE_API_KEY (cle Mollie test_... puis live_...) et MOLLIE_TEST_EMAILS
+# (e-mails autorises tant que la cle Mollie est une cle de test)
 # dans Settings > Secrets.
 
 on:
@@ -73,9 +74,23 @@ jobs:
             rm -f "$RUNNER_TEMP/mollie.txt"
           fi
 
+      # Liste d'e-mails autorises en mode test (secret GitHub MOLLIE_TEST_EMAILS
+      # -> secret Firebase du meme nom). Jamais ecrite dans le depot ni dans les logs.
+      - name: E-mails de test Mollie
+        env:
+          EMAILS: ${{ secrets.MOLLIE_TEST_EMAILS }}
+        run: |
+          if [ -z "$EMAILS" ]; then echo "Secret MOLLIE_TEST_EMAILS absent."; exit 1; fi
+          ACTUEL=$(npx --yes firebase-tools@latest functions:secrets:access MOLLIE_TEST_EMAILS --project repz-baf60 2>/dev/null || true)
+          if [ "$ACTUEL" != "$EMAILS" ]; then
+            printf '%s' "$EMAILS" > "$RUNNER_TEMP/emails.txt"
+            npx --yes firebase-tools@latest functions:secrets:set MOLLIE_TEST_EMAILS --data-file="$RUNNER_TEMP/emails.txt" --project repz-baf60 --non-interactive --force
+            rm -f "$RUNNER_TEMP/emails.txt"
+          fi
+
       - name: Deploiement
         run: npx --yes firebase-tools@latest deploy --only functions,firestore:rules --project repz-baf60 --non-interactive --force
 
       - name: Nettoyage
         if: always()
-        run: rm -f "$RUNNER_TEMP/cle.json" "$RUNNER_TEMP/code.txt" "$RUNNER_TEMP/mollie.txt"
+        run: rm -f "$RUNNER_TEMP/cle.json" "$RUNNER_TEMP/code.txt" "$RUNNER_TEMP/mollie.txt" "$RUNNER_TEMP/emails.txt"

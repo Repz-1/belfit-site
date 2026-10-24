@@ -13,6 +13,7 @@ const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
 
 const MOLLIE_API_KEY = defineSecret("MOLLIE_API_KEY");
+const MOLLIE_TEST_EMAILS = defineSecret("MOLLIE_TEST_EMAILS");
 const API = "https://api.mollie.com/v2";
 const REGION = "europe-west1";
 // 22/10 Raci : acces nutrition = mois paye + 2 semaines = 44 jours apres
@@ -31,15 +32,19 @@ function db() { return admin.firestore(); }
 
 // GARDE-FOU MODE TEST (24/10) : avec une cle « test_ », un faux paiement
 // reussi ouvrirait le coaching et l'IA illimitee en production. Tant que la
-// cle est une cle de test, seuls les comptes listes dans Firestore
-// config/mollieTest (champ uids: [..], ecrit a la main dans la console par
-// Raci ; ferme au client, aucune regle ne l'ouvre) peuvent creer ET activer
-// un paiement. Avec une cle « live_ », la garde ne s'applique plus.
-async function testeurAutorise(uid) {
-  if (!MOLLIE_API_KEY.value().startsWith("test_")) return true;
-  const s = await db().collection("config").doc("mollieTest").get();
-  const uids = s.exists && Array.isArray(s.data().uids) ? s.data().uids : [];
-  return !!uid && uids.includes(uid);
+// cle est une cle de test, seuls les e-mails de la liste secrete
+// MOLLIE_TEST_EMAILS (adresses separees par des virgules, secret Firebase :
+// jamais dans le depot, qui est public) peuvent creer ET activer un
+// paiement. L'e-mail doit etre VERIFIE dans le jeton Firebase : sinon
+// n'importe qui s'inscrirait avec l'adresse d'un autre. Avec une cle
+// « live_ », la garde ne s'applique plus. Les adresses ne sont jamais logguees.
+function cleDeTest() { return MOLLIE_API_KEY.value().startsWith("test_"); }
+function emailAutorise(email, verifie) {
+  if (!cleDeTest()) return true;
+  if (!email || verifie !== true) return false;
+  const liste = String(MOLLIE_TEST_EMAILS.value() || "").split(",")
+      .map((x) => x.trim().toLowerCase()).filter(Boolean);
+  return liste.includes(String(email).trim().toLowerCase());
 }
 
 async function mollie(chemin, options = {}) {
@@ -55,7 +60,7 @@ async function mollie(chemin, options = {}) {
 // 1) Le client clique « Payer » : on cree le paiement et on renvoie
 //    l'adresse de la page Mollie (Bancontact, cartes...).
 exports.creerPaiementMollie = onRequest(
-    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY]},
+    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS]},
     async (req, res) => {
       res.set("Access-Control-Allow-Origin", "*");
       res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -65,9 +70,9 @@ exports.creerPaiementMollie = onRequest(
       try {
         const h = req.get("Authorization") || "";
         const token = h.startsWith("Bearer ") ? h.slice(7) : "";
-        let uid; let email = null;
-        try { const d = await admin.auth().verifyIdToken(token); uid = d.uid; email = d.email || null; } catch (e) { res.status(401).json({ok: false, motif: "auth"}); return; }
-        if (!(await testeurAutorise(uid))) { res.status(403).json({ok: false, motif: "test"}); return; }
+        let uid; let email = null; let verifie = false;
+        try { const d = await admin.auth().verifyIdToken(token); uid = d.uid; email = d.email || null; verifie = d.email_verified === true; } catch (e) { res.status(401).json({ok: false, motif: "auth"}); return; }
+        if (!emailAutorise(email, verifie)) { res.status(403).json({ok: false, motif: "test"}); return; }
         const type = (req.body || {}).type === "maj" ? "maj" : "plan";
         const p = PRODUITS[type];
         if (type === "maj") {
@@ -103,7 +108,7 @@ exports.creerPaiementMollie = onRequest(
 // 2) Mollie previent (corps : id=tr_xxx). On ne croit PAS le corps :
 //    on relit le paiement chez Mollie avec la cle secrete.
 exports.mollieWebhook = onRequest(
-    {region: REGION, cors: false, secrets: [MOLLIE_API_KEY]},
+    {region: REGION, cors: false, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS]},
     async (req, res) => {
       try {
         const id = String((req.body || {}).id || "");
@@ -112,8 +117,10 @@ exports.mollieWebhook = onRequest(
         const uid = p.metadata && p.metadata.uid;
         const type = p.metadata && p.metadata.type === "maj" ? "maj" : "plan";
         const refCmd = db().collection("commandes").doc(p.id);
-        // Paiement de test d'un compte non autorise : on le note, on n'active rien.
-        const autorise = await testeurAutorise(uid);
+        // Paiement de test : on n'active que si la commande a ete creee par le
+        // serveur pour un e-mail autorise (sinon on la note sans rien activer).
+        const cmd0 = await refCmd.get();
+        const autorise = !cleDeTest() || (cmd0.exists && emailAutorise(cmd0.data().email, true));
         // Idempotence : la commande n'est activee qu'une seule fois.
         const activer = await db().runTransaction(async (tx) => {
           const s = await tx.get(refCmd);
