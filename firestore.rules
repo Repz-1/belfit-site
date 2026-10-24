@@ -41,6 +41,12 @@ service cloud.firestore {
     match /invitations/{code} {
       allow read, write: if false;
     }
+    // Commandes Mollie (17/10) : lisibles par leur proprietaire,
+    // ecrites uniquement par le serveur (statut « paid » impossible a falsifier).
+    match /commandes/{paymentId} {
+      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
     match /quotasIA/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if false;
