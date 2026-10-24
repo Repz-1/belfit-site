@@ -528,7 +528,7 @@ export function MealCard({ r, aSuivre, fait }) {
   // centres sur la meme ligne : places separement, ils se retrouvaient
   // l'un en haut, l'autre au milieu.
   return (
-    <div class={'mc' + (aSuivre ? ' mc--suivant' : '') + (fait ? ' mc--fait' : '') + (r.prevu ? ' mc--prevu' : '') + (r.saute ? ' mc--saute' : '') + (r.remplace ? ' mc--autre' : '')}>
+    <div class={'mc' + (aSuivre ? ' mc--suivant' : '') + (fait ? ' mc--fait' : '') + (r.prevu ? ' mc--prevu' : '') + (r.saute ? ' mc--saute' : '') + (r.remplace ? ' mc--autre' : '') + (r.duPlan ? ' mc--plan' : '')}>
       <div class="mc-tete" onClick={() => { if (!edite) repasOuvertId.value = r.id; }}>
 
         <div class="mc-vignette" dangerouslySetInnerHTML={{ __html: illustration(r) }} />
@@ -542,7 +542,7 @@ export function MealCard({ r, aSuivre, fait }) {
               onInput={e => renommerRepas(r.id, e.currentTarget.value)}
               onBlur={() => setEdite(false)}
               onKeyDown={e => e.key === 'Enter' && setEdite(false)}
-              autoFocus
+              ref={el => { if (el && !el.dataset.fait) { el.dataset.fait = '1'; el.focus(); } }}
             />
           ) : (
             <h3 class="mc-titre">{r.nom}</h3>
@@ -594,6 +594,15 @@ export function MealCard({ r, aSuivre, fait }) {
           <span class="mc-chevron mc-chevron--nav" aria-hidden="true">›</span>
         </div>
       </div>
+      {/* 24/10 Raci : renommer un repas du plan. Bouton HORS de .mc-tete (donc il
+          n'ouvre jamais la fiche), cale juste a gauche du chevron. */}
+      {r.duPlan && !edite && (
+        <button class="mc-renommer" aria-label={`Renommer ${r.nom}`}
+          onClick={e => { e.stopPropagation(); setEdite(true); }}>
+          <svg viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
+        </button>
+      )}
+
       {/* 24/10 Raci : les trois issues d'un repas du plan sont visibles d'emblee,
           HORS de la zone qui ouvre la fiche (.mc-tete) : aucun clic ici n'ouvre le repas,
           sauf « Mangé autre chose » qui ouvre la page pour noter ce qui a ete mange. */}
