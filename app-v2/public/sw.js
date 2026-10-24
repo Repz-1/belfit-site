@@ -8,7 +8,7 @@
 //    unique par version, ils sont donc immuables : aucun risque
 //    de servir du perime, et l'ouverture reste instantanee.
 // ============================================================
-const CACHE = 'belfit-v2-391';
+const CACHE = 'belfit-v2-392';
 // Photos d'exercices (/img/exercices/, voir components/PhotoExo.jsx) :
 // cache a part, qui SURVIT aux nouvelles versions. Elles ne changent
 // pas d'une version a l'autre — les reprendre a chaque deploiement

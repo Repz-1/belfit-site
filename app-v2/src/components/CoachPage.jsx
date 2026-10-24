@@ -4,7 +4,8 @@
 // unique, sans abonnement ni prelevement.
 import { useState, useEffect } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
-import { utilisateur } from '../services/firebase.js';
+import { utilisateur, authPrete } from '../services/firebase.js';
+import { paiementOuvert, modeTest, retourPaiement, payerMollie, verifierAcces, demarrerRetour, verifierRetour, reverifierRetour, fermerRetour } from '../services/mollie.js';
 import { getApps } from 'firebase/app';
 import { BelfitPlus, chargerProgramme, programme, programmeCharge, progOuvert, dossierCoach } from './BelfitPlus.jsx';
 import { QuestionnaireCoach, effacerBrouillon } from './QuestionnaireCoach.jsx';
@@ -50,6 +51,10 @@ const MAIL = 'contact@belfit.be';
 // Interrupteur (26/09, demande de Raci) : questionnaire en relecture,
 // masque en ligne tant qu'il n'est pas valide. true = commandes ouvertes.
 export const COMMANDES_OUVERTES = false;
+// 24/10 : le serveur (mollieEtat) peut ouvrir le paiement a UN compte autorise
+// (test Mollie sur le telephone de Raci) sans l'ouvrir aux autres clients.
+// Lire .value dans un composant le fait se mettre a jour tout seul.
+export const commandesOuvertes = () => COMMANDES_OUVERTES || paiementOuvert.value;
 
 function joursDepuis(iso) {
   if (!iso) return null;
@@ -60,16 +65,16 @@ function joursDepuis(iso) {
 // Regle du delai : voir store/coach.js (7 jours pour remplir le
 // questionnaire ; au-dela, la file, detaillee dans les CGV / FAQ).
 
-// Retour de LemonSqueezy : le paiement renvoie directement vers le
-// questionnaire (redirect_url). On retient le retour sur l'appareil,
-// le webhook pouvant arriver apres le client.
+// Retour de la page de paiement (Mollie renvoie ici que le paiement ait
+// reussi, ete annule ou ait echoue) : on ne marque RIEN comme paye ici.
+// Le serveur est interroge (services/mollie.js) ; le questionnaire ne
+// s'ouvre que s'il confirme le paiement.
 const RETOUR = 'https://belfit.be/v2/?onglet=premium&coach=questionnaire&type=';
 function lireRetour() {
   try {
     const u = new URLSearchParams(location.search);
     if (u.get('coach') !== 'questionnaire') return null;
     const type = u.get('type') === 'maj' ? 'maj' : 'plan';
-    marquerPaye(type);
     history.replaceState(null, '', location.pathname);
     return type;
   } catch (e) { return null; }
@@ -77,7 +82,8 @@ function lireRetour() {
 // Lu une seule fois, au chargement du module : la page peut etre montee
 // plusieurs fois (rail des onglets), l'URL est deja nettoyee la 2e fois.
 // Il n'est oublie qu'a la fermeture ou a l'envoi du questionnaire.
-let retourEnAttente = lireRetour();
+const retourLu = lireRetour();
+if (retourLu) demarrerRetour(retourLu);
 
 function urlPaiement(lien, type) {
   const u = utilisateur.value;
@@ -105,15 +111,47 @@ function envoyerQuestionnaire(type, reponses, alerte, extra = {}) {
     .catch(e => console.warn('questionnaire non envoye', e));
 }
 
+// Retour de la page de paiement (24/10) : message clair, sans faux acces.
+function RetourPaiement({ retour }) {
+  const e = retour.etat; const st = retour.statut;
+  let titre; let txt;
+  if (e === 'verif') { titre = 'Vérification de ton paiement…'; txt = 'Un instant, on confirme avec la banque.'; }
+  else if (e === 'connexion') { titre = 'Connecte-toi pour finaliser'; txt = 'Reconnecte-toi avec le compte utilisé pour payer : on confirmera ton paiement.'; }
+  else if (e === 'attente') {
+    titre = retour.fini ? 'Paiement pas encore confirmé' : 'Paiement en cours de confirmation…';
+    txt = retour.fini ? 'Rien n\'est débité tant que le paiement n\'est pas confirmé. Si tu as payé, patiente une minute puis vérifie de nouveau.' : 'Ça ne prend que quelques secondes.';
+  } else if (st === 'canceled') { titre = 'Paiement annulé'; txt = 'Tu as annulé le paiement. Rien n\'a été débité et rien n\'est activé. Tu peux réessayer quand tu veux.'; }
+  else if (st === 'expired') { titre = 'Paiement expiré'; txt = 'Le délai pour payer est dépassé. Rien n\'a été débité. Tu peux recommencer.'; }
+  else if (st === 'failed') { titre = 'Paiement refusé'; txt = 'Le paiement n\'a pas abouti. Rien n\'a été débité et rien n\'est activé. Tu peux réessayer ou écrire à ' + MAIL + '.'; }
+  else { titre = 'Paiement non trouvé'; txt = 'Aucun paiement confirmé pour ce compte. Rien n\'est activé. Écris à ' + MAIL + ' si tu as payé.'; }
+  return (
+    <div class="cp-carte" role="status" data-retour={e}>
+      <p class="cp-nom">{titre}</p>
+      <p class="cp-txt">{txt}</p>
+      {e === 'attente' && retour.fini && <button class="cp-bt cp-bt--or" onClick={() => reverifierRetour((type) => { marquerPaye(type); chargerProgramme(); })}>Vérifier de nouveau</button>}
+      {(e === 'echec' || (e === 'attente' && retour.fini)) && <button class="cp-bt cp-bt--gris" onClick={fermerRetour}>Fermer</button>}
+    </div>
+  );
+}
+
 export function CoachPage() {
   const [achat, setAchat] = useState(null);      // modale de paiement : 'plan' | 'maj' | null
   const [adulte, setAdulte] = useState(null);    // question eliminatoire : 'oui' | 'non'
   const [tca, setTca] = useState(null);          // suivi pour un trouble alimentaire : 'oui' | 'non'
   const [consent, setConsent] = useState(false);
   const [consent2, setConsent2] = useState(false);
-  const [remplir, setRemplir] = useState(() => retourEnAttente);  // questionnaire ouvert
+  const [remplir, setRemplir] = useState(() => { const r = retourPaiement.peek(); return r && r.etat === 'paye' ? r.type : null; });  // questionnaire ouvert
   const [vueChoisie, setVueChoisie] = useState(vueMemorisee);
   const choisirVue = (v) => { setVueChoisie(v); try { localStorage.setItem(CLE_VUE, v); } catch (e) { /* rien */ } };
+  // 24/10 : le serveur dit si CE compte peut payer ; au retour de la page
+  // de paiement, il dit ce qu'est devenu le paiement.
+  const uidCourant = utilisateur.value ? utilisateur.value.uid : null;
+  useEffect(() => { verifierAcces(); }, [uidCourant]);
+  useEffect(() => {
+    if ((uidCourant || authPrete.value) && retourPaiement.peek()) verifierRetour((type) => { marquerPaye(type); chargerProgramme(); });
+  }, [uidCourant, authPrete.value]);
+  const retour = retourPaiement.value;
+  useEffect(() => { if (retour && retour.etat === 'paye') setRemplir(retour.type); }, [retour && retour.etat]);
   // Clients invites par lien (02/10) : memes verifications qu'a l'achat
   // (18 ans, trouble alimentaire, retractation), avant le questionnaire.
   const cmdInv = dossierCoach.value.commande;
@@ -133,13 +171,13 @@ export function CoachPage() {
   if (remplir) {
     return (
       <QuestionnaireCoach type={remplir}
-        onFermer={() => { retourEnAttente = null; setRemplir(null); }}
+        onFermer={() => { fermerRetour(); setRemplir(null); }}
         onTermine={(reponses, alerte, extra) => {
           // Accords donnes par un client invite : joints au questionnaire.
           const ex = invite && accordInv ? { ...extra, consentements: { ...((extra && extra.consentements) || {}), invitation: accordInv } } : extra;
           envoyerQuestionnaire(remplir, reponses, alerte, ex);
           effacerBrouillon(remplir);
-          retourEnAttente = null;
+          fermerRetour();
           setRemplir(null);
         }} />
     );
@@ -165,7 +203,9 @@ export function CoachPage() {
   };
   const payer = () => {
     const lien = LIENS_COACH[achat];
-    if (!lien) {
+    if (paiementOuvert.value) {
+      payerMollie(achat).catch(() => alert('Le paiement n\'a pas pu démarrer. Réessaie ou écris à ' + MAIL + '.'));
+    } else if (!lien) {
       const sujet = achat === 'maj' ? 'Continuer mon coaching (mois suivant)' : 'Mon premier mois de coaching';
       window.location.href = `mailto:${MAIL}?subject=${encodeURIComponent(sujet)}`;
     } else {
@@ -194,6 +234,7 @@ export function CoachPage() {
     <div class="pg-coach">
       <Entete />
       <h1 class="cp-titre">Ton coach</h1>
+      {retour && retour.etat !== 'paye' && <RetourPaiement retour={retour} />}
       {aAchat ? (
         <div class="prog-onglets" role="tablist">
           {VUES.map(([k, l]) => <button type="button" role="tab" aria-selected={vue === k} class={vue === k ? 'actif' : ''} onClick={() => choisirVue(k)}>{l}</button>)}
@@ -268,7 +309,7 @@ export function CoachPage() {
         <div class="cp-carte cp-carte--or cp-offre">
           <div class="cp-ligne"><span class="cp-nom">Premier mois</span><span class="cp-prix">80 €</span></div>
           <p class="cp-txt">{'Un mois de coaching : bilan complet, plan alimentaire écrit pour toi, livré sous 48 h, ajustements inclus pendant le mois.'}</p>
-          {COMMANDES_OUVERTES
+          {commandesOuvertes()
             ? <button class="cp-bt cp-bt--or" onClick={() => ouvrirAchat('plan')}>Demander mon plan</button>
             : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
         </div>
@@ -279,6 +320,7 @@ export function CoachPage() {
       {achat && createPortal(
         <div class="pg-coach cp-portail"><div class="cp-voile" onClick={(e) => { if (e.target === e.currentTarget) setAchat(null); }}>
           <div class="cp-modale" role="dialog" aria-modal="true">
+            {paiementOuvert.value && modeTest.value && !viaInv && <p class="qc-alerte">Mode test : paiement fictif, aucun argent n'est débité.</p>}
             <p class="cp-nom">{typeAchat === 'maj' ? 'Mois suivant · 60 €' : (pr ? 'Nouveau mois · 80 €' : 'Premier mois · 80 €')}</p>
             <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>
             {/* 02/10 : avantage IA annonce explicitement avant le paiement. */}

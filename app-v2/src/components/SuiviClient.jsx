@@ -3,7 +3,7 @@
 // Uniquement des donnees existantes. Pas de chrono, pas de « dernieres
 // seances », rien de medical : on n'affiche que ce que le client a saisi.
 import { programme, dossierCoach, progOuvert } from './BelfitPlus.jsx';
-import { COMMANDES_OUVERTES } from './CoachPage.jsx';
+import { commandesOuvertes } from './CoachPage.jsx';
 import { repas, totauxJour, cleDuNom, ajouterIngredient } from '../store/journal.js';
 import { weightLog } from '../store/stats.js';
 import { limite60, moisCoaching, poidsDepuisPlan, prochainRepas } from '../store/coach.js';
@@ -130,7 +130,7 @@ export function SuiviClient({ onContinuer, onNouveau }) {
             {/* 22/10 Raci : vraie date de fin, d'apres payeLe + 44 jours. */}
             <p class="cp-txt sv-acces">Accès nutrition jusqu'au {dateCourte(lim)}.</p>
             {/* 21/10 Raci : 60 € discret, seulement dans les 7 derniers jours du mois ou apres sa fin. */}
-            {(mois.fini || mois.restants <= 7) && (COMMANDES_OUVERTES
+            {(mois.fini || mois.restants <= 7) && (commandesOuvertes()
               ? <button type="button" class="sv-lien" onClick={onContinuer}>Envie de continuer ? Le mois suivant est à 60 €, jusqu'au {dateCourte(lim)}.</button>
               : <p class="sv-lien sv-lien--off" aria-disabled="true">Envie de continuer ? Le mois suivant à 60 € sera bientôt disponible.</p>
             )}
@@ -141,7 +141,7 @@ export function SuiviClient({ onContinuer, onNouveau }) {
             <p class="cp-txt">On repart d'un bilan complet, ajustements inclus pendant le mois.</p>
             {/* 22/10 Raci : acces ferme (payeLe reel + 44 j), date discrete, sans 60 €. */}
             {lim && Date.now() >= lim.getTime() && <p class="cp-txt sv-acces">Accès nutrition terminé le {dateCourte(lim)}.</p>}
-            {COMMANDES_OUVERTES
+            {commandesOuvertes()
               ? <button class="cp-bt cp-bt--or" onClick={onNouveau}>Reprendre · 80 €</button>
               : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
           </>
