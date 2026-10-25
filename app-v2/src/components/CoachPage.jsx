@@ -4,7 +4,8 @@
 // unique, sans abonnement ni prelevement.
 import { useState, useEffect } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
-import { utilisateur } from '../services/firebase.js';
+import { utilisateur, authPrete } from '../services/firebase.js';
+import { paiementOuvert, modeTest, retourPaiement, payerMollie, verifierAcces, demarrerRetour, verifierRetour, reverifierRetour, fermerRetour } from '../services/mollie.js';
 import { getApps } from 'firebase/app';
 import { BelfitPlus, chargerProgramme, programme, programmeCharge, progOuvert, dossierCoach } from './BelfitPlus.jsx';
 import { QuestionnaireCoach, effacerBrouillon } from './QuestionnaireCoach.jsx';
@@ -50,6 +51,10 @@ const MAIL = 'contact@belfit.be';
 // Interrupteur (26/09, demande de Raci) : questionnaire en relecture,
 // masque en ligne tant qu'il n'est pas valide. true = commandes ouvertes.
 export const COMMANDES_OUVERTES = false;
+// 24/10 : le serveur (mollieEtat) peut ouvrir le paiement a UN compte autorise
+// (test Mollie sur le telephone de Raci) sans l'ouvrir aux autres clients.
+// Lire .value dans un composant le fait se mettre a jour tout seul.
+export const commandesOuvertes = () => COMMANDES_OUVERTES || paiementOuvert.value;
 
 function joursDepuis(iso) {
   if (!iso) return null;
@@ -60,16 +65,16 @@ function joursDepuis(iso) {
 // Regle du delai : voir store/coach.js (7 jours pour remplir le
 // questionnaire ; au-dela, la file, detaillee dans les CGV / FAQ).
 
-// Retour de LemonSqueezy : le paiement renvoie directement vers le
-// questionnaire (redirect_url). On retient le retour sur l'appareil,
-// le webhook pouvant arriver apres le client.
+// Retour de la page de paiement (Mollie renvoie ici que le paiement ait
+// reussi, ete annule ou ait echoue) : on ne marque RIEN comme paye ici.
+// Le serveur est interroge (services/mollie.js) ; le questionnaire ne
+// s'ouvre que s'il confirme le paiement.
 const RETOUR = 'https://belfit.be/v2/?onglet=premium&coach=questionnaire&type=';
 function lireRetour() {
   try {
     const u = new URLSearchParams(location.search);
     if (u.get('coach') !== 'questionnaire') return null;
     const type = u.get('type') === 'maj' ? 'maj' : 'plan';
-    marquerPaye(type);
     history.replaceState(null, '', location.pathname);
     return type;
   } catch (e) { return null; }
@@ -77,7 +82,8 @@ function lireRetour() {
 // Lu une seule fois, au chargement du module : la page peut etre montee
 // plusieurs fois (rail des onglets), l'URL est deja nettoyee la 2e fois.
 // Il n'est oublie qu'a la fermeture ou a l'envoi du questionnaire.
-let retourEnAttente = lireRetour();
+const retourLu = lireRetour();
+if (retourLu) demarrerRetour(retourLu);
 
 function urlPaiement(lien, type) {
   const u = utilisateur.value;
@@ -105,15 +111,47 @@ function envoyerQuestionnaire(type, reponses, alerte, extra = {}) {
     .catch(e => console.warn('questionnaire non envoye', e));
 }
 
+// Retour de la page de paiement (24/10) : message clair, sans faux acces.
+function RetourPaiement({ retour }) {
+  const e = retour.etat; const st = retour.statut;
+  let titre; let txt;
+  if (e === 'verif') { titre = 'Vérification de ton paiement…'; txt = 'Un instant, on confirme avec la banque.'; }
+  else if (e === 'connexion') { titre = 'Connecte-toi pour finaliser'; txt = 'Reconnecte-toi avec le compte utilisé pour payer\u00A0: on confirmera ton paiement.'; }
+  else if (e === 'attente') {
+    titre = retour.fini ? 'Paiement pas encore confirmé' : 'Paiement en cours de confirmation…';
+    txt = retour.fini ? 'Rien n\'est débité tant que le paiement n\'est pas confirmé. Si tu as payé, patiente une minute puis vérifie de nouveau.' : 'Ça ne prend que quelques secondes.';
+  } else if (st === 'canceled') { titre = 'Paiement annulé'; txt = 'Tu as annulé le paiement. Rien n\'a été débité et rien n\'est activé. Tu peux réessayer quand tu veux.'; }
+  else if (st === 'expired') { titre = 'Paiement expiré'; txt = 'Le délai pour payer est dépassé. Rien n\'a été débité. Tu peux recommencer.'; }
+  else if (st === 'failed') { titre = 'Paiement refusé'; txt = 'Le paiement n\'a pas abouti. Rien n\'a été débité et rien n\'est activé. Tu peux réessayer ou écrire à ' + MAIL + '.'; }
+  else { titre = 'Paiement non trouvé'; txt = 'Aucun paiement confirmé pour ce compte. Rien n\'est activé. Écris à ' + MAIL + ' si tu as payé.'; }
+  return (
+    <div class="cp-carte" role="status" data-retour={e}>
+      <p class="cp-nom">{titre}</p>
+      <p class="cp-txt">{txt}</p>
+      {e === 'attente' && retour.fini && <button class="cp-bt cp-bt--or" onClick={() => reverifierRetour((type) => { marquerPaye(type); chargerProgramme(); })}>Vérifier de nouveau</button>}
+      {(e === 'echec' || (e === 'attente' && retour.fini)) && <button class="cp-bt cp-bt--gris" onClick={fermerRetour}>Fermer</button>}
+    </div>
+  );
+}
+
 export function CoachPage() {
   const [achat, setAchat] = useState(null);      // modale de paiement : 'plan' | 'maj' | null
   const [adulte, setAdulte] = useState(null);    // question eliminatoire : 'oui' | 'non'
   const [tca, setTca] = useState(null);          // suivi pour un trouble alimentaire : 'oui' | 'non'
   const [consent, setConsent] = useState(false);
   const [consent2, setConsent2] = useState(false);
-  const [remplir, setRemplir] = useState(() => retourEnAttente);  // questionnaire ouvert
+  const [remplir, setRemplir] = useState(() => { const r = retourPaiement.peek(); return r && r.etat === 'paye' ? r.type : null; });  // questionnaire ouvert
   const [vueChoisie, setVueChoisie] = useState(vueMemorisee);
   const choisirVue = (v) => { setVueChoisie(v); try { localStorage.setItem(CLE_VUE, v); } catch (e) { /* rien */ } };
+  // 24/10 : le serveur dit si CE compte peut payer ; au retour de la page
+  // de paiement, il dit ce qu'est devenu le paiement.
+  const uidCourant = utilisateur.value ? utilisateur.value.uid : null;
+  useEffect(() => { verifierAcces(); }, [uidCourant]);
+  useEffect(() => {
+    if ((uidCourant || authPrete.value) && retourPaiement.peek()) verifierRetour((type) => { marquerPaye(type); chargerProgramme(); });
+  }, [uidCourant, authPrete.value]);
+  const retour = retourPaiement.value;
+  useEffect(() => { if (retour && retour.etat === 'paye') setRemplir(retour.type); }, [retour && retour.etat]);
   // Clients invites par lien (02/10) : memes verifications qu'a l'achat
   // (18 ans, trouble alimentaire, retractation), avant le questionnaire.
   const cmdInv = dossierCoach.value.commande;
@@ -133,13 +171,13 @@ export function CoachPage() {
   if (remplir) {
     return (
       <QuestionnaireCoach type={remplir}
-        onFermer={() => { retourEnAttente = null; setRemplir(null); }}
+        onFermer={() => { fermerRetour(); setRemplir(null); }}
         onTermine={(reponses, alerte, extra) => {
           // Accords donnes par un client invite : joints au questionnaire.
           const ex = invite && accordInv ? { ...extra, consentements: { ...((extra && extra.consentements) || {}), invitation: accordInv } } : extra;
           envoyerQuestionnaire(remplir, reponses, alerte, ex);
           effacerBrouillon(remplir);
-          retourEnAttente = null;
+          fermerRetour();
           setRemplir(null);
         }} />
     );
@@ -165,7 +203,9 @@ export function CoachPage() {
   };
   const payer = () => {
     const lien = LIENS_COACH[achat];
-    if (!lien) {
+    if (paiementOuvert.value) {
+      payerMollie(achat).catch(() => alert('Le paiement n\'a pas pu démarrer. Réessaie ou écris à ' + MAIL + '.'));
+    } else if (!lien) {
       const sujet = achat === 'maj' ? 'Continuer mon coaching (mois suivant)' : 'Mon premier mois de coaching';
       window.location.href = `mailto:${MAIL}?subject=${encodeURIComponent(sujet)}`;
     } else {
@@ -194,6 +234,7 @@ export function CoachPage() {
     <div class="pg-coach">
       <Entete />
       <h1 class="cp-titre">Ton coach</h1>
+      {retour && retour.etat !== 'paye' && <RetourPaiement retour={retour} />}
       {aAchat ? (
         <div class="prog-onglets" role="tablist">
           {VUES.map(([k, l]) => <button type="button" role="tab" aria-selected={vue === k} class={vue === k ? 'actif' : ''} onClick={() => choisirVue(k)}>{l}</button>)}
@@ -203,40 +244,31 @@ export function CoachPage() {
       {vue === 'seances' && <TesSeances />}
       {vue === 'programme' && (<>
 
-      {!pr && (
-      <div class="cp-carte cp-profil cp-hero cp-hero--achat">
-        <div class="cp-hero-id">
-          <span class="cp-avatar" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
-          </span>
-          <div>
-            <p class="cp-nom">BelFit</p>
-            <p class="cp-txt">Nutrition et préparation physique</p>
-          </div>
+      {/* 25/10 : plus d'avatar-icone ni de photo de salle (aucun vrai portrait dans le depot).
+          Les 3 « preuves » deviennent une carte : le delai (48 h) en gros, deux garanties en lignes. */}
+      {!pr && !occupe && (
+        <div class="cp-carte cp-preuve">
+          <p class="cp-preuve-t"><b>48&nbsp;h</b><span>pour recevoir ton plan</span></p>
+          <ul class="cp-preuve-l">
+            <li><span class="cp-coche" aria-hidden="true">✓</span>Ajustements inclus pendant 1&nbsp;mois</li>
+            <li><span class="cp-coche" aria-hidden="true">✓</span>Sans abonnement, sans prélèvement</li>
+          </ul>
         </div>
-        {!pr && !occupe && (
-          <div class="cp-chiffres">
-            <div><b>48 h</b><span>plan livré</span></div>
-            <div><b>1 mois</b><span>ajustements inclus</span></div>
-            <div><b>0</b><span>abonnement</span></div>
-          </div>
-        )}
-      </div>
       )}
 
       {aRemplir && (
         <div class="cp-carte cp-carte--or">
           <p class="cp-nom">{invite ? 'Invitation de ton coach' : 'Paiement reçu'}</p>
           <p class="cp-txt">Remplis ton questionnaire pour que je prépare ton plan. {tardif
-            ? 'Ton délai de 7 jours est passé : ta demande rejoint la file.'
-            : `Livraison sous 48 h si tu le remplis dans les ${DELAI_QUESTIONNAIRE} jours suivant ton paiement.`}</p>
+            ? 'Ton délai de 7 jours est passé\u00A0: ta demande rejoint la file.'
+            : `Livraison sous 48\u00A0h si tu le remplis dans les ${DELAI_QUESTIONNAIRE} jours suivant ton paiement.`}</p>
           <button class="cp-bt cp-bt--or" onClick={() => ouvrirQuestionnaire(typePaye)}>Remplir mon questionnaire</button>
         </div>
       )}
       {enPrep && (
         <div class="cp-carte cp-attente">
           <p class="cp-nom">Plan en préparation</p>
-          <p class="cp-txt">Questionnaire reçu. Ton coach prépare ton plan, livré dans l'app sous 48 h.</p>
+          <p class="cp-txt">Questionnaire reçu. Ton coach prépare ton plan, livré dans l'app sous 48&nbsp;h.</p>
         </div>
       )}
 
@@ -257,7 +289,7 @@ export function CoachPage() {
           <div class="cp-carte cp-etapes">
             <div class="cp-etape"><span class="cp-n"><Icone nom="bolt" taille={16} /></span><span class="cp-txt">Tu paies ton 1er mois de coaching alimentaire en ligne (80 €).</span></div>
             <div class="cp-etape"><span class="cp-n"><Icone nom="list-check" taille={16} /></span><span class="cp-txt">Tu réponds au questionnaire.</span></div>
-            <div class="cp-etape"><span class="cp-n"><Icone nom="flame" taille={16} /></span><span class="cp-txt">Je t'écris ton plan, livré dans l'app sous 48 h.</span></div>
+            <div class="cp-etape"><span class="cp-n"><Icone nom="flame" taille={16} /></span><span class="cp-txt">Je t'écris ton plan, livré dans l'app sous 48&nbsp;h.</span></div>
           </div>
         </>
       )}
@@ -267,27 +299,28 @@ export function CoachPage() {
       {!occupe && !pr && (
         <div class="cp-carte cp-carte--or cp-offre">
           <div class="cp-ligne"><span class="cp-nom">Premier mois</span><span class="cp-prix">80 €</span></div>
-          <p class="cp-txt">{'Un mois de coaching : bilan complet, plan alimentaire écrit pour toi, livré sous 48 h, ajustements inclus pendant le mois.'}</p>
-          {COMMANDES_OUVERTES
+          <p class="cp-txt">{'Un mois de coaching\u00A0: bilan complet, plan alimentaire écrit pour toi, livré sous 48\u00A0h, ajustements inclus pendant le mois.'}</p>
+          {commandesOuvertes()
             ? <button class="cp-bt cp-bt--or" onClick={() => ouvrirAchat('plan')}>Demander mon plan</button>
             : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
         </div>
       )}
-      {!occupe && !pr && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement : tu décides de continuer. Accès nutrition inclus pendant ton mois payé et les 2 semaines qui suivent.</p>}
+      {!occupe && !pr && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement&nbsp;: tu décides de continuer. Accès nutrition inclus pendant ton mois payé et les 2 semaines qui suivent.</p>}
       </>)}
 
       {achat && createPortal(
         <div class="pg-coach cp-portail"><div class="cp-voile" onClick={(e) => { if (e.target === e.currentTarget) setAchat(null); }}>
           <div class="cp-modale" role="dialog" aria-modal="true">
+            {paiementOuvert.value && modeTest.value && !viaInv && <p class="qc-alerte">Mode test&nbsp;: paiement fictif, aucun argent n'est débité.</p>}
             <p class="cp-nom">{typeAchat === 'maj' ? 'Mois suivant · 60 €' : (pr ? 'Nouveau mois · 80 €' : 'Premier mois · 80 €')}</p>
             <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>
             {/* 02/10 : avantage IA annonce explicitement avant le paiement. */}
-            <p class="cp-txt cp-inclus">Inclus : analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>
+            <p class="cp-txt cp-inclus">Inclus&nbsp;: analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>
             {typeAchat === 'plan' && (
               <div class="cp-elim">
-                <p class="cp-q">As-tu 18 ans ou plus ?</p>
+                <p class="cp-q">As-tu 18 ans ou plus&nbsp;?</p>
                 <Choix val={adulte} set={setAdulte} />
-                <p class="cp-q">Es-tu suivi actuellement pour un trouble alimentaire ?</p>
+                <p class="cp-q">Es-tu suivi actuellement pour un trouble alimentaire&nbsp;?</p>
                 <Choix val={tca} set={setTca} />
               </div>
             )}
@@ -295,7 +328,7 @@ export function CoachPage() {
               <p class="qc-alerte">Le plan coach est réservé aux 18 ans et plus. L'app, elle, reste gratuite pour toi.</p>
             )}
             {typeAchat === 'plan' && adulte !== 'non' && tca === 'oui' && (
-              <p class="qc-alerte">Merci de ta confiance. Pendant un suivi en cours, un plan chiffré peut faire plus de mal que de bien : parle de ton alimentation avec le professionnel qui te suit. L'app reste gratuite pour toi.</p>
+              <p class="qc-alerte">Merci de ta confiance. Pendant un suivi en cours, un plan chiffré peut faire plus de mal que de bien&nbsp;: parle de ton alimentation avec le professionnel qui te suit. L'app reste gratuite pour toi.</p>
             )}
             {!bloque && eligible && (
               <>
@@ -305,16 +338,17 @@ export function CoachPage() {
                     Deux cases distinctes, decochees. Texte a faire valider. */}
                 <label class="cp-consent">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-                  <span>Je demande que mon coach commence mon plan dès réception de mon {viaInv ? 'virement' : 'questionnaire'}, pour une livraison sous 48 h. Je reconnais perdre mon droit de rétractation de 14 jours une fois le plan livré.</span>
+                  <span>Je demande que mon coach commence mon plan dès réception de mon {viaInv ? 'virement' : 'questionnaire'}, pour une livraison sous 48&nbsp;h. Je reconnais perdre mon droit de rétractation de 14 jours une fois le plan livré.</span>
                 </label>
                 <label class="cp-consent">
                   <input type="checkbox" checked={consent2} onChange={(e) => setConsent2(e.target.checked)} />
                   <span>J'accepte les <a href="https://www.belfit.be/cgv.html" target="_blank" rel="noopener">conditions et la FAQ</a>. Je comprends que ce plan n'est pas un avis médical.</span>
                 </label>
                 {viaInv
-                  ? <p class="cp-txt cp-petit">Livraison sous 48 h après la réception du virement. Détails dans les conditions générales.</p>
-                  : <p class="cp-txt cp-petit">Questionnaire à remplir dans les {DELAI_QUESTIONNAIRE} jours suivant le paiement pour une livraison sous 48 h. Détails dans les conditions générales.</p>}
+                  ? <p class="cp-txt cp-petit">Livraison sous 48&nbsp;h après la réception du virement. Détails dans les conditions générales.</p>
+                  : <p class="cp-txt cp-petit">Questionnaire à remplir dans les {DELAI_QUESTIONNAIRE} jours suivant le paiement pour une livraison sous 48&nbsp;h. Détails dans les conditions générales.</p>}
                 <button class="cp-bt cp-bt--or" disabled={!consent || !consent2} onClick={viaInv ? accepterInv : payer}>{viaInv ? 'Continuer vers le questionnaire' : 'Continuer vers le paiement'}</button>
+                {!viaInv && paiementOuvert.value && <p class="cp-petit cp-secure">Paiement sécurisé par Mollie.</p>}
               </>
             )}
             <button class="cp-bt cp-bt--gris" onClick={() => setAchat(null)}>{bloque ? 'Fermer' : 'Annuler'}</button>

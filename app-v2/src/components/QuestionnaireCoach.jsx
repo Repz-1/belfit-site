@@ -252,7 +252,7 @@ function Question({ q, rep, toutes, maj, erreur }) {
         <textarea class="qc-champ" rows={3} placeholder={q.exemple || ''} value={r.valeur || ''} onInput={e => maj({ ...r, valeur: e.currentTarget.value })} />
       )}
       {q.id === 'reaction' && allergieGrave(toutes) && (
-        <div class="qc-alerte-rouge"><Icone nom="shield-check" taille={16} /><span>Gonflement ou malaise : cet aliment sera exclu à 100 % de ton plan, sans substitut risqué.</span></div>
+        <div class="qc-alerte-rouge"><Icone nom="shield-check" taille={16} /><span>Gonflement ou malaise&nbsp;: cet aliment sera exclu à 100 % de ton plan, sans substitut risqué.</span></div>
       )}
       {erreur && <p class="qc-err">Réponds à cette question pour continuer.</p>}
     </div>
@@ -391,7 +391,7 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
         <div class="qc-haut"><span>Récapitulatif</span><Sauve /></div>
         <Segments jusque={sections.length} />
         <p class="qc-sur">DERNIÈRE ÉTAPE</p>
-        <h1 class="qc-titre">Tout est bon ?</h1>
+        <h1 class="qc-titre">Tout est bon&nbsp;?</h1>
         <p class="qc-sous">Vérifie, puis envoie à ton coach.</p>
         {sections.map((s, k) => {
           const lignes = visibles(s).filter(q => rep[q.id] && lisible(q, rep[q.id]) !== '—');

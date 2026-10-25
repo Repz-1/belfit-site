@@ -14,7 +14,7 @@ import { estPremium } from '../src/components/PremiumPage.jsx';
 import { programme } from '../src/components/BelfitPlus.jsx';
 
 
-utilisateur.value = { uid: 'test', email: 'coach@belfit.be', displayName: 'Raci', metadata: { creationTime: new Date().toISOString() } };
+utilisateur.value = { uid: 'test', email: 'coach@belfit.be', displayName: 'Raci', getIdToken: async () => 'jeton-de-test', metadata: { creationTime: new Date().toISOString() } };
 objectifs.value = { kcal: 2712, prot: 165, carbs: 344, lip: 75 };
 let n = 0;
 const ing = (name, portion) => ({ id: ++n, name, portion });
