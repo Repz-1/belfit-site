@@ -1,0 +1,12 @@
+/* Accueil du matin / du soir : carte claire posee apres le splash. */
+.acc-voile{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;
+  background:rgba(244,243,240,.94);padding:24px;box-sizing:border-box;cursor:pointer;
+  opacity:0;transition:opacity .25s ease;-webkit-tap-highlight-color:transparent}
+.acc-voile.acc-vu{opacity:1}
+.acc-carte{width:100%;max-width:340px;background:#fff;border-radius:22px;padding:26px 24px 24px;
+  box-shadow:0 10px 34px rgba(24,24,24,.10);text-align:left;font-family:inherit;color:#181818}
+.acc-logo{width:40px;height:auto;display:block;margin-bottom:14px}
+.acc-titre{font-size:26px;font-weight:800;line-height:1.15;letter-spacing:-.01em;margin:0}
+.acc-filet{width:40px;height:3px;border-radius:2px;background:#F7B500;margin:12px 0 14px}
+.acc-ligne{font-size:16px;font-weight:500;line-height:1.4;margin:0 0 6px;color:#3a3a3a}
+@media (prefers-reduced-motion:reduce){.acc-voile{transition:none}}
