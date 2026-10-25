@@ -4,7 +4,7 @@ import { signal, effect, computed } from '@preact/signals';
 import { Icone } from './IconesCoach.jsx';
 import { getApps } from 'firebase/app';
 import { utilisateur } from '../services/firebase.js';
-import { setObjectifs, objectifs, repas, cleDuNom, semerPlan, dateJour, donneesPretes } from '../store/journal.js';
+import { setObjectifs, objectifs, repas, cleDuNom, semerPlan, dateJour, donneesPretes, clotures } from '../store/journal.js';
 import { macrosOf, DB } from '../data/aliments.js';
 import { ongletActif, allerOnglet } from './BottomNav.jsx';
 import { statsAvOuvertes } from './StatsAvancees.jsx';
@@ -85,7 +85,11 @@ effect(() => {
 // voir plus haut), ses repas arrivent seuls sur Aujourd'hui en « Prévu ».
 // Une fois par journee du journal (dateJour, qui change a la cloture) et
 // par livraison (livreLe) ; semerPlan n'ecrase jamais une saisie.
+// Apres une cloture de la journee (clotures, journal.js), le seed rejoue meme
+// si dateJour est inchange (cloture le soir meme) : les repas du plan
+// reviennent en « Prevu » sur le journal vide.
 const CLE_SEME = 'belfit_v2_plan_seme';
+let cloturesSemees = 0;
 effect(() => {
   const pr = programme.value;
   if (!pr || !Array.isArray(pr.repas) || !pr.repas.length) return;
@@ -93,7 +97,10 @@ effect(() => {
   const u = utilisateur.peek();
   const cle = CLE_SEME + '_' + (u ? u.uid : 'local');
   const marque = dateJour.value + '|' + String(pr.livreLe || '');
-  try { if (localStorage.getItem(cle) === marque) return; } catch (e) {}
+  const nClotures = clotures.value;
+  const apresCloture = nClotures !== cloturesSemees;
+  try { if (!apresCloture && localStorage.getItem(cle) === marque) return; } catch (e) {}
+  cloturesSemees = nClotures;
   semerPlan(pr.repas);
   try { localStorage.setItem(cle, marque); } catch (e) {}
 });

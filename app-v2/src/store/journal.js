@@ -360,10 +360,19 @@ export function renommerRepas(repasId, nom) {
 }
 
 
+// 25/10 : compteur de clotures de la session. La cloture vide le journal
+// mais dateJour ne change pas toujours (cloture le soir meme, ou entre
+// 00h et 01h/02h heure de Bruxelles car la cle de date est en UTC) : le
+// marqueur « une fois par dateJour » du seed du plan ne bougeait donc
+// pas et les repas du plan ne revenaient pas en « Prevu ». Ce compteur
+// dit au seed de rejouer apres chaque cloture.
+export const clotures = signal(0);
+
 export function nouvelleJournee() {
   repas.value = structuredClone(DEFAUTS.repas);
   eau.value = 0;
   dateJour.value = aujourdhui();
+  clotures.value = clotures.value + 1;
 }
 
 // PLUS DE BASCULE AUTOMATIQUE (Raci, 8/08). L'automatisme du 27/07
