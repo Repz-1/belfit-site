@@ -244,25 +244,16 @@ export function CoachPage() {
       {vue === 'seances' && <TesSeances />}
       {vue === 'programme' && (<>
 
-      {!pr && (
-      <div class="cp-carte cp-profil cp-hero cp-hero--achat">
-        <div class="cp-hero-id">
-          <span class="cp-avatar" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
-          </span>
-          <div>
-            <p class="cp-nom">BelFit</p>
-            <p class="cp-txt">Nutrition et préparation physique</p>
-          </div>
+      {/* 25/10 : plus d'avatar-icone ni de photo de salle (aucun vrai portrait dans le depot).
+          Les 3 « preuves » deviennent une carte : le delai (48 h) en gros, deux garanties en lignes. */}
+      {!pr && !occupe && (
+        <div class="cp-carte cp-preuve">
+          <p class="cp-preuve-t"><b>48&nbsp;h</b><span>pour recevoir ton plan</span></p>
+          <ul class="cp-preuve-l">
+            <li><span class="cp-coche" aria-hidden="true">✓</span>Ajustements inclus pendant 1&nbsp;mois</li>
+            <li><span class="cp-coche" aria-hidden="true">✓</span>Sans abonnement, sans prélèvement</li>
+          </ul>
         </div>
-        {!pr && !occupe && (
-          <div class="cp-chiffres">
-            <div><b>48 h</b><span>plan livré</span></div>
-            <div><b>1 mois</b><span>ajustements inclus</span></div>
-            <div><b>0</b><span>abonnement</span></div>
-          </div>
-        )}
-      </div>
       )}
 
       {aRemplir && (
@@ -270,14 +261,14 @@ export function CoachPage() {
           <p class="cp-nom">{invite ? 'Invitation de ton coach' : 'Paiement reçu'}</p>
           <p class="cp-txt">Remplis ton questionnaire pour que je prépare ton plan. {tardif
             ? 'Ton délai de 7 jours est passé : ta demande rejoint la file.'
-            : `Livraison sous 48 h si tu le remplis dans les ${DELAI_QUESTIONNAIRE} jours suivant ton paiement.`}</p>
+            : `Livraison sous 48\u00A0h si tu le remplis dans les ${DELAI_QUESTIONNAIRE} jours suivant ton paiement.`}</p>
           <button class="cp-bt cp-bt--or" onClick={() => ouvrirQuestionnaire(typePaye)}>Remplir mon questionnaire</button>
         </div>
       )}
       {enPrep && (
         <div class="cp-carte cp-attente">
           <p class="cp-nom">Plan en préparation</p>
-          <p class="cp-txt">Questionnaire reçu. Ton coach prépare ton plan, livré dans l'app sous 48 h.</p>
+          <p class="cp-txt">Questionnaire reçu. Ton coach prépare ton plan, livré dans l'app sous 48&nbsp;h.</p>
         </div>
       )}
 
@@ -298,7 +289,7 @@ export function CoachPage() {
           <div class="cp-carte cp-etapes">
             <div class="cp-etape"><span class="cp-n"><Icone nom="bolt" taille={16} /></span><span class="cp-txt">Tu paies ton 1er mois de coaching alimentaire en ligne (80 €).</span></div>
             <div class="cp-etape"><span class="cp-n"><Icone nom="list-check" taille={16} /></span><span class="cp-txt">Tu réponds au questionnaire.</span></div>
-            <div class="cp-etape"><span class="cp-n"><Icone nom="flame" taille={16} /></span><span class="cp-txt">Je t'écris ton plan, livré dans l'app sous 48 h.</span></div>
+            <div class="cp-etape"><span class="cp-n"><Icone nom="flame" taille={16} /></span><span class="cp-txt">Je t'écris ton plan, livré dans l'app sous 48&nbsp;h.</span></div>
           </div>
         </>
       )}
@@ -308,7 +299,7 @@ export function CoachPage() {
       {!occupe && !pr && (
         <div class="cp-carte cp-carte--or cp-offre">
           <div class="cp-ligne"><span class="cp-nom">Premier mois</span><span class="cp-prix">80 €</span></div>
-          <p class="cp-txt">{'Un mois de coaching : bilan complet, plan alimentaire écrit pour toi, livré sous 48 h, ajustements inclus pendant le mois.'}</p>
+          <p class="cp-txt">{'Un mois de coaching : bilan complet, plan alimentaire écrit pour toi, livré sous 48\u00A0h, ajustements inclus pendant le mois.'}</p>
           {commandesOuvertes()
             ? <button class="cp-bt cp-bt--or" onClick={() => ouvrirAchat('plan')}>Demander mon plan</button>
             : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
@@ -347,15 +338,15 @@ export function CoachPage() {
                     Deux cases distinctes, decochees. Texte a faire valider. */}
                 <label class="cp-consent">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-                  <span>Je demande que mon coach commence mon plan dès réception de mon {viaInv ? 'virement' : 'questionnaire'}, pour une livraison sous 48 h. Je reconnais perdre mon droit de rétractation de 14 jours une fois le plan livré.</span>
+                  <span>Je demande que mon coach commence mon plan dès réception de mon {viaInv ? 'virement' : 'questionnaire'}, pour une livraison sous 48&nbsp;h. Je reconnais perdre mon droit de rétractation de 14 jours une fois le plan livré.</span>
                 </label>
                 <label class="cp-consent">
                   <input type="checkbox" checked={consent2} onChange={(e) => setConsent2(e.target.checked)} />
                   <span>J'accepte les <a href="https://www.belfit.be/cgv.html" target="_blank" rel="noopener">conditions et la FAQ</a>. Je comprends que ce plan n'est pas un avis médical.</span>
                 </label>
                 {viaInv
-                  ? <p class="cp-txt cp-petit">Livraison sous 48 h après la réception du virement. Détails dans les conditions générales.</p>
-                  : <p class="cp-txt cp-petit">Questionnaire à remplir dans les {DELAI_QUESTIONNAIRE} jours suivant le paiement pour une livraison sous 48 h. Détails dans les conditions générales.</p>}
+                  ? <p class="cp-txt cp-petit">Livraison sous 48&nbsp;h après la réception du virement. Détails dans les conditions générales.</p>
+                  : <p class="cp-txt cp-petit">Questionnaire à remplir dans les {DELAI_QUESTIONNAIRE} jours suivant le paiement pour une livraison sous 48&nbsp;h. Détails dans les conditions générales.</p>}
                 <button class="cp-bt cp-bt--or" disabled={!consent || !consent2} onClick={viaInv ? accepterInv : payer}>{viaInv ? 'Continuer vers le questionnaire' : 'Continuer vers le paiement'}</button>
                 {!viaInv && paiementOuvert.value && <p class="cp-petit cp-secure">Paiement sécurisé par Mollie.</p>}
               </>
