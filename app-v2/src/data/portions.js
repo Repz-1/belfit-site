@@ -15,6 +15,9 @@
 // Ordre significatif : la premiere famille qui reconnait gagne.
 // Les familles etroites passent donc AVANT les familles larges.
 const FAMILLES = [
+  // --- Cereale seche en poudre (petit-dejeuner) : poids de la POUDRE ---
+  { cle: 'cereale_sec',min: 30,  max: 80,  step: 10, mots: ['creme de riz', 'crème de riz', 'cream of rice'] },
+
   // --- Matieres grasses et condiments : les plus petits plafonds ---
   { cle: 'huile',      min: 5,   max: 20,  step: 5,  mots: ['huile'] },
   { cle: 'miel',       min: 5,   max: 30,  step: 5,  mots: ['miel', 'sirop', 'confiture'] },

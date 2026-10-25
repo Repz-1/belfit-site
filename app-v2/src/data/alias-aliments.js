@@ -24,6 +24,8 @@ const ALIAS_BRUT = {
   riz: 'Riz cuit', rice: 'Riz cuit', rijst: 'Riz cuit', 'riz blanc': 'Riz cuit',
   pates: 'Pates blanches cuites', pate: 'Pates blanches cuites', pasta: 'Pates blanches cuites',
   spaghetti: 'Pates blanches cuites', nouilles: 'Pates blanches cuites',
+  // Poudre seche : sans cet alias, « creme de riz » tombait sur « Riz cuit ».
+  'creme de riz': 'Crème de riz', 'cream of rice': 'Crème de riz',
   quinoa: 'Quinoa cuit', couscous: 'Couscous cuit', pain: 'Pain blanc', brood: 'Pain blanc',
   pistolet: 'Pistolet (petit pain)', kebab: 'Viande de kebab', doner: 'Viande de kebab',
   frites: 'Frites', frite: 'Frites', friet: 'Frites', frieten: 'Frites', fries: 'Frites',
