@@ -337,6 +337,10 @@ export function semerPlan(planRepas) {
     if (i < 0) { liste.push(neuf(++id)); return; }
     const r = liste[i];
     if (r.saute || r.remplace) return;   // 22/10 : choix du client, jamais ecrase
+    if (r.idee) {                         // 25/10 : idee choisie -> on garde le choix, le retour pointe sur le plan a jour
+      liste[i] = { ...r, ingsPlan: neuf(r.id).ings };
+      return;
+    }
     if (r.ings.length === 0 || (r.duPlan && r.prevu)) liste[i] = { ...neuf(r.id), fixe: r.fixe, cle: r.cle || cle };
   });
   repas.value = liste.filter(r => !(r.duPlan && r.prevu && !r.remplace && !cles.has(r.cle || nomN(r.nom))));
@@ -387,7 +391,11 @@ export function sauterRepas(repasId) {
 }
 export function mangeAutreChose(repasId) {
   repas.value = repas.value.map(r => r.id !== repasId || !r.duPlan || r.remplace ? r
-    : { ...r, prevu: true, saute: false, remplace: true, ingsPlan: r.ings, ings: [] });
+    : (() => {   // 25/10 : si une « Autre idee » etait choisie, le PLAN reste ce qui est mis de cote
+        const n = { ...r, prevu: true, saute: false, remplace: true, ingsPlan: r.idee ? (r.ingsPlan || []) : r.ings, ings: [] };
+        delete n.idee;
+        return n;
+      })());
 }
 export function remettrePrevu(repasId) {
   repas.value = repas.value.map(r => {
@@ -395,6 +403,33 @@ export function remettrePrevu(repasId) {
     const n = { ...r, prevu: true };
     delete n.saute;
     if (r.remplace) { n.ings = r.ingsPlan || []; delete n.remplace; delete n.ingsPlan; }
+    return n;
+  });
+}
+
+/** 25/10 « Autre idee » : remplace les aliments d'un repas du plan par ceux
+ *  d'une idee aux calories proches, POUR AUJOURD'HUI SEULEMENT.
+ *  - le plan d'origine est mis de cote dans `ingsPlan` (jamais perdu) ; si
+ *    une autre idee etait deja choisie, on garde le tout premier plan ;
+ *  - `idee` = { nom, kcal, cible } sert a l'affichage et a l'annulation ;
+ *  - le repas reste « prevu » : il se coche ensuite comme n'importe quel repas.
+ *  Seulement un repas du plan, prevu ou mange, ni saute ni « autre chose ». */
+export function appliquerIdee(repasId, idee) {
+  repas.value = repas.value.map(r => {
+    if (r.id !== repasId || !r.duPlan || r.saute || r.remplace) return r;
+    const base = r.idee ? (r.ingsPlan || []) : r.ings;
+    return {
+      ...r, idee: { nom: idee.nom, kcal: idee.kcal, cible: idee.cible }, ingsPlan: base,
+      ings: idee.ings.map(i => ({ id: ++prochainId, name: i.name, portion: i.portion })),
+    };
+  });
+}
+/** Annule « Autre idee » : le repas du plan revient tel qu'il etait prevu. */
+export function annulerIdee(repasId) {
+  repas.value = repas.value.map(r => {
+    if (r.id !== repasId || !r.duPlan || !r.idee) return r;
+    const n = { ...r, ings: r.ingsPlan || [] };
+    delete n.idee; delete n.ingsPlan;
     return n;
   });
 }
