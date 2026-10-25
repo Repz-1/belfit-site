@@ -423,3 +423,12 @@
 /* 21/10 : 60 € tant que les commandes sont fermees, texte discret non cliquable. */
 .pg-coach .sv-lien--off { text-decoration: none; cursor: default; opacity: .8; }
 .pg-coach .sv-neutre { margin: 4px 2px 12px; }
+
+/* ---- Iteration v3 (25/10, retours de Raci) ---- */
+/* Filet jaune BelFit UNIQUEMENT sous « Ton coach » ; « COMMENT ÇA MARCHE » et « TARIFS » gardent le filet vert. */
+.pg-coach .cp-titre::after { background: #F8CF01; }
+/* La barre du bas ne doit jamais couvrir la carte 80 € ni le bouton : au repos du scroll (snap « proximity »),
+   la fin du texte légal se cale au-dessus de la barre (~96 px + marge), donc le bouton reste entier et bien visible.
+   Hors de cette zone, le scroll reste libre. */
+.pan-scroll:has(.pg-coach) { scroll-snap-type: y proximity; scroll-padding-bottom: 120px; }
+.pg-coach .cp-pied { scroll-snap-align: end; scroll-margin-bottom: 8px; }

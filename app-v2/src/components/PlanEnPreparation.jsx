@@ -150,7 +150,7 @@ export function PlanEnPreparation({ payeLe, questionnaire, commande }) {
         </button>
       </div>
       <a class="pp-mail" href={`mailto:${MAIL}?subject=${encodeURIComponent('Question sur mon plan')}`}>
-        <Icone nom="mail" taille={16} />Une question ? Écrire à mon coach
+        <Icone nom="mail" taille={16} />Une question&nbsp;? Écrire à mon coach
       </a>
       {voir && <Reponses q={questionnaire} fermer={() => setVoir(false)} />}
     </>

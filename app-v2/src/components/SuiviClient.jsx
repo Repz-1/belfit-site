@@ -131,8 +131,8 @@ export function SuiviClient({ onContinuer, onNouveau }) {
             <p class="cp-txt sv-acces">Accès nutrition jusqu'au {dateCourte(lim)}.</p>
             {/* 21/10 Raci : 60 € discret, seulement dans les 7 derniers jours du mois ou apres sa fin. */}
             {(mois.fini || mois.restants <= 7) && (commandesOuvertes()
-              ? <button type="button" class="sv-lien" onClick={onContinuer}>Envie de continuer ? Le mois suivant est à 60 €, jusqu'au {dateCourte(lim)}.</button>
-              : <p class="sv-lien sv-lien--off" aria-disabled="true">Envie de continuer ? Le mois suivant à 60 € sera bientôt disponible.</p>
+              ? <button type="button" class="sv-lien" onClick={onContinuer}>Envie de continuer&nbsp;? Le mois suivant est à 60 €, jusqu'au {dateCourte(lim)}.</button>
+              : <p class="sv-lien sv-lien--off" aria-disabled="true">Envie de continuer&nbsp;? Le mois suivant à 60 € sera bientôt disponible.</p>
             )}
           </>
         ) : pr ? (

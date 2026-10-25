@@ -116,7 +116,7 @@ function RetourPaiement({ retour }) {
   const e = retour.etat; const st = retour.statut;
   let titre; let txt;
   if (e === 'verif') { titre = 'Vérification de ton paiement…'; txt = 'Un instant, on confirme avec la banque.'; }
-  else if (e === 'connexion') { titre = 'Connecte-toi pour finaliser'; txt = 'Reconnecte-toi avec le compte utilisé pour payer : on confirmera ton paiement.'; }
+  else if (e === 'connexion') { titre = 'Connecte-toi pour finaliser'; txt = 'Reconnecte-toi avec le compte utilisé pour payer\u00A0: on confirmera ton paiement.'; }
   else if (e === 'attente') {
     titre = retour.fini ? 'Paiement pas encore confirmé' : 'Paiement en cours de confirmation…';
     txt = retour.fini ? 'Rien n\'est débité tant que le paiement n\'est pas confirmé. Si tu as payé, patiente une minute puis vérifie de nouveau.' : 'Ça ne prend que quelques secondes.';
@@ -260,7 +260,7 @@ export function CoachPage() {
         <div class="cp-carte cp-carte--or">
           <p class="cp-nom">{invite ? 'Invitation de ton coach' : 'Paiement reçu'}</p>
           <p class="cp-txt">Remplis ton questionnaire pour que je prépare ton plan. {tardif
-            ? 'Ton délai de 7 jours est passé : ta demande rejoint la file.'
+            ? 'Ton délai de 7 jours est passé\u00A0: ta demande rejoint la file.'
             : `Livraison sous 48\u00A0h si tu le remplis dans les ${DELAI_QUESTIONNAIRE} jours suivant ton paiement.`}</p>
           <button class="cp-bt cp-bt--or" onClick={() => ouvrirQuestionnaire(typePaye)}>Remplir mon questionnaire</button>
         </div>
@@ -299,28 +299,28 @@ export function CoachPage() {
       {!occupe && !pr && (
         <div class="cp-carte cp-carte--or cp-offre">
           <div class="cp-ligne"><span class="cp-nom">Premier mois</span><span class="cp-prix">80 €</span></div>
-          <p class="cp-txt">{'Un mois de coaching : bilan complet, plan alimentaire écrit pour toi, livré sous 48\u00A0h, ajustements inclus pendant le mois.'}</p>
+          <p class="cp-txt">{'Un mois de coaching\u00A0: bilan complet, plan alimentaire écrit pour toi, livré sous 48\u00A0h, ajustements inclus pendant le mois.'}</p>
           {commandesOuvertes()
             ? <button class="cp-bt cp-bt--or" onClick={() => ouvrirAchat('plan')}>Demander mon plan</button>
             : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
         </div>
       )}
-      {!occupe && !pr && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement : tu décides de continuer. Accès nutrition inclus pendant ton mois payé et les 2 semaines qui suivent.</p>}
+      {!occupe && !pr && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement&nbsp;: tu décides de continuer. Accès nutrition inclus pendant ton mois payé et les 2 semaines qui suivent.</p>}
       </>)}
 
       {achat && createPortal(
         <div class="pg-coach cp-portail"><div class="cp-voile" onClick={(e) => { if (e.target === e.currentTarget) setAchat(null); }}>
           <div class="cp-modale" role="dialog" aria-modal="true">
-            {paiementOuvert.value && modeTest.value && !viaInv && <p class="qc-alerte">Mode test : paiement fictif, aucun argent n'est débité.</p>}
+            {paiementOuvert.value && modeTest.value && !viaInv && <p class="qc-alerte">Mode test&nbsp;: paiement fictif, aucun argent n'est débité.</p>}
             <p class="cp-nom">{typeAchat === 'maj' ? 'Mois suivant · 60 €' : (pr ? 'Nouveau mois · 80 €' : 'Premier mois · 80 €')}</p>
             <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>
             {/* 02/10 : avantage IA annonce explicitement avant le paiement. */}
-            <p class="cp-txt cp-inclus">Inclus : analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>
+            <p class="cp-txt cp-inclus">Inclus&nbsp;: analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>
             {typeAchat === 'plan' && (
               <div class="cp-elim">
-                <p class="cp-q">As-tu 18 ans ou plus ?</p>
+                <p class="cp-q">As-tu 18 ans ou plus&nbsp;?</p>
                 <Choix val={adulte} set={setAdulte} />
-                <p class="cp-q">Es-tu suivi actuellement pour un trouble alimentaire ?</p>
+                <p class="cp-q">Es-tu suivi actuellement pour un trouble alimentaire&nbsp;?</p>
                 <Choix val={tca} set={setTca} />
               </div>
             )}
@@ -328,7 +328,7 @@ export function CoachPage() {
               <p class="qc-alerte">Le plan coach est réservé aux 18 ans et plus. L'app, elle, reste gratuite pour toi.</p>
             )}
             {typeAchat === 'plan' && adulte !== 'non' && tca === 'oui' && (
-              <p class="qc-alerte">Merci de ta confiance. Pendant un suivi en cours, un plan chiffré peut faire plus de mal que de bien : parle de ton alimentation avec le professionnel qui te suit. L'app reste gratuite pour toi.</p>
+              <p class="qc-alerte">Merci de ta confiance. Pendant un suivi en cours, un plan chiffré peut faire plus de mal que de bien&nbsp;: parle de ton alimentation avec le professionnel qui te suit. L'app reste gratuite pour toi.</p>
             )}
             {!bloque && eligible && (
               <>
