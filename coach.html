@@ -149,6 +149,31 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
   color:var(--tx);background:#FFF8E1;border:0;border-radius:12px;padding:12px;margin-top:12px}
   .vir{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 0 12px 46px;font-size:13px;color:#9A5B00}
   .vir .second{width:auto;margin:0;padding:7px 12px;font-size:13px;flex:none}
+
+/* Plans par date (26/10) : plusieurs versions d'un plan, chacune avec son jour de debut */
+.ver{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;background:none;
+  border:1px solid var(--filet);border-radius:13px;padding:10px 12px;margin-bottom:7px;cursor:pointer;color:var(--tx)}
+.ver.on{border-color:#F8CF01;background:#FFF8E1;box-shadow:0 0 0 2px rgba(248,207,1,.35)}
+.ver-n{flex:none;width:26px;height:26px;border-radius:50%;background:#F1EFE8;font-size:12.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center}
+.ver.on .ver-n{background:#F8CF01}
+.ver-t{flex:1;min-width:0;font-size:14px;line-height:1.35}
+.ver-t b{font-weight:600}
+.ver-t small{display:block;font-size:12px;color:var(--tx3)}
+.ver-t small.alerte{color:#A32D2D;font-weight:600}
+.ver-t small.attention{color:#854F0B;font-weight:600}
+.ver-k{flex:none;font-size:13px;font-weight:600;color:var(--tx2);font-variant-numeric:tabular-nums}
+.ver-champs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.ver-ligne{display:flex;gap:8px;margin-top:10px}
+.ver-ligne button{flex:1;font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:0;border-radius:12px;padding:11px 6px;
+  background:#F4F3F0;color:var(--tx)}
+.ver-ligne button.danger{color:#A32D2D}
+.ver-ligne button:disabled{opacity:.45;cursor:default}
+.ver-esp{display:flex;gap:8px;align-items:flex-end;margin-top:12px}
+.ver-esp>div{flex:1}
+.ver-esp button{flex:none;font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:0;border-radius:12px;
+  padding:12px 12px;background:#FFF8E1;color:var(--tx)}
+.ver-esp button:disabled{opacity:.45;cursor:default}
 </style>
 </head>
 <body>
@@ -224,7 +249,26 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
       <p class="aide">Touche un questionnaire plus haut pour le remplir tout seul.</p>
     </div>
 
-    <p class="lb">Les repas</p>
+    <p class="lb">Versions du plan</p>
+    <div class="carte" id="versionsCarte">
+      <div id="listeVersions"></div>
+      <div class="ver-champs">
+        <div><label for="vLib">Nom de la version</label><input id="vLib" type="text" maxlength="60" placeholder="ex. Semaine 1" spellcheck="false"></div>
+        <div><label for="vDebut">Commence le</label><input id="vDebut" type="date"></div>
+      </div>
+      <div class="ver-ligne">
+        <button id="btnVerCopie">+ Nouvelle version (copie)</button>
+        <button id="btnVerSuppr" class="danger">Supprimer</button>
+      </div>
+      <div class="ver-esp">
+        <div><label for="vPremier">1re version le</label><input id="vPremier" type="date"></div>
+        <button id="btnEspacer">Espacer d'une semaine</button>
+      </div>
+      <button class="second" id="btnModele">Pré-remplir : rebond après sèche (5 versions)</button>
+      <p class="aide">Une seule version sans date = un plan unique, comme avant. Avec plusieurs versions, chacune s'applique à partir de son jour de début (jour belge, 00 h 00) ; la dernière reste valable sans fin. Une version sans date n'est pas appliquée. Avant la première date, le client garde son plan actuel, ou rien s'il n'en avait pas. « Espacer » met la 2e version 7 jours après la 1re, la 3e 14 jours après, etc. Le modèle est pré-rempli sans dates : c'est à toi de les donner.</p>
+    </div>
+
+    <p class="lb" id="titreRepas">Les repas</p>
     <div id="iaEtat" class="msg"></div>
     <div id="cible" class="cible" style="display:none"></div>
     <div id="repas"></div>
@@ -249,6 +293,8 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
 <script type="module">
 // Base d'aliments de l'app (meme fichier) : memes calories chez le client.
 import { DB, NOMS_ALIMENTS, macrosOf } from '/app-v2/src/data/aliments.js';
+import { modeleRebond } from '/app-v2/src/data/modele-rebond.js';
+import { jourValide, ajouterJours, dateBruxelles } from '/app-v2/src/store/plans-par-date.js';
 
 const URL_COACH = 'https://europe-west1-repz-baf60.cloudfunctions.net/espaceCoach';
 const CLE = 'belfit_espace_coach';
@@ -257,10 +303,15 @@ let code = '';
 try { code = localStorage.getItem(CLE) || ''; } catch (e) { /* rien */ }
 let choisi = null;   // dossier selectionne (destinataire)
 
-let plan = [
+// 26/10 Plans par date : un plan = une ou plusieurs VERSIONS, chacune avec
+// un jour de debut. `plan` pointe toujours sur les repas de la version
+// ouverte : tout le reste de la page (repas, totaux, IA) n'a pas change.
+let versions = [{ libelle: '', debut: '', repas: [
   { nom: 'Repas 1', ings: [] },
   { nom: 'Repas 2', ings: [] },
-];
+] }];
+let cur = 0;
+let plan = versions[0].repas;
 
 const arrondi = (n) => Math.round(n);
 
@@ -398,7 +449,87 @@ function dessiner() {
   });
 
   rafraichirTotaux();
+  dessinerVersions();
 }
+
+// ---------- Versions du plan (26/10) ----------
+const fmtJour = (j) => new Date(j + 'T12:00:00Z').toLocaleDateString('fr-BE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const kcalVersion = (v) => arrondi(v.repas.reduce((t, r) => t + totalRepas(r).kcal, 0));
+const nomVersion = (v, i) => (v.libelle || '').trim() || 'Version ' + (i + 1);
+
+function dessinerVersions() {
+  const hote = $('listeVersions');
+  hote.innerHTML = '';
+  const aujourdhui = dateBruxelles();
+  versions.forEach((v, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ver' + (i === cur ? ' on' : '');
+    const j = jourValide(v.debut);
+    const prec = i > 0 ? jourValide(versions[i - 1].debut) : null;
+    let ligne2, cls = '';
+    if (versions.length === 1 && !j) { ligne2 = 'plan unique, envoyé tout de suite'; }
+    else if (!j) { ligne2 = 'sans date : non appliquée'; cls = 'alerte'; }
+    else if (prec && j < prec) { ligne2 = 'dès le ' + fmtJour(j) + ' — avant la version précédente'; cls = 'attention'; }
+    else { ligne2 = (j <= aujourdhui ? 'depuis le ' : 'dès le ') + fmtJour(j); }
+    b.innerHTML = '<span class="ver-n"></span><span class="ver-t"><b></b><small></small></span><span class="ver-k"></span>';
+    b.querySelector('.ver-n').textContent = i + 1;
+    b.querySelector('b').textContent = nomVersion(v, i);
+    const sm = b.querySelector('small'); sm.textContent = ligne2; if (cls) sm.className = cls;
+    b.querySelector('.ver-k').textContent = kcalVersion(v).toLocaleString('fr-BE') + ' kcal';
+    b.addEventListener('click', () => ouvrirVersion(i));
+    hote.appendChild(b);
+  });
+  $('vLib').value = versions[cur].libelle || '';
+  $('vDebut').value = jourValide(versions[cur].debut) || '';
+  $('btnVerSuppr').disabled = versions.length <= 1;
+  $('titreRepas').textContent = versions.length > 1 ? 'Les repas · ' + nomVersion(versions[cur], cur) : 'Les repas';
+  const prem = jourValide($('vPremier').value);
+  $('btnEspacer').disabled = !(versions.length > 1 && prem);
+}
+
+function ouvrirVersion(i) {
+  cur = i; plan = versions[cur].repas;
+  dessiner();
+}
+
+$('vLib').addEventListener('input', (e) => { versions[cur].libelle = e.target.value; dessinerVersionsSansChamps(); });
+$('vDebut').addEventListener('change', (e) => { versions[cur].debut = e.target.value || ''; dessinerVersions(); });
+$('vPremier').addEventListener('input', () => { $('btnEspacer').disabled = !(versions.length > 1 && jourValide($('vPremier').value)); });
+// Liste seulement : le champ de saisie garde son focus pendant la frappe.
+function dessinerVersionsSansChamps() {
+  const lib = $('vLib').value, debut = $('vDebut').value;
+  dessinerVersions();
+  $('vLib').value = lib; $('vDebut').value = debut;
+}
+$('btnVerCopie').addEventListener('click', () => {
+  if (versions.length >= 12) return;
+  const src = versions[cur];
+  versions.splice(cur + 1, 0, {
+    libelle: '', debut: '',
+    repas: src.repas.map((r) => ({ nom: r.nom, ings: r.ings.map((i) => ({ ...i })) })),
+  });
+  ouvrirVersion(cur + 1);
+});
+$('btnVerSuppr').addEventListener('click', () => {
+  if (versions.length <= 1) return;
+  if (!confirm('Supprimer « ' + nomVersion(versions[cur], cur) + ' » ?')) return;
+  versions.splice(cur, 1);
+  ouvrirVersion(Math.min(cur, versions.length - 1));
+});
+$('btnEspacer').addEventListener('click', () => {
+  const prem = jourValide($('vPremier').value);
+  if (!prem) return;
+  versions.forEach((v, i) => { v.debut = ajouterJours(prem, 7 * i); });
+  dessiner();
+});
+$('btnModele').addEventListener('click', () => {
+  const vide = versions.length === 1 && versions[0].repas.every((r) => !r.ings.length);
+  if (!vide && !confirm('Remplacer les versions actuelles par le modèle « rebond après sèche » ? Ce que tu as saisi sera perdu.')) return;
+  versions = modeleRebond();
+  $('vPremier').value = '';
+  ouvrirVersion(0);
+});
 
 /** Totaux sans redessiner : le champ en cours garde le focus. */
 function rafraichirTotaux() {
@@ -422,6 +553,9 @@ function rafraichirTotaux() {
       '<div><b>' + arrondi(T.carbs) + ' g</b><span>glucides</span></div>' +
       '<div><b>' + arrondi(T.lip) + ' g</b><span>lipides</span></div>' +
     '</div>';
+  document.querySelectorAll('#listeVersions .ver .ver-k').forEach((el, i) => {
+    if (versions[i]) el.textContent = kcalVersion(versions[i]).toLocaleString('fr-BE') + ' kcal';
+  });
 }
 
 $('btnRepas').addEventListener('click', () => {
@@ -595,6 +729,7 @@ function proposer(extra) {
   return appel('proposer', { aliments: LISTE, ...extra }).then((d) => {
     if (d && d.ok) {
       plan = d.repas.map((r) => ({ nom: r.nom, ings: r.ings.map((i) => ({ name: i.name, portion: i.portion })) }));
+      versions[cur].repas = plan;
       dessiner();
       if (d.cible) {
         $('cible').innerHTML = 'Cible calculée : <b>' + d.cible.kcal + ' kcal</b> · P ' + d.cible.prot + ' g · G ' + d.cible.carbs + ' g · L ' + d.cible.lip + ' g';
@@ -726,17 +861,36 @@ $('btnEnvoi').addEventListener('click', () => {
   msg.className = 'msg';
   const client = choisi ? 'uid:' + choisi.uid : $('client').value.trim();
   if (!client) { afficher(msg, 'Indique le destinataire.', false); return; }
-  const repas = plan.filter((r) => r.ings.length).map((r) => ({
+  const nettoyer = (liste) => liste.filter((r) => r.ings.length).map((r) => ({
     nom: (r.nom || '').trim() || 'Repas',
     ings: r.ings.map((i) => ({ name: i.name, portion: +i.portion || 0 })),
   }));
-  if (!repas.length) { afficher(msg, 'Le programme est vide : ajoute au moins un aliment.', false); return; }
-  const T = totalPlan();
+  // Plan unique sans date = depot d'avant, a l'identique. Sinon : versions.
+  const parVersions = versions.length > 1 || !!jourValide(versions[0].debut);
+  let extra;
+  if (!parVersions) {
+    const repas = nettoyer(plan);
+    if (!repas.length) { afficher(msg, 'Le programme est vide : ajoute au moins un aliment.', false); return; }
+    const T = totalPlan();
+    extra = { repas, kcal: arrondi(T.kcal), prot: arrondi(T.prot), carbs: arrondi(T.carbs), lip: arrondi(T.lip) };
+  } else {
+    const liste = [];
+    for (let i = 0; i < versions.length; i++) {
+      const v = versions[i], repas = nettoyer(v.repas);
+      if (!repas.length) { afficher(msg, '« ' + nomVersion(v, i) + ' » est vide : ajoute un aliment ou supprime-la.', false); return; }
+      const T = v.repas.reduce((t, r) => { const m = totalRepas(r); return { kcal: t.kcal + m.kcal, prot: t.prot + m.prot, carbs: t.carbs + m.carbs, lip: t.lip + m.lip }; }, { kcal: 0, prot: 0, carbs: 0, lip: 0 });
+      liste.push({ libelle: (v.libelle || '').trim(), debut: jourValide(v.debut) || null, repas,
+        kcal: arrondi(T.kcal), prot: arrondi(T.prot), carbs: arrondi(T.carbs), lip: arrondi(T.lip) });
+    }
+    const sansDate = liste.filter((v) => !v.debut).length;
+    const txt = sansDate
+      ? sansDate + ' version' + (sansDate > 1 ? 's' : '') + ' sans date ne ser' + (sansDate > 1 ? 'ont' : 'a') + ' pas appliquée' + (sansDate > 1 ? 's' : '') + '. Envoyer quand même ?'
+      : 'Envoyer ' + liste.length + ' versions à ce client ? Chacune s\'appliquera à sa date.';
+    if (!confirm(txt)) return;
+    extra = { versions: liste };
+  }
   b.disabled = true; b.textContent = 'Envoi…';
-  appel('deposer', {
-    client, repas, note: $('note').value.trim(), langue: 'fr',
-    kcal: arrondi(T.kcal), prot: arrondi(T.prot), carbs: arrondi(T.carbs), lip: arrondi(T.lip),
-  }).then((d) => {
+  appel('deposer', { client, note: $('note').value.trim(), langue: 'fr', ...extra }).then((d) => {
     if (d && d.ok) {
       afficher(msg, d.mailEnvoye ? 'Programme envoyé : dans l\'app et par e-mail.'
         : 'Programme déposé dans l\'app. L\'e-mail n\'a pas pu partir, le client le voit quand même.', true);
@@ -747,6 +901,7 @@ $('btnEnvoi').addEventListener('click', () => {
         m === 'introuvable' ? 'Aucun compte BELFIT avec cet e-mail ou ce pseudo.' :
         m === 'valeurs' ? 'Une valeur est hors des bornes (calories ou macros).' :
         m === 'repas' ? 'Le programme est vide.' :
+        m === 'versions' ? 'Les versions du plan sont invalides (1 à 12 versions).' :
         'L\'envoi a échoué. Réessaie.', false);
     }
   }).catch((e) => { if (e.message !== 'code') afficher(msg, 'Réseau indisponible.', false); })

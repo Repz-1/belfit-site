@@ -11,6 +11,7 @@ import { statsAvOuvertes } from './StatsAvancees.jsx';
 import { ideesOuvertes, origineIdees } from './IdeesRepas.jsx';
 import { origineCourses } from './Courses.jsx';
 import { Entete } from './Entete.jsx';
+import { dateBruxelles, resoudreProgramme } from '../store/plans-par-date.js';
 import '../styles/belfit-plus.css';
 
 const URL_AJUSTEMENT =
@@ -42,7 +43,32 @@ export const progOuvert = signal(false);
 /** D'ou le calculateur a-t-il ete ouvert : null | 'programme'. Sert a
  *  savoir ou revenir, et quel libelle mettre sur la fleche. */
 export const origineCalc = signal(null);
-export const programme = signal(null);
+// 26/10 Plans par date : `programmeBrut` est le document tel que le serveur
+// le renvoie (users/{uid}.programme) ; `programme` est ce qu'il faut MONTRER
+// aujourd'hui (jour de Bruxelles). Sans versions, c'est le meme objet qu'avant.
+// Regles : store/plans-par-date.js.
+export const programmeBrut = signal(null);
+/** Jour calendaire a Bruxelles, remis a jour toutes les 30 s et au retour
+ *  sur l'appli (une appli ouverte a minuit change de version seule). */
+export const jourBruxelles = signal(dateBruxelles());
+function majJourBruxelles() {
+  const j = dateBruxelles();
+  if (j && j !== jourBruxelles.peek()) jourBruxelles.value = j;
+}
+if (typeof document !== 'undefined') {
+  setInterval(majJourBruxelles, 30000);
+  document.addEventListener('visibilitychange', majJourBruxelles);
+}
+const programmeResolu = computed(() => resoudreProgramme(programmeBrut.value, jourBruxelles.value));
+// `programme` garde l'allure d'un signal (lecture ET ecriture de .value) pour
+// tout le code et les bancs d'essai existants : lire donne le plan resolu
+// pour aujourd'hui (Bruxelles), ecrire remplace le plan brut recu.
+export const programme = {
+  get value() { return programmeResolu.value; },
+  set value(v) { programmeBrut.value = v; },
+  peek() { return programmeResolu.peek(); },
+  subscribe(f) { return programmeResolu.subscribe(f); },
+};
 export const programmeCharge = signal(false);
 // Dossier coaching (26/09) : dernier questionnaire envoye et derniere
 // commande payee. La commande est ecrite par le webhook LemonSqueezy.
@@ -62,7 +88,7 @@ effect(() => {
   if (programmeCharge.peek() && chargePour === uid) return;
   if (chargePour === uid && uid) return; // chargement deja en cours
   if (programmeCharge.peek()) {
-    programme.value = null;
+    programmeBrut.value = null;
     dossierCoach.value = { questionnaire: null, commande: null };
     ajustements.value = { restants: null, quota: null };
     programmeCharge.value = false;
@@ -96,7 +122,9 @@ effect(() => {
   if (!donneesPretes.value) return;   // journal du compte pas encore charge
   const u = utilisateur.peek();
   const cle = CLE_SEME + '_' + (u ? u.uid : 'local');
-  const marque = dateJour.value + '|' + String(pr.livreLe || '');
+  // 26/10 : une nouvelle version du plan (plans par date) rejoue le semis ;
+  // sans versions, versionCle est absent et le marqueur reste celui d'avant.
+  const marque = dateJour.value + '|' + String(pr.livreLe || '') + (pr.versionCle ? '|' + pr.versionCle : '');
   const nClotures = clotures.value;
   const apresCloture = nClotures !== cloturesSemees;
   try { if (!apresCloture && localStorage.getItem(cle) === marque) return; } catch (e) {}
@@ -113,7 +141,7 @@ export function chargerProgramme() {
     const faux = localStorage.getItem('belfit_v2_apercu_programme');
     const dos = localStorage.getItem('belfit_v2_apercu_dossier');
     if (faux || dos) {
-      programme.value = faux ? JSON.parse(faux) : null;
+      programmeBrut.value = faux ? JSON.parse(faux) : null;
       if (dos) dossierCoach.value = JSON.parse(dos);
       const q = localStorage.getItem('belfit_v2_apercu_ajust');
       ajustements.value = q ? JSON.parse(q) : {restants: null, quota: null};
@@ -129,13 +157,13 @@ export function chargerProgramme() {
     getDoc(doc(getFirestore(getApps()[0]), 'users', u.uid)))
     .then(s => {
       const d = s.exists() ? s.data() : null;
-      programme.value = (d && d.programme) || null;
+      programmeBrut.value = (d && d.programme) || null;
       dossierCoach.value = { questionnaire: (d && d.questionnaireCoach) || null, commande: (d && d.commandeCoach) || null, brouillon: (d && d.brouillonCoach) || null, accesPro: (d && d.accesPro) || null };
       // 21/10 Raci : ajustements illimites pendant le mois de coaching,
       // plus de compteur affiche.
       ajustements.value = {restants: null, quota: null};
     })
-    .catch(() => { programme.value = null; })
+    .catch(() => { programmeBrut.value = null; })
     .finally(() => { programmeCharge.value = true; });
 }
 
@@ -158,6 +186,12 @@ function depuis(iso) {
   if (j < 31) return `il y a ${j} jours`;
   const m = Math.floor(j / 30);
   return m === 1 ? 'il y a un mois' : `il y a ${m} mois`;
+}
+
+/** « 2 novembre » a partir d'un jour « AAAA-MM-JJ » (jour calendaire, sans fuseau). */
+function jourLisible(j) {
+  const d = new Date(j + 'T12:00:00Z');
+  return isNaN(d.getTime()) ? '' : d.toLocaleDateString('fr-BE', { day: 'numeric', month: 'long', timeZone: 'UTC' });
 }
 
 /** Prenom pour l'accueil : le compte, sinon la cle locale. */
@@ -268,7 +302,8 @@ export function BelfitPlus() {
   let sousProg = '';
   if (pret) {
     if (!pr) sousProg = 'Ton coach prépare ton plan — livré sous 24 à 48 h.';
-    else if (dejaApplique) sousProg = `Actif · ${pr.kcal} kcal par jour`;
+    else if (pr.enAttente) sousProg = pr.enAttente.debut ? `Ton plan commence le ${jourLisible(pr.enAttente.debut)}` : 'Plan reçu · la date de départ arrive bientôt';
+    else if (dejaApplique) sousProg = `Actif · ${pr.kcal} kcal par jour` + (pr.versionActive && pr.versionActive.total > 1 ? ` · étape ${pr.versionActive.n} sur ${pr.versionActive.total}` : '');
     else sousProg = `Reçu ${depuis(pr.livreLe) || 'récemment'} · prêt à appliquer`;
   }
 
@@ -294,7 +329,26 @@ export function BelfitPlus() {
             <>
               {/* Mise en page du 27/09 (Raci : « pas attirante ») : un
                   bandeau des totaux, puis une carte par repas. */}
-              <p class="pc-sous">Reçu {depuis(pr.livreLe) || 'récemment'} · actif dans ton journal</p>
+              <p class="pc-sous">Reçu {depuis(pr.livreLe) || 'récemment'} · {pr.enAttente ? 'pas encore actif' : 'actif dans ton journal'}</p>
+              {pr.enAttente && (
+                <section class="pc-repas pc-attente">
+                  <header><b>{pr.enAttente.debut ? `Ton plan commence le ${jourLisible(pr.enAttente.debut)}` : 'La date de départ arrive bientôt'}</b></header>
+                  <p class="pc-sous">Ton coach t'a envoyé un plan par étapes. Il s'affichera ici, avec tes repas du jour, dès qu'il démarre.</p>
+                </section>
+              )}
+              {pr.versionActive && pr.versionActive.total > 1 && (
+                <p class="pc-sous pc-etape">
+                  <b>Étape {pr.versionActive.n} sur {pr.versionActive.total}</b>
+                  {pr.versionActive.libelle ? ` · ${pr.versionActive.libelle}` : ''}
+                  {pr.versionActive.debut ? ` · depuis le ${jourLisible(pr.versionActive.debut)}` : ''}
+                </p>
+              )}
+              {pr.prochaine && (
+                <p class="pc-sous pc-etape">
+                  Prochaine étape le {jourLisible(pr.prochaine.debut)}{pr.prochaine.kcal > 0 ? ` · ${Number(pr.prochaine.kcal).toLocaleString('fr-BE')} kcal par jour` : ''}
+                </p>
+              )}
+              {!pr.enAttente && (<>
               <section class="pc-hero">
                 <p class="pc-hero-lb">Par jour</p>
                 <p class="pc-kcal"><b>{Number(pr.kcal).toLocaleString('fr-BE')}</b><span>kcal</span></p>
@@ -330,6 +384,7 @@ export function BelfitPlus() {
                   ))}
                 </section>
               ))}
+              </>)}
 
               {pr.note && (
                 <section class="pc-note">

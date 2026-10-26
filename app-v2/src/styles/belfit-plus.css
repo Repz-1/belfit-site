@@ -482,6 +482,10 @@
    ============================================================ */
 .pg-prog .prog-titre { margin: 10px 0 2px; }
 .pg-prog .pc-sous { margin: 0 0 16px; font-size: 13.5px; color: var(--encre-3); }
+/* 26/10 plans par date : etape en cours / prochaine etape / plan en attente */
+.pg-prog .pc-sous.pc-etape { margin: -8px 0 12px; }
+.pg-prog .pc-sous.pc-etape b { color: var(--encre, inherit); }
+.pg-prog .pc-attente .pc-sous { margin: 8px 0 0; }
 .pg-prog .pc-hero {
   background: linear-gradient(180deg, #FFF6D6 0%, #FFFFFF 70%);
   border: 1px solid var(--bordure-chaude); border-radius: 24px;

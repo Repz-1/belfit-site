@@ -5,6 +5,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
+const plansVersions = require("./plans-versions");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -1151,6 +1152,17 @@ const TEXTES_PROG = {
   },
 };
 
+/** 26/10 : ajoutee au courriel quand le plan est livre en plusieurs
+ *  versions a dates (le courriel montre alors la premiere). */
+const PHRASE_VERSIONS = {
+  fr: "Ton plan évolue par étapes : les repas ci-dessus sont la première. " +
+    "Les suivantes apparaissent toutes seules dans l'application, à leur date.",
+  en: "Your plan changes in stages: the meals above are the first one. " +
+    "The next ones appear by themselves in the app on their start date.",
+  nl: "Je plan verloopt in fasen: de maaltijden hierboven zijn de eerste. " +
+    "De volgende verschijnen vanzelf in de app op hun startdatum.",
+};
+
 /** Message HTML du programme. Tables + styles en ligne, comme les
  *  autres modeles : seule mise en forme fiable en messagerie. */
 function modeleProgramme(prog, langue) {
@@ -1262,11 +1274,24 @@ async function deposerChez(corps, parCoach) {
 
   // 4. Le plan tient-il debout ?
   const b = corps || {};
+  // 26/10 Plans par date : le coach peut envoyer plusieurs VERSIONS d'un
+  // meme plan, chacune avec sa date de debut (voir plans-versions.js).
+  // Sans `versions`, c'est le depot d'avant, a l'identique.
+  const parVersions = Array.isArray(b.versions) && b.versions.length > 0;
+  let versions = null;
+  if (parVersions) {
+    const v = plansVersions.normaliserVersions(b.versions);
+    if (!v.ok) { return [400, {ok: false, motif: v.motif}]; }
+    versions = v.versions;
+  }
+  // Plan « de tete » : le plan unique, ou la 1re version (e-mail et
+  // anciennes versions de l'app, qui ne connaissent pas les versions).
+  const tete = parVersions ? plansVersions.premiereVersion(versions) : b;
   const prog = {
-    kcal: nombreValide(b.kcal, 800, 8000),
-    prot: nombreValide(b.prot, 20, 600),
-    carbs: nombreValide(b.carbs, 20, 1200),
-    lip: nombreValide(b.lip, 10, 400),
+    kcal: nombreValide(tete.kcal, 800, 8000),
+    prot: nombreValide(tete.prot, 20, 600),
+    carbs: nombreValide(tete.carbs, 20, 1200),
+    lip: nombreValide(tete.lip, 10, 400),
   };
   if (prog.kcal === null || prog.prot === null ||
       prog.carbs === null || prog.lip === null) {
@@ -1276,7 +1301,7 @@ async function deposerChez(corps, parCoach) {
   // en sont la consequence, calcules par la page a partir de la
   // meme base d'aliments que l'app — on ne les recalcule pas ici,
   // on les borne seulement.
-  const repasBruts = Array.isArray(b.repas) ? b.repas : [];
+  const repasBruts = parVersions ? tete.repas : (Array.isArray(b.repas) ? b.repas : []);
   const repas = repasBruts.slice(0, 12).map((r) => ({
     nom: String((r && r.nom) || "Repas").slice(0, 60),
     ings: (Array.isArray(r && r.ings) ? r.ings : []).slice(0, 40)
@@ -1294,6 +1319,21 @@ async function deposerChez(corps, parCoach) {
   prog.note = String(b.note || "").slice(0, 600);
   prog.livreLe = new Date().toISOString();
   prog.parCoach = parCoach;
+
+  // Versions : stockees telles quelles. Sans versions, on EFFACE un
+  // eventuel ancien champ : set(..., {merge:true}) fusionne les sous-champs
+  // et laisserait sinon des versions perimees derriere un plan unique.
+  const FV = admin.firestore.FieldValue;
+  if (parVersions) {
+    prog.versions = versions;
+    // Ce que le client avait avant reste actif jusqu'a la 1re date.
+    const avant = await db.collection("users").doc(client.uid).get();
+    const ancien = plansVersions.ancienPlan(avant.exists ? avant.data().programme : null);
+    prog.precedent = ancien || FV.delete();
+  } else {
+    prog.versions = FV.delete();
+    prog.precedent = FV.delete();
+  }
 
   // 5. Ecriture. C'est le seul chemin : la regle Firestore
   //    interdit au client de toucher ce champ lui-meme.
@@ -1319,7 +1359,11 @@ async function deposerChez(corps, parCoach) {
           reply_to: "coach@belfit.be",
           to: [client.email],
           subject: T.objet,
-          html: modeleProgramme(prog, langue),
+          html: modeleProgramme(parVersions ? {
+            ...prog,
+            note: [prog.note, (PHRASE_VERSIONS[langue] || PHRASE_VERSIONS.fr)]
+              .filter(Boolean).join("\n\n"),
+          } : prog, langue),
         }),
       });
       mailEnvoye = envoi.ok;
