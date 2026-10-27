@@ -245,7 +245,7 @@ await o.ctx.close();
   let e0; const vers = async () => { await dej().scrollIntoViewIfNeeded(); await p.waitForTimeout(500); };
   ok(await p.locator('.mc-plan').count() === 3 && await p.locator('.mc-plan-btn').count() === 9, 'choix : 3 boutons visibles (Mangé / Sauté / Mangé autre chose) sur chaque repas prévu du plan, sans menu caché');
   const libs = await dej().locator('.mc-plan-btn').allInnerTexts(); ok(JSON.stringify(libs) === JSON.stringify(['✓ Mangé', 'Sauté', 'Mangé autre chose']), 'choix : libellés ' + JSON.stringify(libs));
-  ok(await p.locator('.mc-crayon').count() === 1 && await p.locator('.mc-renommer').count() === 3, 'renommer : crayon discret sur chaque repas du plan (.mc-renommer) + celui de Collations (.mc-crayon)');
+  ok(await p.locator('.mc-crayon').count() === 0 && await p.locator('.mc-renommer').count() === 3, 'renommer : crayon discret sur chaque repas du plan (.mc-renommer) ; Collations (créneau vide) masqué tant que le plan est actif (27/10)');
   const crayonOk = async (etat) => { const c = dej().locator('.mc-renommer'); const hb = await c.boundingBox(); const ch = await dej().locator('.mc-chevron').boundingBox();
     ok(hb && hb.width >= 40 && hb.height >= 40 && hb.x + hb.width <= ch.x + 1, 'renommer (' + etat + ') : visible, cible ≥ 40 px (' + Math.round(hb.width) + '×' + Math.round(hb.height) + '), à gauche du chevron');
     ok(await dej().locator('.mc-tete .mc-renommer').count() === 0 && await dej().locator('.mc-plan .mc-renommer').count() === 0, 'renommer (' + etat + ') : hors de .mc-tete et hors de la rangée des 3 boutons');
@@ -263,7 +263,7 @@ await o.ctx.close();
   ok(await dej().locator('.mc-titre').innerText() === 'Midi maison' && await p.locator('.rp-titre').count() === 0, 'renommer : nouveau nom affiché, fiche fermée');
   e0 = await p.evaluate(() => window.__banc.repas.value.map(r => r.nom + ':' + (r.prevu ? 'P' : '-')).join('|')); ok(/Midi maison:P/.test(e0), 'renommer : le repas reste « Prévu » (' + e0 + ')');
   await p.evaluate(() => { const b = window.__banc.programme; b.value = { ...b.value, livreLe: new Date(Date.now() + 500).toISOString() }; }); await p.waitForTimeout(800);
-  ok(await p.locator('.mc').count() === 4 && await dej().locator('.mc-titre').innerText() === 'Déjeuner', 'renommer : une nouvelle livraison remplace le repas encore « Prévu » par la version du plan (nom du plan), sans doublon');
+  ok(await p.locator('.mc').count() === 3 && await dej().locator('.mc-titre').innerText() === 'Déjeuner', 'renommer : une nouvelle livraison remplace le repas encore « Prévu » par la version du plan (nom du plan), sans doublon');
   await vers(); await p.screenshot({ path: '/workspace/shots/choix-repas-menu.png' });
   // saute
   await dej().locator('.mc-plan-btn--saute').tap(); await p.waitForTimeout(300);

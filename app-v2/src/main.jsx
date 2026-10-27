@@ -12,7 +12,7 @@ import { LoginScreen } from './components/LoginScreen.jsx';
 import { ACCES_INVITE, ONGLET_VITRINE, demanderConnexion } from './acces-invite.js';
 import { VERSION_APP } from './version.js';
 import { BandeauConfirmation } from './components/BandeauConfirmation.jsx';
-import { repas, objectifs, donneesPretes, calculBaseFait, totauxJourAff } from './store/journal.js';
+import { repas, objectifs, donneesPretes, calculBaseFait, totauxJourAff, repasAffiches } from './store/journal.js';
 import { DayDashboard, ouvrirCalcDemande } from './components/DayDashboard.jsx';
 import { CoachBar } from './components/CoachBar.jsx';
 // 22/10 Raci : barre de saisie libre des repas masquee sur Aujourd'hui
@@ -80,8 +80,12 @@ export function OngletJournal() {
             rempli. Sauter le dejeuner et remplir le diner laisse donc la
             marque sur le dejeuner, ce qui est le rappel utile. */}
         {(() => {
-          const aSuivre = repas.value.find(r => r.ings.length === 0);
-          return repas.value.map(r => (
+          // 27/10 : avec un plan coach, ses repas passent en premier et les
+          // creneaux par defaut vides sont masques (affichage seulement).
+          const pr = programme.value;
+          const liste = repasAffiches(repas.value, pr && pr.repas);
+          const aSuivre = liste.find(r => r.ings.length === 0);
+          return liste.map(r => (
             <MealCard key={r.id} r={r}
               aSuivre={aSuivre && r.id === aSuivre.id}
               fait={r.ings.length > 0 && !r.prevu && !r.saute} />

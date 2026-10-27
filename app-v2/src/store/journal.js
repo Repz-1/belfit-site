@@ -324,6 +324,32 @@ export function semerPlan(planRepas) {
   repas.value = liste.filter(r => !(r.duPlan && r.prevu && !r.remplace && !cles.has(r.cle || nomN(r.nom))));
 }
 
+/**
+ * 27/10 Raci : ordre d'AFFICHAGE de la liste « Tes repas » quand un plan
+ * coach est la. Pure derivation : rien n'est supprime ni deplace dans les
+ * donnees du journal (sauvegarde, synchro, totaux, cloture restent tels quels).
+ *  - les repas du plan (duPlan) passent en premier, dans l'ordre du plan ;
+ *  - les creneaux par defaut (Petit dejeuner...) restes VIDES sont masques ;
+ *  - un creneau par defaut deja rempli, et tout repas ajoute a la main
+ *    (meme vide), restent visibles, sous les repas du plan.
+ * Sans plan actif (avant la 1re date, plan retire) ou sans repas du plan
+ * dans le journal, la liste est rendue telle quelle : les defauts reviennent.
+ */
+export function repasAffiches(liste, planRepas) {
+  const plan = Array.isArray(planRepas) ? planRepas : [];
+  if (!Array.isArray(liste) || !plan.length || !liste.some(r => r.duPlan)) return liste;
+  const nomN = (n) => String(n || '').trim().toLowerCase();
+  const rang = (r) => {
+    const k = plan.findIndex(p => { const c = cleDuNom(p.nom); return (c && r.cle === c) || nomN(r.nom) === nomN(p.nom); });
+    return k < 0 ? plan.length : k;   // ancien repas du plan (deja mange...) : apres ceux du plan
+  };
+  const creneauVide = (r) => !r.duPlan && r.fixe && (r.ings || []).length === 0;
+  const duPlan = liste.map((r, i) => ({ r, i })).filter(x => x.r.duPlan)
+    .sort((a, b) => rang(a.r) - rang(b.r) || a.i - b.i).map(x => x.r);
+  const autres = liste.filter(r => !r.duPlan && !creneauVide(r));
+  return [...duPlan, ...autres];
+}
+
 /** 22/10 Raci : decocher un repas du plan -> il redevient « prevu » et
  *  sort du cadran (totauxJour / totauxJourAff ignorent les prevus, la
  *  cloture aussi). Seulement pour les repas venus du plan (duPlan). */
