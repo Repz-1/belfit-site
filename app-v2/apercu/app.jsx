@@ -11,8 +11,21 @@ import { histoJours } from '../src/store/stats.js';
 import { App } from '../src/main.jsx';
 import { programmeActif } from '../src/store/programme.js';
 import { estPremium } from '../src/components/PremiumPage.jsx';
-import { programme } from '../src/components/BelfitPlus.jsx';
+import { programme, programmeBrut, programmeCharge, dossierCoach, poserLecteurProgramme } from '../src/components/BelfitPlus.jsx';
 
+// Banc de la relecture du plan (27/10) : si la page pose window.__lecteur, la
+// lecture de users/{uid} est SIMULEE par lui (aucun acces a Firestore).
+//   window.__lecteur = { docs: { uid: document }, delai: { uid: ms }, panne: false, appels: 0 }
+if (window.__lecteur) {
+  poserLecteurProgramme(async (uid) => {
+    const L = window.__lecteur;
+    L.appels++; (L.parUid = L.parUid || {})[uid] = (L.parUid[uid] || 0) + 1;
+    if (L.delai && L.delai[uid]) await new Promise((r) => setTimeout(r, L.delai[uid]));
+    if (L.panne) throw new Error('reseau simule');
+    const d = L.docs[uid];
+    return d ? JSON.parse(JSON.stringify(d)) : null;
+  });
+}
 
 utilisateur.value = { uid: 'test', email: 'coach@belfit.be', displayName: 'Raci', getIdToken: async () => 'jeton-de-test', metadata: { creationTime: new Date().toISOString() } };
 objectifs.value = { kcal: 2712, prot: 165, carbs: 344, lip: 75 };
@@ -49,6 +62,6 @@ setInterval(() => {
 }, 100);
 
 // Acces des tests Playwright (cloture de la veille, 21/10).
-window.__banc = { dateJour, repas, histoJours, programme };
+window.__banc = { dateJour, repas, histoJours, programme, programmeBrut, programmeCharge, dossierCoach, objectifs, utilisateur };
 
 render(<App />, document.getElementById('app'));
