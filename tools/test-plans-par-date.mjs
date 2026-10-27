@@ -111,15 +111,17 @@ ok(PV.ancienPlan(null) === null && PV.ancienPlan({ kcal: 0, repas: [] }) === nul
 
 // ---- 9. Modele « rebond apres seche » ----
 const M = modeleRebond();
-ok(M.length === 5 && M.every((v) => v.debut === '' && v.repas.length === 6), 'modele : 5 versions, 6 repas chacune, AUCUNE date');
+ok(M.length === 8 && M.every((v) => v.debut === '' && v.repas.length === 6), 'modele : 8 versions, 6 repas chacune, AUCUNE date');
 const tot = (v) => v.repas.reduce((t, rp) => { for (const i of rp.ings) { const m = macrosOf(i); t.k += m.kcal; t.p += m.prot; } return t; }, { k: 0, p: 0 });
 ok(M.every((v) => v.repas.every((rp) => rp.ings.every((i) => DB[i.name]))), 'modele : tous les aliments existent dans la base de l\'app');
 const T = M.map(tot);
 ok(T.every((t, i) => i === 0 || t.k > T[i - 1].k), 'modele : les calories montent a chaque version (' + T.map((t) => Math.round(t.k)).join(' → ') + ')');
-ok(Math.abs(T[0].k - 3050) < 100 && Math.abs(T[4].k - 3960) < 100, 'modele : ~3 050 au debut, ~3 960 a la fin (a +-100 kcal : estimation)');
-ok(T.every((t) => t.p > 240 && t.p < 290), 'modele : proteines autour de 250 g (' + T.map((t) => Math.round(t.p)).join(' / ') + ' g)');
-ok(M[1].repas[1].ings[1].portion === 100 && M[1].repas[3].ings[0].portion === 80 && M[4].repas[5].ings.find((i) => i.name === 'Noix').portion === 35 && M[4].repas[4].ings[1].portion === 360, 'modele : les ajouts cumules (riz 100 g en S2, creme de riz 80 g, noix 35 g et pommes de terre 360 g en S5)');
-ok(M[0] !== modeleRebond()[0] && (M[0].repas[0].ings[0].portion = 1, modeleRebond()[0].repas[0].ings[0].portion === 40), 'modele : chaque appel rend une copie neuve');
+ok(Math.abs(T[0].k - 3230) < 120 && Math.abs(T[7].k - 4255) < 120, 'modele : ~3 230 kcal en S1 et ~4 255 en S8 (estimation du partenaire, a +-120 pres)');
+ok(M.every((v) => v.repas.every((rp) => rp.ings.reduce((s, i) => s + DB[i.name].carbs * i.portion / 100, 0) >= 40)), 'modele : des glucides dans CHAQUE repas, a chaque version (au moins 40 g)');
+ok(M.every((v) => v.repas.every((rp) => rp.ings.every((i) => !/Riz soufflé|Skyr|Riz thai|olive/i.test(i.name)))) && M.every((v) => v.repas.every((rp) => rp.ings.every((i) => i.name !== 'Riz basmati cru' || i.portion <= 150))), 'modele : riz basmati (jamais plus de 150 g par repas), creme de riz, pas de riz souffle ni de skyr ni d\'huile d\'olive');
+ok(T.every((t) => t.p > 235 && t.p < 280), 'modele : proteines autour de 240-270 g, bien sous les 329 g du plan actuel (' + T.map((t) => Math.round(t.p)).join(' / ') + ' g)');
+ok(M[1].repas[1].ings[1].portion === 110 && M[1].repas[2].ings[1].portion === 110 && M[5].repas[5].ings.find((i) => i.name === 'Noix').portion === 25 && M[7].repas[1].ings[1].portion === 150 && M[7].repas[4].ings[1].portion === 500 && M[5].repas[3].ings[0].portion === 110, 'modele : les ajouts cumules (riz 110 g en S2, noix 25 g et creme de riz 110 g en S6, pommes de terre 500 g et riz 150 g en S8)');
+ok(M[0] !== modeleRebond()[0] && (M[0].repas[0].ings[0].portion = 1, modeleRebond()[0].repas[0].ings[0].portion === 30), 'modele : chaque appel rend une copie neuve');
 
 // ---- 10. L'appli, a deux dates simulees ----
 const dossierApercu = 'app-v2/apercu/construit';
@@ -128,7 +130,7 @@ const { chromium } = exiger('../app-v2/node_modules/playwright');
 const srv = spawn('python3', ['-m', 'http.server', '8093', '--directory', dossierApercu], { stdio: 'ignore', detached: true });
 await new Promise((res) => setTimeout(res, 1500));
 const nav = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
-const REBOND_EX = modeleRebond().map((v, i) => ({ ...v, debut: ajouterJours('2026-11-02', 7 * (i < 4 ? i : 4)), kcal: Math.round(tot(v).k), prot: Math.round(tot(v).p), carbs: 300, lip: 90 }));
+const REBOND_EX = modeleRebond().map((v, i) => ({ ...v, debut: ajouterJours('2026-11-02', 7 * i), kcal: Math.round(tot(v).k), prot: Math.round(tot(v).p), carbs: 300, lip: 90 }));
 const PROG = { kcal: REBOND_EX[0].kcal, prot: REBOND_EX[0].prot, carbs: 300, lip: 90, repas: REBOND_EX[0].repas, livreLe: '2026-10-26T09:00:00.000Z', version: 1, note: 'Exemple (banc de test)', versions: REBOND_EX };
 const VIDE = [{ id: 1, nom: 'Repas 1', type: 'repas', fixe: true, ouvert: false, ings: [] }];
 const SHOTS = process.env.SHOTS || '/workspace/shots';
@@ -167,7 +169,7 @@ const photo = async (o, nom, texte) => {
 // Semaine 1 : lundi 3 nov. 2026, 10h belge
 let o = await ouvrir('2026-11-03T09:00:00Z', PROG, VIDE, 'sem1');
 let rp = await lire(o.page);
-ok(rp.length === 6 && rp[0].g.includes('Whey:40') && rp[1].g.includes('Riz basmati cru:80'), 'appli, 3 nov. (semaine 1) : 6 repas « prevus » de la version 1 (riz 80 g)');
+ok(rp.length === 6 && rp[0].g.includes('Whey:30') && rp[1].g.includes('Riz basmati cru:90'), 'appli, 3 nov. (semaine 1) : 6 repas « prevus » de la version 1 (riz 90 g)');
 ok(rp.every((x) => x.prevu), 'appli, semaine 1 : tout est « prevu »');
 const kc1 = await o.page.evaluate(() => window.__banc.programme.value.versionActive.n + '/' + window.__banc.programme.value.kcal);
 ok(kc1.startsWith('1/'), 'appli, semaine 1 : version 1 active (kcal ' + kc1.split('/')[1] + ')');
@@ -176,7 +178,7 @@ await o.ctx.close();
 // Semaine 5 : lundi 30 nov. 2026
 o = await ouvrir('2026-11-30T09:00:00Z', PROG, VIDE, 'sem5');
 rp = await lire(o.page);
-ok(rp.length === 6 && rp[1].g.includes('Riz basmati cru:120') && rp[3].g.includes('Crème de riz:100') && rp[5].g.includes('Noix:35'), 'appli, 30 nov. (semaine 5) : repas de la version 5 (riz 120 g, creme de riz 100 g, noix 35 g)');
+ok(rp.length === 6 && rp[1].g.includes('Riz basmati cru:130') && rp[3].g.includes('Crème de riz:90') && rp[5].g.includes('Noix:15'), 'appli, 30 nov. (semaine 5) : repas de la version 5 (riz 130 g, creme de riz 90 g, noix 15 g)');
 await photo(o, 'plans-appli-semaine5-alimentation', 'EXEMPLE · date simulée : lun. 30 nov. 2026 · données de test');
 await o.ctx.close();
 // Avant la 1re date, sans ancien plan
@@ -193,21 +195,21 @@ await o.ctx.close();
 o = await ouvrir('2026-11-03T09:00:00Z', PROG, VIDE, 'saisie');
 await o.page.evaluate(() => {
   const b = window.__banc;
-  b.repas.value = b.repas.value.map((x, i) => i === 0 ? { ...x, prevu: false } : i === 1 ? { ...x, prevu: false, saute: true } : i === 2 ? { ...x, remplace: true, ings: [{ id: 5, name: 'Pomme', portion: 150 }], ingsPlan: x.ings } : x);
+  b.repas.value = b.repas.value.map((x, i) => i === 1 ? { ...x, prevu: false } : i === 0 ? { ...x, prevu: false, saute: true } : i === 3 ? { ...x, remplace: true, ings: [{ id: 5, name: 'Pomme', portion: 150 }], ingsPlan: x.ings } : x);
 });
 await o.page.evaluate(() => { window.__banc.programme.value = JSON.parse(localStorage.getItem('belfit_v2_apercu_programme')); });   // plan renvoye a l'identique : rien ne bouge
 await o.page.waitForTimeout(500);
 rp = await lire(o.page);
-ok(!rp[0].prevu && rp[1].saute && rp[2].remplace && rp[2].g === 'Pomme:150', 'appli : « Mange », « Saute », « Mange autre chose » conserves');
+ok(!rp[1].prevu && rp[0].saute && rp[3].remplace && rp[3].g === 'Pomme:150', 'appli : « Mange », « Saute », « Mange autre chose » conserves');
 // la version change (on avance l'horloge de la page jusqu'au 10 nov., 10h belge)
 await o.page.clock.setFixedTime(new Date('2026-11-10T09:00:00Z'));
 await o.page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
 await o.page.waitForTimeout(800);
 rp = await lire(o.page);
-ok(!rp[0].prevu && rp[0].g.includes('Avoine:60'), 'changement de version : un repas deja mange garde ses quantites d\'avant (avoine 60 g, pas 80)');
-ok(rp[1].saute, 'changement de version : un repas saute reste saute');
-ok(rp[2].remplace && rp[2].g === 'Pomme:150', 'changement de version : « mange autre chose » conserve');
-ok(rp[3].prevu && rp[3].g.includes('Crème de riz:80'), 'changement de version : un repas encore « prevu » passe aux quantites de la version 2 (creme de riz 80 g)');
+ok(!rp[1].prevu && rp[1].g.includes('Riz basmati cru:90'), 'changement de version : un repas deja mange garde ses quantites d\'avant (riz 90 g, pas 110)');
+ok(rp[0].saute, 'changement de version : un repas saute reste saute');
+ok(rp[3].remplace && rp[3].g === 'Pomme:150', 'changement de version : « mange autre chose » conserve');
+ok(rp[2].prevu && rp[2].g.includes('Riz basmati cru:110'), 'changement de version : un repas encore « prevu » passe aux quantites de la version 2 (riz 110 g)');
 await o.ctx.close();
 await nav.close(); try { process.kill(-srv.pid); } catch {} srv.kill();
 process.exit(code);

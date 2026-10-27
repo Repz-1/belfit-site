@@ -34,10 +34,10 @@ let p = await ouvrir();
 ok(await p.locator('#listeVersions .ver').count() === 1, 'au depart : une seule version');
 ok((await lignes(p))[0].includes('plan unique'), 'une seule version sans date = « plan unique, envoye tout de suite »');
 await p.locator('#btnModele').click(); await p.waitForTimeout(400);
-ok(await p.locator('#listeVersions .ver').count() === 5, 'modele : 5 versions');
+ok(await p.locator('#listeVersions .ver').count() === 8, 'modele : 8 versions');
 const l0 = await lignes(p);
 ok(l0.every((t) => t.includes('sans date : non appliquée')), 'modele : chaque version porte « sans date : non appliquée » (aucune date inventee)');
-ok(l0[0].includes('Semaine 1') && l0[4].includes('Semaines 5 à 8'), 'modele : libelles Semaine 1 … Semaines 5 à 8');
+ok(l0[0].includes('Semaine 1') && l0[7].includes('Semaine 8'), 'modele : libelles Semaine 1 … Semaine 8');
 ok(await p.locator('#btnEspacer').isDisabled(), '« Espacer » inactif tant que le coach n\'a pas tape la 1re date');
 await banniere(p, 'EXEMPLE · modèle pré-rempli, SANS dates · serveur simulé');
 await p.locator('#versionsCarte').scrollIntoViewIfNeeded(); await p.evaluate(() => window.scrollBy(0, -50)); await p.waitForTimeout(300);
@@ -47,33 +47,33 @@ await p.evaluate(() => document.getElementById('banc').remove());
 await p.fill('#client', 'client-test@exemple.test');
 let confirmation = null; p.removeAllListeners('dialog'); p.on('dialog', (d) => { confirmation = d.message(); d.dismiss(); });
 await p.locator('#btnEnvoi').click(); await p.waitForTimeout(400);
-ok(/5 versions sans date ne seront pas appliquées/.test(confirmation || ''), 'envoi sans date : avertissement « 5 versions sans date ne seront pas appliquees »');
+ok(/8 versions sans date ne seront pas appliquées/.test(confirmation || ''), 'envoi sans date : avertissement « 8 versions sans date ne seront pas appliquees »');
 ok(envois.length === 0, 'avertissement refuse : rien n\'est envoye');
 // dates : 1re date, puis « Espacer d'une semaine »
 await p.fill('#vPremier', '2026-11-02'); await p.waitForTimeout(200);
 await p.locator('#btnEspacer').click(); await p.waitForTimeout(300);
 const l1 = await lignes(p);
-ok(l1[0].includes('2 nov') && l1[1].includes('9 nov') && l1[2].includes('16 nov') && l1[3].includes('23 nov') && l1[4].includes('30 nov'), 'espacer : 2, 9, 16, 23 et 30 nov.');
+ok(l1[0].includes('2 nov') && l1[1].includes('9 nov') && l1[2].includes('16 nov') && l1[3].includes('23 nov') && l1[4].includes('30 nov') && l1[7].includes('21 déc'), 'espacer : 2, 9, 16, 23, 30 nov. … 21 dec.');
 ok(!l1.some((t) => t.includes('sans date')), 'plus aucun avertissement « sans date »');
 await banniere(p, 'EXEMPLE · dates de test (2 nov. = date fictive) · serveur simulé');
 await p.locator('#versionsCarte').scrollIntoViewIfNeeded(); await p.evaluate(() => window.scrollBy(0, -50)); await p.waitForTimeout(300);
 await p.screenshot({ path: SHOTS + '/plans-coach-versions.png' });
 await p.locator('#total').scrollIntoViewIfNeeded(); await p.waitForTimeout(200);
-// ouvrir la version 5
-await p.locator('#listeVersions .ver').nth(4).click(); await p.waitForTimeout(300);
-ok(/semaines 5 à 8/i.test(await p.locator('#titreRepas').innerText()), 'ouvrir la version 5 : le titre des repas la nomme');
+// ouvrir la version 8
+await p.locator('#listeVersions .ver').nth(7).click(); await p.waitForTimeout(300);
+ok(/semaine 8/i.test(await p.locator('#titreRepas').innerText()), 'ouvrir la version 8 : le titre des repas la nomme');
 await p.locator('#titreRepas').scrollIntoViewIfNeeded(); await p.evaluate(() => window.scrollBy(0, -60)); await p.waitForTimeout(300);
 await p.screenshot({ path: SHOTS + '/plans-coach-version5.png', fullPage: false });
 await p.evaluate(() => document.getElementById('banc').remove());
 // envoi reel (simule)
 p.removeAllListeners('dialog'); p.on('dialog', (d) => { confirmation = d.message(); d.accept(); });
 await p.locator('#btnEnvoi').click(); await p.waitForTimeout(600);
-ok(/Envoyer 5 versions/.test(confirmation || ''), 'envoi : confirmation « Envoyer 5 versions … chacune a sa date »');
+ok(/Envoyer 8 versions/.test(confirmation || ''), 'envoi : confirmation « Envoyer 8 versions … chacune a sa date »');
 const e = envois[0];
-ok(e && Array.isArray(e.versions) && e.versions.length === 5 && !('repas' in e), 'envoi : payload « versions » (5), pas de plan unique');
-ok(e.versions.map((v) => v.debut).join() === '2026-11-02,2026-11-09,2026-11-16,2026-11-23,2026-11-30', 'envoi : les 5 dates du coach, telles quelles');
-ok(e.versions.every((v) => v.kcal > 2900 && v.repas.length === 6 && v.libelle), 'envoi : chaque version a ses calories, 6 repas et son libelle');
-ok(e.versions[0].kcal < e.versions[4].kcal, 'envoi : calories croissantes (' + e.versions.map((v) => v.kcal).join(' → ') + ')');
+ok(e && Array.isArray(e.versions) && e.versions.length === 8 && !('repas' in e), 'envoi : payload « versions » (8), pas de plan unique');
+ok(e.versions.map((v) => v.debut).join() === '2026-11-02,2026-11-09,2026-11-16,2026-11-23,2026-11-30,2026-12-07,2026-12-14,2026-12-21', 'envoi : les 8 dates du coach, telles quelles');
+ok(e.versions.every((v) => v.kcal > 3000 && v.repas.length === 6 && v.libelle), 'envoi : chaque version a ses calories, 6 repas et son libelle');
+ok(e.versions[0].kcal < e.versions[7].kcal, 'envoi : calories croissantes (' + e.versions.map((v) => v.kcal).join(' → ') + ')');
 ok(/Programme envoyé/.test(await p.locator('#msg').innerText()), 'retour du serveur simule affiche');
 await p.context().close();
 
@@ -93,7 +93,7 @@ await p.context().close();
 // (3) On retombe sur une seule version sans date : depot « d'avant », a l'identique
 envois = []; p = await ouvrir();
 await p.locator('#btnModele').click(); await p.fill('#client', 'client-test@exemple.test');
-for (let i = 0; i < 4; i++) { await p.locator('#btnVerSuppr').click(); await p.waitForTimeout(150); }
+for (let i = 0; i < 7; i++) { await p.locator('#btnVerSuppr').click(); await p.waitForTimeout(150); }
 ok(await p.locator('#listeVersions .ver').count() === 1 && await p.locator('#btnVerSuppr').isDisabled(), 'suppression : il reste une version, on ne peut pas supprimer la derniere');
 confirmation = null; p.removeAllListeners('dialog'); p.on('dialog', (d) => { confirmation = d.message(); d.accept(); });
 await p.locator('#btnEnvoi').click(); await p.waitForTimeout(500);
@@ -106,7 +106,7 @@ await p.context().close();
 p = await ouvrir();
 await p.locator('#btnModele').click(); await p.locator('#listeVersions .ver').nth(1).click(); await p.locator('#btnVerCopie').click(); await p.waitForTimeout(300);
 const l4 = await lignes(p);
-ok(l4.length === 6 && l4[2].includes('sans date'), 'copie : une 6e version apparait apres la version 2, sans date');
+ok(l4.length === 9 && l4[2].includes('sans date'), 'copie : une 9e version apparait apres la version 2, sans date');
 await p.context().close();
 
 await nav.close(); try { process.kill(-srv.pid); } catch {} srv.kill();
