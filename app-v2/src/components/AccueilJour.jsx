@@ -8,16 +8,17 @@ import '../styles/accueil-jour.css';
 /**
  * Ecran de bienvenue : petit logo BelFit discret en haut, un SEUL message court
  * (« Bonjour Raci », « Demain est un autre jour »…) selon l'heure de Bruxelles. Aucune donnee de l'app. Se ferme seul (~3,4 s,
- * en fondu) ou d'un tap. Le dernier message est memorise pour ne pas se
+ * en fondu) ou d'un tap. En mode `direct` (ouverture a froid, decidee avant le premier rendu) il est opaque d'emblee. Le dernier message est memorise pour ne pas se
  * repeter deux fois de suite.
  */
-export function AccueilJour({ onFin }) {
+export function AccueilJour({ onFin, direct = false }) {
   const [m] = useState(() => {
     const r = composerAccueil({ heure: momentBruxelles().heure, prenom: prenomUtilisateur(), dernier: lireDernier(), lang: langue.peek() });
     ecrireDernier(r);
     return r;
   });
-  const [vu, setVu] = useState(false);
+  // direct : l'ecran prend le relais du splash de chargement (meme creme) : opaque des la premiere image.
+  const [vu, setVu] = useState(direct);
   const [sort, setSort] = useState(false);
   useEffect(() => {
     const r = requestAnimationFrame(() => setVu(true));
