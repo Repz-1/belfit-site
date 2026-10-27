@@ -6,7 +6,7 @@ import { momentBruxelles } from '../services/accueil-frequence.js';
 import '../styles/accueil-jour.css';
 
 /**
- * Ecran de bienvenue : logo BelFit, « Bonjour, {prenom} », une petite phrase
+ * Ecran de bienvenue : petit logo BelFit discret en haut, « Bonjour, {prenom} », une petite phrase
  * selon l'heure de Bruxelles. Aucune donnee de l'app. Se ferme seul (~3,4 s,
  * en fondu) ou d'un tap. Le dernier message est memorise pour ne pas se
  * repeter deux fois de suite.
@@ -28,8 +28,8 @@ export function AccueilJour({ onFin }) {
   return (
     <div class={'acc-voile' + (vu ? ' acc-vu' : '') + (sort ? ' acc-sort' : '')} role="status" aria-live="polite"
       onClick={onFin} data-tranche={m.tranche} data-index={m.index}>
+      <img class="acc-logo" src="/belfit-logo-bf.png" alt="BelFit" />
       <div class="acc-carte">
-        <img class="acc-logo" src="/belfit-logo-bf.png" alt="BelFit" />
         <div class="acc-titre">
           {m.salut}{m.prenom ? ',\u00a0' : ''}{m.prenom ? <span class="acc-nom">{m.prenom}</span> : null}{m.interro ? '\u00a0?' : ''}
         </div>

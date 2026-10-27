@@ -11,7 +11,7 @@ copyFileSync('belfit-logo-bf.png', 'app-v2/apercu/construit/belfit-logo-bf.png')
 const srv = spawn('python3', ['-m', 'http.server', String(PORT), '--directory', 'app-v2/apercu/construit'], { stdio: 'ignore', detached: true });
 await new Promise(r => setTimeout(r, 1500));
 const nav = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
-const bandeau = (page, txt) => page.evaluate((t) => { const d = document.createElement('div'); d.textContent = t; d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#d00;color:#fff;font:700 12px sans-serif;text-align:center;padding:4px 6px;pointer-events:none'; document.body.appendChild(d); }, txt);
+const bandeau = (page, txt) => page.evaluate((t) => { const d = document.createElement('div'); d.textContent = t; d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#d00;color:#fff;font:700 12px sans-serif;text-align:center;padding:4px 6px;pointer-events:none'; document.body.appendChild(d); }, txt);
 // [nom, heure Bruxelles, tirage, sansprenom, libelle]
 const CAS = [
   ['tot-taquin', '2026-10-27T07:10:00+01:00', 0.4, false, 'tôt le matin · taquin'],

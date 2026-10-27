@@ -242,11 +242,22 @@ export function AccueilGarde() {
   useEffect(() => {
     if (!u || !pret || montreePour.current === relance) return undefined;
     let annule = false;
-    // On attend que le splash de chargement soit parti.
+    // On charge l'ecran (et sa police, ~46 Ko) pendant que le splash de chargement
+    // est encore la ; on affiche des que le splash est parti ET la police prete
+    // (au plus 1 s d'attente : sinon on affiche quand meme, font-display: swap).
+    const pretCarte = import('./components/AccueilJour.jsx').then((mod) => {
+      const polices = (document.fonts && document.fonts.load)
+        ? Promise.race([
+          Promise.all([document.fonts.load('400 1em Newsreader'), document.fonts.load('600 1em Newsreader')]),
+          new Promise((r) => setTimeout(r, 1000)),
+        ]).catch(() => {})
+        : Promise.resolve();
+      return polices.then(() => mod);
+    });
     const attendre = () => {
       if (annule) return;
       if (document.getElementById('splash')) { setTimeout(attendre, 150); return; }
-      import('./components/AccueilJour.jsx').then((mod) => {
+      pretCarte.then((mod) => {
         if (annule) return;
         montreePour.current = relance;
         setCarte({ Carte: mod.AccueilJour, id: relance });
