@@ -1,6 +1,7 @@
 import { signal, computed, effect } from '@preact/signals';
 import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
+import { aujourdhuiBxl } from './plans-par-date.js';
 
 // ============================================================
 // STORE STATS v2
@@ -67,8 +68,8 @@ export function ajouterPesee(kg) {
   // Meme format d'entree que la v1 (app.html / saveWeightNutri) :
   // { iso, date (jj mois court fr), weight }
   const val = parseFloat(kg) || 0;
-  const iso = new Date().toISOString().slice(0, 10);
-  const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  const iso = aujourdhuiBxl();
+  const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', timeZone: 'Europe/Brussels' });
   const sansAuj = weightLog.value.filter(p => p.iso !== iso);
   weightLog.value = [...sansAuj, { iso, date, weight: val }]
     .sort((a, b) => a.iso.localeCompare(b.iso));
@@ -77,7 +78,7 @@ export function ajouterPesee(kg) {
 export function enregistrerJour(totaux, isoForce) {
   // isoForce : utilise par la bascule automatique de journee, qui archive
   // la journee ECOULEE (donc pas la date du jour).
-  const iso = isoForce || new Date().toISOString().slice(0, 10);
+  const iso = isoForce || aujourdhuiBxl();
   // Jamais une journee vide a la place d'une journee deja enregistree
   // (double clic sur « Cloturer la journee », 21/10).
   if (!(Math.round(totaux?.kcal || 0) > 0)) return false;

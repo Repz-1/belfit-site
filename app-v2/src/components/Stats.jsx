@@ -11,6 +11,7 @@ import { t } from '../i18n/index.js';
 import { Entete } from './Entete.jsx';
 import { SILHOUETTE_FACE, SILHOUETTE_DOS, SILHOUETTE_FACE_F, SILHOUETTE_DOS_F } from '../data/silhouette.js';
 import { sexe } from '../store/perso.js';
+import { aujourdhuiBxl, ajouterJours } from '../store/plans-par-date.js';
 import '../legacy/stats.scoped.css';
 
 // ==========================================================
@@ -23,7 +24,8 @@ import '../legacy/stats.scoped.css';
 const LIMITE_GRATUIT = 7;
 const COL = { pecs: '#EF4444', dos: '#F97316', epaules: '#F7B500', trapezes: '#EA8C00', biceps: '#10B981', triceps: '#06B6D4', jambes: '#3B82F6', abdos: '#7A45E8' };
 
-const isoNDaysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+// 27/10 : « aujourd'hui » = jour de Bruxelles, calendrier sans decalage horaire.
+const isoNDaysAgo = (n) => ajouterJours(aujourdhuiBxl(), -n);
 const jourCourt = (iso) => new Date(iso + 'T00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 // Pesees : v1 = {iso, date, weight} ; tolere l'ancien format v2 {iso, kg}
 const poidsDe = (e) => parseFloat(e.weight ?? e.kg) || 0;
@@ -117,7 +119,7 @@ const PERIODES = [
 // pesees, elle inventerait une forme. Seuil pose par Raci le 7/08.
 const MIN_TENDANCE = 10;
 
-const isoMoins = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+const isoMoins = (n) => ajouterJours(aujourdhuiBxl(), -n);
 
 /** Moyenne mobile centree sur 7 jours, en unites de temps reelles. */
 function tendance(pts) {
@@ -373,39 +375,38 @@ export function Stats() {
   const kcalTri = [...histoire].sort((a, b) => (a.iso || '').localeCompare(b.iso || ''));
   const parIso = {};
   kcalTri.forEach(d => { if (d.iso) parIso[d.iso] = parseInt(d.kcal || 0); });
-  const isoDe = (dt) => dt.toISOString().slice(0, 10);
+  const midi = (iso) => new Date(iso + 'T12:00:00Z');   // jour civil, sans decalage
   const colsK = [];
   if (periodeK === '1s') {
     // 7 jours civils, les jours sans saisie gardent leur colonne (vide) :
     // les supprimer decalait la lecture et cachait les trous.
     for (let i = 6; i >= 0; i--) {
-      const dt = new Date(); dt.setDate(dt.getDate() - i);
-      const iso = isoDe(dt);
+      const iso = isoNDaysAgo(i);
       colsK.push({ cle: iso, v: parIso[iso] ?? null,
-        lb: dt.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }) });
+        lb: midi(iso).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', timeZone: 'UTC' }) });
     }
   } else if (periodeK === '1m' || periodeK === '3m') {
     const nb = periodeK === '1m' ? 5 : 13;
     for (let i = nb - 1; i >= 0; i--) {
-      const lundi = new Date();
-      lundi.setDate(lundi.getDate() - ((lundi.getDay() + 6) % 7) - i * 7);
+      const auj = aujourdhuiBxl();
+      const lundi = ajouterJours(auj, -((midi(auj).getUTCDay() + 6) % 7) - i * 7);
       let somme = 0, n = 0;
       for (let j = 0; j < 7; j++) {
-        const dt = new Date(lundi); dt.setDate(lundi.getDate() + j);
-        const v = parIso[isoDe(dt)];
+        const v = parIso[ajouterJours(lundi, j)];
         if (v != null) { somme += v; n++; }
       }
-      colsK.push({ cle: isoDe(lundi), v: n ? Math.round(somme / n) : null,
-        lb: `${lundi.getDate()}/${lundi.getMonth() + 1}` });
+      colsK.push({ cle: lundi, v: n ? Math.round(somme / n) : null,
+        lb: `${parseInt(lundi.slice(8, 10), 10)}/${parseInt(lundi.slice(5, 7), 10)}` });
     }
   } else {
     for (let i = 11; i >= 0; i--) {
-      const m = new Date(); m.setDate(1); m.setMonth(m.getMonth() - i);
+      const auj = aujourdhuiBxl();
+      const m = new Date(Date.UTC(+auj.slice(0, 4), +auj.slice(5, 7) - 1 - i, 1, 12));
       const pref = m.toISOString().slice(0, 7);
       let somme = 0, n = 0;
       Object.keys(parIso).forEach(iso => { if (iso.startsWith(pref)) { somme += parIso[iso]; n++; } });
       colsK.push({ cle: pref, v: n ? Math.round(somme / n) : null,
-        lb: m.toLocaleDateString('fr-FR', { month: 'short' }) });
+        lb: m.toLocaleDateString('fr-FR', { month: 'short', timeZone: 'UTC' }) });
     }
   }
   const valsK = colsK.map(c => c.v).filter(v => v != null);

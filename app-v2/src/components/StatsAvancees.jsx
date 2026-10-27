@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import { t } from '../i18n/index.js';
 import { weightLog, histoJours } from '../store/stats.js';
 import { objectifs } from '../store/journal.js';
+import { aujourdhuiBxl, ajouterJours } from '../store/plans-par-date.js';
 import { musclesParJour } from '../services/muscles-jour.js';
 import { Entete } from './Entete.jsx';
 import { useRetour } from '../services/retour.js';
@@ -32,14 +33,10 @@ const PERIODES = [
   { k: 90, lb: '90 j' }, { k: 0, lb: 'Tout' },
 ];
 
-const iso = (d) => d.toISOString().slice(0, 10);
-
 /** Bornes de la periode. 0 = depuis le premier jour connu. */
 function depuis(jours) {
   if (!jours) return '0000-01-01';
-  const d = new Date();
-  d.setDate(d.getDate() - jours + 1);
-  return iso(d);
+  return ajouterJours(aujourdhuiBxl(), -jours + 1);
 }
 
 /** Moyenne mobile : le poids oscille d'un kilo d'un jour a l'autre,
@@ -104,9 +101,9 @@ export function StatsAvancees({ fermer }) {
   const total = periode || Math.max(nbJours, 1);
   let serie = 0, meilleure = 0;
   const setJours = new Set(jours.map(j => j[0]));
+  const aujBxl = aujourdhuiBxl();
   for (let i = 0; i < (periode || 365); i++) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    if (setJours.has(iso(d))) { serie++; meilleure = Math.max(meilleure, serie); }
+    if (setJours.has(ajouterJours(aujBxl, -i))) { serie++; meilleure = Math.max(meilleure, serie); }
     else serie = 0;
   }
 
@@ -125,10 +122,10 @@ export function StatsAvancees({ fermer }) {
   const dernierPoids = pesees.length ? pesees[pesees.length - 1].kg : null;
   let projection = null;
   if (dernierPoids !== null && pente !== null && Math.abs(pente) >= 0.05) {
-    const dCible = new Date(); dCible.setDate(dCible.getDate() + 30);
+    const dCible = new Date(ajouterJours(aujourdhuiBxl(), 30) + 'T12:00:00Z');
     projection = {
       kg: dernierPoids + (pente / 7) * 30,
-      date: dCible.toLocaleDateString('fr-BE', { day: 'numeric', month: 'long' }),
+      date: dCible.toLocaleDateString('fr-BE', { day: 'numeric', month: 'long', timeZone: 'UTC' }),
     };
   }
 

@@ -44,7 +44,10 @@ import { MEAL_SVG, TYPE_SVG, MEAL_NEUTRAL_SVG } from '../data/illustrations.js';
 import {
   repas, totauxRepas, setPortion, ajouterIngredient, ajouterPlat,
   supprimerIngredient, supprimerRepas, renommerRepas, basculerCuisson,
-  fourchetteRepas, remplacerAliment, validerRepas, annulerValidation, sauterRepas, mangeAutreChose, remettrePrevu } from '../store/journal.js';
+  fourchetteRepas, remplacerAliment, validerRepas, annulerValidation, sauterRepas, mangeAutreChose, remettrePrevu,
+  appliquerIdee, annulerIdee } from '../store/journal.js';
+import { dossierCoach } from './BelfitPlus.jsx';
+import { preferencesDe, prochaineIdee, kcalIngs } from '../services/autre-idee.js';
 
 /** Illustration d'un repas : la sienne s'il est fixe, sinon celle de son type. */
 export function illustration(r) {
@@ -517,8 +520,24 @@ export function Recherche({ repasId, phCourt }) {
   );
 }
 
+// 25/10 « Autre idee » : idees deja proposees pour chaque repas (pour ne pas
+// repeter tant qu'il en reste), oubliees au rechargement.
+const ideesVues = new Map();
+
 export function MealCard({ r, aSuivre, fait }) {
   const tot = totauxRepas(r);
+  const [msgIdee, setMsgIdee] = useState(null);
+  const autreIdee = () => {
+    // Cible = le repas du PLAN (pas l'idee en cours) ; refus/allergies = questionnaire coach.
+    const cible = kcalIngs(r.idee ? r.ingsPlan : r.ings);
+    const d = dossierCoach.value || {};
+    const prefs = preferencesDe((d.questionnaire && d.questionnaire.reponses) || (d.brouillon && d.brouillon.rep) || null);
+    if (!ideesVues.has(r.id)) ideesVues.set(r.id, new Set());
+    const p = prochaineIdee(cible, prefs, ideesVues.get(r.id), r.idee && r.idee.nom);
+    if (!p) { setMsgIdee(`Pas d'autre idée proche de ${Math.round(cible)} kcal avec tes préférences.`); return; }
+    setMsgIdee(null);
+    appliquerIdee(r.id, p);
+  };
   const vide = r.ings.length === 0;
   const [edite, setEdite] = useState(false);
   // 22/10 : etat d'un repas du plan — prevu, mange, saute, autre (remplace).
@@ -611,6 +630,26 @@ export function MealCard({ r, aSuivre, fait }) {
           <button class="mc-plan-btn mc-plan-btn--mange" onClick={e => { e.stopPropagation(); validerRepas(r.id); }}>✓ Mangé</button>
           <button class="mc-plan-btn mc-plan-btn--saute" onClick={e => { e.stopPropagation(); sauterRepas(r.id); }}>Sauté</button>
           <button class="mc-plan-btn mc-plan-btn--autre" onClick={e => { e.stopPropagation(); mangeAutreChose(r.id); repasOuvertId.value = r.id; }}>Mangé autre chose</button>
+        </div>
+      )}
+
+      {/* 25/10 « Autre idee » : un autre repas aux calories proches, pour aujourd'hui
+          seulement. Le plan d'origine reste de cote (ingsPlan) : « Revenir au plan ». */}
+      {r.duPlan && !r.remplace && !r.saute && (r.idee || (r.prevu && !vide)) && (
+        <div class="mc-idee" onClick={e => e.stopPropagation()}>
+          {r.idee && (
+            <p class="mc-idee-txt">
+              <b>Idée du jour : {r.idee.nom}</b> · {Math.round(r.idee.kcal)} kcal <span class="mc-idee-plan">(plan : {Math.round(r.idee.cible)} kcal)</span>
+              <span class="mc-idee-verif"> Vérifie les ingrédients (allergies, régime).</span>
+            </p>
+          )}
+          {msgIdee && <p class="mc-idee-msg" role="status">{msgIdee}</p>}
+          {r.prevu && (
+            <div class="mc-idee-actions">
+              <button class="mc-idee-btn" onClick={e => { e.stopPropagation(); autreIdee(); }}>↻ Autre idée</button>
+              {r.idee && <button class="mc-idee-btn mc-idee-btn--retour" onClick={e => { e.stopPropagation(); annulerIdee(r.id); setMsgIdee(null); }}>Revenir au plan</button>}
+            </div>
+          )}
         </div>
       )}
     </div>

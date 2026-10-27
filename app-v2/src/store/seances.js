@@ -1,6 +1,7 @@
 import { signal, effect } from '@preact/signals';
 import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
+import { aujourdhuiBxl } from './plans-par-date.js';
 
 // ============================================================
 // STORE DES SEANCES ENREGISTREES
@@ -53,7 +54,7 @@ function reprendreV1() {
     if (!Array.isArray(vieilles)) return [];
     return vieilles.map((s, i) => ({
       id: 'v1-' + (s.ts || i),
-      iso: s.iso || new Date(s.ts || Date.now()).toISOString().slice(0, 10),
+      iso: s.iso || aujourdhuiBxl(new Date(s.ts || Date.now())),
       ts: s.ts || Date.now(),
       titre: s.titre || 'Séance',
       duree: s.duree || 0,
@@ -121,7 +122,7 @@ effect(() => {
 export function enregistrerSeance(s) {
   const seance = {
     id: String(Date.now()) + '-' + Math.random().toString(36).slice(2, 7),
-    iso: s.iso || new Date().toISOString().slice(0, 10),
+    iso: s.iso || aujourdhuiBxl(),
     ts: Date.now(),
     titre: s.titre || 'Séance',
     duree: s.duree || 0,

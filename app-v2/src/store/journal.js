@@ -3,6 +3,7 @@ import { macrosOf } from '../data/aliments.js';
 import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { enregistrerJour } from './stats.js';
+import { aujourdhuiBxl } from './plans-par-date.js';
 
 // ============================================================
 // STORE DU JOURNAL v2
@@ -59,7 +60,24 @@ export const rappelIgnoreA = signal(null);
 // Contenance de la bouteille du suivi d'hydratation (litres).
 export const tailleBouteille = signal(1.5);
 
-function aujourdhui() { return new Date().toISOString().slice(0, 10); }
+// 27/10 : « aujourd'hui » = jour de Bruxelles (etait le jour UTC, qui change
+// a 01h/02h belges : la cloture et le clignotement arrivaient trop tard).
+function aujourdhui() { return aujourdhuiBxl(); }
+
+/**
+ * 27/10 Raci : le journal affiche est-il celui d'un jour PASSE (a cloturer) ?
+ * Des minuit a Bruxelles, les 24 h sont ecoulees : la cle de date du journal
+ * (dateJour, desormais le jour de Bruxelles) est alors anterieure a aujourd'hui.
+ * Un journal ouvert a 00h30 recoit directement la cle du nouveau jour : pas
+ * de faux positif. Les anciennes cles (jour UTC, avant ce changement) ne sont
+ * pas migrees : une ancienne cle « jour J » saisie entre 00h et 01h/02h le
+ * jour J+1 est vue comme un journal de la veille, jusqu'a sa cloture (une
+ * seule fois, le jour du deploiement).
+ */
+export function journalDUnJourPasse(cle, maintenant = new Date()) {
+  if (!cle || typeof cle !== 'string') return false;
+  return cle < aujourdhuiBxl(maintenant);
+}
 
 // --- Chargement par compte : quand l'utilisateur change (connexion),
 // on charge SES donnees (cloud d'abord, local en secours). ---
@@ -319,9 +337,39 @@ export function semerPlan(planRepas) {
     if (i < 0) { liste.push(neuf(++id)); return; }
     const r = liste[i];
     if (r.saute || r.remplace) return;   // 22/10 : choix du client, jamais ecrase
+    if (r.idee) {                         // 25/10 : idee choisie -> on garde le choix, le retour pointe sur le plan a jour
+      liste[i] = { ...r, ingsPlan: neuf(r.id).ings };
+      return;
+    }
     if (r.ings.length === 0 || (r.duPlan && r.prevu)) liste[i] = { ...neuf(r.id), fixe: r.fixe, cle: r.cle || cle };
   });
   repas.value = liste.filter(r => !(r.duPlan && r.prevu && !r.remplace && !cles.has(r.cle || nomN(r.nom))));
+}
+
+/**
+ * 27/10 Raci : ordre d'AFFICHAGE de la liste « Tes repas » quand un plan
+ * coach est la. Pure derivation : rien n'est supprime ni deplace dans les
+ * donnees du journal (sauvegarde, synchro, totaux, cloture restent tels quels).
+ *  - les repas du plan (duPlan) passent en premier, dans l'ordre du plan ;
+ *  - les creneaux par defaut (Petit dejeuner...) restes VIDES sont masques ;
+ *  - un creneau par defaut deja rempli, et tout repas ajoute a la main
+ *    (meme vide), restent visibles, sous les repas du plan.
+ * Sans plan actif (avant la 1re date, plan retire) ou sans repas du plan
+ * dans le journal, la liste est rendue telle quelle : les defauts reviennent.
+ */
+export function repasAffiches(liste, planRepas) {
+  const plan = Array.isArray(planRepas) ? planRepas : [];
+  if (!Array.isArray(liste) || !plan.length || !liste.some(r => r.duPlan)) return liste;
+  const nomN = (n) => String(n || '').trim().toLowerCase();
+  const rang = (r) => {
+    const k = plan.findIndex(p => { const c = cleDuNom(p.nom); return (c && r.cle === c) || nomN(r.nom) === nomN(p.nom); });
+    return k < 0 ? plan.length : k;   // ancien repas du plan (deja mange...) : apres ceux du plan
+  };
+  const creneauVide = (r) => !r.duPlan && r.fixe && (r.ings || []).length === 0;
+  const duPlan = liste.map((r, i) => ({ r, i })).filter(x => x.r.duPlan)
+    .sort((a, b) => rang(a.r) - rang(b.r) || a.i - b.i).map(x => x.r);
+  const autres = liste.filter(r => !r.duPlan && !creneauVide(r));
+  return [...duPlan, ...autres];
 }
 
 /** 22/10 Raci : decocher un repas du plan -> il redevient « prevu » et
@@ -343,7 +391,11 @@ export function sauterRepas(repasId) {
 }
 export function mangeAutreChose(repasId) {
   repas.value = repas.value.map(r => r.id !== repasId || !r.duPlan || r.remplace ? r
-    : { ...r, prevu: true, saute: false, remplace: true, ingsPlan: r.ings, ings: [] });
+    : (() => {   // 25/10 : si une « Autre idee » etait choisie, le PLAN reste ce qui est mis de cote
+        const n = { ...r, prevu: true, saute: false, remplace: true, ingsPlan: r.idee ? (r.ingsPlan || []) : r.ings, ings: [] };
+        delete n.idee;
+        return n;
+      })());
 }
 export function remettrePrevu(repasId) {
   repas.value = repas.value.map(r => {
@@ -355,14 +407,40 @@ export function remettrePrevu(repasId) {
   });
 }
 
+/** 25/10 « Autre idee » : remplace les aliments d'un repas du plan par ceux
+ *  d'une idee aux calories proches, POUR AUJOURD'HUI SEULEMENT.
+ *  - le plan d'origine est mis de cote dans `ingsPlan` (jamais perdu) ; si
+ *    une autre idee etait deja choisie, on garde le tout premier plan ;
+ *  - `idee` = { nom, kcal, cible } sert a l'affichage et a l'annulation ;
+ *  - le repas reste « prevu » : il se coche ensuite comme n'importe quel repas.
+ *  Seulement un repas du plan, prevu ou mange, ni saute ni « autre chose ». */
+export function appliquerIdee(repasId, idee) {
+  repas.value = repas.value.map(r => {
+    if (r.id !== repasId || !r.duPlan || r.saute || r.remplace) return r;
+    const base = r.idee ? (r.ingsPlan || []) : r.ings;
+    return {
+      ...r, idee: { nom: idee.nom, kcal: idee.kcal, cible: idee.cible }, ingsPlan: base,
+      ings: idee.ings.map(i => ({ id: ++prochainId, name: i.name, portion: i.portion })),
+    };
+  });
+}
+/** Annule « Autre idee » : le repas du plan revient tel qu'il etait prevu. */
+export function annulerIdee(repasId) {
+  repas.value = repas.value.map(r => {
+    if (r.id !== repasId || !r.duPlan || !r.idee) return r;
+    const n = { ...r, ings: r.ingsPlan || [] };
+    delete n.idee; delete n.ingsPlan;
+    return n;
+  });
+}
+
 export function renommerRepas(repasId, nom) {
   repas.value = repas.value.map(r => r.id !== repasId ? r : { ...r, nom });
 }
 
 
 // 25/10 : compteur de clotures de la session. La cloture vide le journal
-// mais dateJour ne change pas toujours (cloture le soir meme, ou entre
-// 00h et 01h/02h heure de Bruxelles car la cle de date est en UTC) : le
+// mais dateJour ne change pas toujours (cloture le soir meme avant minuit) : le
 // marqueur « une fois par dateJour » du seed du plan ne bougeait donc
 // pas et les repas du plan ne revenaient pas en « Prevu ». Ce compteur
 // dit au seed de rejouer apres chaque cloture.

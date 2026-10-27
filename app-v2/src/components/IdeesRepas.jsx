@@ -9,6 +9,7 @@ import { objectifs, totauxJourAff, kcalRestantes } from '../store/journal.js';
 import { estPremium } from './PremiumPage.jsx';
 import { ongletActif, allerOnglet } from './BottomNav.jsx';
 import { t } from '../i18n/index.js';
+import { quantitesIdee, RATIO_MIN, RATIO_MAX } from '../services/autre-idee.js';
 
 // Macros d'une idee = somme reelle de ses aliments (base DB)
 function macrosIdee(idee) {
@@ -34,11 +35,8 @@ function macrosIdee(idee) {
 // portion minimale est ecartee. Proposer du gras a quelqu'un deja
 // en exces de lipides est un contresens.
 // ============================================================
-const RATIO_MIN = 0.35;
-// 1.4 bridait les portions a ~740 kcal maximum : impossible d'honorer
-// un reste de 900. Porte a 2.0, toujours realiste (une recette de base
-// a 350 kcal plafonne a 700).
-const RATIO_MAX = 2.0;
+// RATIO_MIN / RATIO_MAX et le calcul des quantites vivent dans
+// services/autre-idee.js (partages avec le bouton « Autre idee » du plan).
 
 /**
  * Cible calorique d'une suggestion : TOUJOURS ce qu'il reste, plafonne a
@@ -53,37 +51,9 @@ function cibleRepas(reste, objKcal) {
 }
 /** Calcule les quantites d'une idee pour un ratio donne. */
 function quantites(idee, ratio) {
-  const parts = [];
-  let kcal = 0, prot = 0, carbs = 0, lip = 0;
-  idee.ings.forEach(i => {
-    const d = DB[i.n];
-    if (!d) return;
-    // Plafonds humains : le budget calorique ne peut plus etre atteint
-    // en gonflant les grammages (275 g de poulet, 430 g de patate, 6 oeufs).
-    const lim = limitesPortion(i.n);
-    let q, grammes, libelle;
-    if (d.unit) {
-      q = Math.min(lim.max, Math.max(lim.min, Math.round(i.q * ratio)));
-      grammes = q * d.unit;
-      libelle = q + ' ' + i.l + (q > 1 ? 's' : '');
-    } else {
-      const brut = Math.round(i.q * ratio / lim.step) * lim.step;
-      q = Math.min(lim.max, Math.max(lim.min, brut));
-      grammes = q;
-      libelle = q + 'g ' + i.l;
-    }
-    const f = grammes / 100;
-    kcal += d.kcal * f; prot += d.prot * f;
-    carbs += (d.carbs || 0) * f; lip += (d.lip || 0) * f;
-    parts.push(libelle);
-  });
-  return {
-    texte: parts.join(' · '),
-    kcal: Math.round(kcal), prot: Math.round(prot),
-    carbs: Math.round(carbs), lip: Math.round(lip),
-  };
+  const q = quantitesIdee(idee, ratio);
+  return { texte: q.parts.join(' · '), kcal: q.kcal, prot: q.prot, carbs: q.carbs, lip: q.lip };
 }
-
 /**
  * Adapte une idee au budget calorique restant, PORTIONS PLAFONNEES.
  *

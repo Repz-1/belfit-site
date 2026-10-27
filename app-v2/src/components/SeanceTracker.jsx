@@ -3,6 +3,7 @@ import { signal, effect } from '@preact/signals';
 import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { t } from '../i18n/index.js';
+import { aujourdhuiBxl } from '../store/plans-par-date.js';
 
 // ============================================================
 // SUIVI DE SEANCE v2 — journal d'exercices du jour.
@@ -32,7 +33,7 @@ effect(() => {
   sauvegarder(u, { setLog: log });
 });
 
-const isoAuj = () => new Date().toISOString().slice(0, 10);
+const isoAuj = () => aujourdhuiBxl();
 
 function majJour(fn) {
   const d = isoAuj();

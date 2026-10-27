@@ -46,7 +46,7 @@ ok(planR(s).every(r => !r.prevu && !r.saute), 'J : tous les repas du plan coches
 await page.screenshot({ path: '/workspace/shots/reinit-' + (process.env.PHASE || 'x') + '-1-tout-mange.png' });
 // Cloture le jour J (le soir meme)
 const btn = page.locator('button.cal-reset');
-await btn.scrollIntoViewIfNeeded(); await btn.click(); await pause();
+await btn.evaluate(b => b.scrollIntoView({ block: 'center' })); await btn.click({ force: true }); await pause();
 s = await etat();
 const hJ = JSON.stringify(s.h['2026-10-25'] || null);
 ok(s.h['2026-10-25'] && s.h['2026-10-25'].kcal > 0, 'J : journee archivee dans histoJours');
@@ -61,7 +61,7 @@ const hJavant = JSON.stringify((await etat()).h['2026-10-25']);
 await page.clock.setSystemTime(new Date('2026-10-26T08:00:00+01:00')); await page.evaluate(() => { window.__banc.repas.value = [...window.__banc.repas.value]; }); await page.waitForTimeout(1200);
 ok((await page.locator('.cal-retard').count()) === 1, '(2) J+1 : le message « journee non cloturee » s\'affiche');
 await page.screenshot({ path: '/workspace/shots/reinit-' + (process.env.PHASE || 'x') + '-3-lendemain-avant-cloture.png' });
-try { await btn.scrollIntoViewIfNeeded({timeout:3000}); await btn.click({timeout:3000}); } catch { console.log('   (bouton Cloturer inactif)'); } await pause();
+try { await btn.evaluate(b => b.scrollIntoView({ block: 'center' })); await btn.click({timeout:3000, force:true}); } catch { console.log('   (bouton Cloturer inactif)'); } await pause();
 s = await etat();
 ok(s.d === '2026-10-26', '(2) apres cloture : on passe a J+1 (' + s.d + ')');
 ok(planR(s).length === 3 && planR(s).every(r => r.prevu && !r.saute), '(2) J+1 : repas du plan « Prevu » decoches');
