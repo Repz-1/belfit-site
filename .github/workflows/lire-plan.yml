@@ -1,0 +1,71 @@
+name: Lire un plan (lecture seule)
+
+# Lit users/{uid}.programme d'UN compte (trouve par e-mail), en LECTURE
+# SEULE : aucune ecriture, aucune suppression, aucun e-mail envoye.
+# Se lance a la main (Actions > « Lire un plan (lecture seule) » > Run
+# workflow, champ « email »). Un simple push ne le declenche pas.
+#
+# Le depot est public : le journal ne contient que « lecture effectuee » et
+# « programme present : oui/non ». Le detail est chiffre avec
+# tools/diagnostic/cle-publique-inscrits.pem puis pousse sur la branche
+# lire-plan-sortie (distincte de inscrits-sortie : on n'ecrase rien).
+# L'e-mail est lu dans la charge utile de l'evenement par le script (pas dans
+# un env: de step, que le journal afficherait).
+#
+# Dechiffrer (avec la cle privee, jamais dans le depot) :
+#   git fetch origin lire-plan-sortie && git checkout FETCH_HEAD -- k.enc sortie.enc
+#   openssl pkeyutl -decrypt -inkey cle-privee.pem -in k.enc -out k.txt
+#   openssl enc -d -aes-256-cbc -pbkdf2 -in sortie.enc -pass file:k.txt
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "E-mail du compte a lire"
+        required: true
+
+permissions:
+  contents: write   # uniquement pour pousser la sortie chiffree sur lire-plan-sortie
+
+concurrency:
+  group: lire-plan
+  cancel-in-progress: false
+
+jobs:
+  lire-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Cle du compte de service
+        env:
+          CLE: ${{ secrets.FIREBASE_SA_KEY }}
+        run: |
+          umask 077
+          printf '%s' "$CLE" > "$RUNNER_TEMP/cle.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/cle.json" >> "$GITHUB_ENV"
+      - name: Dependances (firebase-admin, comme les fonctions)
+        run: npm ci --prefix functions --no-audit --no-fund --ignore-scripts
+      - name: Lecture (journal minimal, detail chiffre)
+        run: |
+          set -e
+          node tools/diagnostic/lire-plan.mjs "$RUNNER_TEMP/sortie.txt" > "$RUNNER_TEMP/journal.txt"
+          # Garde-fou : aucune adresse dans le journal public.
+          if grep -qE '[A-Za-z0-9._+-]@' "$RUNNER_TEMP/journal.txt"; then
+            echo "Une adresse est apparue dans le journal : arret."; exit 1
+          fi
+          cat "$RUNNER_TEMP/journal.txt"
+          openssl rand -hex 32 > "$RUNNER_TEMP/k.txt"
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in "$RUNNER_TEMP/sortie.txt" -out "$RUNNER_TEMP/sortie.enc" -pass file:"$RUNNER_TEMP/k.txt"
+          openssl pkeyutl -encrypt -pubin -inkey tools/diagnostic/cle-publique-inscrits.pem -in "$RUNNER_TEMP/k.txt" -out "$RUNNER_TEMP/k.enc"
+          mkdir -p "$RUNNER_TEMP/out" && cp "$RUNNER_TEMP/sortie.enc" "$RUNNER_TEMP/k.enc" "$RUNNER_TEMP/out/"
+          cd "$RUNNER_TEMP/out"
+          git init -q && git checkout -q -b lire-plan-sortie
+          git config user.email "coach@belfit.be" && git config user.name "BelFit Lire Plan"
+          git add . && git commit -qm "lire-plan $(date -u +%FT%TZ)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" lire-plan-sortie
+      - name: Nettoyage
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cle.json" "$RUNNER_TEMP/sortie.txt" "$RUNNER_TEMP/k.txt" "$RUNNER_TEMP/journal.txt"
