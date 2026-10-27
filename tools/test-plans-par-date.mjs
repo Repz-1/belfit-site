@@ -112,7 +112,7 @@ ok(PV.ancienPlan(null) === null && PV.ancienPlan({ kcal: 0, repas: [] }) === nul
 // ---- 9. Modele « rebond apres seche » ----
 const M = modeleRebond();
 ok(M.length === 8 && M.every((v) => v.debut === '' && v.repas.length === 6), 'modele : 8 versions, 6 repas chacune, AUCUNE date');
-const tot = (v) => v.repas.reduce((t, rp) => { for (const i of rp.ings) { const m = macrosOf(i); t.k += m.kcal; t.p += m.prot; } return t; }, { k: 0, p: 0 });
+const tot = (v) => v.repas.reduce((t, rp) => { for (const i of rp.ings) { const m = macrosOf(i); t.k += m.kcal; t.p += m.prot; t.c += m.carbs || 0; t.l += m.lip || 0; } return t; }, { k: 0, p: 0, c: 0, l: 0 });
 ok(M.every((v) => v.repas.every((rp) => rp.ings.every((i) => DB[i.name]))), 'modele : tous les aliments existent dans la base de l\'app');
 const T = M.map(tot);
 ok(T.every((t, i) => i === 0 || t.k > T[i - 1].k), 'modele : les calories montent a chaque version (' + T.map((t) => Math.round(t.k)).join(' → ') + ')');
@@ -130,8 +130,8 @@ const { chromium } = exiger('../app-v2/node_modules/playwright');
 const srv = spawn('python3', ['-m', 'http.server', '8093', '--directory', dossierApercu], { stdio: 'ignore', detached: true });
 await new Promise((res) => setTimeout(res, 1500));
 const nav = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
-const REBOND_EX = modeleRebond().map((v, i) => ({ ...v, debut: ajouterJours('2026-11-02', 7 * i), kcal: Math.round(tot(v).k), prot: Math.round(tot(v).p), carbs: 300, lip: 90 }));
-const PROG = { kcal: REBOND_EX[0].kcal, prot: REBOND_EX[0].prot, carbs: 300, lip: 90, repas: REBOND_EX[0].repas, livreLe: '2026-10-26T09:00:00.000Z', version: 1, note: 'Exemple (banc de test)', versions: REBOND_EX };
+const REBOND_EX = modeleRebond().map((v, i) => ({ ...v, debut: ajouterJours('2026-11-02', 7 * i), kcal: Math.round(tot(v).k), prot: Math.round(tot(v).p), carbs: Math.round(tot(v).c), lip: Math.round(tot(v).l) }));
+const PROG = { kcal: REBOND_EX[0].kcal, prot: REBOND_EX[0].prot, carbs: REBOND_EX[0].carbs, lip: REBOND_EX[0].lip, repas: REBOND_EX[0].repas, livreLe: '2026-10-26T09:00:00.000Z', version: 1, note: 'Exemple (banc de test)', versions: REBOND_EX };
 const VIDE = [{ id: 1, nom: 'Repas 1', type: 'repas', fixe: true, ouvert: false, ings: [] }];
 const SHOTS = process.env.SHOTS || '/workspace/shots';
 async function ouvrir(quand, prog, repasBanc, nom, ecran) {
