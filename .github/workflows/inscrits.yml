@@ -1,0 +1,73 @@
+name: Inscrits (lecture seule)
+
+# Liste les derniers comptes crees (Firebase Auth + dossier Firestore),
+# en LECTURE SEULE : aucune ecriture, aucune suppression, aucun e-mail
+# envoye. Se lance a la main (onglet Actions > « Inscrits (lecture
+# seule) » > Run workflow) : un simple push ne le declenche pas.
+#
+# Le depot est public : le journal du workflow ne contient que des
+# e-mails MASQUES. Le detail (e-mails complets, prenom, objectif) est
+# chiffre avec tools/diagnostic/cle-publique.pem puis pousse sur la
+# branche inscrits-sortie (distincte de diagnostic-sortie). Seul le
+# detenteur de la cle privee peut le lire.
+#
+# Dechiffrer (avec cle-privee.pem, jamais dans le depot) :
+#   git fetch origin inscrits-sortie && git checkout FETCH_HEAD -- k.enc sortie.enc
+#   openssl pkeyutl -decrypt -inkey cle-privee.pem -in k.enc -out k.txt
+#   openssl enc -d -aes-256-cbc -pbkdf2 -in sortie.enc -pass file:k.txt
+
+on:
+  workflow_dispatch:
+    inputs:
+      nombre:
+        description: "Combien de derniers comptes afficher (1 a 50)"
+        required: false
+        default: "10"
+
+permissions:
+  contents: write   # uniquement pour pousser la sortie chiffree sur inscrits-sortie
+
+concurrency:
+  group: inscrits
+  cancel-in-progress: false
+
+jobs:
+  inscrits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Cle du compte de service
+        env:
+          CLE: ${{ secrets.FIREBASE_SA_KEY }}
+        run: |
+          umask 077
+          printf '%s' "$CLE" > "$RUNNER_TEMP/cle.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/cle.json" >> "$GITHUB_ENV"
+      - name: Dependances (firebase-admin, comme les fonctions)
+        run: npm ci --prefix functions --no-audit --no-fund --ignore-scripts
+      - name: Lecture (journal masque, detail chiffre)
+        env:
+          NOMBRE: ${{ github.event.inputs.nombre }}
+        run: |
+          set -e
+          node tools/diagnostic/inscrits.mjs "$RUNNER_TEMP/sortie.txt" "${NOMBRE:-10}" > "$RUNNER_TEMP/journal.txt"
+          # Garde-fou : aucune adresse complete dans le journal public.
+          if grep -qE '[A-Za-z0-9._+-]@' "$RUNNER_TEMP/journal.txt"; then
+            echo "Une adresse complete est apparue dans le journal : arret."; exit 1
+          fi
+          cat "$RUNNER_TEMP/journal.txt"
+          openssl rand -hex 32 > "$RUNNER_TEMP/k.txt"
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in "$RUNNER_TEMP/sortie.txt" -out "$RUNNER_TEMP/sortie.enc" -pass file:"$RUNNER_TEMP/k.txt"
+          openssl pkeyutl -encrypt -pubin -inkey tools/diagnostic/cle-publique.pem -in "$RUNNER_TEMP/k.txt" -out "$RUNNER_TEMP/k.enc"
+          mkdir -p "$RUNNER_TEMP/out" && cp "$RUNNER_TEMP/sortie.enc" "$RUNNER_TEMP/k.enc" "$RUNNER_TEMP/out/"
+          cd "$RUNNER_TEMP/out"
+          git init -q && git checkout -q -b inscrits-sortie
+          git config user.email "coach@belfit.be" && git config user.name "BelFit Inscrits"
+          git add . && git commit -qm "inscrits $(date -u +%FT%TZ)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" inscrits-sortie
+      - name: Nettoyage
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cle.json" "$RUNNER_TEMP/sortie.txt" "$RUNNER_TEMP/k.txt" "$RUNNER_TEMP/journal.txt"
