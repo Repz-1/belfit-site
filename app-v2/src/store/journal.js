@@ -3,6 +3,7 @@ import { macrosOf } from '../data/aliments.js';
 import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { enregistrerJour } from './stats.js';
+import { dateBruxelles } from './plans-par-date.js';
 
 // ============================================================
 // STORE DU JOURNAL v2
@@ -60,6 +61,23 @@ export const rappelIgnoreA = signal(null);
 export const tailleBouteille = signal(1.5);
 
 function aujourdhui() { return new Date().toISOString().slice(0, 10); }
+
+/**
+ * 27/10 Raci : le journal affiche est-il celui d'un jour PASSE (a cloturer) ?
+ * La cle de date du journal (dateJour) est en UTC : un journal date du 26
+ * peut avoir ete ouvert le 27 a 00h30 heure belge, indiscernable d'un journal
+ * ouvert la veille au soir. On ne declare donc « passe » que lorsque la cle
+ * est anterieure a la fois au jour UTC ET au jour de Bruxelles : jamais de
+ * faux positif entre 00h et 01h/02h belges (le jour belge est deja le
+ * suivant, le jour UTC pas encore) ; la mise en avant se declenche au plus
+ * tard a 01h/02h belges, donc bien avant que le client ouvre l'app le matin.
+ */
+export function journalDUnJourPasse(cle, maintenant = new Date()) {
+  if (!cle || typeof cle !== 'string') return false;
+  const utc = maintenant.toISOString().slice(0, 10);
+  const bxl = dateBruxelles(maintenant);
+  return cle < utc && (!bxl || cle < bxl);
+}
 
 // --- Chargement par compte : quand l'utilisateur change (connexion),
 // on charge SES donnees (cloud d'abord, local en secours). ---

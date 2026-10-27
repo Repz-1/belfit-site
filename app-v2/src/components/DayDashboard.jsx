@@ -3,10 +3,20 @@ import { planCoachActif } from './BelfitPlus.jsx';
 import { signal } from '@preact/signals';
 
 export const ouvrirCalcDemande = signal(false);
-import { repas, objectifs, totauxJourAff, kcalRestantes, donneesPretes, poidsCalcul, rappelIgnoreA, dateJour, nouvelleJournee } from '../store/journal.js';
+import { repas, objectifs, totauxJourAff, kcalRestantes, donneesPretes, poidsCalcul, rappelIgnoreA, dateJour, nouvelleJournee, journalDUnJourPasse } from '../store/journal.js';
 import { weightLog, enregistrerJour } from '../store/stats.js';
 import { IdeesRepas } from './IdeesRepas.jsx';
 import { t } from '../i18n/index.js';
+
+// 27/10 : horloge grossiere (30 s + retour sur l'app) pour que la mise en
+// avant de « Clôturer la journée » apparaisse seule apres minuit, sans
+// attendre qu'autre chose redessine la carte.
+const horlogeJour = signal(0);
+if (typeof document !== 'undefined') {
+  const tic = () => { horlogeJour.value = Date.now(); };
+  setInterval(tic, 30000);
+  document.addEventListener('visibilitychange', tic);
+}
 
 function useNombreAnime(cible, duree = 650) {
   const [valeur, setValeur] = useState(cible);
@@ -120,6 +130,9 @@ export function DayDashboard() {
   const moisCourt = t('months_min').split('|');
   const isoAuj = new Date().toISOString().slice(0, 10);
   const retard = !!dateJour.value && dateJour.value !== isoAuj;
+  horlogeJour.value;   // abonnement : la carte se redessine apres minuit
+  // 27/10 : journal d'un jour PASSE -> le bouton de cloture est mis en avant.
+  const aCloturer = journalDUnJourPasse(dateJour.value);
   // Journal vide (0 kcal, aucun aliment) : rien a cloturer (21/10).
   const journalVide = !(Math.round(tot.kcal || 0) > 0) && !repas.value.some(r => (r.ings || []).length);
   // Bloque seulement si vide ET aujourd'hui : une veille vide (jour rate)
@@ -177,7 +190,7 @@ export function DayDashboard() {
       {retard && (
         <div class="cal-retard">{t('jour_non_cloture').replace('{j}', jourOuvert)}</div>
       )}
-      <button class="cal-reset" disabled={clotureBloquee}
+      <button class={'cal-reset' + (aCloturer ? ' cal-reset--rappel' : '')} disabled={clotureBloquee}
         aria-disabled={clotureBloquee ? 'true' : undefined}
         onClick={() => {
         if (clotureBloquee) return;
