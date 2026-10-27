@@ -1,20 +1,20 @@
-// Ecran de bienvenue : salutation + une petite phrase qui change avec l'heure
-// de Bruxelles (28/10, Raci : « plusieurs messages differents, en fonction des
-// heures, il est un peu taquin des fois »).
+// Ecran de bienvenue : UN SEUL message court par apparition, selon l'heure de
+// Bruxelles (Raci, 27/10 : « Bonjour Raci », « Demain est un autre jour »,
+// « Encore debout ? » — pas de titre + phrase, pas de phrases longues).
 //
 // MODULE PUR : aucune dependance, heure et tirage injectables, donc testable
 // sous Node. Aucune donnee du client n'entre ici (ni chiffre, ni etat).
 //
 // Regles de redaction (verifiees par tools/test-accueil-messages.mjs) :
-//  - tutoiement, phrases courtes, francais avec accents ;
-//  - jamais un mot sur la nourriture a culpabiliser, le poids, le corps, les
-//    repas sautes, le regime, l'apparence ; aucune promesse de sante ;
+//  - 6 mots maximum, tutoiement, francais avec accents ;
+//  - jamais un mot sur la nourriture, le poids, le corps, le regime, un repas
+//    saute, la culpabilite, la sante ; pas de chiffre ; rien de vulgaire ;
 //  - le ton taquin reste sur l'heure, le cafe, le canape, la motivation, la
-//    salle : complice et bienveillant, jamais blessant.
+//    salle, le lit : complice et bienveillant, jamais blessant.
 //
-// Une entree : { t: phrase, taquin?: true, salut?: 'Encore debout', interro?: true }
-//   salut   = remplace « Bonjour / Bonsoir » (titre : « Encore debout, Raci ? »)
-//   interro = le titre se termine par « ? »
+// Une entree : { t: texte, taquin?: true }. `{p}` = place du prenom ; sans
+// prenom, « , {p} » / « {p} » disparait proprement (« Bonjour Raci » -> « Bonjour »).
+// Les espaces avant ? ! : sont rendues insecables a la composition.
 
 export const TRANCHES = ['tot', 'fin_matinee', 'midi', 'apres_midi', 'soir', 'nuit'];
 
@@ -29,64 +29,64 @@ export const LIBELLES_TRANCHES = {
 
 export const BANQUE = {
   tot: [
+    { t: 'Bonjour {p}' },
     { t: 'Belle journée en vue.' },
-    { t: 'On démarre en douceur, ou en force : à toi de choisir.' },
-    { t: 'Un grand verre d’eau, et c’est parti.' },
-    { t: 'Le café est-il prêt ? On t’attend.', taquin: true },
     { t: 'Petit à petit, ça avance.' },
-    { t: 'Ton lit te regrette déjà ? Il s’en remettra.', taquin: true },
-    { t: 'Les lève-tôt ont toujours un coup d’avance.' },
-    { t: 'Le café d’abord, les grandes décisions ensuite.', taquin: true },
+    { t: 'Le café est prêt ?', taquin: true },
+    { t: 'Déjà debout, {p} ?', taquin: true },
+    { t: 'Ton lit s’en remettra.', taquin: true },
+    { t: 'Les lève-tôt ont de l’avance.' },
+    { t: 'On y va doucement, {p}.' },
   ],
   fin_matinee: [
+    { t: 'Bonjour {p}' },
     { t: 'Belle matinée à toi.' },
-    { t: 'Tu es dans le bon rythme.' },
-    { t: 'Le canapé a essayé de te retenir ? Raté.', taquin: true },
-    { t: 'Une petite pause, un étirement, et on repart.' },
-    { t: 'Ce que tu fais aujourd’hui compte.' },
-    { t: 'Deuxième café ? On ne dira rien.', taquin: true },
-    { t: 'Content de te revoir.' },
-    { t: 'La motivation arrive toujours en retard. Toi, tu es à l’heure.', taquin: true },
+    { t: 'Le canapé a perdu, bravo.', taquin: true },
+    { t: 'Deuxième café ? Aucun jugement.', taquin: true },
+    { t: 'Tu es dans le rythme.' },
+    { t: 'Content de te revoir, {p}.' },
+    { t: 'La motivation t’a rejoint ?', taquin: true },
+    { t: 'Un étirement, et on repart.' },
   ],
   midi: [
-    { t: 'Le déjeuner n’attend pas… et ton estomac non plus.', taquin: true },
-    { t: 'Bon appétit, et prends ton temps.' },
-    { t: 'Prends une vraie pause, tu l’as bien méritée.' },
-    { t: 'Midi pile : le moment de lever le nez de l’écran.', taquin: true },
-    { t: 'Content de te retrouver à midi.' },
-    { t: 'Rien ne presse : savoure ta pause.' },
-    { t: 'La sieste te fait de l’œil ? Garde-la pour plus tard.', taquin: true },
-    { t: 'Une petite marche après la pause ? Juste une idée.' },
+    { t: 'Bonjour {p}' },
+    { t: 'Bonne pause, {p}.' },
+    { t: 'Prends une vraie pause.' },
+    { t: 'Midi : lève le nez de l’écran.', taquin: true },
+    { t: 'La sieste te fait de l’œil ?', taquin: true },
+    { t: 'Content de te retrouver, {p}.' },
+    { t: 'Rien ne presse. Respire.' },
+    { t: 'Même les héros font une pause.', taquin: true },
   ],
   apres_midi: [
+    { t: 'Bonjour {p}' },
     { t: 'Bel après-midi à toi.' },
-    { t: 'Tu tiens le bon bout.' },
-    { t: 'Le petit coup de mou de l’après-midi ? On le connaît.', taquin: true },
-    { t: 'Un pas après l’autre, tu avances.' },
-    { t: 'La salle t’attend. Elle ne dira rien si tu arrives en retard.', taquin: true },
-    { t: 'Encore un peu, et la soirée est à toi.' },
-    { t: 'La motivation a pris sa pause café. On la rappelle ?', taquin: true },
-    { t: 'Prends un instant pour souffler, tu y as droit.' },
+    { t: 'Petit coup de mou ? On connaît.', taquin: true },
+    { t: 'Un pas après l’autre.' },
+    { t: 'La salle t’attend. Sans pression.', taquin: true },
+    { t: 'La motivation a pris sa pause ?', taquin: true },
+    { t: 'Encore un peu, {p}.' },
+    { t: 'Prends un instant pour souffler.' },
   ],
   soir: [
+    { t: 'Bonsoir {p}' },
     { t: 'Belle soirée à toi.' },
-    { t: 'La journée est derrière toi, respire.' },
-    { t: 'Le canapé t’appelle ? Il est doué, il faut le reconnaître.', taquin: true },
-    { t: 'Content de te retrouver ce soir.' },
-    { t: 'Demain se prépare un peu ce soir.' },
-    { t: 'Un petit moment pour toi, rien que pour toi.' },
-    { t: 'Toujours là en fin de journée ? Respect.', taquin: true },
-    { t: 'Ta série du soir peut attendre cinq minutes. Peut-être dix.', taquin: true },
+    { t: 'Le canapé t’appelle.', taquin: true },
+    { t: 'Content de te retrouver, {p}.' },
+    { t: 'Respire, la journée est finie.' },
+    { t: 'Toujours là ? Respect.', taquin: true },
+    { t: 'La série peut attendre un peu.', taquin: true },
+    { t: 'Un moment rien que pour toi.' },
   ],
   nuit: [
-    { t: 'La nuit est calme, prends ton temps.' },
-    { t: 'Les meilleures idées arrivent tard, paraît-il.', taquin: true, salut: 'Encore debout', interro: true },
-    { t: 'Une petite visite avant de dormir ?' },
-    { t: 'Ton oreiller commence à s’impatienter.', taquin: true, salut: 'Encore debout', interro: true },
-    { t: 'Prends soin de toi ce soir.' },
+    { t: 'Bonsoir {p}' },
+    { t: 'Encore debout ?', taquin: true },
     { t: 'Demain est un autre jour.' },
-    { t: 'On ne dira rien à ton réveil.', taquin: true, salut: 'Encore debout', interro: true },
-    { t: 'Tout est calme. C’est le bon moment pour souffler.' },
+    { t: 'Ton oreiller s’impatiente.', taquin: true },
+    { t: 'Tout est calme, prends ton temps.' },
+    { t: 'Encore là, {p} ?', taquin: true },
+    { t: 'Les bonnes idées arrivent tard.' },
+    { t: 'Prends soin de toi ce soir.' },
   ],
 };
 
@@ -132,10 +132,26 @@ export function choisirIndex(n, tirage = Math.random, exclu = null) {
 }
 
 const NBSP = '\u00a0';
+/** Texte final : prenom insere (ou retire proprement), ponctuation haute insecable. */
+export function rendreTexte(modele, prenom) {
+  const p = String(prenom || '').trim();
+  const t = p ? modele.replace('{p}', p) : modele.replace(/,?\s*\{p\}/, '');
+  return t.replace(/ ([?!:;])/g, NBSP + '$1');
+}
+/** Pieces [{ t, gras }] : le prenom (s'il est la) est isole pour etre mis en 600. */
+export function piecesDe(modele, prenom) {
+  const p = String(prenom || '').trim();
+  if (!p || !modele.includes('{p}')) return [{ t: rendreTexte(modele, ''), gras: false }];
+  const [av, ap] = modele.split('{p}');
+  const norm = (x) => x.replace(/ ([?!:;])/g, NBSP + '$1');
+  return [av && { t: norm(av), gras: false }, { t: p, gras: true }, ap && { t: norm(ap), gras: false }].filter(Boolean);
+}
+/** Message long (> 18 car.) : l'ecran le met un cran plus petit pour tenir sur 1-2 lignes. */
+export const estLong = (texte) => String(texte).length > 18;
 
 /**
  * ctx = { heure (Bruxelles, 0-23), prenom, tirage?, dernier? ({tranche, index}), lang? }
- * -> { tranche, index, salut, prenom, interro, phrase, taquin, titre }
+ * -> { tranche, index, texte, pieces, prenom, taquin, long }
  * Ne renvoie jamais null. Hors francais : salutation seule (la banque est en francais).
  */
 export function composerAccueil(ctx = {}) {
@@ -146,11 +162,9 @@ export function composerAccueil(ctx = {}) {
   const exclu = ctx.dernier && ctx.dernier.tranche === tranche ? ctx.dernier.index : null;
   const index = choisirIndex(liste.length, ctx.tirage, exclu);
   const e = liste[index];
-  const avecPhrase = lang === 'fr';
-  const salut = avecPhrase && e.salut ? e.salut : salutationDe(tranche, lang);
-  const interro = !!(avecPhrase && e.interro);
-  const titre = salut + (prenom ? ',' + NBSP + prenom : '') + (interro ? NBSP + '?' : '');
-  return { tranche, index, salut, prenom, interro, phrase: avecPhrase ? e.t : '', taquin: !!e.taquin, titre };
+  const modele = lang === 'fr' ? e.t : salutationDe(tranche, lang) + ' {p}';
+  const texte = rendreTexte(modele, prenom);
+  return { tranche, index, texte, pieces: piecesDe(modele, prenom), prenom, taquin: lang === 'fr' && !!e.taquin, long: estLong(texte) };
 }
 
 // --- Memoire du dernier message (localStorage), jamais bloquante ---

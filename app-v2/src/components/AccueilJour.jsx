@@ -6,8 +6,8 @@ import { momentBruxelles } from '../services/accueil-frequence.js';
 import '../styles/accueil-jour.css';
 
 /**
- * Ecran de bienvenue : petit logo BelFit discret en haut, « Bonjour, {prenom} », une petite phrase
- * selon l'heure de Bruxelles. Aucune donnee de l'app. Se ferme seul (~3,4 s,
+ * Ecran de bienvenue : petit logo BelFit discret en haut, un SEUL message court
+ * (« Bonjour Raci », « Demain est un autre jour »…) selon l'heure de Bruxelles. Aucune donnee de l'app. Se ferme seul (~3,4 s,
  * en fondu) ou d'un tap. Le dernier message est memorise pour ne pas se
  * repeter deux fois de suite.
  */
@@ -30,10 +30,9 @@ export function AccueilJour({ onFin }) {
       onClick={onFin} data-tranche={m.tranche} data-index={m.index}>
       <img class="acc-logo" src="/belfit-logo-bf.png" alt="BelFit" />
       <div class="acc-carte">
-        <div class="acc-titre">
-          {m.salut}{m.prenom ? ',\u00a0' : ''}{m.prenom ? <span class="acc-nom">{m.prenom}</span> : null}{m.interro ? '\u00a0?' : ''}
+        <div class={'acc-msg' + (m.long ? ' acc-long' : '')}>
+          {m.pieces.map((x) => (x.gras ? <span class="acc-nom">{x.t}</span> : x.t))}
         </div>
-        {m.phrase ? <div class="acc-sous">{m.phrase}</div> : null}
       </div>
     </div>
   );

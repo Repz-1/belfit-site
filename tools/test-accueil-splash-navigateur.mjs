@@ -6,7 +6,7 @@ import { createRequire } from 'module';
 import { copyFileSync } from 'fs';
 const exiger = createRequire(new URL('../app-v2/package.json', import.meta.url));
 const { chromium } = exiger('playwright');
-const { BANQUE } = await import('../app-v2/src/services/accueil-messages.js');
+const { BANQUE, rendreTexte, estLong } = await import('../app-v2/src/services/accueil-messages.js');
 const PORT = 8094;
 let code = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); if (!c) code = 1; };
 // Le banc ne sert pas le dossier public : on y met le vrai logo (dossier de banc, hors depot).
@@ -32,10 +32,11 @@ const absente = async (page) => !(await visible(page, 3500));
 const texte = async (page) => norm(await page.locator('.acc-carte').innerText({ timeout: 3000 }));
 const fond = (page) => page.evaluate(() => getComputedStyle(document.querySelector('.acc-voile')).backgroundColor);
 
-// (a) 08:30, tirage 0 : « Bonjour, Raci » + 1re phrase du matin tot ; logo reel ; fond creme
+// (a) 08:30, tirage 0 : UN SEUL message « Bonjour Raci » ; logo reel ; fond creme
 let t = await ouvrir({ quand: '2026-10-25T08:30:00+01:00', rnd: 0 }); await t.charger();
 ok(await visible(t.page), 'matin 08:30 : l\'ecran s\'affiche a l\'ouverture');
-ok(await texte(t.page) === 'Bonjour, Raci ' + BANQUE.tot[0].t, 'texte exact : « ' + await texte(t.page) + ' »');
+ok(await texte(t.page) === 'Bonjour Raci', 'texte exact : « ' + await texte(t.page) + ' » (un seul message)');
+ok(await t.page.locator('.acc-msg').count() === 1 && await t.page.locator('.acc-titre, .acc-sous').count() === 0, 'un seul bloc de texte : plus de titre + phrase dessous');
 ok((await t.page.locator('.acc-logo').getAttribute('src')) === '/belfit-logo-bf.png', 'logo reel de l\'app : /belfit-logo-bf.png');
 ok(await t.page.evaluate(() => document.querySelector('.acc-logo').complete && document.querySelector('.acc-logo').naturalWidth === 480), 'logo reellement charge (480 px de large)');
 ok(await fond(t.page) === 'rgb(247, 244, 239)', 'fond creme #f7f4ef');
@@ -59,7 +60,7 @@ await t.page.waitForSelector('.acc-voile', { state: 'detached', timeout: 6000 })
 await cacher(t.page, true); await t.page.clock.fastForward(40 * 60 * 1000); await cacher(t.page, false);
 await visible(t.page, 4000);
 const t2 = await texte(t.page).catch(() => '');
-ok(t2 !== '' && !t2.includes(BANQUE.tot[0].t), 'nouveau tirage (meme tirage 0) : pas le meme message que la fois d\'avant');
+ok(t2 !== '' && t2 !== 'Bonjour Raci', 'nouveau tirage (meme tirage 0) : pas le meme message que la fois d\'avant');
 await t.ctx.close();
 
 // (d) 2e ouverture a froid (rechargement) : s'affiche de nouveau, et change de message
@@ -67,7 +68,7 @@ t = await ouvrir({ quand: '2026-10-25T08:30:00+01:00', rnd: 0 }); await t.charge
 await visible(t.page); const m1 = await texte(t.page);
 await t.page.waitForSelector('.acc-voile', { state: 'detached', timeout: 6000 }).catch(() => {});
 await t.charger(); await visible(t.page); const m2 = await texte(t.page);
-ok(m1 !== m2 && m2.startsWith('Bonjour, Raci'), 'rechargement (ouverture a froid) : reaffiche, message different');
+ok(m1 !== m2 && m2 !== '', 'rechargement (ouverture a froid) : reaffiche, message different');
 await t.ctx.close();
 
 // (e) tap : ferme tout de suite, ne bloque pas
@@ -79,16 +80,17 @@ await t.ctx.close();
 
 // (f) sans prenom : « Bonjour » seul, sans virgule
 t = await ouvrir({ quand: '2026-10-25T10:30:00+01:00', rnd: 0, query: '&sansprenom' }); await t.charger();
-ok(await visible(t.page) && await texte(t.page) === 'Bonjour ' + BANQUE.fin_matinee[0].t, 'sans prenom : « ' + await texte(t.page).catch(() => '?') + ' »');
+ok(await visible(t.page) && await texte(t.page) === 'Bonjour', 'sans prenom : « ' + await texte(t.page).catch(() => '?') + ' »');
 await t.ctx.close();
 
 // (g) tranches : midi, apres-midi, soir, nuit (tirage 0 et variante « Encore debout »)
 for (const [q, rnd, att] of [
-  ['2026-10-25T12:30:00+01:00', 0, 'Bonjour, Raci ' + BANQUE.midi[0].t],
-  ['2026-10-25T15:00:00+01:00', 0, 'Bonjour, Raci ' + BANQUE.apres_midi[0].t],
-  ['2026-10-25T20:00:00+01:00', 0, 'Bonsoir, Raci ' + BANQUE.soir[0].t],
-  ['2026-10-25T23:30:00+01:00', 0.2, 'Encore debout, Raci ? ' + BANQUE.nuit[1].t],
-  ['2026-10-26T02:00:00+01:00', 0, 'Bonsoir, Raci ' + BANQUE.nuit[0].t],
+  ['2026-10-25T12:30:00+01:00', 0.5, 'La sieste te fait de l\u2019\u0153il ?'],
+  ['2026-10-25T15:00:00+01:00', 0.6, 'La salle t\u2019attend. Sans pression.'],
+  ['2026-10-25T20:00:00+01:00', 0.3, 'Le canapé t\u2019appelle.'],
+  ['2026-10-25T23:30:00+01:00', 0.2, 'Encore debout ?'],
+  ['2026-10-26T02:00:00+01:00', 0, 'Bonsoir Raci'],
+  ['2026-10-25T18:00:00+01:00', 0, 'Bonsoir Raci'],
 ]) {
   t = await ouvrir({ quand: q, rnd }); await t.charger();
   const tx = await visible(t.page) ? await texte(t.page) : '';
@@ -97,27 +99,27 @@ for (const [q, rnd, att] of [
 }
 // (h) fuseau de l'appareil New York, 08:30 a Bruxelles → matin (heure de Bruxelles)
 t = await ouvrir({ quand: '2026-10-25T08:30:00+01:00', tz: 'America/New_York', rnd: 0 }); await t.charger();
-ok(await visible(t.page) && (await texte(t.page)).startsWith('Bonjour, Raci ' + BANQUE.tot[0].t), 'appareil a New York : tranche de Bruxelles');
+ok(await visible(t.page) && (await texte(t.page)) === 'Bonjour Raci', 'appareil a New York : tranche de Bruxelles');
 await t.ctx.close();
 // (i) ete : 23h30 UTC+2 = nuit ; 06h00 UTC+2 = tot
 t = await ouvrir({ quand: '2026-07-10T06:00:00+02:00', rnd: 0 }); await t.charger();
-ok(await visible(t.page) && (await texte(t.page)).includes(BANQUE.tot[0].t), 'ete 06:00 (UTC+2) : tot le matin');
+ok(await visible(t.page) && (await texte(t.page)) === 'Bonjour Raci', 'ete 06:00 (UTC+2) : tot le matin');
 await t.ctx.close();
 // (j) aucune donnee a l'ecran meme avec un plan/de l'eau : jamais de chiffre
 t = await ouvrir({ quand: '2026-10-25T08:30:00+01:00', rnd: 0.4 }); await t.charger(); await visible(t.page);
 ok(!/\d/.test(await texte(t.page).catch(() => '1')), 'aucun chiffre a l\'ecran');
 await t.ctx.close();
 // (k) mouvement normal : logo en simple fondu (pas de zoom), texte qui monte une seule fois
-t = await ouvrir({ quand: '2026-10-25T08:30:00+01:00' }); await t.charger(); await visible(t.page);
-const noms = await t.page.evaluate(() => ['.acc-logo', '.acc-titre', '.acc-sous'].map(s => [...document.querySelector(s).getAnimations()].map(a => a.animationName).join('+') || 'fini').join(','));
-ok(/^(acc-fondu|fini),(acc-monte|fini),(acc-monte|fini)$/.test(noms) && !/zoom/.test(noms), 'mouvement normal : logo = fondu simple, texte = montee (' + noms + ')');
+t = await ouvrir({ quand: '2026-10-25T08:30:00+01:00', rnd: 0 }); await t.charger(); await visible(t.page);
+const noms = await t.page.evaluate(() => ['.acc-logo', '.acc-msg'].map(s => [...document.querySelector(s).getAnimations()].map(a => a.animationName).join('+') || 'fini').join(','));
+ok(/^(acc-fondu|fini),(acc-monte|fini)$/.test(noms) && !/zoom/.test(noms), 'mouvement normal : logo = fondu simple, texte = montee (' + noms + ')');
 await t.page.waitForTimeout(1800);
 // (k2) mise en page : petit logo discret tout en haut, message seul au centre, police serif
 const g = await t.page.evaluate(() => {
   const L = document.querySelector('.acc-logo').getBoundingClientRect(), C = document.querySelector('.acc-carte').getBoundingClientRect();
-  const cs = getComputedStyle(document.querySelector('.acc-logo')), ti = getComputedStyle(document.querySelector('.acc-titre')), nom = getComputedStyle(document.querySelector('.acc-nom')), so = getComputedStyle(document.querySelector('.acc-sous'));
+  const cs = getComputedStyle(document.querySelector('.acc-logo')), ti = getComputedStyle(document.querySelector('.acc-msg')), nom = getComputedStyle(document.querySelector('.acc-nom'));
   return { top: L.top, w: L.width, cx: L.left + L.width / 2, op: parseFloat(cs.opacity), pos: cs.position, ccy: C.top + C.height / 2, ccx: C.left + C.width / 2, vh: innerHeight, vw: innerWidth, bas: L.bottom, haut: C.top,
-    fam: ti.fontFamily, nomW: nom.fontWeight, titW: ti.fontWeight, famSous: so.fontFamily,
+    fam: ti.fontFamily, nomW: nom.fontWeight, titW: ti.fontWeight, famSous: ti.fontFamily,
     f400: document.fonts.check('400 1em Newsreader'), f600: document.fonts.check('600 1em Newsreader'),
     charge: [...document.fonts].filter(f => f.family.replace(/"/g, '') === 'Newsreader' && f.status === 'loaded').length };
 });
@@ -128,8 +130,20 @@ ok(g.op >= 0.5 && g.op <= 0.6, 'logo discret : opacite ' + g.op + ' (0,5–0,6)'
 ok(Math.abs(g.ccy - g.vh / 2) <= 40 && Math.abs(g.ccx - g.vw / 2) <= 2, 'message seul au centre de l\'ecran (centre ' + Math.round(g.ccy) + ' / ' + g.vh / 2 + ')');
 ok(g.haut > g.bas + 40, 'le message est bien sous le logo, sans chevauchement');
 ok(/^"?Newsreader"?/.test(g.fam) && /^"?Newsreader"?/.test(g.famSous), 'police serif Newsreader : ' + g.fam);
-ok(g.titW === '400' && g.nomW === '600', 'titre en 400, prenom en 600 (' + g.titW + '/' + g.nomW + ')');
+ok(g.titW === '400' && g.nomW === '600', 'message en 400, prenom en 600 (' + g.titW + '/' + g.nomW + ')');
 ok(g.f400 && g.f600 && g.charge === 2, 'les 2 graisses de la police sont chargees (fichiers locaux, ' + g.charge + ' woff2)');
+await t.ctx.close();
+// (k2b) tous les messages (avec prenom court et long) tiennent sur 1 ou 2 lignes a 390 px, police Newsreader
+t = await ouvrir({ quand: '2026-10-25T08:30:00+01:00', rnd: 0 }); await t.charger(); await visible(t.page);
+for (const prenom of ['Raci', 'Marie-Christine']) {
+  const liste = Object.values(BANQUE).flat().map(e => ({ texte: rendreTexte(e.t, prenom), long: estLong(rendreTexte(e.t, prenom)) }));
+  const res = await t.page.evaluate((L) => { const v = document.createElement('div'); v.className = 'acc-voile'; v.style.opacity = '0'; v.style.pointerEvents = 'none'; const el = document.createElement('div'); el.className = 'acc-msg'; el.style.animation = 'none'; el.style.transform = 'none'; v.appendChild(el); document.body.appendChild(v);
+    return L.map(m => { el.className = 'acc-msg' + (m.long ? ' acc-long' : ''); el.style.animation = 'none'; el.textContent = m.texte; const lh = parseFloat(getComputedStyle(el).lineHeight); return { t: m.texte, n: Math.round(el.getBoundingClientRect().height / lh), larg: el.scrollWidth <= el.clientWidth + 1 }; }); }, liste);
+  const trois = res.filter(r => r.n > 2 || !r.larg);
+  const une = res.filter(r => r.n === 1).length;
+  ok(trois.length === 0, 'prenom « ' + prenom + ' » : les ' + res.length + ' messages tiennent sur 1-2 lignes sans debordement (' + une + ' sur 1 ligne)' + (trois.length ? ' — pb : ' + trois.map(r => r.t).join(' | ') : ''));
+  if (prenom === 'Raci') ok(une >= res.length * 0.4, 'au moins 40 % des messages tiennent sur 1 seule ligne (' + une + '/' + res.length + ')');
+}
 await t.ctx.close();
 // (k3) aucune requete vers un serveur de polices externe, polices servies par le site
 {
@@ -144,8 +158,8 @@ await t.ctx.close();
 }
 // (l) prefers-reduced-motion : fondu simple, ni zoom ni montee
 t = await ouvrir({ quand: '2026-10-25T08:30:00+01:00', reduit: true }); await t.charger(); await visible(t.page);
-const r = await t.page.evaluate(() => { const v = document.querySelector('.acc-voile'); const s = ['.acc-logo', '.acc-titre', '.acc-sous'].map(q => document.querySelector(q)); return { an: s.map(e => getComputedStyle(e).animationName).join(), nb: s.reduce((n, e) => n + e.getAnimations().length, 0), tr: getComputedStyle(v).transitionDuration, opLogo: getComputedStyle(s[0]).opacity }; });
-ok(r.an === 'none,none,none' && r.nb === 0, 'reduced-motion : aucune animation de zoom/montee ' + JSON.stringify(r));
+const r = await t.page.evaluate(() => { const v = document.querySelector('.acc-voile'); const s = ['.acc-logo', '.acc-msg'].map(q => document.querySelector(q)); return { an: s.map(e => getComputedStyle(e).animationName).join(), nb: s.reduce((n, e) => n + e.getAnimations().length, 0), tr: getComputedStyle(v).transitionDuration, opLogo: getComputedStyle(s[0]).opacity }; });
+ok(r.an === 'none,none' && r.nb === 0, 'reduced-motion : aucune animation de zoom/montee ' + JSON.stringify(r));
 ok(parseFloat(r.tr) > 0 && parseFloat(r.opLogo) === 0.55, 'reduced-motion : fondu simple conserve (transition ' + r.tr + '), logo fixe a ' + r.opLogo);
 ok(await t.page.waitForSelector('.acc-voile', { state: 'detached', timeout: 6000 }).then(() => true, () => false), 'reduced-motion : se ferme aussi tout seul');
 await t.ctx.close();

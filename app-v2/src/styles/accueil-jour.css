@@ -6,8 +6,8 @@
 @font-face{font-family:'Newsreader';font-style:normal;font-weight:600;font-display:swap;
   src:url('../fonts/newsreader-latin-600.woff2') format('woff2')}
 /* Ecran de bienvenue (28/10, Raci) : inspire de sa maquette — petit logo discret tout en haut
-   (fondu simple), message seul au centre, « Bonjour, prenom » en grand, une
-   phrase dessous, fond creme. Pas de battement infini : l'ecran se ferme seul, en fondu. CSS pur. */
+   (fondu simple), UN SEUL message court au centre (serif),
+   fond creme. Pas de battement infini : l'ecran se ferme seul, en fondu. CSS pur. */
 .acc-voile{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;
   background:#f7f4ef;padding:24px;box-sizing:border-box;cursor:pointer;
   opacity:0;transition:opacity .4s ease;-webkit-tap-highlight-color:transparent}
@@ -17,15 +17,14 @@
 .acc-logo{position:absolute;top:calc(env(safe-area-inset-top, 0px) + 20px);left:50%;margin-left:-32px;
   width:64px;height:auto;display:block;opacity:.55;pointer-events:none;
   animation:acc-fondu 1s ease-out both}
-.acc-titre{font-size:2.4rem;font-weight:400;letter-spacing:-.3px;line-height:1.15;margin:0 0 .6rem;
+.acc-msg{font-size:2.4rem;font-weight:400;letter-spacing:-.3px;line-height:1.18;
   overflow-wrap:anywhere;text-wrap:balance;animation:acc-monte 1s ease-out .4s both}
+.acc-msg.acc-long{font-size:1.85rem}
 .acc-nom{font-weight:600}
-.acc-sous{font-size:1.15rem;line-height:1.4;color:#666;font-weight:400;
-  animation:acc-monte 1s ease-out .7s both}
 @keyframes acc-fondu{from{opacity:0}to{opacity:.55}}
 @keyframes acc-monte{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 /* Mouvement reduit : un simple fondu de l'ecran, tout le reste est la d'emblee. */
 @media (prefers-reduced-motion:reduce){
   .acc-voile,.acc-voile.acc-sort{transition:opacity .4s ease}
-  .acc-logo,.acc-titre,.acc-sous{animation:none;transform:none}
+  .acc-logo,.acc-msg{animation:none;transform:none}
 }

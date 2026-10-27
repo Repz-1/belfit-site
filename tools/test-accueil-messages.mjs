@@ -1,6 +1,6 @@
 // Ecran de bienvenue : parties pures (banque de messages, tranches, tirage, frequence).
 // Sans navigateur. Lancer : node tools/test-accueil-messages.mjs
-import { BANQUE, TRANCHES, trancheDe, salutationDe, choisirIndex, composerAccueil, lireDernier, ecrireDernier } from '../app-v2/src/services/accueil-messages.js';
+import { BANQUE, TRANCHES, trancheDe, salutationDe, choisirIndex, composerAccueil, lireDernier, ecrireDernier, rendreTexte, estLong } from '../app-v2/src/services/accueil-messages.js';
 import { momentBruxelles, absenceLongue, ABSENCE_MS } from '../app-v2/src/services/accueil-frequence.js';
 let code = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); if (!c) code = 1; };
 const tr = (iso) => trancheDe(momentBruxelles(new Date(iso)).heure);
@@ -26,48 +26,70 @@ ok(trancheDe(NaN) === 'fin_matinee' && trancheDe(24) === 'nuit' && trancheDe(-1)
 ok(salutationDe('tot') === 'Bonjour' && salutationDe('apres_midi') === 'Bonjour' && salutationDe('soir') === 'Bonsoir' && salutationDe('nuit') === 'Bonsoir', 'Bonjour jusqu\'a 17h59, Bonsoir ensuite');
 
 // --- Banque : invariants
+const NB = '\u00a0';
 ok(TRANCHES.length === 6 && TRANCHES.every(k => BANQUE[k]), '6 tranches, toutes avec une banque');
-let tousTextes = [];
+let tous = [];
 for (const k of TRANCHES) {
-  const L = BANQUE[k]; tousTextes = tousTextes.concat(L.map(e => e.t));
-  const nt = L.filter(e => e.taquin).length;
-  ok(L.length >= 8, k + ' : au moins 8 messages (' + L.length + ')');
-  ok(nt >= Math.floor(L.length / 4) && nt <= Math.ceil(L.length / 2), k + ' : environ un tiers de taquins (' + nt + '/' + L.length + ')');
+  const L = BANQUE[k]; tous = tous.concat(L.map(e => e.t));
+  const nt = L.filter(e => e.taquin).length, np = L.filter(e => e.t.includes('{p}')).length;
+  ok(L.length === 8, k + ' : 8 messages (' + L.length + ')');
+  ok(nt >= 2 && nt <= 4, k + ' : environ un tiers de taquins (' + nt + '/' + L.length + ')');
+  ok(np >= 2 && np <= 4, k + ' : le prenom n\'apparait que parfois (' + np + '/' + L.length + ')');
+  ok(L.some(e => /^Bon(jour|soir) \{p\}$/.test(e.t)), k + ' : contient « Bonjour/Bonsoir {prenom} »');
 }
-ok(new Set(tousTextes).size === tousTextes.length, 'aucun message en double dans toute la banque');
-ok(tousTextes.every(t => !/\d/.test(t)), 'aucun chiffre dans aucun message');
-const INTERDITS = /kilo|\bkg\b|poids|maigr|gros|gras|régime|regime|calor|kcal|\bminc|silhouette|corps|ventre|\bsauté|\bsaut[eé]s?\b|culpab|honte|paresseu|flemm|nul\b|\bcon\b|merde|putain|bordel|santé|guéri|soigne|perdre|maigrir|manger trop|grignot/i;
-const mauvais = tousTextes.filter(t => INTERDITS.test(t));
-ok(mauvais.length === 0, 'aucun mot interdit (poids, regime, corps, repas saute, sante, vulgarite…)' + (mauvais.length ? ' : ' + mauvais.join(' | ') : ''));
-ok(tousTextes.every(t => t.length <= 70 && /[.?!…]$/.test(t)), 'phrases courtes (≤ 70 car.) et terminees par une ponctuation');
-ok(!tousTextes.some(t => /\b(vous|votre|vos)\b/i.test(t)), 'tutoiement : jamais « vous »');
-ok(BANQUE.midi.some(e => e.t === 'Le déjeuner n’attend pas… et ton estomac non plus.' && e.taquin), 'l\'exemple de Raci est au midi, taquin');
-ok(BANQUE.nuit.filter(e => e.salut === 'Encore debout').length >= 2, 'la nuit : variantes « Encore debout, prenom ? »');
+ok(new Set(tous.filter(t => !t.includes('{p}'))).size === tous.filter(t => !t.includes('{p}')).length, 'aucun message en double (hors modeles a prenom)');
+{ // meme apres suppression du prenom, aucun doublon dans une tranche
+  const bad = TRANCHES.filter(k => { const r = BANQUE[k].map(e => rendreTexte(e.t, '')); return new Set(r).size !== r.length; });
+  ok(bad.length === 0, 'sans prenom : aucun doublon dans une tranche' + (bad.length ? ' (' + bad + ')' : ''));
+}
+ok(tous.every(t => !/\d/.test(t)), 'aucun chiffre dans aucun message');
+const INTERDITS = /kilo|\bkg\b|poids|maigr|gros|gras|régime|regime|calor|kcal|\bminc|silhouette|corps|ventre|saut[ée]|culpab|honte|paresseu|flemm|nul\b|\bcon\b|merde|putain|bordel|santé|guéri|soigne|perdre|manger|mange|faim|estomac|déjeuner|dîner|repas|assiette|grignot|gourmand|nourri|appétit|bouff/i;
+const mauvais = tous.filter(t => INTERDITS.test(t));
+ok(mauvais.length === 0, 'aucun mot interdit (nourriture, poids, regime, corps, culpabilite, sante, vulgarite…)' + (mauvais.length ? ' : ' + mauvais.join(' | ') : ''));
+const mots = (t) => rendreTexte(t, 'Raci').replace(/[,.?!:]/g, ' ').split(/\s+/).filter(Boolean);
+const longs = tous.filter(t => mots(t).length > 6);
+ok(longs.length === 0, 'messages courts : 6 mots maximum' + (longs.length ? ' : ' + longs.join(' | ') : ''));
+const tropLongs = tous.filter(t => rendreTexte(t, 'Raci').length > 34);
+ok(tropLongs.length === 0, 'messages courts : 34 caracteres maximum' + (tropLongs.length ? ' : ' + tropLongs.join(' | ') : ''));
+ok(tous.every(t => /^[A-ZÉÀ]/.test(t) && /[.?!}]$/.test(t.replace(/\{p\}$/, '}'))), 'majuscule au debut, ponctuation a la fin (sauf « Bonjour {prenom} »)');
+ok(!tous.some(t => /\b(vous|votre|vos)\b/i.test(t)), 'tutoiement : jamais « vous »');
+ok(BANQUE.nuit.some(e => e.t === 'Encore debout ?' && e.taquin) && BANQUE.nuit.some(e => e.t === 'Demain est un autre jour.'), 'exemples de Raci presents : « Encore debout ? », « Demain est un autre jour. »');
 
-// --- Composition
+// --- Composition : UN SEUL texte, plus de titre + phrase
 const fixe = (x) => () => x;
 let r = composerAccueil({ heure: 8, prenom: 'Raci', tirage: fixe(0) });
-ok(r.tranche === 'tot' && r.index === 0 && r.titre === 'Bonjour,\u00a0Raci' && r.phrase === BANQUE.tot[0].t, 'tot + prenom : « Bonjour, Raci » + phrase 1');
+ok(r.tranche === 'tot' && r.index === 0 && r.texte === 'Bonjour Raci' && r.pieces.length === 2 && r.pieces[1].gras && r.pieces[1].t === 'Raci' && !('phrase' in r) && !('titre' in r), 'tot + prenom : « Bonjour Raci », prenom isole en gras, aucun titre/phrase separes');
 r = composerAccueil({ heure: 19, prenom: 'Raci', tirage: fixe(0) });
-ok(r.titre === 'Bonsoir,\u00a0Raci', 'soir : « Bonsoir, Raci »');
+ok(r.texte === 'Bonsoir Raci', 'soir : « Bonsoir Raci »');
 r = composerAccueil({ heure: 10, prenom: '', tirage: fixe(0) });
-ok(r.titre === 'Bonjour' && r.prenom === '', 'sans prenom : « Bonjour » seul (pas de virgule)');
-for (const p of [undefined, null, '   ']) ok(composerAccueil({ heure: 10, prenom: p }).titre === 'Bonjour', 'prenom ' + JSON.stringify(p) + ' : « Bonjour » seul');
-r = composerAccueil({ heure: 23, prenom: 'Raci', tirage: fixe(0.2) }); // index 1 : « Encore debout »
-ok(r.index === 1 && r.titre === 'Encore debout,\u00a0Raci\u00a0?' && r.taquin, 'nuit, variante taquine : « Encore debout, Raci ? »');
-r = composerAccueil({ heure: 23, prenom: '', tirage: fixe(0.2) });
-ok(r.titre === 'Encore debout\u00a0?', 'nuit, variante taquine, sans prenom : « Encore debout ? »');
-r = composerAccueil({ heure: 23, prenom: 'Raci', tirage: fixe(0) });
-ok(r.titre === 'Bonsoir,\u00a0Raci', 'nuit, variante calme : « Bonsoir, Raci »');
-r = composerAccueil({ heure: 13, prenom: 'Raci', tirage: fixe(0) });
-ok(r.phrase === 'Le déjeuner n’attend pas… et ton estomac non plus.', 'midi : l\'exemple de Raci');
+ok(r.texte === 'Bonjour' && r.pieces.length === 1 && !r.pieces[0].gras, 'sans prenom : « Bonjour » seul, sans espace ni virgule');
+for (const p of [undefined, null, '   ']) ok(composerAccueil({ heure: 10, prenom: p, tirage: fixe(0) }).texte === 'Bonjour', 'prenom ' + JSON.stringify(p) + ' : « Bonjour »');
+r = composerAccueil({ heure: 23, prenom: 'Raci', tirage: fixe(0.2) }); // index 1
+ok(r.index === 1 && r.texte === 'Encore debout' + NB + '?' && r.taquin && r.pieces.length === 1, 'nuit : « Encore debout ? » (sans prenom dans le modele)');
+r = composerAccueil({ heure: 23, prenom: 'Raci', tirage: fixe(5 / 8) }); // index 5 « Encore là, {p} ? »
+ok(r.texte === 'Encore là, Raci' + NB + '?' && r.taquin, 'nuit avec prenom : « Encore là, Raci ? »');
+r = composerAccueil({ heure: 23, prenom: '', tirage: fixe(5 / 8) });
+ok(r.texte === 'Encore là' + NB + '?' && r.pieces.length === 1, 'nuit sans prenom : « Encore là ? » (repli propre)');
+r = composerAccueil({ heure: 14, prenom: '', tirage: fixe(6 / 8) });
+ok(r.texte === 'Encore un peu.', 'sans prenom : « Encore un peu, {p}. » -> « Encore un peu. »');
+r = composerAccueil({ heure: 12, prenom: 'Raci', tirage: fixe(1 / 8) });
+ok(r.pieces.map(x => x.t).join('') === r.texte && r.pieces.map(x => x.t).join('') === 'Bonne pause, Raci.', 'pieces recomposent exactement le texte');
 r = composerAccueil({ heure: 9, prenom: 'Raci', lang: 'en', tirage: fixe(0) });
-ok(r.titre === 'Good morning,\u00a0Raci' && r.phrase === '', 'anglais : salutation seule, pas de phrase francaise');
-r = composerAccueil({ heure: 20, prenom: 'Raci', lang: 'nl', tirage: fixe(0) });
-ok(r.titre === 'Goedenavond,\u00a0Raci' && r.phrase === '', 'neerlandais : salutation seule');
+ok(r.texte === 'Good morning Raci' && !r.taquin, 'anglais : salutation seule');
+r = composerAccueil({ heure: 20, prenom: '', lang: 'nl', tirage: fixe(0) });
+ok(r.texte === 'Goedenavond', 'neerlandais sans prenom : « Goedenavond »');
 r = composerAccueil({ heure: 10, prenom: 'Raci', kcal: 2000, repas: 3, eauL: 2, tirage: fixe(0) });
-ok(!/\d/.test(r.titre + r.phrase), 'aucune donnee n\'entre meme si on en fournit');
+ok(!/\d/.test(r.texte), 'aucune donnee n\'entre meme si on en fournit');
 ok(!!composerAccueil({}) && !!composerAccueil({ heure: 'x', tirage: () => NaN }), 'jamais d\'erreur sur entree vide ou invalide');
+ok(!estLong('Encore debout ?') && !estLong('Bonjour Raci') && estLong('Demain est un autre jour.'), 'classe « long » (> 18 car.) pour reduire la taille');
+// toutes les combinaisons rendent, avec et sans prenom, sans « {p} » ni espace double
+{
+  let bad = 0;
+  for (const k of TRANCHES) for (const e of BANQUE[k]) for (const p of ['Raci', '']) {
+    const t = rendreTexte(e.t, p); if (/[{}]/.test(t) || /\s\s/.test(t) || /^\s|\s$/.test(t) || /,\s*[.?!]|,$/.test(t)) bad++;
+  }
+  ok(bad === 0, 'les 96 rendus (avec/sans prenom) sont propres : ni accolade, ni espace double, ni virgule orpheline');
+}
 
 // --- Jamais deux fois le meme message de suite (toutes les tranches, tous les tirages possibles)
 {
@@ -84,7 +106,7 @@ ok(!!composerAccueil({}) && !!composerAccueil({ heure: 'x', tirage: () => NaN })
   // tous les autres messages restent atteignables
   const vus = new Set(); for (let q = 0; q < 100; q++) vus.add(composerAccueil({ heure: 12, dernier: { tranche: 'midi', index: 3 }, tirage: fixe(q / 100) }).index);
   ok(vus.size === BANQUE.midi.length - 1 && !vus.has(3), 'les 7 autres messages restent tous atteignables');
-  ok(composerAccueil({ heure: 12, dernier: { tranche: 'soir', index: 3 }, tirage: fixe(0.5) }).index === Math.floor(0.5 * 8), 'le dernier d\'une AUTRE tranche n\'exclut rien');
+  ok(composerAccueil({ heure: 12, dernier: { tranche: 'soir', index: 3 }, tirage: fixe(0.5) }).index === 4, 'le dernier d\'une AUTRE tranche n\'exclut rien');
   ok(choisirIndex(1, fixe(0.9), 0) === 0 && choisirIndex(0) === 0, 'liste d\'un seul element ou vide : pas de boucle');
   ok(choisirIndex(8, fixe(1), 7) < 8 && choisirIndex(8, fixe(-3), null) === 0 && choisirIndex(8, fixe(NaN), 2) !== 2, 'tirage hors bornes ou NaN : rattrape');
 }
