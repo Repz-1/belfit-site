@@ -6,7 +6,7 @@ import '../src/styles.css';
 import '../src/styles/design-system.css';
 import '../src/styles/journal-socle.css';
 import { utilisateur, authPrete } from '../src/services/firebase.js';
-import { donneesPretes, objectifs, repas, calculBaseFait, dateJour, repasAffiches, journalDUnJourPasse } from '../src/store/journal.js';
+import { donneesPretes, objectifs, repas, calculBaseFait, dateJour, repasAffiches, journalDUnJourPasse, eau } from '../src/store/journal.js';
 import { histoJours, weightLog, ajouterPesee } from '../src/store/stats.js';
 import { App, AccueilGarde } from '../src/main.jsx';
 import { programmeActif } from '../src/store/programme.js';
@@ -66,7 +66,7 @@ setInterval(() => {
 }, 100);
 
 // Acces des tests Playwright (cloture de la veille, 21/10).
-window.__banc = { weightLog, ajouterPesee, repasAffiches, journalDUnJourPasse, dateJour, repas, histoJours, programme, programmeBrut, programmeCharge, dossierCoach, objectifs, utilisateur };
+window.__banc = { eau, weightLog, ajouterPesee, repasAffiches, journalDUnJourPasse, dateJour, repas, histoJours, programme, programmeBrut, programmeCharge, dossierCoach, objectifs, utilisateur };
 
 // L'accueil du matin/soir (voile plein ecran) n'est monte que sur demande (?accueil) :
 // il recouvrirait l'ecran et fausserait les autres tests selon l'heure.

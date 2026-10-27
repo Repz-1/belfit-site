@@ -42,7 +42,7 @@ import { PremiumPage, estPremium } from './components/PremiumPage.jsx';
 import { CoachPage } from './components/CoachPage.jsx';
 import './services/invitation.js';
 import { Besoins, besoinsRequis, besoinsOuverts } from './components/Besoins.jsx';
-import { origineCalc, planCoachActif, programme, programmeCharge, dossierCoach } from './components/BelfitPlus.jsx';
+import { origineCalc, planCoachActif, programme, dossierCoach } from './components/BelfitPlus.jsx';
 import { finAcces } from './store/coach.js';
 import { IdeesRepas } from './components/IdeesRepas.jsx';
 import { Courses, origineCourses } from './components/Courses.jsx';
@@ -227,7 +227,6 @@ export function AccueilGarde() {
   const u = utilisateur.value;
   const pret = authPrete.value && donneesPretes.value && !demanderConnexion.value
     && !besoinsOuverts.value && !(besoinsRequis() && !planCoachActif.value);
-  const plan = programmeCharge.value;
   useEffect(() => {
     if (!u || !pret || carte) return undefined;
     const m = momentBruxelles();
@@ -236,27 +235,25 @@ export function AccueilGarde() {
     const cle = cleAccueil(periode, u.uid);
     if (dejaVu(cle, m.jour)) return undefined;
     let annule = false;
-    const debut = Date.now();
-    // On attend que le splash soit parti et que le plan soit charge
-    // (3 s au plus : sans plan, le message se passe de lui).
+    // On attend que le splash soit parti (le mot de bienvenue ne depend
+    // d'aucune donnee : plus d'attente du plan).
     const attendre = () => {
       if (annule) return;
       const splash = document.getElementById('splash');
-      const planOk = programmeCharge.value || Date.now() - debut > 3000;
-      if (splash || !planOk) { setTimeout(attendre, 150); return; }
+      if (splash) { setTimeout(attendre, 150); return; }
       import('./components/AccueilJour.jsx').then((mod) => {
         if (annule) return;
-        setCarte({ Carte: mod.AccueilJour, periode, heure: m.heure, cle, jour: m.jour });
+        setCarte({ Carte: mod.AccueilJour, periode, cle, jour: m.jour });
       }).catch(() => {});
     };
     attendre();
     return () => { annule = true; };
-  }, [u, pret, plan]);
+  }, [u, pret]);
   if (!carte) return null;
   const C = carte.Carte;
   // Reste monte (valeur « carte » gardee) pour ne jamais se rouvrir : on
   // rend null a la fin, la cle « deja vu » est ecrite a l'affichage.
-  return <C periode={carte.periode} heure={carte.heure} cle={carte.cle} jour={carte.jour} onFin={() => setCarte({ ...carte, Carte: () => null })} />;
+  return <C periode={carte.periode} cle={carte.cle} jour={carte.jour} onFin={() => setCarte({ ...carte, Carte: () => null })} />;
 }
 
 export function App() {

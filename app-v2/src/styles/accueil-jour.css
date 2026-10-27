@@ -1,12 +1,35 @@
-/* Accueil du matin / du soir : carte claire posee apres le splash. */
+/* Accueil : un mot de bienvenue « projete » sur l'ecran (27/10, Raci).
+   Texte seul. Fondu + flou qui se precise + leger zoom, puis un balayage
+   de lumiere doree, quelques secondes, disparition douce. CSS pur. */
 .acc-voile{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;
-  background:rgba(244,243,240,.94);padding:24px;box-sizing:border-box;cursor:pointer;
-  opacity:0;transition:opacity .25s ease;-webkit-tap-highlight-color:transparent}
+  background:radial-gradient(ellipse at 50% 42%,#fffdf6 0%,#f4f3f0 70%);
+  padding:24px;box-sizing:border-box;cursor:pointer;
+  opacity:0;transition:opacity .5s ease;-webkit-tap-highlight-color:transparent}
 .acc-voile.acc-vu{opacity:1}
-.acc-carte{width:100%;max-width:340px;background:#fff;border-radius:22px;padding:26px 24px 24px;
-  box-shadow:0 10px 34px rgba(24,24,24,.10);text-align:left;font-family:inherit;color:#181818}
-.acc-logo{width:40px;height:auto;display:block;margin-bottom:14px}
-.acc-titre{font-size:26px;font-weight:800;line-height:1.15;letter-spacing:-.01em;margin:0}
-.acc-filet{width:40px;height:3px;border-radius:2px;background:#F7B500;margin:12px 0 14px}
-.acc-ligne{font-size:16px;font-weight:500;line-height:1.4;margin:0 0 6px;color:#3a3a3a}
-@media (prefers-reduced-motion:reduce){.acc-voile{transition:none}}
+.acc-voile.acc-sort{opacity:0;transition:opacity .7s ease}
+.acc-carte{display:flex;flex-direction:column;align-items:center;text-align:center;font-family:inherit;color:#181818}
+.acc-logo{width:44px;height:auto;display:block;margin-bottom:18px;
+  animation:acc-apparait .9s ease-out .1s both}
+.acc-titre{margin:0;font-size:34px;font-weight:800;line-height:1.15;letter-spacing:-.01em;
+  color:#181818;will-change:opacity,filter,transform;
+  background:linear-gradient(100deg,#181818 0%,#181818 42%,#F7B500 50%,#181818 58%,#181818 100%);
+  background-size:260% 100%;background-position:100% 0;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:acc-projette 1.5s cubic-bezier(.2,.7,.2,1) .15s both,
+            acc-balayage 1.7s ease-in-out 1s both}
+.acc-filet{width:44px;height:3px;border-radius:2px;background:#F7B500;margin:16px 0 0;
+  transform-origin:center;animation:acc-filet .8s ease-out 1s both}
+@keyframes acc-projette{
+  0%{opacity:0;filter:blur(16px);transform:scale(1.14);letter-spacing:.09em}
+  60%{opacity:1}
+  100%{opacity:1;filter:blur(0);transform:scale(1);letter-spacing:-.01em}}
+@keyframes acc-balayage{from{background-position:100% 0}to{background-position:0 0}}
+@keyframes acc-apparait{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes acc-filet{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
+/* Mouvement reduit : un simple fondu, ni flou, ni zoom, ni balayage. */
+@media (prefers-reduced-motion:reduce){
+  .acc-voile{transition:opacity .4s ease}
+  .acc-voile.acc-sort{transition:opacity .4s ease}
+  .acc-logo,.acc-titre,.acc-filet{animation:none;filter:none;transform:none;letter-spacing:-.01em;will-change:auto}
+  .acc-titre{background:none;-webkit-text-fill-color:currentColor;color:#181818}
+}
