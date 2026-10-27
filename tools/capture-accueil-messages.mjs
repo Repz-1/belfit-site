@@ -15,7 +15,8 @@ const bandeau = (page, txt) => page.evaluate((t) => { const d = document.createE
 // [nom, heure Bruxelles, tirage, sansprenom, libelle]
 const CAS = [
   ['tot-bonjour-prenom', '2026-10-27T07:10:00+01:00', 0, false, 'tôt le matin · « Bonjour Raci »'],
-  ['tot-taquin', '2026-10-27T07:10:00+01:00', 0.4, false, 'tôt le matin · taquin'],
+  ['tot-deja-debout', '2026-10-27T06:10:00+01:00', 0.5, false, '6 h 10 · « Déjà debout » (5 h–7 h seulement)'],
+  ['tot-taquin', '2026-10-27T07:10:00+01:00', 0.5, false, '7 h 10 · taquin'],
   ['fin-matinee', '2026-10-27T10:30:00+01:00', 0.15, false, 'fin de matinée'],
   ['midi-taquin', '2026-10-27T12:30:00+01:00', 0.5, false, 'midi · taquin'],
   ['apres-midi-taquin', '2026-10-27T15:30:00+01:00', 0.6, false, 'après-midi · taquin'],

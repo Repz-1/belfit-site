@@ -33,7 +33,7 @@ export const BANQUE = {
     { t: 'Belle journée en vue.' },
     { t: 'Petit à petit, ça avance.' },
     { t: 'Le café est prêt ?', taquin: true },
-    { t: 'Déjà debout, {p} ?', taquin: true },
+    { t: 'Déjà debout, {p} ?', taquin: true, avant: 7 }, // 5 h-7 h seulement : plus tard, « déjà » sonne faux
     { t: 'Ton lit s’en remettra.', taquin: true },
     { t: 'Les lève-tôt ont de l’avance.' },
     { t: 'On y va doucement, {p}.' },
@@ -154,13 +154,31 @@ export const estLong = (texte) => String(texte).length > 18;
  * -> { tranche, index, texte, pieces, prenom, taquin, long }
  * Ne renvoie jamais null. Hors francais : salutation seule (la banque est en francais).
  */
+/**
+ * Indices des messages permis a cette heure. Un message peut porter
+ * `avant` (heure < avant) et/ou `apres` (heure >= apres), heure de Bruxelles 0-23.
+ * Ne renvoie jamais une liste vide : si tout etait filtre, on prend toute la tranche.
+ */
+export function indicesPermis(tranche, heure) {
+  const liste = BANQUE[tranche] || BANQUE.tot;
+  const h = Number(heure);
+  const tous = liste.map((_, i) => i);
+  if (!Number.isFinite(h)) return tous;
+  const ok = tous.filter(i => {
+    const e = liste[i];
+    return !(Number.isFinite(e.avant) && h >= e.avant) && !(Number.isFinite(e.apres) && h < e.apres);
+  });
+  return ok.length ? ok : tous;
+}
 export function composerAccueil(ctx = {}) {
   const lang = SALUTS[ctx.lang] ? ctx.lang : 'fr';
   const tranche = trancheDe(ctx.heure);
   const prenom = String(ctx.prenom || '').trim();
   const liste = BANQUE[tranche];
   const exclu = ctx.dernier && ctx.dernier.tranche === tranche ? ctx.dernier.index : null;
-  const index = choisirIndex(liste.length, ctx.tirage, exclu);
+  const permis = indicesPermis(tranche, ctx.heure);
+  const posExclu = exclu === null ? null : permis.indexOf(exclu);
+  const index = permis[choisirIndex(permis.length, ctx.tirage, posExclu >= 0 ? posExclu : null)];
   const e = liste[index];
   const modele = lang === 'fr' ? e.t : salutationDe(tranche, lang) + ' {p}';
   const texte = rendreTexte(modele, prenom);

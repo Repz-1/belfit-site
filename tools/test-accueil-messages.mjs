@@ -1,6 +1,6 @@
 // Ecran de bienvenue : parties pures (banque de messages, tranches, tirage, frequence).
 // Sans navigateur. Lancer : node tools/test-accueil-messages.mjs
-import { BANQUE, TRANCHES, trancheDe, salutationDe, choisirIndex, composerAccueil, lireDernier, ecrireDernier, rendreTexte, estLong } from '../app-v2/src/services/accueil-messages.js';
+import { BANQUE, TRANCHES, trancheDe, salutationDe, choisirIndex, composerAccueil, lireDernier, ecrireDernier, rendreTexte, estLong, indicesPermis } from '../app-v2/src/services/accueil-messages.js';
 import { momentBruxelles, absenceLongue, ABSENCE_MS } from '../app-v2/src/services/accueil-frequence.js';
 let code = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); if (!c) code = 1; };
 const tr = (iso) => trancheDe(momentBruxelles(new Date(iso)).heure);
@@ -89,6 +89,39 @@ ok(!estLong('Encore debout ?') && !estLong('Bonjour Raci') && estLong('Demain es
     const t = rendreTexte(e.t, p); if (/[{}]/.test(t) || /\s\s/.test(t) || /^\s|\s$/.test(t) || /,\s*[.?!]|,$/.test(t)) bad++;
   }
   ok(bad === 0, 'les 96 rendus (avec/sans prenom) sont propres : ni accolade, ni espace double, ni virgule orpheline');
+}
+
+// --- Restriction horaire optionnelle par message (M-05 « Déjà debout » : 5 h-7 h seulement)
+{
+  const iDeja = BANQUE.tot.findIndex(e => /Déjà debout/.test(e.t));
+  ok(iDeja === 4 && BANQUE.tot[iDeja].avant === 7, 'M-05 « Déjà debout » porte avant: 7');
+  ok(BANQUE.tot.filter(e => e.avant != null || e.apres != null).length === 1 && TRANCHES.filter(k => k !== 'tot').every(k => BANQUE[k].every(e => e.avant == null && e.apres == null)), 'seul M-05 est restreint');
+  for (const h of [5, 6]) ok(indicesPermis('tot', h).length === 8 && indicesPermis('tot', h).includes(iDeja), h + ' h : les 8 messages, M-05 compris');
+  for (const h of [7, 8]) ok(indicesPermis('tot', h).length === 7 && !indicesPermis('tot', h).includes(iDeja), h + ' h : 7 messages, sans M-05');
+  ok(indicesPermis('tot', 6).includes(iDeja) && !indicesPermis('tot', 7).includes(iDeja), 'frontiere 6 h 59 (heure 6) -> permis ; 7 h 00 (heure 7) -> exclu');
+  // tirage balaye toute la plage [0,1[ : M-05 sort a 6 h, jamais a 7 h / 8 h
+  const vus = (h) => { const s = new Set(); for (let i = 0; i < 400; i++) s.add(composerAccueil({ heure: h, prenom: 'Raci', tirage: () => i / 400 }).index); return s; };
+  ok(vus(6).size === 8 && vus(6).has(iDeja), 'a 6 h, les 8 messages peuvent sortir, M-05 compris');
+  ok(vus(7).size === 7 && !vus(7).has(iDeja), 'a 7 h, M-05 ne sort jamais');
+  ok(vus(8).size === 7 && !vus(8).has(iDeja), 'a 8 h, M-05 ne sort jamais');
+  // memes verifications a partir d'un vrai instant Bruxelles (hiver et ete)
+  const heureB = (iso) => Number(new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Brussels', hour: '2-digit', hourCycle: 'h23' }).format(new Date(iso)).replace(/\D/g, ''));
+  ok(heureB('2026-10-27T06:59:00+01:00') === 6 && indicesPermis('tot', heureB('2026-10-27T06:59:00+01:00')).includes(iDeja), '06:59 Bruxelles (hiver) : M-05 permis');
+  ok(heureB('2026-10-27T07:00:00+01:00') === 7 && !indicesPermis('tot', heureB('2026-10-27T07:00:00+01:00')).includes(iDeja), '07:00 Bruxelles (hiver) : M-05 exclu');
+  ok(!indicesPermis('tot', heureB('2026-07-15T07:00:00+02:00')).includes(iDeja) && indicesPermis('tot', heureB('2026-07-15T06:59:00+02:00')).includes(iDeja), 'ete (UTC+2) : meme frontiere a 7 h de Bruxelles');
+  // pas de repetition immediate, meme quand l'ancien dernier est M-05 et qu'il n'est plus permis
+  let bad = 0;
+  for (const h of [5, 6, 7, 8]) for (let d = 0; d < 8; d++) for (let i = 0; i < 40; i++) if (composerAccueil({ heure: h, dernier: { tranche: 'tot', index: d }, tirage: () => i / 40 }).index === d) bad++;
+  ok(bad === 0, 'jamais le meme message deux fois de suite (tot, 5-8 h, avec filtre)');
+  ok(composerAccueil({ heure: 8, dernier: { tranche: 'tot', index: iDeja }, tirage: () => 0.99 }).index !== iDeja, 'dernier = M-05 a 8 h : aucun souci, M-05 reste exclu');
+  // liste jamais vide, meme avec une banque entierement restreinte
+  const sauve = BANQUE.tot.map(e => ({ ...e }));
+  BANQUE.tot.forEach(e => { e.avant = 1; });
+  ok(indicesPermis('tot', 8).length === 8 && composerAccueil({ heure: 8, tirage: () => 0.5 }).texte.length > 0, 'si tout est filtre, on retombe sur toute la tranche (jamais de liste vide)');
+  BANQUE.tot.forEach((e, i) => { Object.keys(e).forEach(k => delete e[k]); Object.assign(e, sauve[i]); });
+  ok(indicesPermis('tot', NaN).length === 8 && indicesPermis('tot', undefined).length === 8, 'heure invalide : aucune restriction, aucune erreur');
+  // coherence des autres messages de « tot » a 8 h (aucun « déjà », aucune allusion a l'aube)
+  ok(BANQUE.tot.filter((e, i) => i !== iDeja).every(e => !/déjà|aube|lever du soleil|bien tôt/i.test(e.t)), 'les 7 autres messages de « tot » restent coherents a 8 h (pas de « déjà » ni d\'aube)');
 }
 
 // --- Jamais deux fois le meme message de suite (toutes les tranches, tous les tirages possibles)

@@ -85,6 +85,9 @@ await t.ctx.close();
 
 // (g) tranches : midi, apres-midi, soir, nuit (tirage 0 et variante « Encore debout »)
 for (const [q, rnd, att] of [
+  ['2026-10-25T06:30:00+01:00', 0.5, 'Déjà debout, Raci ?'],
+  ['2026-10-25T07:00:00+01:00', 0.5, 'Le café est prêt ?'],
+  ['2026-10-25T08:00:00+01:00', 0.6, 'Ton lit s\u2019en remettra.'],
   ['2026-10-25T12:30:00+01:00', 0.5, 'La sieste te fait de l\u2019\u0153il ?'],
   ['2026-10-25T15:00:00+01:00', 0.6, 'La salle t\u2019attend. Sans pression.'],
   ['2026-10-25T20:00:00+01:00', 0.3, 'Le canapé t\u2019appelle.'],
