@@ -7,7 +7,7 @@ name: Inscrits (lecture seule)
 #
 # Le depot est public : le journal du workflow ne contient que des
 # e-mails MASQUES. Le detail (e-mails complets, prenom, objectif) est
-# chiffre avec tools/diagnostic/cle-publique.pem puis pousse sur la
+# chiffre avec tools/diagnostic/cle-publique-inscrits.pem puis pousse sur la
 # branche inscrits-sortie (distincte de diagnostic-sortie). Seul le
 # detenteur de la cle privee peut le lire.
 #
@@ -61,7 +61,7 @@ jobs:
           cat "$RUNNER_TEMP/journal.txt"
           openssl rand -hex 32 > "$RUNNER_TEMP/k.txt"
           openssl enc -aes-256-cbc -pbkdf2 -salt -in "$RUNNER_TEMP/sortie.txt" -out "$RUNNER_TEMP/sortie.enc" -pass file:"$RUNNER_TEMP/k.txt"
-          openssl pkeyutl -encrypt -pubin -inkey tools/diagnostic/cle-publique.pem -in "$RUNNER_TEMP/k.txt" -out "$RUNNER_TEMP/k.enc"
+          openssl pkeyutl -encrypt -pubin -inkey tools/diagnostic/cle-publique-inscrits.pem -in "$RUNNER_TEMP/k.txt" -out "$RUNNER_TEMP/k.enc"
           mkdir -p "$RUNNER_TEMP/out" && cp "$RUNNER_TEMP/sortie.enc" "$RUNNER_TEMP/k.enc" "$RUNNER_TEMP/out/"
           cd "$RUNNER_TEMP/out"
           git init -q && git checkout -q -b inscrits-sortie
