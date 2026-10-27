@@ -76,6 +76,18 @@ export const dossierCoach = signal({ questionnaire: null, commande: null });
 /** Ajustements restants ce mois-ci, et quota de la formule. */
 export const ajustements = signal({restants: null, quota: null});
 
+export const DELAI_RELECTURE_MS = 60000;
+let derniereLecture = 0;
+let relectureEnCours = false;
+/** Lecture de users/{uid} (Firestore en differe). Remplacable pour les bancs d'essai. */
+const lireDocUtilisateur = (uid) =>
+  import('firebase/firestore').then(({ getFirestore, doc, getDoc }) =>
+    getDoc(doc(getFirestore(getApps()[0]), 'users', uid)))
+    .then(s => (s.exists() ? s.data() : null));
+let lecteurProgramme = lireDocUtilisateur;
+/** Banc d'essai uniquement : remplace la lecture Firestore (sans argument : la remet). */
+export function poserLecteurProgramme(f) { lecteurProgramme = f || lireDocUtilisateur; }
+// (etat de la relecture : voir plus bas, « Relecture automatique du plan »)
 // Compte pour lequel le dossier a ete charge (27/09) : au changement de
 // compte sur le meme appareil, tout ce qui appartenait au precedent
 // (plan, questionnaire, commande) est oublie puis recharge.
@@ -152,11 +164,9 @@ export function chargerProgramme() {
 
   const u = utilisateur.value;
   if (!u || !getApps().length) { programmeCharge.value = true; return; }
-  // Firestore en differe : voir services/sync.js pour la raison (170 Ko gzip)
-  import('firebase/firestore').then(({ getFirestore, doc, getDoc }) =>
-    getDoc(doc(getFirestore(getApps()[0]), 'users', u.uid)))
-    .then(s => {
-      const d = s.exists() ? s.data() : null;
+  derniereLecture = Date.now();
+  lecteurProgramme(u.uid)
+    .then(d => {
       programmeBrut.value = (d && d.programme) || null;
       dossierCoach.value = { questionnaire: (d && d.questionnaireCoach) || null, commande: (d && d.commandeCoach) || null, brouillon: (d && d.brouillonCoach) || null, accesPro: (d && d.accesPro) || null };
       // 21/10 Raci : ajustements illimites pendant le mois de coaching,
@@ -165,6 +175,53 @@ export function chargerProgramme() {
     })
     .catch(() => { programmeBrut.value = null; })
     .finally(() => { programmeCharge.value = true; });
+}
+
+// 27/10 Relecture automatique du plan. Avant : le plan n'etait lu qu'une
+// fois, au demarrage ; un plan envoye par le coach pendant que l'appli
+// restait ouverte n'apparaissait qu'apres deconnexion/reconnexion.
+// Maintenant : au retour sur l'appli (visibilitychange / focus / pageshow),
+// si un compte est connecte et que la derniere lecture date de plus de 60 s,
+// on relit users/{uid} SANS rien remettre a zero :
+//  - echec reseau : on garde le plan deja charge, rien ne change ;
+//  - contenu identique : on ne touche pas aux signaux (memes objets), donc
+//    aucun effet ne se rejoue et rien ne clignote ;
+//  - programmeCharge reste a true pendant toute la relecture.
+const memeContenu = (a, b) => { try { return JSON.stringify(a) === JSON.stringify(b); } catch (e) { return false; } };
+
+/** Relecture silencieuse du plan. Rend true si une lecture a ete lancee. */
+export function relireProgramme() {
+  const u = utilisateur.peek();
+  if (!u || !u.uid) return false;
+  if (!programmeCharge.peek() || chargePour !== u.uid) return false;   // chargement initial pas fini, ou autre compte
+  if (relectureEnCours || !getApps().length) return false;
+  try { if (localStorage.getItem('belfit_v2_apercu_programme') || localStorage.getItem('belfit_v2_apercu_dossier')) return false; } catch (e) {}
+  if (Date.now() - derniereLecture < DELAI_RELECTURE_MS) return false;   // anti-spam
+  derniereLecture = Date.now();
+  relectureEnCours = true;
+  const uid = u.uid;
+  lecteurProgramme(uid)
+    .then(d => {
+      // Le compte a change pendant la lecture : on jette le resultat.
+      const c = utilisateur.peek();
+      if (!c || c.uid !== uid || chargePour !== uid) return;
+      if (!d) return;   // pas de document : rien a corriger
+      const neuf = d.programme || null;
+      if (!memeContenu(programmeBrut.peek(), neuf)) programmeBrut.value = neuf;
+      const avant = dossierCoach.peek();
+      const dos = { questionnaire: d.questionnaireCoach || null, commande: d.commandeCoach || null, accesPro: d.accesPro || null };
+      // `brouillon` reste celui de la memoire : il s'ecrit en differe depuis ce telephone.
+      if (!['questionnaire', 'commande', 'accesPro'].every(k => memeContenu(avant[k] || null, dos[k]))) dossierCoach.value = { ...avant, ...dos };
+    })
+    .catch(() => { /* hors ligne ou erreur : on garde le plan deja charge */ })
+    .finally(() => { relectureEnCours = false; });
+  return true;
+}
+if (typeof document !== 'undefined') {
+  const auRetour = () => { if (document.visibilityState === 'visible') relireProgramme(); };
+  document.addEventListener('visibilitychange', auRetour);
+  window.addEventListener('focus', auRetour);
+  window.addEventListener('pageshow', auRetour);
 }
 
 /** « il y a 3 jours », a partir d'une date ISO. */
