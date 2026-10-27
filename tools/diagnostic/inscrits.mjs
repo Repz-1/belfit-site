@@ -3,7 +3,7 @@
 //
 //   node tools/diagnostic/inscrits.mjs <fichier-complet> [nombre]
 //
-// - stdout (= journal public du workflow) : e-mails MASQUES uniquement.
+// - stdout (= journal public du workflow) : dates de creation uniquement, aucun e-mail.
 // - <fichier-complet> : e-mails complets, prenom, objectif ; le workflow
 //   le chiffre avant de le publier (le depot est public).
 // - INSCRITS_FACTICE=1 : donnees inventees, sans Firebase (test du
@@ -67,7 +67,7 @@ export function resumeDossier(d) {
 export function formater(comptes, total, maintenant = new Date()) {
   const entete = `Inscrits BelFit - ${dateBxl(maintenant)} - ${total} compte(s) au total, ${comptes.length} derniers affiches (du plus recent au plus ancien).`;
   const complet = [entete, ''];
-  const masque = [entete, '(journal public : e-mails masques, details dans la sortie chiffree)', ''];
+  const masque = [entete, '(journal public : dates de creation seulement, details dans la sortie chiffree)', ''];
   comptes.forEach(({ u, dossier }, i) => {
     const dos = dossier || { existe: false };
     const base = [
@@ -86,8 +86,7 @@ export function formater(comptes, total, maintenant = new Date()) {
       `Plan livre : ${dos.plan ? `oui, le ${dateBxl(dos.plan.livreLe)}${dos.plan.kcal ? ', ' + dos.plan.kcal + ' kcal' : ''}` : 'non (pas encore de plan)'}`,
     ];
     complet.push(`#${i + 1}  ${u.email || '(pas d\'e-mail)'}${dos.prenom ? '  -  ' + dos.prenom : ''}`, ...base.map((l) => '   ' + l), ...detail.map((l) => '   ' + l), '');
-    masque.push(`#${i + 1}  ${masquerEmail(u.email)}`, ...base.map((l) => '   ' + l),
-      `   Dossier : ${oui(dos.existe)} ; achat : ${dos.achat ? 'oui' : 'non'} ; plan livre : ${dos.plan ? 'oui' : 'non'}`, '');
+    masque.push(`#${i + 1}  cree le ${dateBxl(u.metadata.creationTime)}`);
   });
   complet.push('Langue : non enregistree sur le serveur (elle reste sur l\'appareil de l\'utilisateur).');
   return { complet: complet.join('\n'), masque: masque.join('\n') };

@@ -5,8 +5,8 @@ name: Inscrits (lecture seule)
 # envoye. Se lance a la main (onglet Actions > « Inscrits (lecture
 # seule) » > Run workflow) : un simple push ne le declenche pas.
 #
-# Le depot est public : le journal du workflow ne contient que des
-# e-mails MASQUES. Le detail (e-mails complets, prenom, objectif) est
+# Le depot est public : le journal du workflow ne contient que des dates de creation (aucun e-mail).
+# Le detail (e-mails complets, prenom, objectif) est
 # chiffre avec tools/diagnostic/cle-publique-inscrits.pem puis pousse sur la
 # branche inscrits-sortie (distincte de diagnostic-sortie). Seul le
 # detenteur de la cle privee peut le lire.
