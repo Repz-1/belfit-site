@@ -14,6 +14,8 @@ export const DB = {
     'Patate douce':{kcal:86,prot:1.6,carbs:20,lip:0.1,fibres:2.87,sucres:5.64,satures:0.06,sel:0.1,cache:true},
     'Quinoa cru':{kcal:368,prot:14,carbs:64,lip:6,fibres:7,satures:0.71,sel:0.01},
     'Semoule':{kcal:360,prot:12,carbs:73,lip:1.8,fibres:3.37,sucres:1,satures:0.21,sel:0},
+    // Produit SEC (poudre), tel que vendu. Source : etiquette « Creme de riz » Snackfit (France), Open Food Facts 3012003251416 : 372 kcal, 7,7 g prot, 83,1 g glucides, 0,7 g lip, fibres 1,5, sucres 0,2, satures 0,1, sel 0,025. Recoupement : USDA « Cereals, Cream of Rice, dry » 370 kcal / 6,3 / 82,4 / 0,5.
+    'Crème de riz':{kcal:372,prot:7.7,carbs:83.1,lip:0.7,fibres:1.5,sucres:0.2,satures:0.1,sel:0.025},
     // Protéines
     'Poulet cuit':{kcal:165,prot:31,carbs:0,lip:3.6,fibres:0,sucres:0,satures:0.58,sel:0.14},
     'Poulet cru':{kcal:120,prot:23,carbs:0,lip:2.6,fibres:0,sucres:0,satures:0.44,sel:0.11},
@@ -1359,6 +1361,8 @@ function synonymes(s) {
   return String(s || '').toLowerCase()
     .replace(/\bpatates?\b(?!\s+douces?)/g, 'pomme de terre')
     .replace(/\bpdt\b/g, 'pomme de terre')
+    // Anglais : « cream of rice » = creme de riz.
+    .replace(/\bcream of rice\b/g, 'creme de riz')
     // « pates » seul : les pates alimentaires avant la pate a tartiner.
     .replace(/^\s*p[aâ]tes\s*$/, 'pâtes blanches');
 }
@@ -1482,6 +1486,8 @@ export function facteurCuisson(nom) {
   // aucune conversion a proposer.
   if (mots.some(m => ['cru', 'crue', 'cuit', 'cuite'].includes(m))) return null;
   if (mots.some(m => PREPARATIONS.has(m))) return null;
+  // Poudre a delayer : on pese la poudre seche, pas la bouillie.
+  if (mots.includes('creme') && mots.includes('riz')) return null;
   for (const f of FACTEURS_CUISSON) {
     // Mots de moins de 3 lettres exclus du rapprochement : la taille
     // « M » d'un oeuf faisait demarrer « macaroni », d'ou une bascule
