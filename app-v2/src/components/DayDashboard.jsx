@@ -7,6 +7,7 @@ import { repas, objectifs, totauxJourAff, kcalRestantes, donneesPretes, poidsCal
 import { weightLog, enregistrerJour } from '../store/stats.js';
 import { IdeesRepas } from './IdeesRepas.jsx';
 import { t } from '../i18n/index.js';
+import { aujourdhuiBxl } from '../store/plans-par-date.js';
 
 // 27/10 : horloge grossiere (30 s + retour sur l'app) pour que la mise en
 // avant de « Clôturer la journée » apparaisse seule apres minuit, sans
@@ -128,7 +129,7 @@ export function DayDashboard() {
   const d = new Date();
   const jours = t('days_long').split('|');
   const moisCourt = t('months_min').split('|');
-  const isoAuj = new Date().toISOString().slice(0, 10);
+  const isoAuj = aujourdhuiBxl();
   const retard = !!dateJour.value && dateJour.value !== isoAuj;
   horlogeJour.value;   // abonnement : la carte se redessine apres minuit
   // 27/10 : journal d'un jour PASSE -> le bouton de cloture est mis en avant.

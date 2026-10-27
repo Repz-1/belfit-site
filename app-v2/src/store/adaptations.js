@@ -2,11 +2,12 @@ import { signal } from '@preact/signals';
 import { seancePrevue } from './programme.js';
 import { SESSION_EXOS } from '../data/sessionExos.js';
 import { EXERCISES } from '../data/exercices.js';
+import { aujourdhuiBxl } from './plans-par-date.js';
 
 export const adaptationsJour = signal(null);
 
 function isoJour() {
-  return new Date().toISOString().slice(0, 10);
+  return aujourdhuiBxl();
 }
 
 function norm(s) {

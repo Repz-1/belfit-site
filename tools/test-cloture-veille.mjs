@@ -2,6 +2,7 @@
 // Prerequis : apercu construit (npx vite build --config apercu.config.js dans app-v2).
 import { spawn } from 'child_process';
 import { createRequire } from 'module';
+import { aujourdhuiBxl, ajouterJours } from '../app-v2/src/store/plans-par-date.js';
 const exiger = createRequire(new URL('../app-v2/package.json', import.meta.url));
 const { chromium } = exiger('playwright');
 const srv = spawn('python3',['-m','http.server','8091','--directory','app-v2/apercu/construit'],{stdio:'ignore',detached:true});
@@ -14,8 +15,9 @@ const page = await ctx.newPage();
 page.on('pageerror', e => { console.log('ERREUR JS', e.message); code=1; });
 page.on('dialog', d => d.accept());
 await page.goto('http://localhost:8091/app.html'); await page.waitForTimeout(2000);
-const AUJ = new Date().toISOString().slice(0,10);
-const VEILLE = new Date(Date.now()-86400000).toISOString().slice(0,10);
+// 27/10 : la cle du journal = jour de Bruxelles (etait le jour UTC)
+const AUJ = aujourdhuiBxl();
+const VEILLE = ajouterJours(AUJ, -1);
 const btn = page.locator('button.cal-reset');
 const regler = (date, plein) => page.evaluate(([date, plein]) => {
   const b = window.__banc; b.dateJour.value = date;
@@ -30,22 +32,22 @@ ok(await btn.isDisabled(), '(a) aujourd\'hui vide : bouton inactif');
 await regler(VEILLE, false); await pause();
 ok(await btn.isEnabled(), '(b) veille vide : bouton actif');
 ok((await page.locator('.cal-retard').count()) === 1, '(b) message jour_non_cloture affiche');
-await btn.scrollIntoViewIfNeeded();
+await btn.evaluate(b => b.scrollIntoView({ block: 'center' }));
 await page.locator('section.cal').screenshot({ path: '/workspace/shots/cloture-veille.png' });
-let av = await etat(); await btn.click(); await pause(); let ap = await etat();
+let av = await etat(); await btn.click({ force: true }); await pause(); let ap = await etat();
 ok(ap.d === AUJ, '(b) clic : passe a aujourd\'hui');
 ok(ap.h === av.h, '(b) histoJours inchange');
 ok(await btn.isDisabled(), '(b) ensuite aujourd\'hui vide : bouton inactif');
 // (c)
 await regler(VEILLE, true); await pause();
-await btn.click(); await pause(); ap = await etat();
+await btn.click({ force: true }); await pause(); ap = await etat();
 const h = JSON.parse(ap.h);
 ok(h[VEILLE] && h[VEILLE].kcal > 0, '(c) veille remplie enregistree sous ' + VEILLE + ' (' + (h[VEILLE]||{}).kcal + ' kcal)');
 ok(!h[AUJ], '(c) rien sous la date du jour');
 ok(ap.d === AUJ, '(c) passage a aujourd\'hui');
 // (d) cloture d'aujourd'hui rempli, puis double clic
 await regler(AUJ, true); await pause();
-await btn.click(); await pause(); const apres1 = await etat();
+await btn.click({ force: true }); await pause(); const apres1 = await etat();
 const e1 = JSON.parse(apres1.h)[AUJ];
 ok(e1 && e1.kcal > 0, '(d) premiere cloture enregistree');
 ok(await btn.isDisabled(), '(d) bouton inactif apres cloture');

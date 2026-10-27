@@ -3,6 +3,7 @@ import { createPortal } from 'preact/compat';
 import { weightLog } from '../store/stats.js';
 import { WeightModal } from './Stats.jsx';
 import { t } from '../i18n/index.js';
+import { aujourdhuiBxl } from '../store/plans-par-date.js';
 
 // ============================================================
 // NOTE POIDS DU JOUR — copie de la v1 (app.html, renderWeightNote) :
@@ -12,7 +13,7 @@ import { t } from '../i18n/index.js';
 
 export function WeightNote() {
   const [modale, setModale] = useState(false);
-  const iso = new Date().toISOString().slice(0, 10);
+  const iso = aujourdhuiBxl();
   const dejaPese = (weightLog.value || []).some(w => w.iso === iso);
   if (dejaPese) return null;
 

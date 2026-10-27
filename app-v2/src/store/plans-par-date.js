@@ -40,6 +40,19 @@ export function dateBruxelles(quand = new Date()) {
   return FORMAT_JOUR.format(d);
 }
 
+/**
+ * 27/10 Raci : « aujourd'hui » du journal, des stats, des pesees et des
+ * seances = le jour de Bruxelles (a minuit belge, les 24 h sont ecoulees).
+ * Avant, la cle etait le jour UTC : elle changeait a 01h/02h belges.
+ * Jamais null : secours sur le jour UTC si Intl echoue ou si la date est invalide.
+ */
+export function aujourdhuiBxl(quand = new Date()) {
+  const j = dateBruxelles(quand);
+  if (j) return j;
+  const d = new Date(quand);
+  return (isNaN(d.getTime()) ? new Date() : d).toISOString().slice(0, 10);
+}
+
 /** « AAAA-MM-JJ » reel (le 31 fevrier est refuse), sinon null. */
 export function jourValide(s) {
   if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;

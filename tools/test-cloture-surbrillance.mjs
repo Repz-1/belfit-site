@@ -1,4 +1,5 @@
-// « Clôturer la journée » mis en surbrillance quand le journal affiché est celui d'un jour PASSÉ (27/10),
+// « Clôturer la journée » CLIGNOTE quand le journal affiché est celui d'un jour PASSÉ (27/10) : dès minuit à Bruxelles
+// (la clé de date du journal = jour de Bruxelles, plus le jour UTC) ; fixe si mouvement réduit.
 // + cloture d'un journal de la veille avec repas Mangé / Sauté / Mangé autre chose.
 // Prerequis : apercu construit (npx vite build --config apercu.config.js dans app-v2).
 // TOUTES les donnees sont FICTIVES (banc de test, comptes et plans d'exemple).
@@ -56,7 +57,10 @@ async function ouvrir(quand, reduit) {
 const regler = async (page, cle) => { await page.evaluate((c) => { window.__banc.dateJour.value = c; }, cle); await page.waitForTimeout(500); };
 const tic = async (page, quand) => { await page.clock.setFixedTime(new Date(quand)); await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange'))); await page.waitForTimeout(500); };
 const aRappel = (page) => page.locator('button.cal-reset.cal-reset--rappel').count().then((n) => n === 1);
-const style = (page) => page.locator('button.cal-reset').evaluate((b) => { const s = getComputedStyle(b); return { color: s.color, bg: s.backgroundColor, anim: s.animationName, shadow: s.boxShadow }; });
+const style = (page) => page.locator('button.cal-reset').evaluate((b) => { const s = getComputedStyle(b); return { color: s.color, bg: s.backgroundColor, anim: s.animationName, shadow: s.boxShadow, tr: s.transform, dur: s.animationDuration, it: s.animationIterationCount }; });
+// Fige l'animation a un instant donne (ms dans le cycle de 1100 ms) et lit le rendu.
+const figer = async (page, ms) => { await page.locator('button.cal-reset').evaluate((b, t) => { const a = b.getAnimations()[0]; a.pause(); a.currentTime = t; }, ms); await page.waitForTimeout(150); return style(page); };
+const reprendre = (page) => page.locator('button.cal-reset').evaluate((b) => { const a = b.getAnimations()[0]; if (a) a.play(); });
 const lum = (css) => { const m = css.match(/[\d.]+/g).map(Number); const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(m[0]) + .7152 * f(m[1]) + .0722 * f(m[2]); };
 const contraste = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
 const photo = async (page, nom, texte) => {
@@ -74,60 +78,118 @@ let o = await ouvrir(MER, false);
 await regler(o.page, '2026-11-03');
 ok(await aRappel(o.page), '1. journal d\'hier (3 nov., on est le 4) : « Clôturer la journée » en surbrillance');
 let s = await style(o.page);
-ok(s.bg === 'rgb(248, 207, 1)' && s.anim === 'cal-reset-halo' && s.shadow !== 'none', '1. or BELFIT + halo anime : ' + s.bg + ' / ' + s.anim);
-const c = contraste(s.color, s.bg);
-ok(c >= 7, '1. texte lisible : contraste ' + c.toFixed(1) + ':1 (>= 7)');
+ok(s.anim === 'cal-reset-clignote' && s.it === 'infinite' && s.dur === '1.1s', '1. animation de clignotement infinie, 1,1 s : ' + s.anim + ' / ' + s.dur + ' / ' + s.it);
+const fort = await figer(o.page, 0);
+const faible = await figer(o.page, 550);
+ok(fort.bg === 'rgb(248, 207, 1)' && fort.shadow !== 'none' && !/0px 0px 0px 0px rgba\(248, 207, 1, 0\)/.test(fort.shadow), '1. etat FORT : aplat or BELFIT + halo + grossi : ' + fort.bg + ' / ' + fort.tr);
+ok(faible.bg === 'rgb(255, 251, 224)', '1. etat FAIBLE : creme tres pale (le bouton « s\'eteint » nettement) : ' + faible.bg);
+ok(fort.bg !== faible.bg && fort.tr !== faible.tr, '1. les deux etats sont tres differents (couleur ET taille) : clignotement net, pas un halo doux');
+const c = Math.min(contraste(fort.color, fort.bg), contraste(faible.color, faible.bg));
+ok(c >= 7, '1. texte lisible dans les DEUX etats : contraste mini ' + c.toFixed(1) + ':1 (>= 7)');
+ok(await o.page.evaluate(() => { const g = document.querySelector('button.cal-reset').getAnimations()[0]; const kf = g.effect.getKeyframes(); return kf.length === 3 && kf[1].backgroundColor !== kf[0].backgroundColor; }), '1. le clignotement alterne bien fort -> faible -> fort');
 ok(await o.page.locator('button.cal-reset').isEnabled(), '1. bouton actif');
 ok((await o.page.locator('.cal-retard').count()) === 1, '1. la phrase « Cette journée est celle du … » reste affichée');
-await photo(o.page, 'cloture-surbrillance-hier', EX('mer. 4 nov. 2026 · journal d\'hier (mar. 3 nov.) · bouton en surbrillance'));
+await figer(o.page, 0);
+await photo(o.page, 'cloture-clignote-fort', EX('mer. 4 nov. 2026 · journal d\'hier · bouton CLIGNOTANT, état fort'));
+await figer(o.page, 550);
+await photo(o.page, 'cloture-clignote-faible', EX('mer. 4 nov. 2026 · journal d\'hier · bouton CLIGNOTANT, état faible'));
+await reprendre(o.page);
 
 // ---- 2. Journal du jour : aucune surbrillance ----
 await regler(o.page, '2026-11-04');
 ok(!(await aRappel(o.page)), '2. journal du jour : pas de surbrillance');
 s = await style(o.page);
 ok(s.anim === 'none' && s.bg === 'rgba(0, 0, 0, 0)', '2. bouton discret comme avant : ' + s.bg + ' / ' + s.anim);
-await photo(o.page, 'cloture-surbrillance-jour', EX('mer. 4 nov. 2026 · journal du jour · pas de surbrillance'));
+await photo(o.page, 'cloture-sans-clignotement-jour', EX('mer. 4 nov. 2026 · journal du jour · pas de clignotement'));
 // journal plus ancien (3 jours) : surbrillance aussi
 await regler(o.page, '2026-11-01');
-ok(await aRappel(o.page), '2. journal vieux de 3 jours : surbrillance');
+ok(await aRappel(o.page), '2. journal vieux de 3 jours : clignote aussi');
 await o.ctx.close();
 
 // ---- 3. Mouvement reduit : surbrillance fixe, sans animation ----
 o = await ouvrir(MER, true);
 await regler(o.page, '2026-11-03');
 s = await style(o.page);
-ok(await aRappel(o.page) && s.anim === 'none' && s.bg === 'rgb(248, 207, 1)', '3. prefers-reduced-motion : aplat or conserve, aucune animation (' + s.anim + ')');
+ok(await aRappel(o.page) && s.anim === 'none' && s.bg === 'rgb(248, 207, 1)' && s.shadow !== 'none' && (s.tr === 'none' || s.tr === 'matrix(1, 0, 0, 1, 0, 0)'), '3. prefers-reduced-motion : etat fort FIXE (aplat or + anneau), aucune animation (' + s.anim + ')');
+ok(contraste(s.color, s.bg) >= 7, '3. mouvement reduit : texte lisible');
 await o.ctx.close();
 
-// ---- 4. Frontiere Bruxelles / UTC (00h-02h belges) ----
-// 4 nov. 22h30 belge = 21h30Z : journal du 4 nov., rien a signaler.
-o = await ouvrir('2026-11-04T21:30:00Z', false);
-await regler(o.page, '2026-11-04');
-ok(!(await aRappel(o.page)), '4. 22h30 belges, journal du jour : pas de surbrillance');
-await tic(o.page, '2026-11-04T23:30:00Z');   // 00h30 belges le 5 nov. (jour UTC = encore le 4)
-ok(!(await aRappel(o.page)), '4. 00h30 belges (jour UTC pas encore change) : toujours rien : pas de faux positif a la bascule');
-await regler(o.page, '2026-11-03');
-ok(await aRappel(o.page), '4. 00h30 belges, journal du 3 nov. (vraiment passé) : surbrillance');
-await regler(o.page, '2026-11-04');
-await tic(o.page, '2026-11-05T00:30:00Z');   // 01h30 belges : le jour UTC passe au 5
-ok(await aRappel(o.page), '4. 01h30 belges : le journal du 4 nov. est passé, la surbrillance apparait toute seule (carte non touchée)');
+// ---- 4. Minuit a Bruxelles : 23:59, 00:00, 00:30, 01:30 ; hiver (CET, UTC+1) et ete (CEST, UTC+2) ----
+// Le journal ouvert a 23:59 porte la cle du jour ; des 00:00 belges il est « passe » ; apres
+// cloture a 00:30 il porte la cle du NOUVEAU jour belge et ne reclignote ni a 00:30 ni a 01:30.
+async function minuit(nom, jourAvant, jourApres, t2359, t0000, t0030, t0130) {
+  const o = await ouvrir(t2359, false);
+  await regler(o.page, jourAvant);
+  ok(!(await aRappel(o.page)), '4' + nom + '. 23:59 belges, journal du jour : ne clignote pas');
+  await tic(o.page, t0000);
+  ok(await aRappel(o.page), '4' + nom + '. 00:00 belges : le journal de la veille clignote DES MINUIT (carte non touchee, pas a 01h/02h)');
+  await o.page.evaluate(() => { const b = window.__banc; b.repas.value = b.repas.value.map((r, i) => ({ ...r, ings: i === 0 ? [{ id: 900, name: 'Avoine', portion: 70 }] : [] })); });
+  await tic(o.page, t0030);
+  ok(await aRappel(o.page), '4' + nom + '. 00:30 belges, journal de la veille non cloture : clignote encore');
+  await o.page.locator('button.cal-reset').click({ force: true }); await o.page.waitForTimeout(1200);
+  const e = await o.page.evaluate(() => ({ dj: window.__banc.dateJour.value, h: Object.keys(window.__banc.histoJours.value) }));
+  ok(e.dj === jourApres, '4' + nom + '. clotures a 00:30 : la cle passe au jour belge ' + jourApres + ' (' + e.dj + ')');
+  ok(e.h.includes(jourAvant) && !e.h.includes(jourApres), '4' + nom + '. journee close archivee sous ' + jourAvant + ', rien sous ' + jourApres);
+  ok(!(await aRappel(o.page)), '4' + nom + '. 00:30 apres cloture : le bouton ne clignote PLUS (pas de faux positif)');
+  await tic(o.page, t0130);
+  ok(!(await aRappel(o.page)), '4' + nom + '. 01:30 belges (ancien decalage UTC) : toujours pas de clignotement');
+  await o.ctx.close();
+}
+await minuit('a hiver', '2026-11-04', '2026-11-05', '2026-11-04T22:59:00Z', '2026-11-04T23:00:00Z', '2026-11-04T23:30:00Z', '2026-11-05T00:30:00Z');
+await minuit('b ete', '2026-07-14', '2026-07-15', '2026-07-14T21:59:00Z', '2026-07-14T22:00:00Z', '2026-07-14T22:30:00Z', '2026-07-14T23:30:00Z');
+
+// Appli ouverte pour la premiere fois a 00:30 belges : le journal neuf porte DEJA le jour belge.
+o = await ouvrir('2026-11-04T23:30:00Z', false);
+const dj0 = await o.page.evaluate(() => window.__banc.dateJour.value);
+ok(dj0 === '2026-11-05', '4c. journal neuf a 00:30 belges : cle = jour belge 2026-11-05 (' + dj0 + ')');
+ok(!(await aRappel(o.page)), '4c. appli ouverte a 00:30 belges avec journal neuf : pas de clignotement');
 await o.ctx.close();
-// fonction pure, heure d'ete et d'hiver
+
+// ---- 4d. Passage heure d'ete -> hiver (dim. 25 oct. 2026, 03h->02h) et hiver -> ete (dim. 29 mars 2026, 02h->03h) ----
 o = await ouvrir(MER, false);
+const dst = await o.page.evaluate(() => {
+  const f = window.__banc.journalDUnJourPasse; const D = (s) => new Date(s);
+  return [
+    // 24 -> 25 oct. 2026 : minuit belge = 22:00Z (CEST), la nuit dure 25 h
+    f('2026-10-24', D('2026-10-24T21:59:00Z')), f('2026-10-24', D('2026-10-24T22:00:00Z')),
+    f('2026-10-25', D('2026-10-25T21:59:00Z')),   // 23:59 CET le 25 : (UTC+1 apres le 25 oct.) encore le 25
+    f('2026-10-25', D('2026-10-25T22:59:00Z')),   // 23:59 CET
+    f('2026-10-25', D('2026-10-25T23:00:00Z')),   // 00:00 CET le 26
+    // 28 -> 29 mars 2026 : minuit belge = 23:00Z (CET) ; la nuit du 28 au 29 dure 23 h
+    f('2026-03-28', D('2026-03-28T22:59:00Z')), f('2026-03-28', D('2026-03-28T23:00:00Z')),
+    f('2026-03-29', D('2026-03-29T21:59:00Z')),   // 23:59 CEST le 29
+    f('2026-03-29', D('2026-03-29T22:00:00Z')),   // 00:00 CEST le 30
+  ];
+});
+ok(eq(dst, [false, true, false, false, true, false, true, false, true]), '4d. bascule heure d\'ete/hiver (25 oct. et 29 mars) : minuit belge exact : ' + dst.join(','));
+// fonction pure, ete et hiver
 const pur = await o.page.evaluate(() => {
   const f = window.__banc.journalDUnJourPasse; const D = (s) => new Date(s);
   return [
-    f('2026-07-14', D('2026-07-14T22:30:00Z')),   // 00h30 CEST le 15 : jour UTC = 14
-    f('2026-07-14', D('2026-07-14T23:59:00Z')),
-    f('2026-07-14', D('2026-07-15T00:10:00Z')),   // 02h10 CEST
-    f('2026-07-14', D('2026-07-15T10:00:00Z')),
+    f('2026-07-14', D('2026-07-14T22:30:00Z')),   // 00h30 CEST le 15 : la veille est passee
+    f('2026-07-15', D('2026-07-14T22:30:00Z')),   // cle du jour belge : rien
     f('2026-12-14', D('2026-12-14T23:30:00Z')),   // 00h30 CET le 15
-    f('2026-12-14', D('2026-12-15T00:10:00Z')),   // 01h10 CET
-    f('2026-12-15', D('2026-12-15T10:00:00Z')),
+    f('2026-12-15', D('2026-12-14T23:30:00Z')),
     f('', D('2026-12-15T10:00:00Z')), f(null), f(undefined), f('2026-12-16', D('2026-12-15T10:00:00Z')),
   ];
 });
-ok(eq(pur, [false, false, true, true, false, true, false, false, false, false, false]), '4. fonction pure (ete CEST / hiver CET, vide, futur) : ' + pur.join(','));
+ok(eq(pur, [true, false, true, false, false, false, false, false]), '4e. fonction pure (ete CEST / hiver CET, vide, futur) : ' + pur.join(','));
+await o.ctx.close();
+
+// ---- 4f. Pas de perte ni de doublon au changement de cle (anciennes entrees en cle UTC) ----
+// Entree posee AVANT le deploiement a 00h30 belges sous la cle UTC de la veille : on ne la touche pas.
+o = await ouvrir('2026-11-04T23:30:00Z', false);   // 00h30 belges le 5 nov. (jour UTC = 4)
+await o.page.evaluate(() => { window.__banc.weightLog.value = [{ iso: '2026-11-04', date: '5 nov.', weight: 80.5 }]; window.__banc.ajouterPesee(80.1); });
+const poidsApres = await o.page.evaluate(() => window.__banc.weightLog.value.map((w) => w.iso + ':' + w.weight));
+ok(eq(poidsApres, ['2026-11-04:80.5', '2026-11-05:80.1']), '4f. pesee a 00h30 belges : cle du jour belge ; l\'ancienne pesee (cle UTC 2026-11-04) est intacte, aucun doublon : ' + poidsApres.join(' | '));
+// journal ancien (cle UTC du 4) encore ouvert apres le deploiement : clignote (c'est la veille), une seule fois ; la cloture l'archive sous SA cle
+await regler(o.page, '2026-11-04');
+await o.page.evaluate(() => { const b = window.__banc; b.repas.value = b.repas.value.map((r, i) => ({ ...r, ings: i === 0 ? [{ id: 900, name: 'Avoine', portion: 70 }] : [] })); });
+await o.page.waitForTimeout(400);
+ok(await aRappel(o.page), '4f. ancien journal (cle UTC 2026-11-04) encore ouvert a 00h30 belges le 5 : il est vu comme la veille (1 fois, jour du deploiement)');
+await o.page.locator('button.cal-reset').click({ force: true }); await o.page.waitForTimeout(1200);
+const ap = await o.page.evaluate(() => ({ dj: window.__banc.dateJour.value, h: window.__banc.histoJours.value }));
+ok(ap.dj === '2026-11-05' && ap.h['2026-11-04'].kcal > 0 && ap.h['2026-01-01'].kcal === 1999 && Object.keys(ap.h).length === 2, '4f. cloture : archive sous 2026-11-04, journal -> 2026-11-05, historique ancien intact, 2 cles (pas de doublon)');
 await o.ctx.close();
 
 // ---- 5. Cloture d'un journal de la veille avec repas Mangé / Sauté / Mangé autre chose ----
@@ -146,7 +208,7 @@ await p.waitForTimeout(600);
 const avant = await p.evaluate(() => ({ plan: window.__banc.repas.value.filter((x) => x.duPlan).map((x) => ({ nom: x.nom, g: x.ings.map((i) => i.name + ':' + i.portion).join(',') })), obj: JSON.stringify(window.__banc.objectifs.value), prog: JSON.stringify(window.__banc.programme.value), kcal: document.querySelector('.cal-cote-val').textContent.trim() }));
 ok(await aRappel(p), '5. journal d\'hier rempli : surbrillance');
 ok(Number(avant.kcal) > 0, '5. le cadran compte les repas mangés (' + avant.kcal + ' kcal consommées)');
-await p.locator('button.cal-reset').click(); await p.waitForTimeout(1500);
+await p.locator('button.cal-reset').click({ force: true }); await p.waitForTimeout(1500);
 const apres = await p.evaluate(() => {
   const b = window.__banc;
   return { dj: b.dateJour.value, h: b.histoJours.value, repas: b.repas.value.map((x) => ({ nom: x.nom, prevu: !!x.prevu, saute: !!x.saute, remplace: !!x.remplace, duPlan: !!x.duPlan, g: x.ings.map((i) => i.name + ':' + i.portion).join(',') })), obj: JSON.stringify(b.objectifs.value), prog: JSON.stringify(b.programme.value), poids: JSON.parse(localStorage.getItem('belfit_v2_apercu_stats') || '{}').weightLog };
@@ -155,11 +217,11 @@ const pl = apres.repas.filter((x) => x.duPlan);
 ok(pl.length === 6 && pl.every((x) => x.prevu && !x.saute && !x.remplace), '5. apres cloture : les 6 repas du plan sont de nouveau « Prévu » (ni sauté ni autre chose)');
 ok(eq(pl.map((x) => ({ nom: x.nom, g: x.g })), planAvant), '5. ... avec leurs aliments et quantites du plan (Repas 4 : plus la pomme, retour au plan)');
 ok(apres.repas.filter((x) => !x.duPlan).every((x) => x.g === ''), '5. creneaux par defaut remis a zero (Déjeuner : l\'avoine du journal clos n\'est plus la)');
-ok(apres.dj === new Date().toISOString().slice(0, 10) || apres.dj === '2026-11-04', '5. le journal passe au jour courant : ' + apres.dj);
+ok(apres.dj === '2026-11-04', '5. le journal passe au jour courant (Bruxelles) : ' + apres.dj);
 ok(apres.h['2026-11-03'] && apres.h['2026-11-03'].kcal > 0 && !apres.h['2026-11-04'], '5. la journée close est archivée sous 2026-11-03 (' + (apres.h['2026-11-03'] || {}).kcal + ' kcal), rien sous le 4');
 ok(apres.h['2026-01-01'].kcal === 1999, '5. historique ancien intact');
 ok(apres.obj === avant.obj && apres.prog === avant.prog, '5. objectifs et plan inchanges');
-ok(!(await aRappel(p)), '5. apres cloture : plus de surbrillance');
+ok(!(await aRappel(p)), '5. apres cloture : plus de clignotement');
 const t = await p.evaluate(() => [...document.querySelectorAll('.pg-journal h3.mc-titre')].map((e) => e.textContent.trim()));
 ok(eq(t, NOMS_PLAN), '5. liste affichee : Repas 1 -> 6 en haut : ' + t.join(' | '));
 await o.ctx.close();

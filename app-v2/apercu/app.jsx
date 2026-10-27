@@ -7,7 +7,7 @@ import '../src/styles/design-system.css';
 import '../src/styles/journal-socle.css';
 import { utilisateur, authPrete } from '../src/services/firebase.js';
 import { donneesPretes, objectifs, repas, calculBaseFait, dateJour, repasAffiches, journalDUnJourPasse } from '../src/store/journal.js';
-import { histoJours } from '../src/store/stats.js';
+import { histoJours, weightLog, ajouterPesee } from '../src/store/stats.js';
 import { App } from '../src/main.jsx';
 import { programmeActif } from '../src/store/programme.js';
 import { estPremium } from '../src/components/PremiumPage.jsx';
@@ -62,6 +62,6 @@ setInterval(() => {
 }, 100);
 
 // Acces des tests Playwright (cloture de la veille, 21/10).
-window.__banc = { repasAffiches, journalDUnJourPasse, dateJour, repas, histoJours, programme, programmeBrut, programmeCharge, dossierCoach, objectifs, utilisateur };
+window.__banc = { weightLog, ajouterPesee, repasAffiches, journalDUnJourPasse, dateJour, repas, histoJours, programme, programmeBrut, programmeCharge, dossierCoach, objectifs, utilisateur };
 
 render(<App />, document.getElementById('app'));
