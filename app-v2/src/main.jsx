@@ -50,6 +50,7 @@ import { WeightNote } from './components/WeightNote.jsx';
 import { MealPage } from './components/MealPage.jsx';
 import { repasOuvertId } from './components/MealCard.jsx';
 import { MesPlats } from './components/MesPlats.jsx';
+import { absenceLongue } from './services/accueil-frequence.js';
 
 export function OngletJournal() {
   const [modale, setModale] = useState(false);
@@ -212,6 +213,62 @@ function AvisAccesInvite() {
 
   if (!ACCES_INVITE) return null;
   return null;
+}
+
+
+/**
+ * Ecran de bienvenue (28/10, Raci). Une fois a chaque ouverture « a froid »,
+ * puis au retour au premier plan SEULEMENT apres plus de 30 min d'absence.
+ * Jamais bloquant (un tap le ferme). Seule la decision vit dans le paquet
+ * principal ; l'ecran (AccueilJour.jsx) est charge a la demande.
+ */
+export function AccueilGarde() {
+  const [carte, setCarte] = useState(null);
+  const [relance, setRelance] = useState(0);   // +1 a chaque retour apres longue absence
+  const montreePour = useRef(-1);
+  const u = utilisateur.value;
+  const pret = authPrete.value && donneesPretes.value && !demanderConnexion.value
+    && !besoinsOuverts.value && !(besoinsRequis() && !planCoachActif.value);
+  useEffect(() => {
+    let masqueA = null;
+    const f = () => {
+      if (document.visibilityState === 'hidden') { masqueA = Date.now(); return; }
+      if (absenceLongue(masqueA, Date.now())) setRelance((n) => n + 1);
+      masqueA = null;
+    };
+    document.addEventListener('visibilitychange', f);
+    return () => document.removeEventListener('visibilitychange', f);
+  }, []);
+  useEffect(() => {
+    if (!u || !pret || montreePour.current === relance) return undefined;
+    let annule = false;
+    // On charge l'ecran (et sa police, ~46 Ko) pendant que le splash de chargement
+    // est encore la ; on affiche des que le splash est parti ET la police prete
+    // (au plus 1 s d'attente : sinon on affiche quand meme, font-display: swap).
+    const pretCarte = import('./components/AccueilJour.jsx').then((mod) => {
+      const polices = (document.fonts && document.fonts.load)
+        ? Promise.race([
+          Promise.all([document.fonts.load('400 1em Newsreader'), document.fonts.load('600 1em Newsreader')]),
+          new Promise((r) => setTimeout(r, 1000)),
+        ]).catch(() => {})
+        : Promise.resolve();
+      return polices.then(() => mod);
+    });
+    const attendre = () => {
+      if (annule) return;
+      if (document.getElementById('splash')) { setTimeout(attendre, 150); return; }
+      pretCarte.then((mod) => {
+        if (annule) return;
+        montreePour.current = relance;
+        setCarte({ Carte: mod.AccueilJour, id: relance });
+      }).catch(() => {});
+    };
+    attendre();
+    return () => { annule = true; };
+  }, [u, pret, relance]);
+  if (!carte) return null;
+  const C = carte.Carte;
+  return <C key={carte.id} onFin={() => setCarte(null)} />;
 }
 
 export function App() {
@@ -683,7 +740,7 @@ window.addEventListener('unhandledrejection', (e) => {
 // BandeauConfirmation a la racine (27/09) : il n'etait monte que dans
 // un ecran de S'entrainer rarement ouvert, si bien que le courriel de
 // confirmation ne partait jamais a l'inscription (signale par Raci).
-if (racine) render(<><AvisAccesInvite /><BandeauConfirmation /><App /></>, racine);
+if (racine) render(<><AvisAccesInvite /><BandeauConfirmation /><App /><AccueilGarde /></>, racine);
 
 // Retrait du splash.
 //

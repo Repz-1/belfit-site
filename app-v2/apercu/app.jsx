@@ -6,9 +6,9 @@ import '../src/styles.css';
 import '../src/styles/design-system.css';
 import '../src/styles/journal-socle.css';
 import { utilisateur, authPrete } from '../src/services/firebase.js';
-import { donneesPretes, objectifs, repas, calculBaseFait, dateJour, repasAffiches, journalDUnJourPasse } from '../src/store/journal.js';
+import { donneesPretes, objectifs, repas, calculBaseFait, dateJour, repasAffiches, journalDUnJourPasse, eau } from '../src/store/journal.js';
 import { histoJours, weightLog, ajouterPesee } from '../src/store/stats.js';
-import { App } from '../src/main.jsx';
+import { App, AccueilGarde } from '../src/main.jsx';
 import { programmeActif } from '../src/store/programme.js';
 import { estPremium } from '../src/components/PremiumPage.jsx';
 import { programme, programmeBrut, programmeCharge, dossierCoach, poserLecteurProgramme } from '../src/components/BelfitPlus.jsx';
@@ -27,7 +27,7 @@ if (window.__lecteur) {
   });
 }
 
-utilisateur.value = { uid: 'test', email: 'coach@belfit.be', displayName: 'Raci', getIdToken: async () => 'jeton-de-test', metadata: { creationTime: new Date().toISOString() } };
+utilisateur.value = { uid: 'test', email: 'coach@belfit.be', displayName: new URLSearchParams(location.search).has('sansprenom') ? '' : 'Raci', getIdToken: async () => 'jeton-de-test', metadata: { creationTime: new Date().toISOString() } };
 objectifs.value = { kcal: 2712, prot: 165, carbs: 344, lip: 75 };
 let n = 0;
 const ing = (name, portion) => ({ id: ++n, name, portion });
@@ -50,6 +50,9 @@ try { const pe = localStorage.getItem('belfit_v2_apercu_entrainement'); if (pe) 
 // Firebase repond en differe et remet `utilisateur` a null : on
 // maintient la session simulee le temps du test.
 // ?gratuit : simule un compte non payant (test du lancement, 24/09).
+const ACCUEIL = new URLSearchParams(location.search).has('accueil');
+// ?accueil : simule le #splash de la vraie page (retire apres 1,5 s) : la carte doit l'attendre.
+if (ACCUEIL) { const sp = document.createElement('div'); sp.id = 'splash'; document.body.appendChild(sp); setTimeout(() => sp.remove(), 1500); }
 const GRATUIT = new URLSearchParams(location.search).has('gratuit');
 if (GRATUIT) estPremium.value = false;
 const faux = utilisateur.value;
@@ -58,10 +61,13 @@ setInterval(() => {
   authPrete.value = true;
   donneesPretes.value = true;
   calculBaseFait.value = true;
+  if (ACCUEIL) programmeCharge.value = true;
   if (!GRATUIT) estPremium.value = true;   // l'effet Firestore le remettait a false
 }, 100);
 
 // Acces des tests Playwright (cloture de la veille, 21/10).
-window.__banc = { weightLog, ajouterPesee, repasAffiches, journalDUnJourPasse, dateJour, repas, histoJours, programme, programmeBrut, programmeCharge, dossierCoach, objectifs, utilisateur };
+window.__banc = { eau, weightLog, ajouterPesee, repasAffiches, journalDUnJourPasse, dateJour, repas, histoJours, programme, programmeBrut, programmeCharge, dossierCoach, objectifs, utilisateur };
 
-render(<App />, document.getElementById('app'));
+// L'accueil du matin/soir (voile plein ecran) n'est monte que sur demande (?accueil) :
+// il recouvrirait l'ecran et fausserait les autres tests selon l'heure.
+render(<><App />{ACCUEIL ? <AccueilGarde /> : null}</>, document.getElementById('app'));
