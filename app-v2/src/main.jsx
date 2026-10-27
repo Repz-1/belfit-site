@@ -50,7 +50,7 @@ import { WeightNote } from './components/WeightNote.jsx';
 import { MealPage } from './components/MealPage.jsx';
 import { repasOuvertId } from './components/MealCard.jsx';
 import { MesPlats } from './components/MesPlats.jsx';
-import { momentBruxelles, periodeAccueil, cleAccueil, dejaVu } from './services/accueil-cle.js';
+import { absenceLongue } from './services/accueil-frequence.js';
 
 export function OngletJournal() {
   const [modale, setModale] = useState(false);
@@ -217,43 +217,47 @@ function AvisAccesInvite() {
 
 
 /**
- * Accueil du matin / du soir (25/10, Raci). Une carte legere, une fois par
- * periode et par jour, APRES le splash (inchange). Seule la decision vit
- * dans le paquet principal ; la carte (AccueilJour.jsx) est chargee a la
- * demande, donc rien n'est ajoute au demarrage.
+ * Ecran de bienvenue (28/10, Raci). Une fois a chaque ouverture « a froid »,
+ * puis au retour au premier plan SEULEMENT apres plus de 30 min d'absence.
+ * Jamais bloquant (un tap le ferme). Seule la decision vit dans le paquet
+ * principal ; l'ecran (AccueilJour.jsx) est charge a la demande.
  */
 export function AccueilGarde() {
   const [carte, setCarte] = useState(null);
+  const [relance, setRelance] = useState(0);   // +1 a chaque retour apres longue absence
+  const montreePour = useRef(-1);
   const u = utilisateur.value;
   const pret = authPrete.value && donneesPretes.value && !demanderConnexion.value
     && !besoinsOuverts.value && !(besoinsRequis() && !planCoachActif.value);
   useEffect(() => {
-    if (!u || !pret || carte) return undefined;
-    const m = momentBruxelles();
-    const periode = periodeAccueil(m.heure);
-    if (!periode) return undefined;
-    const cle = cleAccueil(periode, u.uid);
-    if (dejaVu(cle, m.jour)) return undefined;
+    let masqueA = null;
+    const f = () => {
+      if (document.visibilityState === 'hidden') { masqueA = Date.now(); return; }
+      if (absenceLongue(masqueA, Date.now())) setRelance((n) => n + 1);
+      masqueA = null;
+    };
+    document.addEventListener('visibilitychange', f);
+    return () => document.removeEventListener('visibilitychange', f);
+  }, []);
+  useEffect(() => {
+    if (!u || !pret || montreePour.current === relance) return undefined;
     let annule = false;
-    // On attend que le splash soit parti (le mot de bienvenue ne depend
-    // d'aucune donnee : plus d'attente du plan).
+    // On attend que le splash de chargement soit parti.
     const attendre = () => {
       if (annule) return;
-      const splash = document.getElementById('splash');
-      if (splash) { setTimeout(attendre, 150); return; }
+      if (document.getElementById('splash')) { setTimeout(attendre, 150); return; }
       import('./components/AccueilJour.jsx').then((mod) => {
         if (annule) return;
-        setCarte({ Carte: mod.AccueilJour, periode, cle, jour: m.jour });
+        montreePour.current = relance;
+        setCarte({ Carte: mod.AccueilJour, id: relance });
       }).catch(() => {});
     };
     attendre();
     return () => { annule = true; };
-  }, [u, pret]);
+  }, [u, pret, relance]);
   if (!carte) return null;
   const C = carte.Carte;
-  // Reste monte (valeur « carte » gardee) pour ne jamais se rouvrir : on
-  // rend null a la fin, la cle « deja vu » est ecrite a l'affichage.
-  return <C periode={carte.periode} cle={carte.cle} jour={carte.jour} onFin={() => setCarte({ ...carte, Carte: () => null })} />;
+  return <C key={carte.id} onFin={() => setCarte(null)} />;
 }
 
 export function App() {
