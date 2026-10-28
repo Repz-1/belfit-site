@@ -11,6 +11,7 @@
 const {onRequest} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
+const reduction = require("./reduction");
 
 const MOLLIE_API_KEY = defineSecret("MOLLIE_API_KEY");
 const MOLLIE_TEST_EMAILS = defineSecret("MOLLIE_TEST_EMAILS");
@@ -92,16 +93,41 @@ async function traiterPaiement(p) {
   // On n'active que si la commande a ete creee par le serveur (donc par un
   // compte autorise) ; en mode test, pour un e-mail de la liste.
   const cmd0 = await refCmd.get();
-  const autorise = cmd0.exists && cmd0.data().source === "mollie" && cmd0.data().uid === uid &&
+  // 28/10 : si la commande porte un montant (toujours le cas depuis les codes de
+  // reduction), Mollie doit avoir encaisse EXACTEMENT ce montant : sinon rien n'est ouvert.
+  const attendu = cmd0.exists ? reduction.montantAttendu(cmd0.data()) : NaN;
+  const montantOk = Number.isNaN(attendu) || reduction.texteVersCents(p.amount && p.amount.value) === attendu;
+  const autorise = cmd0.exists && cmd0.data().source === "mollie" && cmd0.data().uid === uid && montantOk &&
     (!cleDeTest() || emailListe(cmd0.data().email, true));
+  if (cmd0.exists && !montantOk) console.error("Montant inattendu, commande non activee :", p.id);
+  // Code de reduction eventuel (ecrit par le serveur a la creation du paiement).
+  const nomCode = cmd0.exists && cmd0.data().type !== "maj" ? (cmd0.data().code || null) : null;
+  const refCode = nomCode ? db().collection("codesReduction").doc(nomCode) : null;
+  // Historique (pas un verrou) : une ligne par usage, cle = la commande.
+  const refPers = nomCode && uid ? db().collection("reductionsPersonne").doc(p.id) : null;
   // Idempotence : la commande n'est activee qu'une seule fois.
   const r = await db().runTransaction(async (tx) => {
     const s = await tx.get(refCmd);
+    const sCode = refCode ? await tx.get(refCode) : null;
+    const sPers = refPers ? await tx.get(refPers) : null;
     const deja = !!(s.exists && s.data().activeLe);
     const maj = {statut: p.status, majLe: new Date().toISOString()};
     const nouveau = p.status === "paid" && !deja && !!uid && autorise;
     if (nouveau) maj.activeLe = maj.majLe;
     if (s.exists) tx.set(refCmd, maj, {merge: true});
+    // Le code n'est « utilise » QU'ICI, a la confirmation du paiement par Mollie.
+    if (sCode && sCode.exists) {
+      const c = sCode.data();
+      if (nouveau && c.statut !== "utilise") {
+        tx.update(refCode, {statut: "utilise", utilisePar: uid, utiliseLe: maj.majLe, commande: p.id, ...reduction.vide});
+        if (refPers && !(sPers && sPers.exists)) tx.set(refPers, {uid, code: nomCode, commande: p.id, pourcent: c.pourcent, le: maj.majLe});
+      } else if (nouveau && c.commande !== p.id) {
+        console.error("CONFLIT code de reduction : paye deux fois", nomCode, p.id); // paiement honore, a revoir a la main
+      } else if (["canceled", "failed", "expired"].includes(p.status) && c.statut !== "utilise" &&
+          c.reservePar === uid && c.reserveCommande === p.id) {
+        tx.update(refCode, reduction.vide);   // paiement mort : le code redevient libre
+      }
+    }
     return {nouveau, deja};
   });
   if (r.nouveau) {
@@ -120,6 +146,42 @@ async function traiterPaiement(p) {
   return {statut: p.status, activee: r.nouveau || r.deja};
 }
 
+// Adresse IP de l'appelant (freinage des essais de codes).
+function ipDe(req) { return String((req.get && req.get("x-forwarded-for")) || req.ip || "?").split(",")[0].trim(); }
+// Petite attente apres un mauvais code : ralentit la devinette (REDUCTION_DELAI_MS=0 dans les tests).
+const attenteEchec = () => new Promise((r) => setTimeout(r, Number(process.env.REDUCTION_DELAI_MS != null ? process.env.REDUCTION_DELAI_MS : 600)));
+
+// 0) Le client saisit un code : le serveur dit s'il est valable et a quel prix.
+//    LECTURE SEULE (rien n'est reserve ni consomme ici). Memes garde-fous que le paiement :
+//    jeton Firebase, compte autorise a payer, freinage des essais (8 / 15 min, par compte et par IP).
+exports.verifierCodeReduction = onRequest(
+    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS]},
+    async (req, res) => {
+      if (entetes(req, res)) return;
+      const refus = (motif, extra = {}) => res.status(reduction.STATUT_HTTP[motif] || 403)
+          .json({ok: false, motif, message: reduction.MESSAGES[motif], ...extra});
+      try {
+        const j = await lireJeton(req);
+        if (!j) { refus("auth"); return; }
+        if (!paiementPermis(j.email, j.verifie)) { refus("test"); return; }
+        const corps = req.body || {};
+        const type = corps.type === "maj" ? "maj" : "plan";
+        const code = reduction.normaliserCode(corps.code);
+        const cles = reduction.clesEssais(j.uid, ipDe(req));
+        if (await reduction.tropDEssais(cles)) { refus("essais"); return; }
+        const r = await reduction.verifier({uid: j.uid, code, type});
+        if (!r.ok) {
+          if (reduction.MOTIFS_ESSAI_RATE.has(r.motif)) { await reduction.noterEchec(cles); await attenteEchec(); }
+          refus(r.motif); return;
+        }
+        res.json({ok: true, code: r.code, pourcent: r.pourcent, base: r.base, reduction: r.reduction, montant: r.montant});
+      } catch (e) {
+        console.error("verifierCodeReduction :", e);
+        res.status(500).json({ok: false, motif: "serveur", message: reduction.MESSAGES.serveur});
+      }
+    },
+);
+
 // 1) Le client clique « Payer » : on cree le paiement et on renvoie
 //    l'adresse de la page Mollie (Bancontact, cartes...).
 exports.creerPaiementMollie = onRequest(
@@ -133,6 +195,24 @@ exports.creerPaiementMollie = onRequest(
         if (!paiementPermis(j.email, j.verifie)) { res.status(403).json({ok: false, motif: "test"}); return; }
         const type = (req.body || {}).type === "maj" ? "maj" : "plan";
         const p = PRODUITS[type];
+        let montant = p.montant;
+        let leCode = null; let prixCode = null;
+        // Code de reduction : revalide ICI (rien du navigateur n'est cru), reserve, puis le
+        // montant est recalcule depuis le pourcentage enregistre au serveur.
+        const saisi = (req.body || {}).code;
+        if (saisi != null && String(saisi).trim() !== "") {
+          const refus = (motif) => { res.status(reduction.STATUT_HTTP[motif] || 403).json({ok: false, motif, message: reduction.MESSAGES[motif]}); };
+          if (type === "maj") { refus("maj"); return; }
+          leCode = reduction.normaliserCode(saisi);
+          const cles = reduction.clesEssais(uid, ipDe(req));
+          if (await reduction.tropDEssais(cles)) { refus("essais"); return; }
+          const rr = await reduction.reserver({uid, code: leCode});
+          if (!rr.ok) {
+            if (reduction.MOTIFS_ESSAI_RATE.has(rr.motif)) { await reduction.noterEchec(cles); await attenteEchec(); }
+            refus(rr.motif); return;
+          }
+          prixCode = rr; montant = rr.montant;
+        }
         if (type === "maj") {
           // 60 EUR : refuse sans paiement anterieur ou acces nutrition ferme.
           const u = await db().collection("users").doc(uid).get();
@@ -140,22 +220,30 @@ exports.creerPaiementMollie = onRequest(
           const fin = paye ? Date.parse(paye) + JOURS_ACCES * 864e5 : NaN;
           if (!(fin > Date.now())) { res.status(403).json({ok: false, motif: "maj"}); return; }
         }
-        const paiement = await mollie("/payments", {
-          method: "POST",
-          body: JSON.stringify({
-            amount: {currency: "EUR", value: p.montant},
-            description: p.description,
-            redirectUrl: RETOUR + type,
-            webhookUrl: WEBHOOK,
-            locale: "fr_BE",
-            metadata: {uid, type},
-          }),
-        });
+        let paiement;
+        try {
+          paiement = await mollie("/payments", {
+            method: "POST",
+            body: JSON.stringify({
+              amount: {currency: "EUR", value: montant},
+              description: p.description,
+              redirectUrl: RETOUR + type,
+              webhookUrl: WEBHOOK,
+              locale: "fr_BE",
+              metadata: {uid, type},
+            }),
+          });
+        } catch (e) {
+          if (leCode) await reduction.liberer({uid, code: leCode}).catch(() => {});   // le paiement n'a pas demarre
+          throw e;
+        }
         await db().collection("commandes").doc(paiement.id).set({
-          uid, email, type, montant: p.montant, statut: paiement.status,
+          uid, email, type, montant, statut: paiement.status,
           source: "mollie", mode: paiement.mode, creeLe: new Date().toISOString(),
+          ...(leCode ? {code: leCode, pourcent: prixCode.pourcent, montantBase: p.montant, reduction: prixCode.reduction} : {}),
         });
-        res.json({ok: true, url: paiement._links.checkout.href});
+        if (leCode) await reduction.attacherCommande({uid, code: leCode, commande: paiement.id});
+        res.json({ok: true, url: paiement._links.checkout.href, ...(leCode ? {montant, reduction: prixCode.reduction} : {})});
       } catch (e) {
         console.error("creerPaiementMollie :", e);
         res.status(500).json({ok: false, motif: "serveur"});

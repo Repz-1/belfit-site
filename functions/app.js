@@ -4,3 +4,5 @@ Object.assign(exports, require("./index"));
 exports.coachAgent = require("./coach").coachAgent;
 // Mollie (brouillon 17/10) : paiement unique 80 / 60 EUR avec Bancontact.
 Object.assign(exports, require("./mollie"));
+// Codes de reduction (28/10) : creation / desactivation par l'outil local (secret COACH_CODE).
+Object.assign(exports, require("./reduction-admin"));
