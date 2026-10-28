@@ -21,7 +21,7 @@ import { sexe } from '../store/perso.js';
 // La roue dentee de l'en-tete sortait de la v2 vers la v1 : c'etait
 // la derniere page que l'application devait quitter pour fonctionner.
 // Tout est repris : compte, abonnement, resiliation avec ses motifs,
-// langue, notifications, parrainage, contact, documents, version,
+// langue, notifications, invitation d'amis, contact, documents, version,
 // deconnexion et suppression.
 //
 // Les sous-ecrans (compte, resiliation) sont des VUES et non des
@@ -368,8 +368,6 @@ export function Reglages() {
   const [lg, setLg] = useState(langueApp.value);
   const [pesee, setPesee] = useState(true);
   const [coach, setCoach] = useState(true);
-  const [code, setCode] = useState('');
-  const [copie, setCopie] = useState(false);
   const [confirmeSortie, setConfirmeSortie] = useState(false);
 
   useEffect(() => {
@@ -378,15 +376,7 @@ export function Reglages() {
       setPesee(n.pesee !== false);
       setCoach(n.coach !== false);
     } catch (e) { /* valeurs par defaut */ }
-    if (!u) return;
-    import('firebase/firestore').then(async ({ getFirestore, doc, getDoc }) => {
-      try {
-        const s = await getDoc(doc(getFirestore(app), 'users', u.uid));
-        const d = s.exists() ? s.data() : null;
-        if (d && d.mon_code_parrainage) setCode(d.mon_code_parrainage);
-      } catch (e) { /* silencieux */ }
-    });
-  }, [u]);
+  }, []);
 
   const sauverNotifs = (p, c) => {
     try { localStorage.setItem('belfit_notifs', JSON.stringify({ pesee: p, coach: c })); }
@@ -459,7 +449,8 @@ export function Reglages() {
         <p class="rg-section">{t('set_sec_social')}</p>
         <div class="rg-carte">
           <Rangee titre={t('set_invite')} sous={t('set_invite_sub')} onClick={() => {
-            const txt = t('invite_text') + ' https://www.belfit.be' + (code ? ' (' + t('invite_code') + ' : ' + code + ')' : '');
+            // Pas de code de parrainage (28/10, demande de Raci) : message + lien seulement.
+            const txt = t('invite_text') + ' https://www.belfit.be';
             const copier = () => {
               if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert(t('invite_copied'))).catch(() => {});
             };
@@ -467,17 +458,6 @@ export function Reglages() {
             if (navigator.share) navigator.share({ text: txt }).catch((e) => { if (e && e.name !== 'AbortError') copier(); });
             else copier();
           }} />
-          {code && (
-            <div class="rg-rangee rg-rangee--inerte">
-              <span class="rg-txt"><span class="rg-nom">{t('set_ref_code')}</span></span>
-              <span class="rg-code">{code}</span>
-              <button class="rg-copier" onClick={() => {
-                navigator.clipboard.writeText(code).then(() => {
-                  setCopie(true); setTimeout(() => setCopie(false), 1200);
-                }).catch(() => {});
-              }}>{copie ? t('saved') : t('copy')}</button>
-            </div>
-          )}
         </div>
 
         <p class="rg-section">{t('set_sec_aide')}</p>
