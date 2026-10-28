@@ -4,6 +4,7 @@ import { repasOuvertId } from './MealCard.jsx';
 import { vueEntrainer } from './Entrainer.jsx';
 import { useState, useEffect } from 'preact/hooks';
 import { ONGLET_VITRINE } from '../acces-invite.js';
+import { ecritureBloquee } from '../store/acces-nutrition.js';
 
 // Onglet actif de l'app. Signal global : n'importe quel composant
 // peut naviguer (ex : le bouton « Premium » d'une modale).
@@ -39,6 +40,7 @@ export function allerOnglet(cle) {
   // fermeture, taper un autre onglet changeait bien l'onglet actif
   // mais l'ecran restait bloque sur l'encodage du repas.
   if (repasOuvertId.value !== null) repasOuvertId.value = null;
+  if (cle === 'courses' && ecritureBloquee()) return;   // alimentation fermee
   if (cle === ongletActif.value) return;
   // En QUITTANT S'entrainer, on remet sa vue interne a l'accueil.
   // Sans cela le signal garde le dernier ecran ouvert : on partait

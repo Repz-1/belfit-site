@@ -1,5 +1,7 @@
 import { auth } from './firebase.js';
 import { initializeApp, getApps } from 'firebase/app';
+import { effect } from '@preact/signals';
+import { lectureSeule, cloudNutritionPermis, sansNutrition } from '../store/acces-nutrition.js';
 
 /* Firestore pese 170 Ko gzip : importe en statique ici, il entrait
    dans le graphe de demarrage via Courses/Scanner/SeanceTracker et
@@ -102,8 +104,32 @@ export function sauvegarder(uid, champsPartiels) {
   // Debounce : on n'envoie au cloud qu'apres 2s de calme (groupe les frappes)
   clearTimeout(timerEnvoi);
   timerEnvoi = setTimeout(() => {
+    // BLOCAGE ALIMENTATION : sans acces actif, les cles nutrition ne partent
+    // PAS au cloud. Une seule cle refusee par les regles ferait echouer toute
+    // l'ecriture groupee (seances et poids compris). Les donnees locales
+    // restent intactes ; elles repartent des que l'acces s'ouvre (plus bas).
+    // Evalue a l'envoi, pas a l'appel : l'acces peut etre connu entre-temps.
+    const complet = cloudNutritionPermis();
+    const envoi = complet ? instantane : sansNutrition(instantane);
     firestore().then(({ fs, db }) =>
-      fs.setDoc(fs.doc(db, 'users', uid), { v2Data: instantane }, { merge: true })
+      fs.setDoc(fs.doc(db, 'users', uid), { v2Data: envoi }, { merge: true })
+        .catch((err) => {
+          // Regles serveur plus strictes que l'etat connu du client (acces
+          // expire entre deux lectures) : on renvoie sans la nutrition pour
+          // ne pas perdre les seances et le poids. Une seule tentative.
+          if (complet && err && err.code === 'permission-denied') {
+            return fs.setDoc(fs.doc(db, 'users', uid), { v2Data: sansNutrition(instantane) }, { merge: true });
+          }
+          throw err;
+        })
     ).catch(() => {/* hors-ligne : Firestore rejouera a la reconnexion */});
   }, 2000);
 }
+
+// Quand l'acces nutrition s'ouvre (paiement, code, offre), on envoie ce qui
+// avait ete retenu. L'effet ne reagit qu'aux CHANGEMENTS de lectureSeule :
+// sans blocage, il ne se declenche jamais.
+effect(() => {
+  const ferme = lectureSeule.value;
+  if (!ferme && uidEtat && uidEtat !== UID_INVITE) sauvegarder(uidEtat, {});
+});

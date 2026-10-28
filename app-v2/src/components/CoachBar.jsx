@@ -11,6 +11,7 @@ import { courses, origineCourses } from './Courses.jsx';
 import { DB, macrosOf } from '../data/aliments.js';
 import { t } from '../i18n/index.js';
 import '../styles/coach-bar.css';
+import { ecritureBloquee } from '../store/acces-nutrition.js';
 
 function repasCible(cle) {
   const liste = repas.value;
@@ -113,6 +114,7 @@ export function CoachBar({ mode = 'repas', titre }) {
     // l'ouvrir. C'est ce qui en fait un agent plutot qu'une reponse —
     // il ecrit dans l'outil au lieu de decrire une liste dans une bulle.
     if (out.action === 'majCourses') {
+      if (ecritureBloquee()) { setMsg('Les courses sont fermées sans accès alimentation.'); setLignes([]); setEtat('pret'); setTexte(''); return; }
       const proche = (v, choix) => choix.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a));
       courses.value = {
         ...courses.value,
@@ -291,7 +293,7 @@ export function CoachBar({ mode = 'repas', titre }) {
         // Aliments hors base : memorises comme aliments perso (valeurs IA).
         const nouveaux = {};
         (distant.aliments || []).forEach((a) => { if (a.horsBase && !DB[a.aliment]) nouveaux[a.aliment] = a.horsBase; });
-        if (Object.keys(nouveaux).length) customFoods.value = { ...customFoods.value, ...nouveaux };
+        if (Object.keys(nouveaux).length && !ecritureBloquee()) customFoods.value = { ...customFoods.value, ...nouveaux };
         const hh = new Date().getHours();
         const repasDit = distant.repas || (local.aliments && local.aliments[0] && local.aliments[0].repasCle)
           || (hh < 11 ? 'pdej' : hh < 15 ? 'dej' : hh < 21 ? 'diner' : 'snack');
@@ -309,6 +311,7 @@ export function CoachBar({ mode = 'repas', titre }) {
       } else if (compris) appliquer(local);
       else { setMsg('Je n\'ai trouvé ni aliment ni boisson dans ta phrase.'); setEtat('pret'); }
     } catch (e) {
+      if (e && e.code === 'acces_nutrition') { setMsg("L'alimentation est fermée : le coach ne peut plus noter de repas. L'entraînement reste libre."); setLignes([]); setEtat('pret'); return; }
       if (e && e.status === 429) { setMsg('Tu as utilisé tes analyses IA d\'aujourd\'hui. Les phrases simples (« 200 g de riz ») restent comprises.'); setEtat('pret'); return; }
       appliquer(local);
     }

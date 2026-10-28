@@ -6,6 +6,7 @@ export const ouvrirCalcDemande = signal(false);
 import { repas, objectifs, totauxJourAff, kcalRestantes, donneesPretes, poidsCalcul, rappelIgnoreA, dateJour, nouvelleJournee, journalDUnJourPasse } from '../store/journal.js';
 import { weightLog, enregistrerJour } from '../store/stats.js';
 import { IdeesRepas } from './IdeesRepas.jsx';
+import { lectureSeule } from '../store/acces-nutrition.js';
 import { t } from '../i18n/index.js';
 import { aujourdhuiBxl } from '../store/plans-par-date.js';
 
@@ -114,6 +115,8 @@ function Macro({ nom, valeur, cible, teinte }) {
 }
 
 export function DayDashboard() {
+  // Alimentation fermee : on consulte le dernier journal enregistre, sans action.
+  const ro = lectureSeule.value;
   const obj = objectifs.value;
   const tot = totauxJourAff.value;
   const restant = kcalRestantes.value;
@@ -143,6 +146,9 @@ export function DayDashboard() {
   const dateTexte = retard
     ? `${jours[dOuvert.getDay()] || ''} ${dOuvert.getDate()} ${moisCourt[dOuvert.getMonth()] || ''}`
     : `${t('today')}, ${d.getDate()} ${moisCourt[d.getMonth()] || ''}`;
+  const dateTexteAff = ro
+    ? `Journal du ${(jours[dOuvert.getDay()] || '').toLowerCase()} ${dOuvert.getDate()} ${moisCourt[dOuvert.getMonth()] || ''}`.replace(/\s+/g, ' ').trim()
+    : dateTexte;
   const jourOuvert = retard
     ? `${(jours[dOuvert.getDay()] || '').toLowerCase()} ${dOuvert.getDate()} ${moisCourt[dOuvert.getMonth()] || ''}`.trim()
     : '';
@@ -158,7 +164,7 @@ export function DayDashboard() {
           <rect x="3" y="4.5" width="18" height="17" rx="3" />
           <path d="M3 10h18M8 2.5v4M16 2.5v4" />
         </svg>
-        <span>{dateTexte}</span>
+        <span>{dateTexteAff}</span>
       </div>
       <div class="cal-corps">
         <div class="cal-cote">
@@ -184,14 +190,14 @@ export function DayDashboard() {
         <Macro nom={t('carbs')}    valeur={tot.carbs} cible={obj.carbs} teinte="var(--mac-carbs)" />
         <Macro nom={t('fats')}     valeur={tot.lip}   cible={obj.lip}   teinte="var(--mac-lip)" />
       </div>
-      <RappelRecalcul />
-      <div class="cal-action">
+      {!ro && <RappelRecalcul />}
+      {!ro && <div class="cal-action">
         <IdeesRepas pilulSeule />
-      </div>
-      {retard && (
+      </div>}
+      {retard && !ro && (
         <div class="cal-retard">{t('jour_non_cloture').replace('{j}', jourOuvert)}</div>
       )}
-      <button class={'cal-reset' + (aCloturer ? ' cal-reset--rappel' : '')} disabled={clotureBloquee}
+      {!ro && <button class={'cal-reset' + (aCloturer ? ' cal-reset--rappel' : '')} disabled={clotureBloquee}
         aria-disabled={clotureBloquee ? 'true' : undefined}
         onClick={() => {
         if (clotureBloquee) return;
@@ -205,7 +211,7 @@ export function DayDashboard() {
           <path d="M18.5 3v3h-3M5.5 21v-3h3" />
         </svg>
         <span>{t('cloturer_journee')}</span>
-      </button>
+      </button>}
     </section>
     </>
   );

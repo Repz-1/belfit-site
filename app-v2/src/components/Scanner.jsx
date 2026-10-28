@@ -4,6 +4,7 @@ import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { ajouterIngredient } from '../store/journal.js';
 import { createPortal } from 'preact/compat';
+import { ecritureBloquee } from '../store/acces-nutrition.js';
 
 // ============================================================
 // SCAN CODE-BARRES v2 (Premium) — camera -> Open Food Facts ->
@@ -117,6 +118,7 @@ export function Scanner({ repasId, fermer }) {
     setStatut('Recherche du produit…');
     const prod = await chercherProduit(code.trim());
     if (!prod) { setStatut('Produit non trouvé — essaie un autre code'); return; }
+    if (ecritureBloquee()) { setStatut('Alimentation fermée'); return; }
     customFoods.value = { ...customFoods.value, [prod.nom]: {
       kcal: prod.kcal, prot: prod.prot, carbs: prod.carbs, lip: prod.lip,
       fibres: prod.fibres, sucres: prod.sucres, satures: prod.satures, sel: prod.sel,

@@ -5,6 +5,7 @@ import { enregistrerPlat } from '../store/perso.js';
 import { Recherche, LigneIngredient, repasOuvertId } from './MealCard.jsx';
 import { DetailNutritionnel } from './DetailNutritionnel.jsx';
 import { t } from '../i18n/index.js';
+import { lectureSeule } from '../store/acces-nutrition.js';
 
 // ============================================================
 // PAGE REPAS — encodage plein ecran.
@@ -58,6 +59,8 @@ export function MealPage() {
   const r = repas.value.find(x => x.id === id);
 
   const [edite, setEdite] = useState(false);
+  // Alimentation fermee : la fiche se consulte, sans recherche ni modification.
+  const ro = lectureSeule.value;
   const [enrego, setEnrego] = useState(false);
   const [nomPlat, setNomPlat] = useState('');
   const [garde, setGarde] = useState(false);
@@ -149,7 +152,7 @@ export function MealPage() {
           <button class="rp-retour" onClick={() => { repasOuvertId.value = null; }} aria-label="Retour">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
-          {edite ? (
+          {edite && !ro ? (
             <input
               class="rp-titre-champ"
               value={r.nom}
@@ -159,7 +162,7 @@ export function MealPage() {
               autoFocus
             />
           ) : (
-            <h1 class="rp-titre" onClick={() => setEdite(true)}>{r.nom}</h1>
+            <h1 class="rp-titre" onClick={() => { if (!ro) setEdite(true); }}>{r.nom}</h1>
           )}
           {/* Une seule sortie : la barre du bas. Un second « Terminer »
               ici laissait croire que la fleche retour annulait quelque
@@ -188,7 +191,7 @@ export function MealPage() {
         </div>
 
         {/* Recherche : la meme brique que la carte, avec tout l'ecran pour elle */}
-        <Recherche repasId={r.id} phCourt />
+        {!ro && <Recherche repasId={r.id} phCourt />}
 
         {/* Aliments deja encodes */}
         {!vide && (
@@ -203,16 +206,16 @@ export function MealPage() {
                   {t('rp_total_court')}
                   <span class="rp-total-val">{totAff.kcal}<span>kcal</span></span>
                 </span>
-                <button class="rp-total-fin" onClick={() => { validerRepas(r.id); repasOuvertId.value = null; }}>
+                {!ro && <button class="rp-total-fin" onClick={() => { validerRepas(r.id); repasOuvertId.value = null; }}>
                   {t('rp_terminer')}
-                </button>
+                </button>}
               </div>
             </div>
           </div>
         )}
 
         {/* Enregistrer la composition comme plat reutilisable */}
-        {!vide && (
+        {!vide && !ro && (
           <div class="mc-plat rp-plat">
             {garde ? (
               <div class="mc-plat-ok">{'\u2713'} {t('mc_plat_ok')}</div>

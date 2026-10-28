@@ -2,6 +2,7 @@ import { signal, computed, effect } from '@preact/signals';
 import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { aujourdhuiBxl } from './plans-par-date.js';
+import { ecritureBloquee } from './acces-nutrition.js';
 
 // ============================================================
 // STORE STATS v2
@@ -76,6 +77,7 @@ export function ajouterPesee(kg) {
 }
 
 export function enregistrerJour(totaux, isoForce) {
+  if (ecritureBloquee()) return false;   // blocage alimentation : lecture seule
   // isoForce : utilise par la bascule automatique de journee, qui archive
   // la journee ECOULEE (donc pas la date du jour).
   const iso = isoForce || aujourdhuiBxl();

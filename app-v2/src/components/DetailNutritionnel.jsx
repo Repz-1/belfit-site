@@ -2,6 +2,7 @@ import { detailTotal, CLES_DETAIL } from '../data/aliments.js';
 import { accesDecouverte, joursRestantsDecouverte, enDecouverte } from '../services/decouverte.js';
 import { ongletActif } from './BottomNav.jsx';
 import { repasOuvertId } from './MealCard.jsx';
+import { lectureSeule } from '../store/acces-nutrition.js';
 
 // ============================================================
 // DETAIL NUTRITIONNEL D'UN REPAS
@@ -62,7 +63,7 @@ export function DetailNutritionnel({ ings }) {
     <div class="dn">
       <div class="dn-tete">
         <span class="dn-titre">Détail nutritionnel</span>
-        {ouvert && enDecouverte.value && (
+        {ouvert && enDecouverte.value && !lectureSeule.value && (
           <span class={'dn-offert' + (joursRestantsDecouverte.value <= 2 ? ' dn-offert--fin' : '')}>
             Offert {joursRestantsDecouverte.value} j
           </span>

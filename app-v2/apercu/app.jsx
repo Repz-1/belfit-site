@@ -12,6 +12,11 @@ import { App, AccueilGarde } from '../src/main.jsx';
 import { programmeActif } from '../src/store/programme.js';
 import { estPremium } from '../src/components/PremiumPage.jsx';
 import { programme, programmeBrut, programmeCharge, dossierCoach, poserLecteurProgramme } from '../src/components/BelfitPlus.jsx';
+import { paiementOuvert } from '../src/services/mollie.js';
+import * as accesNut from '../src/store/acces-nutrition.js';
+import * as jrn from '../src/store/journal.js';
+import * as perso from '../src/store/perso.js';
+const { etatSimule, commandesSimulees } = accesNut;
 
 // Banc de la relecture du plan (27/10) : si la page pose window.__lecteur, la
 // lecture de users/{uid} est SIMULEE par lui (aucun acces a Firestore).
@@ -53,6 +58,10 @@ try { const pe = localStorage.getItem('belfit_v2_apercu_entrainement'); if (pe) 
 const ACCUEIL = new URLSearchParams(location.search).has('accueil');
 // ?accueil : simule le #splash de la vraie page (retire apres 1,5 s) : la carte doit l'attendre.
 if (ACCUEIL) { const sp = document.createElement('div'); sp.id = 'splash'; document.body.appendChild(sp); setTimeout(() => sp.remove(), 1500); }
+// ?verrou=jamais|expire|ouvert : etat d'acces nutrition simule (brouillon 27/10, sans effet si le drapeau est a false).
+const VERROU = new URLSearchParams(location.search).get('verrou');
+if (VERROU) etatSimule.value = VERROU === 'jamais' ? 'ferme' : VERROU;
+{ const c = new URLSearchParams(location.search).get('cmd'); if (c !== null) commandesSimulees.value = c !== '0'; }
 const GRATUIT = new URLSearchParams(location.search).has('gratuit');
 if (GRATUIT) estPremium.value = false;
 const faux = utilisateur.value;
@@ -66,7 +75,7 @@ setInterval(() => {
 }, 100);
 
 // Acces des tests Playwright (cloture de la veille, 21/10).
-window.__banc = { eau, weightLog, ajouterPesee, repasAffiches, journalDUnJourPasse, dateJour, repas, histoJours, programme, programmeBrut, programmeCharge, dossierCoach, objectifs, utilisateur };
+window.__banc = { eau, weightLog, ajouterPesee, repasAffiches, journalDUnJourPasse, dateJour, repas, histoJours, programme, programmeBrut, programmeCharge, dossierCoach, objectifs, utilisateur, accesNut, jrn, perso, paiementOuvert };
 
 // L'accueil du matin/soir (voile plein ecran) n'est monte que sur demande (?accueil) :
 // il recouvrirait l'ecran et fausserait les autres tests selon l'heure.

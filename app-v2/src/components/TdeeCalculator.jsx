@@ -5,6 +5,7 @@ import { estPremium } from './PremiumPage.jsx';
 import { ongletActif } from './BottomNav.jsx';
 import { createPortal } from 'preact/compat';
 import { sexe } from '../store/perso.js';
+import { ecritureBloquee, lectureSeule } from '../store/acces-nutrition.js';
 
 // Calculateur de besoins. Le resultat se recalcule a chaque frappe (pas de bouton
 // "Calculer" : reactif). "Appliquer" pousse le resultat dans les objectifs du jour.
@@ -274,6 +275,7 @@ export function TdeeCalculator({ montre, fermer, retour }) {
 
   const appliquer = () => {
     if (macrosVides) return;
+    if (ecritureBloquee()) return;   // alimentation fermee : calcul consultable, pas applicable
     if (mode === 'manuel') {
       setObjectifs({ kcal: +man.kcal || 0, prot: +man.prot || 0, carbs: +man.carbs || 0, lip: +man.lip || 0 });
       // Pas de calculBaseFait ni de poidsCalcul : la saisie manuelle
@@ -509,7 +511,7 @@ export function TdeeCalculator({ montre, fermer, retour }) {
             mode calcule il n'y a rien a appliquer avant. */}
         {(mode === 'manuel' || calcule) && (
           <div class="calc-barre">
-            <button class="calc-appliquer" onClick={appliquer} disabled={macrosVides}>
+            <button class="calc-appliquer" onClick={appliquer} disabled={macrosVides} aria-disabled={lectureSeule.value ? 'true' : undefined}>
               {applique ? '✓ Appliqué !' : 'Appliquer aux objectifs'}
             </button>
           </div>

@@ -8,6 +8,7 @@ import { deconnexion } from '../services/firebase.js';
 import { signal } from '@preact/signals';
 import { allerOnglet } from './BottomNav.jsx';
 import { origineCalc } from './BelfitPlus.jsx';
+import { ecritureBloquee, lectureSeule } from '../store/acces-nutrition.js';
 
 export const besoinsOuverts = signal(false);
 
@@ -288,6 +289,7 @@ export function Besoins() {
   };
 
   const valider = () => {
+    if (ecritureBloquee()) return;   // alimentation fermee : calcul consultable, pas applicable
     setEnvoi(true);
     if (mode === 'manuel') {
       setObjectifs({
@@ -412,7 +414,7 @@ export function Besoins() {
             </div>
           </div>
         )}
-        <button class="bs-valider" onClick={valider} disabled={envoi || (mode === 'manuel' && !(+man.kcal > 0))}>
+        <button class="bs-valider" onClick={valider} disabled={envoi || lectureSeule.value || (mode === 'manuel' && !(+man.kcal > 0))}>
           {envoi ? '…' : "C'est parti"}
         </button>
         {/* 02/10 (Raci) : plus de saisie manuelle des calories, le calcul
@@ -433,6 +435,7 @@ const DEFAUT_KCAL = 4300;
 export function besoinsRequis() {
   if (SANS_COMPTE) return false;
   if (calculBaseFait.value) return false;
+  if (lectureSeule.value) return false;   // alimentation fermee : pas de calcul force
   const o = objectifs.value || {};
   return o.kcal === DEFAUT_KCAL && o.prot === 217 && o.carbs === 538 && o.lip === 96;
 }

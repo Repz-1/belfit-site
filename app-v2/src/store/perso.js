@@ -3,6 +3,7 @@ import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { DB } from '../data/aliments.js';
 import { customFoods } from '../components/Scanner.jsx';
+import { ecritureBloquee } from './acces-nutrition.js';
 
 // ============================================================
 // FAVORIS, ALIMENTS COURANTS ET PLATS ENREGISTRES
@@ -96,6 +97,7 @@ export function estFavori(nom) {
 }
 
 export function basculerFavori(nom) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   favoris.value = estFavori(nom)
     ? favoris.value.filter(n => n !== nom)
     : [...favoris.value, nom];
@@ -105,6 +107,7 @@ export function basculerFavori(nom) {
 
 /** Un encodage de plus pour cet aliment. */
 export function noterUsage(nom) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   usages.value = { ...usages.value, [nom]: (usages.value[nom] || 0) + 1 };
 }
 
@@ -164,6 +167,7 @@ export function macrosPortion(plat) {
 }
 
 export function enregistrerPlat(plat) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   const existe = plats.value.some(p => p.id === plat.id);
   plats.value = existe
     ? plats.value.map(p => (p.id === plat.id ? plat : p))
@@ -171,6 +175,7 @@ export function enregistrerPlat(plat) {
 }
 
 export function supprimerPlat(id) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   plats.value = plats.value.filter(p => p.id !== id);
 }
 
