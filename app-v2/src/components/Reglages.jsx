@@ -21,7 +21,7 @@ import { sexe } from '../store/perso.js';
 // La roue dentee de l'en-tete sortait de la v2 vers la v1 : c'etait
 // la derniere page que l'application devait quitter pour fonctionner.
 // Tout est repris : compte, abonnement, resiliation avec ses motifs,
-// langue, notifications, invitation d'amis, contact, documents, version,
+// langue, notifications, contact, documents, version,
 // deconnexion et suppression.
 //
 // Les sous-ecrans (compte, resiliation) sont des VUES et non des
@@ -445,20 +445,6 @@ export function Reglages() {
         {/* Notifications retirees le 23/09 : les deux bascules
             enregistraient un choix que rien ne lisait. Elles reviennent
             avec l'application native et de vrais rappels. */}
-
-        <p class="rg-section">{t('set_sec_social')}</p>
-        <div class="rg-carte">
-          <Rangee titre={t('set_invite')} sous={t('set_invite_sub')} onClick={() => {
-            // Pas de code de parrainage (28/10, demande de Raci) : message + lien seulement.
-            const txt = t('invite_text') + ' https://www.belfit.be';
-            const copier = () => {
-              if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert(t('invite_copied'))).catch(() => {});
-            };
-            // Lien DANS le texte : WhatsApp Android ignore souvent "url".
-            if (navigator.share) navigator.share({ text: txt }).catch((e) => { if (e && e.name !== 'AbortError') copier(); });
-            else copier();
-          }} />
-        </div>
 
         <p class="rg-section">{t('set_sec_aide')}</p>
         <div class="rg-carte">

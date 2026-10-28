@@ -159,8 +159,6 @@ Object.assign(STRINGS_V1.fr, {
   set_sec_track:"Suivi automatique",
   set_hc_sub:"Synchroniser pas, poids et séances automatiquement", set_soon:"BIENTÔT",
   set_hc_note:"Santé Connect est le hub santé d'Android : il permet aux applis (Samsung Health, Fitbit…) de partager leurs données entre elles. Cette synchronisation sera disponible avec l'application native BELFIT.",
-  set_sec_social:"Social",
-  set_invite:"Invite des amis", set_invite_sub:"1 mois offert quand ton filleul s'abonne",
   set_sec_contact:"Contact",
   set_write:"Nous écrire", set_write_sub:"Directement depuis l'app — réponse rapide",
   set_suggest:"Suggérer une amélioration", set_suggest_sub:"Une idée pour l'app ? On t'écoute",
@@ -181,8 +179,6 @@ Object.assign(STRINGS_V1.fr, {
   js_acc_deleted:"Ton compte a été supprimé.",
   js_reauth:"Par sécurité, reconnecte-toi puis réessaie la suppression (ta session est trop ancienne).",
   js_del_fail:"Impossible de supprimer le compte pour le moment. Réessaie plus tard.",
-  js_invite_msg:"Je suis sur BELFIT 🇧🇪 — coaching nutrition & training avec un vrai coach. Rejoins-moi : {link} — avec mon lien, on gagne tous les deux un avantage sur l'abonnement 💪",
-  js_invite_copied:"Message d'invitation copié ! Colle-le où tu veux."
 });
 Object.assign(STRINGS_V1.en, {
   set_title:"Settings", set_sec_account:"Account",
@@ -196,8 +192,6 @@ Object.assign(STRINGS_V1.en, {
   set_sec_track:"Automatic tracking",
   set_hc_sub:"Sync steps, weight and workouts automatically", set_soon:"SOON",
   set_hc_note:"Health Connect is Android's health hub: it lets apps (Samsung Health, Fitbit…) share their data with each other. This sync will be available with the native BELFIT app.",
-  set_sec_social:"Social",
-  set_invite:"Invite friends", set_invite_sub:"1 free month when your referral subscribes",
   set_sec_contact:"Contact",
   set_write:"Write to us", set_write_sub:"Straight from the app — fast reply",
   set_suggest:"Suggest an improvement", set_suggest_sub:"Got an idea for the app? We're listening",
@@ -218,8 +212,6 @@ Object.assign(STRINGS_V1.en, {
   js_acc_deleted:"Your account has been deleted.",
   js_reauth:"For security, log in again then retry the deletion (your session is too old).",
   js_del_fail:"Couldn't delete the account right now. Try again later.",
-  js_invite_msg:"I'm on BELFIT 🇧🇪 — nutrition & training coaching with a real coach. Join me: {link} — with my link, we both get a subscription perk 💪",
-  js_invite_copied:"Invitation message copied! Paste it anywhere."
 });
 Object.assign(STRINGS_V1.nl, {
   set_title:"Instellingen", set_sec_account:"Account",
@@ -233,8 +225,6 @@ Object.assign(STRINGS_V1.nl, {
   set_sec_track:"Automatische tracking",
   set_hc_sub:"Stappen, gewicht en trainingen automatisch synchroniseren", set_soon:"BINNENKORT",
   set_hc_note:"Health Connect is de gezondheidshub van Android: apps (Samsung Health, Fitbit…) kunnen er hun gegevens mee delen. Deze synchronisatie komt met de native BELFIT-app.",
-  set_sec_social:"Sociaal",
-  set_invite:"Nodig vrienden uit", set_invite_sub:"1 maand gratis wanneer je vriend zich abonneert",
   set_sec_contact:"Contact",
   set_write:"Schrijf ons", set_write_sub:"Rechtstreeks vanuit de app — snel antwoord",
   set_suggest:"Stel een verbetering voor", set_suggest_sub:"Een idee voor de app? We luisteren",
@@ -255,8 +245,6 @@ Object.assign(STRINGS_V1.nl, {
   js_acc_deleted:"Je account is verwijderd.",
   js_reauth:"Meld je uit veiligheid opnieuw aan en probeer de verwijdering dan opnieuw (je sessie is te oud).",
   js_del_fail:"Account kon nu niet verwijderd worden. Probeer later opnieuw.",
-  js_invite_msg:"Ik zit op BELFIT 🇧🇪 — voedings- & trainingscoaching met een echte coach. Doe mee: {link} — met mijn link krijgen we allebei een voordeel op het abonnement 💪",
-  js_invite_copied:"Uitnodigingsbericht gekopieerd! Plak het waar je wil."
 });
 
 /* ===== Journal (app.html) ===== */
