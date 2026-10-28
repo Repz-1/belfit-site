@@ -12,6 +12,10 @@ import { utilisateur } from './firebase.js';
 const BASE = 'https://europe-west1-repz-baf60.cloudfunctions.net/';
 export const paiementOuvert = signal(false);   // ce compte peut payer
 export const modeTest = signal(false);         // le serveur est en mode test Mollie
+// Code de reduction (28/10) : null | {code, pourcent, base, reduction, montant}. Tous les
+// chiffres viennent du SERVEUR (verifierCodeReduction) ; ici on les affiche, on ne les calcule pas.
+// Le serveur re-verifie tout au moment de payer : ce signal n'est qu'un affichage.
+export const reduction = signal(null);
 // Retour de la page de paiement : null | {type, etat, statut}
 //  etat : 'verif' | 'attente' | 'paye' | 'echec' | 'connexion'
 export const retourPaiement = signal(null);
@@ -39,10 +43,35 @@ export function verifierAcces() {
   }).catch(() => { paiementOuvert.value = false; dejaDemande = null; });
 }
 
-export async function payerMollie(type) {
-  const r = await appeler('creerPaiementMollie', { type });
-  if (!r || r.statut !== 200 || !r.d.url) throw new Error((r && r.d && r.d.motif) || 'paiement');
+// Le code de reduction ne concerne que le premier plan (type 'plan') : jamais envoye pour 'maj'.
+// Le montant n'est JAMAIS envoye : le serveur le recalcule depuis le code.
+export async function payerMollie(type, code) {
+  const corps = { type };
+  if (type === 'plan' && code) corps.code = code;
+  const r = await appeler('creerPaiementMollie', corps);
+  if (!r || r.statut !== 200 || !r.d.url) {
+    const e = new Error((r && r.d && r.d.motif) || 'paiement');
+    if (r && r.d && r.d.message) { e.motif = r.d.motif; e.messageCode = r.d.message; }   // refus lie au code
+    throw e;
+  }
   window.location.href = r.d.url;
+}
+
+// Le client saisit un code : le serveur dit s'il est valable et a quel prix.
+// Retourne {ok:true, ...prix} ou {ok:false, message}. Ne reserve rien.
+const MSG_ERREUR = 'Le code n\'a pas pu être vérifié. Réessaie dans un instant.';
+export async function verifierCodeReduction(code) {
+  const saisi = String(code || '').trim();
+  if (!saisi) return { ok: false, message: 'Saisis ton code de réduction.' };
+  try {
+    const r = await appeler('verifierCodeReduction', { code: saisi, type: 'plan' });
+    if (r && r.statut === 200 && r.d && r.d.ok) {
+      reduction.value = { code: r.d.code, pourcent: r.d.pourcent, base: r.d.base, reduction: r.d.reduction, montant: r.d.montant };
+      return { ok: true };
+    }
+    reduction.value = null;
+    return { ok: false, message: (r && r.d && r.d.message) || MSG_ERREUR };
+  } catch (e) { reduction.value = null; return { ok: false, message: MSG_ERREUR }; }
 }
 
 // type = 'plan' | 'maj', lu dans l'adresse de retour. onPaye(type) est appele

@@ -432,3 +432,21 @@
    Hors de cette zone, le scroll reste libre. */
 .pan-scroll:has(.pg-coach) { scroll-snap-type: y proximity; scroll-padding-bottom: 120px; }
 .pg-coach .cp-pied { scroll-snap-align: end; scroll-margin-bottom: 8px; }
+
+/* Code de reduction (28/10) : sous le prix de l'offre a 80 EUR, premier plan seulement. */
+.pg-coach .cp-prix-bloc { display: inline-flex; align-items: baseline; gap: 10px; }
+.pg-coach .cp-prix-barre { font-size: 18px; font-weight: 600; color: #4B5E53; text-decoration: line-through; text-decoration-thickness: 2px; }
+.pg-coach .cp-offre .cp-prix.cp-prix--promo { color: var(--prim-t); }
+.pg-coach .cp-code { margin: 12px 0 14px; }
+.pg-coach .cp-code-lib { display: block; font-size: 13px; font-weight: 700; color: var(--t1); margin-bottom: 6px; }
+.pg-coach .cp-code-ligne { display: flex; gap: 8px; }
+.pg-coach .cp-code-champ { flex: 1; min-width: 0; min-height: 44px; box-sizing: border-box; padding: 0 12px; font: inherit; font-size: 16px; letter-spacing: .06em; text-transform: uppercase; color: var(--t1); background: #fff; border: 1.5px solid #BFE3CB; border-radius: 12px; }
+.pg-coach .cp-code-champ::placeholder { text-transform: none; letter-spacing: 0; color: #5B6F63; }
+.pg-coach .cp-code-champ:focus-visible { outline: 3px solid rgba(46,125,82,.35); outline-offset: 1px; border-color: var(--prim); }
+.pg-coach .cp-code-champ[aria-invalid="true"] { border-color: #B3261E; }
+.pg-coach .cp-code-bt { min-height: 44px; padding: 0 16px; font: inherit; font-size: 14px; font-weight: 700; color: var(--prim-t); background: #fff; border: 1.5px solid var(--prim); border-radius: 12px; cursor: pointer; }
+.pg-coach .cp-code-bt:disabled { color: #4B5E53; border-color: #7A9082; background: #F1F5F2; cursor: not-allowed; }
+.pg-coach .cp-code-err { margin: 8px 0 0; font-size: 13px; line-height: 1.45; color: #8A1C15; background: #FCEBEB; border-radius: 10px; padding: 8px 10px; }
+.pg-coach .cp-code-ok { margin: 0; font-size: 14px; line-height: 1.5; color: #1F6B42; background: #DDF3E4; border: 1px solid #2E7D52; border-radius: 12px; padding: 10px 12px; }
+.pg-coach .cp-code-lien { display: inline; padding: 6px 2px; margin-left: 4px; font: inherit; font-weight: 700; color: var(--prim-t); text-decoration: underline; background: none; border: 0; cursor: pointer; min-height: 32px; }
+.cp-code-modale{margin:0 0 12px}
