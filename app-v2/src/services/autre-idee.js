@@ -97,9 +97,9 @@ const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0
 
 // Allergenes : cle = libelle des options du questionnaire (allergies).
 const ALLERGENES = [
-  { re: /\boeuf|\boeufs|omelette|cantonais/, noms: ['oeuf', 'oeufs'] },
+  { re: /\boeuf|\boeufs|omelette|cantonais|mayonnaise|\bmayo\b|meringue|hollandaise|bearnaise|gribiche|carbonara|caesar/, noms: ['oeuf', 'oeufs'] },
   { re: /lait(?! de coco)|fromage|skyr|yaourt|yogourt|whey|caseine|cheddar|mozzarella|parmesan|emmental|feta|ricotta|kefir|mascarpone|creme|beurre(?! (de )?(cacahu|arachide|amande|noix))|quark|gouda|burrata|cottage|faisselle/, noms: ['lait', 'lactose', 'laitier', 'laitiers', 'laitage', 'produits laitiers', 'fromage'] },
-  { re: /\bble\b|ble |pain|pates|spaghetti|penne|macaroni|avoine|wrap|tortilla|semoule|boulgour|couscous|seigle|orge|epeautre|biscuit|gateau|granola|cereales|muesli|pizza|brioche|croissant|baguette|burger|panure|panko|farine|crepe|gaufre|pancake|nouilles|galette de ble|cracker|bretzel/, noms: ['gluten', 'ble', 'cereales'] },
+  { re: /\bble\b|ble |pain|pates|spaghetti|penne|macaroni|avoine|wrap|tortilla|semoule|boulgour|couscous|seigle|orge|epeautre|biscuit|gateau|granola|cereales|muesli|pizza|brioche|croissant|baguette|burger|panure|panko|farine|crepe|gaufre|pancake|nouilles|galette de ble|cracker|bretzel|cantonais|sauce soja|tamari|teriyaki/, noms: ['gluten', 'ble', 'cereales'] },
   { re: /cacahu|arachide/, noms: ['arachide', 'arachides', 'cacahuete', 'cacahuetes'] },
   { re: /amande|noix|noisette|pistache|cajou|pecan|macadamia|praline|pralin|nutella|pate a tartiner/, noms: ['fruits a coque', 'fruit a coque', 'noix', 'amande', 'amandes', 'noisette', 'noisettes'] },
   { re: /saumon|thon|cabillaud|poisson|sardine|maquereau|truite|merlu|colin|anchois|lieu |aiglefin|dorade|bar |sole|surimi|hareng/, noms: ['poisson', 'poissons'] },
