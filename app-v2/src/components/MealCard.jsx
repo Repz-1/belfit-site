@@ -47,7 +47,7 @@ import {
   fourchetteRepas, remplacerAliment, validerRepas, annulerValidation, sauterRepas, mangeAutreChose, remettrePrevu,
   appliquerIdee, annulerIdee } from '../store/journal.js';
 import { dossierCoach } from './BelfitPlus.jsx';
-import { preferencesDe, prochaineIdee, kcalIngs } from '../services/autre-idee.js';
+import { preferencesDe, prochaineIdee, kcalIngs, lignesIdee } from '../services/autre-idee.js';
 
 /** Illustration d'un repas : la sienne s'il est fixe, sinon celle de son type. */
 export function illustration(r) {
@@ -527,6 +527,7 @@ const ideesVues = new Map();
 export function MealCard({ r, aSuivre, fait }) {
   const tot = totauxRepas(r);
   const [msgIdee, setMsgIdee] = useState(null);
+  const [tour, setTour] = useState(0);   // relance la petite rotation de l'icone a chaque clic
   const autreIdee = () => {
     // Cible = le repas du PLAN (pas l'idee en cours) ; refus/allergies = questionnaire coach.
     const cible = kcalIngs(r.idee ? r.ingsPlan : r.ings);
@@ -634,19 +635,43 @@ export function MealCard({ r, aSuivre, fait }) {
       )}
 
       {/* 25/10 « Autre idee » : un autre repas aux calories proches, pour aujourd'hui
-          seulement. Le plan d'origine reste de cote (ingsPlan) : « Revenir au plan ». */}
+          seulement. Le plan d'origine reste de cote (ingsPlan) : « Revenir au plan ».
+          28/10 (Raci) : bouton plus soigne + liste des ingredients EN GRAMMES. */}
       {r.duPlan && !r.remplace && !r.saute && (r.idee || (r.prevu && !vide)) && (
         <div class="mc-idee" onClick={e => e.stopPropagation()}>
           {r.idee && (
-            <p class="mc-idee-txt">
-              <b>Idée du jour : {r.idee.nom}</b> · {Math.round(r.idee.kcal)} kcal <span class="mc-idee-plan">(plan : {Math.round(r.idee.cible)} kcal)</span>
-              <span class="mc-idee-verif"> Vérifie les ingrédients (allergies, régime).</span>
-            </p>
+            <div class="mc-idee-fiche" key={r.idee.nom}>
+              <p class="mc-idee-etiq">Idée du jour</p>
+              <p class="mc-idee-nom">{r.idee.nom}</p>
+              <p class="mc-idee-kcal">
+                <b>{Math.round(tot.kcal)} kcal</b>
+                <span class="mc-idee-plan"> · plan : {Math.round(r.idee.cible)} kcal</span>
+              </p>
+              <div class="mc-idee-macros" aria-label="Macronutriments de l'idée">
+                <span><b>{Math.round(tot.prot)} g</b> prot.</span>
+                <span><b>{Math.round(tot.carbs)} g</b> gluc.</span>
+                <span><b>{Math.round(tot.lip)} g</b> lip.</span>
+              </div>
+              <ul class="mc-idee-liste" aria-label="Ingrédients et quantités">
+                {lignesIdee(r.ings, r.idee.libelles).map(l => (
+                  <li key={l.name}>
+                    <span class="mc-idee-ing">{l.nom}</span>
+                    <span class="mc-idee-qte">{l.detail}</span>
+                  </li>
+                ))}
+              </ul>
+              <p class="mc-idee-verif">Vérifie les ingrédients (allergies, régime).</p>
+            </div>
           )}
           {msgIdee && <p class="mc-idee-msg" role="status">{msgIdee}</p>}
           {r.prevu && (
             <div class="mc-idee-actions">
-              <button class="mc-idee-btn" onClick={e => { e.stopPropagation(); autreIdee(); }}>↻ Autre idée</button>
+              <button class="mc-idee-btn" onClick={e => { e.stopPropagation(); setTour(n => n + 1); autreIdee(); }}>
+                <svg key={tour} class={'mc-idee-ic' + (tour ? ' mc-idee-ic--tour' : '')} viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M20 11a8 8 0 00-14.3-4.4M4 4v4h4" /><path d="M4 13a8 8 0 0014.3 4.4M20 20v-4h-4" />
+                </svg>
+                <span>Autre idée</span>
+              </button>
               {r.idee && <button class="mc-idee-btn mc-idee-btn--retour" onClick={e => { e.stopPropagation(); annulerIdee(r.id); setMsgIdee(null); }}>Revenir au plan</button>}
             </div>
           )}

@@ -43,7 +43,8 @@ export function quantitesIdee(idee, ratio) {
     if (d.unit) {
       q = Math.min(lim.max, Math.max(lim.min, Math.round(i.q * ratio)));
       grammes = q * d.unit;
-      libelle = q + ' ' + i.l + (q > 1 ? 's' : '');
+      // Piece : on ajoute son poids (Raci, 28/10 : « pas les quantites en grammes »).
+      libelle = q + ' ' + i.l + (q > 1 ? 's' : '') + ' (≈ ' + Math.round(grammes) + ' g)';
     } else {
       const brut = Math.round(i.q * ratio / lim.step) * lim.step;
       q = Math.min(lim.max, Math.max(lim.min, brut));
@@ -54,9 +55,41 @@ export function quantitesIdee(idee, ratio) {
     kcal += d.kcal * f; prot += d.prot * f;
     carbs += (d.carbs || 0) * f; lip += (d.lip || 0) * f;
     parts.push(libelle);
-    ings.push({ name: i.n, portion: q });
+    ings.push({ name: i.n, portion: q, l: i.l });
   });
   return { parts, ings, kcal: Math.round(kcal), prot: Math.round(prot), carbs: Math.round(carbs), lip: Math.round(lip) };
+}
+
+/** Premiere lettre en majuscule (« poulet cuit » -> « Poulet cuit »). */
+const maj = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
+/**
+ * Lignes d'affichage d'une idee : un ingredient par ligne, avec sa quantite
+ * en GRAMMES. Un aliment compte a la piece (œuf) garde son nombre de pieces
+ * et affiche en plus son poids (poids d'une piece x nombre).
+ * @param ings  ingredients du repas au format du journal ({ name, portion })
+ * @param libelles  { cle de la base : libelle court } (facultatif)
+ * @returns [{ name, nom, grammes, pieces, detail }]
+ *   nom      : « Poulet cuit », « 3 œufs »
+ *   grammes  : poids total de la ligne (entier)
+ *   pieces   : nombre de pieces, ou null pour un aliment pese
+ *   detail   : texte du poids a droite, « 150 g » ou « ≈ 150 g » pour une piece
+ */
+export function lignesIdee(ings, libelles) {
+  return (ings || []).map(i => {
+    const d = DB[i.name];
+    const lib = libelles && libelles[i.name];
+    const portion = Number(i.portion) || 0;
+    if (d && d.unit) {
+      const grammes = Math.round(portion * d.unit);
+      const base = lib || (d.unitLabel || 'pièce');
+      const nom = portion + ' ' + base + (portion > 1 && !/s$/.test(base) ? 's' : '');
+      return { name: i.name, nom, grammes, pieces: portion, detail: '≈ ' + grammes + ' g' };
+    }
+    const propre = String(i.name).replace(/\s*\(\d+\s*g\)\s*$/, '');
+    const nom = maj(lib || propre);
+    return { name: i.name, nom, grammes: Math.round(portion), pieces: null, detail: Math.round(portion) + ' g' };
+  });
 }
 
 // ---------------------------------------------------------------- mots-cles

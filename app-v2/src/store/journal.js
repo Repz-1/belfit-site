@@ -419,7 +419,9 @@ export function appliquerIdee(repasId, idee) {
     if (r.id !== repasId || !r.duPlan || r.saute || r.remplace) return r;
     const base = r.idee ? (r.ingsPlan || []) : r.ings;
     return {
-      ...r, idee: { nom: idee.nom, kcal: idee.kcal, cible: idee.cible }, ingsPlan: base,
+      // libelles : noms courts des ingredients (« poulet cuit », « œuf »), pour la liste en grammes.
+      ...r, idee: { nom: idee.nom, kcal: idee.kcal, cible: idee.cible,
+        libelles: Object.fromEntries(idee.ings.filter(i => i.l).map(i => [i.name, i.l])) }, ingsPlan: base,
       ings: idee.ings.map(i => ({ id: ++prochainId, name: i.name, portion: i.portion })),
     };
   });
