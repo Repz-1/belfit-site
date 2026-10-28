@@ -62,5 +62,22 @@ service cloud.firestore {
     match /codesPremium/{code} {
       allow read, write: if false;
     }
+
+    // Codes de reduction (28/10) : meme principe, et pour les memes raisons.
+    // Lisibles, ils se laisseraient enumerer ; inscriptibles, « une seule
+    // fois » ne voudrait plus rien dire. Seules les Cloud Functions y touchent
+    // (verifierCodeReduction, creerPaiementMollie, mollieWebhook, adminCodesReduction).
+    //  - codesReduction/{CODE}      le code, son pourcentage, son etat
+    //  - reductionsPersonne/{commande}   HISTORIQUE des usages (une ligne par paiement avec code), jamais un verrou
+    //  - essaisCodes/{cle}          compteurs anti-devinette (compte, adresse IP hachee)
+    match /codesReduction/{code} {
+      allow read, write: if false;
+    }
+    match /reductionsPersonne/{commande} {
+      allow read, write: if false;
+    }
+    match /essaisCodes/{cle} {
+      allow read, write: if false;
+    }
   }
 }
