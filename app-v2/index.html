@@ -14,6 +14,16 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#F4F3F0">
+<!-- Accueil « direct » (Raci, 28/10) : a l'ouverture, on sait AVANT le premier rendu si le
+     message de bienvenue va suivre (une ouverture precedente l'a deja affiche, et la personne
+     ne s'est pas deconnectee). Si oui, le splash de chargement n'a pas de logo (meme creme que
+     l'accueil, qui porte le sien) : on ne voit jamais le logo deux fois, ni la page principale
+     entre les deux. Sinon rien ne change. Voir AccueilGarde (main.jsx). -->
+<script>
+try{var l=localStorage;if(l.getItem('belfit_accueil_connu')==='1'&&l.getItem('belfit_sortie')!=='1'){
+document.documentElement.className+=' acc-attendu';window.__accueilAttendu=1;
+var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f7f4ef')}}catch(e){}
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="manifest" href="manifest.json">
@@ -48,6 +58,9 @@
   #splash .sp-nom{position:absolute;left:50%;transform:translateX(-50%);
     bottom:calc(52px + env(safe-area-inset-bottom));width:168px;height:auto}
   #splash.parti{opacity:0;pointer-events:none}
+  /* Accueil attendu : meme creme que l'ecran de bienvenue, sans logo ni nom. */
+  .acc-attendu #splash{background:#f7f4ef}
+  .acc-attendu #splash img{visibility:hidden}
 </style>
 </head>
 <body>

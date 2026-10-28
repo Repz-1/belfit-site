@@ -11,6 +11,6 @@ export default defineConfig({
     outDir: 'construit',
     emptyOutDir: true,
     chunkSizeWarningLimit: 1200,
-    rollupOptions: { input: { index: 'apercu/index.html', app: 'apercu/app.html', stats: 'apercu/stats.html', repas: 'apercu/repas.html', quiz: 'apercu/quiz.html', planif: 'apercu/planif.html', planifg: 'apercu/planifg.html', fiche: 'apercu/fiche.html', login: 'apercu/login.html', besoins: 'apercu/besoins.html', poids: 'apercu/poids.html', planif2: 'apercu/planif2.html', exos: 'apercu/exos.html' } },
+    rollupOptions: { input: { index: 'apercu/index.html', app: 'apercu/app.html', stats: 'apercu/stats.html', repas: 'apercu/repas.html', quiz: 'apercu/quiz.html', planif: 'apercu/planif.html', planifg: 'apercu/planifg.html', fiche: 'apercu/fiche.html', login: 'apercu/login.html', besoins: 'apercu/besoins.html', poids: 'apercu/poids.html', planif2: 'apercu/planif2.html', exos: 'apercu/exos.html', demarrage: 'apercu/demarrage.html' } },
   },
 });

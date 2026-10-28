@@ -217,6 +217,51 @@ function AvisAccesInvite() {
 
 
 /**
+ * Accueil « direct » (v630). A l'ouverture, index.html pose `window.__accueilAttendu` AVANT le
+ * premier rendu si l'accueil va suivre (marqueur local + pas de deconnexion). Alors :
+ *  - le splash de chargement n'a pas de logo (meme creme que l'accueil) ;
+ *  - l'ecran d'accueil (chunk + police) se charge des le demarrage, sans attendre les donnees ;
+ *  - il se monte, opaque, AU-DESSUS de l'app ; le splash ne part qu'ensuite (2 images) ;
+ *  - jamais de page principale visible entre les deux.
+ * Si la personne n'est finalement pas connectee : on abandonne (le splash part, marqueur efface).
+ * Si l'accueil tarde (> 2,5 s) : le logo du splash revient, pour ne pas laisser un ecran vide.
+ * Au-dela du plafond du splash (5 s) : comportement d'avant.
+ */
+const CLE_CONNU = 'belfit_accueil_connu';
+const modeDirect = !!window.__accueilAttendu;
+const directSig = signal(modeDirect);
+let cartePromesse = null;
+let splashDirectPret = false;
+let splashLacher = null;
+function chargerCarte() {
+  if (!cartePromesse) {
+    cartePromesse = import('./components/AccueilJour.jsx').then((mod) => {
+      const polices = (document.fonts && document.fonts.load)
+        ? Promise.race([
+          Promise.all([document.fonts.load('400 1em Newsreader'), document.fonts.load('600 1em Newsreader')]),
+          new Promise((r) => setTimeout(r, 1000)),
+        ]).catch(() => {})
+        : Promise.resolve();
+      return polices.then(() => mod);
+    });
+  }
+  return cartePromesse;
+}
+function couleurBarre(c) {
+  const tc = document.querySelector('meta[name="theme-color"]');
+  if (tc) tc.setAttribute('content', c);
+}
+function libererSplash() { splashDirectPret = true; if (splashLacher) splashLacher(); }
+function abandonnerDirect(effacer) {
+  directSig.value = false;
+  document.documentElement.classList.remove('acc-attendu');
+  window.__accueilAttendu = 0;
+  couleurBarre('#F4F3F0');
+  if (effacer) { try { localStorage.removeItem(CLE_CONNU); } catch (e) { /* tant pis */ } }
+  libererSplash();
+}
+
+/**
  * Ecran de bienvenue (28/10, Raci). Une fois a chaque ouverture « a froid »,
  * puis au retour au premier plan SEULEMENT apres plus de 30 min d'absence.
  * Jamais bloquant (un tap le ferme). Seule la decision vit dans le paquet
@@ -227,6 +272,8 @@ export function AccueilGarde() {
   const [relance, setRelance] = useState(0);   // +1 a chaque retour apres longue absence
   const montreePour = useRef(-1);
   const u = utilisateur.value;
+  const direct = directSig.value;
+  const authOk = authPrete.value;
   const pret = authPrete.value && donneesPretes.value && !demanderConnexion.value
     && !besoinsOuverts.value && !(besoinsRequis() && !planCoachActif.value);
   useEffect(() => {
@@ -239,36 +286,49 @@ export function AccueilGarde() {
     document.addEventListener('visibilitychange', f);
     return () => document.removeEventListener('visibilitychange', f);
   }, []);
+  // Demarrage direct : l'ecran (et sa police, ~46 Ko) se charge tout de suite.
+  useEffect(() => { if (direct) chargerCarte().catch(() => abandonnerDirect(false)); }, [direct]);
   useEffect(() => {
-    if (!u || !pret || montreePour.current === relance) return undefined;
+    if (!direct || !authOk || montreePour.current === relance) return undefined;
+    if (!u) { abandonnerDirect(true); return undefined; }   // pas connecte : pas d'accueil
+    let annule = false;
+    chargerCarte().then((mod) => {
+      if (annule) return;
+      montreePour.current = relance;
+      setCarte({ Carte: mod.AccueilJour, id: relance, direct: true });
+      directSig.value = false;
+    }).catch(() => {});
+    return () => { annule = true; };
+  }, [direct, authOk, u, relance]);
+  // L'accueil est monte au-dessus de l'app : le splash peut partir (apres 2 images, voir retirerSplash).
+  useEffect(() => { if (carte && carte.direct) libererSplash(); }, [carte]);
+  useEffect(() => {
+    if (direct || !u || !pret || montreePour.current === relance) return undefined;
     let annule = false;
     // On charge l'ecran (et sa police, ~46 Ko) pendant que le splash de chargement
     // est encore la ; on affiche des que le splash est parti ET la police prete
     // (au plus 1 s d'attente : sinon on affiche quand meme, font-display: swap).
-    const pretCarte = import('./components/AccueilJour.jsx').then((mod) => {
-      const polices = (document.fonts && document.fonts.load)
-        ? Promise.race([
-          Promise.all([document.fonts.load('400 1em Newsreader'), document.fonts.load('600 1em Newsreader')]),
-          new Promise((r) => setTimeout(r, 1000)),
-        ]).catch(() => {})
-        : Promise.resolve();
-      return polices.then(() => mod);
-    });
+    const pretCarte = chargerCarte();
     const attendre = () => {
       if (annule) return;
       if (document.getElementById('splash')) { setTimeout(attendre, 150); return; }
       pretCarte.then((mod) => {
         if (annule) return;
         montreePour.current = relance;
-        setCarte({ Carte: mod.AccueilJour, id: relance });
+        setCarte({ Carte: mod.AccueilJour, id: relance, direct: false });
       }).catch(() => {});
     };
     attendre();
     return () => { annule = true; };
-  }, [u, pret, relance]);
+  }, [direct, u, pret, relance]);
+  useEffect(() => {
+    if (!carte) return;
+    // Marqueur : la prochaine ouverture a froid saura, avant le premier rendu, que l'accueil suit.
+    try { localStorage.setItem(CLE_CONNU, '1'); } catch (e) { /* tant pis */ }
+  }, [carte]);
   if (!carte) return null;
   const C = carte.Carte;
-  return <C key={carte.id} onFin={() => setCarte(null)} />;
+  return <C key={carte.id} direct={carte.direct} onFin={() => { couleurBarre('#F4F3F0'); setCarte(null); }} />;
 }
 
 export function App() {
@@ -770,11 +830,24 @@ if (racine) render(<><AvisAccesInvite /><BandeauConfirmation /><App /><AccueilGa
     fini = true;
     s.classList.add('parti');
     setTimeout(() => s.remove(), 300);
-    const tc = document.querySelector('meta[name="theme-color"]');
-    if (tc) tc.setAttribute('content', '#F4F3F0');
+    // Accueil direct : la barre d'etat garde le creme de l'accueil jusqu'a sa fin (onFin).
+    if (!document.querySelector('.acc-voile')) couleurBarre('#F4F3F0');
   };
 
   const quandPret = () => {
+    if (modeDirect && !fini) {
+      // Accueil direct : pas de plancher (le splash n'a pas de logo a laisser voir) ; on attend
+      // que l'accueil soit monte au-dessus de l'app, puis on laisse 2 images avant de partir.
+      splashLacher = () => requestAnimationFrame(() => requestAnimationFrame(partir));
+      if (splashDirectPret) splashLacher();
+      // Accueil lent : le logo du splash revient plutot qu'un ecran vide.
+      setTimeout(() => {
+        if (fini || splashDirectPret) return;
+        document.documentElement.classList.remove('acc-attendu');
+        couleurBarre('#F4F3F0');
+      }, 2500);
+      return;
+    }
     const reste = Math.max(0, PLANCHER - (Date.now() - depart));
     setTimeout(partir, reste);
   };
@@ -782,5 +855,5 @@ if (racine) render(<><AvisAccesInvite /><BandeauConfirmation /><App /><AccueilGa
   // Deux images successives : la premiere annonce que le navigateur a
   // calcule la mise en page, la seconde qu'il l'a peinte.
   requestAnimationFrame(() => requestAnimationFrame(quandPret));
-  setTimeout(partir, PLAFOND);
+  setTimeout(() => { partir(); if (directSig.peek()) abandonnerDirect(false); }, PLAFOND);
 })();

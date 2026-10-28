@@ -1,0 +1,48 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F4F3F0">
+<style>
+  html,body{margin:0;background:#F4F3F0;font-family:'Satoshi',system-ui,sans-serif;color:#181818}
+  #splash{position:fixed;inset:0;z-index:9999;background:#F4F3F0;display:flex;align-items:center;justify-content:center;transition:opacity .25s ease}
+  /* Symbole centre, nom en pied d'ecran : on ne lit pas un splash, le
+     nom n'est qu'une signature (Raci, 8/08). */
+  #splash .sp-sym{width:200px;height:auto}
+  /* Le nom seul, sans la ligne « FITNESS · NUTRITION · BIEN-ETRE » :
+     a la taille du splash ses capitales faisaient 5px, illisibles, et une
+     baseline figee en francais jure avec une app en trois langues
+     (Raci, 9/08). Le mot est plus large que haut (ratio 5,06), on lui
+     donne 168px pour une hauteur de 33px. */
+  #splash .sp-nom{position:absolute;left:50%;transform:translateX(-50%);
+    bottom:calc(52px + env(safe-area-inset-bottom));width:168px;height:auto}
+  #splash.parti{opacity:0;pointer-events:none}
+  /* Accueil attendu : meme creme que l'ecran de bienvenue, sans logo ni nom. */
+  .acc-attendu #splash{background:#f7f4ef}
+  .acc-attendu #splash img{visibility:hidden}
+</style>
+<script>
+try{var l=localStorage;if(l.getItem('belfit_accueil_connu')==='1'&&l.getItem('belfit_sortie')!=='1'){
+document.documentElement.className+=' acc-attendu';window.__accueilAttendu=1;
+var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f7f4ef')}}catch(e){}
+</script>
+</head>
+<body>
+
+<!-- Splash : reste jusqu'au premier rendu. Fond clair depuis le 8/08
+     (Raci) : meme valeur que le fond de l'app, donc aucun flash entre le
+     splash et le premier ecran. -->
+<div id="splash">
+  <img class="sp-sym" src="/belfit-logo-bf.png" alt="BelFit">
+  <img class="sp-nom" src="/belfit-nom.png" alt="BelFit">
+</div>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="gradOr" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFC933"/>
+      <stop offset="100%" stop-color="#F7B500"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div id="app"></div>
+<script type="module" src="./demarrage.jsx"></script>
+</body></html>
