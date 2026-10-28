@@ -56,7 +56,12 @@ ok(await absente(t.page), 'retour apres 10 min d\'absence : rien');
 await cacher(t.page, true); await t.page.clock.fastForward(31 * 60 * 1000); await cacher(t.page, false);
 ok(await visible(t.page, 4000), 'retour apres 31 min d\'absence : l\'ecran revient');
 await t.page.waitForSelector('.acc-voile', { state: 'detached', timeout: 6000 }).catch(() => {});
-// 2e affichage de suite : pas le meme message (tirage fixe 0 mais memoire du dernier)
+// Frequence 1 sur 5 (compteur local) : le retour qui suit (compteur a 2) ne montre rien
+await cacher(t.page, true); await t.page.clock.fastForward(35 * 60 * 1000); await cacher(t.page, false);
+ok(await absente(t.page), 'retour suivant apres 35 min : rien (1 sur 5, le compteur est a 2)');
+// 2e affichage de suite : pas le meme message (tirage fixe 0 mais memoire du dernier) ;
+// on amene le compteur a 0 (= le tour du message), comme apres 3 retours de plus.
+await t.page.evaluate(() => localStorage.setItem('belfit_accueil_n', '0'));
 await cacher(t.page, true); await t.page.clock.fastForward(40 * 60 * 1000); await cacher(t.page, false);
 await visible(t.page, 4000);
 const t2 = await texte(t.page).catch(() => '');
