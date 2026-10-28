@@ -174,6 +174,23 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
 .ver-esp button{flex:none;font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:0;border-radius:12px;
   padding:12px 12px;background:#FFF8E1;color:var(--tx)}
 .ver-esp button:disabled{opacity:.45;cursor:default}
+
+/* Codes de reduction (28/10) : cree / liste / desactive, via la fonction adminCodesReduction */
+.red-ligne{display:grid;grid-template-columns:1fr 92px;gap:10px;margin-top:10px}
+.red-ligne input[type=number]{text-align:right}
+.red-code{padding:12px 0;border-bottom:1px solid var(--filet)}
+.red-code:last-child{border-bottom:0}
+.red-haut{display:flex;align-items:center;gap:10px}
+.red-nom{flex:1;min-width:0;font-family:'DM Mono',monospace;font-size:14.5px;font-weight:600;overflow-wrap:anywhere}
+.red-pc{flex:none;font-size:13px;font-weight:600;color:var(--tx2);font-variant-numeric:tabular-nums}
+.red-bas{display:flex;align-items:center;gap:10px;margin-top:6px}
+.red-note{flex:1;min-width:0;font-size:12.5px;line-height:1.4;color:var(--tx3);overflow-wrap:anywhere}
+.red-code button{flex:none;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;border:0;border-radius:10px;
+  padding:7px 11px;background:#F4F3F0;color:var(--tx)}
+.red-code button.danger{color:#A32D2D}
+.red-code button:disabled{opacity:.45;cursor:default}
+.red-nouveau{background:#E9F5EE;border-radius:12px;padding:10px 12px;margin-top:12px;font-size:13.5px;line-height:1.5;color:#1C5334;display:none}
+.red-nouveau b{font-family:'DM Mono',monospace;font-size:15px}
 </style>
 </head>
 <body>
@@ -240,6 +257,21 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
       <div id="msgCode2" class="msg"></div>
     </div>
     <div class="carte" id="listeAcces" style="padding:6px 15px"></div>
+
+    <p class="lb">Codes de réduction</p>
+    <div class="carte">
+      <label for="redNom">Créer un code de réduction</label>
+      <input id="redNom" type="text" placeholder="Nom (vide = au hasard)" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="32" style="font-family:'DM Mono',monospace;text-transform:uppercase">
+      <div class="red-ligne">
+        <div><label for="redNote">Note pour toi (facultatif)</label><input id="redNote" type="text" maxlength="80" placeholder="ex. Kevin, salle Uccle" spellcheck="false"></div>
+        <div><label for="redPc">Réduction %</label><input id="redPc" type="number" inputmode="numeric" min="1" max="90" step="1" placeholder="10"></div>
+      </div>
+      <p class="aide">Réduction de 1 à 90 %, seulement sur les 80 € d'un mois de coaching (jamais sur les 60 €). Un code ne sert qu'une seule fois.</p>
+      <button class="second" id="btnRed">Créer le code</button>
+      <div id="msgRed" class="msg"></div>
+      <div id="redNouveau" class="red-nouveau"></div>
+    </div>
+    <div class="carte" id="listeRed" style="padding:6px 15px"></div>
 
     <p class="lb" id="ancreComposer">Envoyer un programme</p>
     <div class="carte">
@@ -802,6 +834,93 @@ $('btnCode2').addEventListener('click', () => {
   }).catch((e) => { if (e.message !== 'code') afficher(m, 'Réseau indisponible.', false); }).finally(() => { b.disabled = false; });
 });
 
+// ---------- Codes de reduction (28/10) ----------
+// Fonction serveur adminCodesReduction : elle reverifie le code coach a chaque appel
+// (temps constant, freinage anti-devinette). Ce code reste en memoire (variable `code`
+// de la page, deja la) : rien n'est ecrit en plus, rien n'est affiche.
+const URL_RED = 'https://europe-west1-repz-baf60.cloudfunctions.net/adminCodesReduction';
+function appelRed(action, extra) {
+  return fetch(URL_RED, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, action, ...(extra || {}) }),
+  }).then((r) => r.json().catch(() => ({ ok: false })));
+}
+const prixRed = (pc) => ((8000 - 80 * pc) / 100).toLocaleString('fr-BE', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+function erreurRed(d) {
+  const m = d && d.motif;
+  return m === 'secret' ? 'Le serveur refuse le code coach. Quitte et entre-le à nouveau.' :
+    m === 'attente' ? 'Trop d\'essais. Réessaie dans 15 minutes.' :
+    m === 'existe' ? 'Ce code existe déjà. Choisis un autre nom.' :
+    m === 'code' ? 'Nom invalide : 4 à 32 lettres ou chiffres, sans espace.' :
+    m === 'pourcent' ? 'La réduction doit être un nombre entier de 1 à 90.' :
+    m === 'minimum' ? 'Avec cette réduction, le prix serait trop bas pour être payé en ligne.' :
+    m === 'inconnu' ? 'Ce code n\'existe plus.' :
+    'Échec. Réessaie.';
+}
+// Etat affiche : utilise > desactive > reserve > actif.
+function etatRed(c) {
+  if (c.etat === 'utilise') return ['utilisé', ''];
+  if (c.actif === false) return ['désactivé', 'rouge'];
+  if (c.etat === 'reserve') return ['réservé', 'ambre'];
+  return ['actif', 'vert'];
+}
+function chargerRed() {
+  return appelRed('lister').then((r) => {
+    const h = $('listeRed'); h.innerHTML = '';
+    if (!r || !r.ok) { if (r && r.motif) h.append(el('p', 'vide', erreurRed(r))); return; }
+    if (!r.codes.length) { h.append(el('p', 'vide', 'Aucun code de réduction pour le moment.')); return; }
+    r.codes.forEach((c) => {
+      const [txt, couleur] = etatRed(c);
+      const l = el('div', 'red-code');
+      const haut = el('div', 'red-haut');
+      haut.append(el('span', 'red-nom', c.code), el('span', 'red-pc', '−' + c.pourcent + ' % · ' + prixRed(c.pourcent) + ' €'), el('span', 'tag ' + couleur, txt));
+      const bas = el('div', 'red-bas');
+      bas.append(el('span', 'red-note', c.note || (txt === 'utilisé' && c.utiliseLe ? 'utilisé le ' + new Date(c.utiliseLe).toLocaleDateString('fr-BE', { day: 'numeric', month: 'short' }) : '')));
+      if (txt !== 'utilisé') {
+        const b = el('button', txt === 'désactivé' ? '' : 'danger', txt === 'désactivé' ? 'Réactiver' : 'Désactiver');
+        b.dataset.code = c.code; b.dataset.act = txt === 'désactivé' ? 'reactiver' : 'desactiver';
+        bas.append(b);
+      }
+      l.append(haut, bas); h.append(l);
+    });
+  }).catch(() => {});
+}
+$('listeRed').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-code]'); if (!b) return;
+  const m = $('msgRed'), act = b.dataset.act, nom = b.dataset.code;
+  const txt = act === 'desactiver'
+    ? 'Désactiver le code ' + nom + ' ? Plus personne ne pourra le saisir. Rien n\'est supprimé : tu pourras le réactiver.'
+    : 'Réactiver le code ' + nom + ' ?';
+  if (!confirm(txt)) return;
+  b.disabled = true;
+  appelRed(act, { nomCode: nom }).then((d) => {
+    if (d && d.ok) { afficher(m, 'Code ' + nom + (act === 'desactiver' ? ' désactivé.' : ' réactivé.'), true); $('redNouveau').style.display = 'none'; }
+    else afficher(m, erreurRed(d), false);
+    return chargerRed();
+  }).catch(() => { afficher(m, 'Réseau indisponible.', false); b.disabled = false; });
+});
+$('btnRed').addEventListener('click', () => {
+  const b = $('btnRed'), m = $('msgRed');
+  // Meme normalisation que le serveur : majuscules, sans accent, lettres et chiffres seulement.
+  const nom = $('redNom').value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const pc = Number($('redPc').value);
+  $('redNouveau').style.display = 'none';
+  if (!Number.isInteger(pc) || pc < 1 || pc > 90) { afficher(m, 'Indique une réduction entière de 1 à 90 %.', false); return; }
+  if (nom && (nom.length < 4 || nom.length > 32)) { afficher(m, 'Nom invalide : 4 à 32 lettres ou chiffres, sans espace.', false); return; }
+  if (!confirm('Créer ' + (nom ? 'le code ' + nom : 'un code au hasard') + ' à −' + pc + ' % ?\n\nLe premier mois passe de 80 € à ' + prixRed(pc) + ' €. Le code ne sert qu\'une fois. Pas de réduction sur les 60 €.')) return;
+  b.disabled = true;
+  appelRed('creer', { nomCode: nom, pourcent: pc, note: $('redNote').value.trim() }).then((d) => {
+    if (d && d.ok) {
+      afficher(m, 'Code créé. Donne-le tel quel à la personne.', true);
+      const n = $('redNouveau'); n.textContent = ''; n.append('Code : ', el('b', '', d.code), ' · −' + d.pourcent + ' % · ' + prixRed(d.pourcent) + ' € au lieu de 80 €'); n.style.display = 'block';
+      $('redNom').value = ''; $('redNote').value = ''; $('redPc').value = '';
+      return chargerRed();
+    }
+    afficher(m, erreurRed(d), false);
+  }).catch(() => afficher(m, 'Réseau indisponible.', false)).finally(() => { b.disabled = false; });
+});
+
 // ---------- Invitations par lien (02/10) ----------
 function chargerInvitations() {
   appel('invitations').then((r) => {
@@ -854,7 +973,7 @@ $('btnCode').addEventListener('click', () => {
 $('code').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btnCode').click(); });
 $('btnQuitter').addEventListener('click', (e) => { e.preventDefault(); oublier(); });
 
-function ouvrir() { ecran('travail'); dessiner(); chargerDossiers(); chargerAcces(); chargerInvitations(); }
+function ouvrir() { ecran('travail'); dessiner(); chargerDossiers(); chargerAcces(); chargerRed(); chargerInvitations(); }
 
 $('btnEnvoi').addEventListener('click', () => {
   const b = $('btnEnvoi'), msg = $('msg');

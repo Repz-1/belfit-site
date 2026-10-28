@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { utilisateur, authPrete } from '../services/firebase.js';
-import { paiementOuvert, modeTest, retourPaiement, payerMollie, verifierAcces, demarrerRetour, verifierRetour, reverifierRetour, fermerRetour } from '../services/mollie.js';
+import { paiementOuvert, modeTest, retourPaiement, payerMollie, reduction, verifierCodeReduction, verifierAcces, demarrerRetour, verifierRetour, reverifierRetour, fermerRetour } from '../services/mollie.js';
 import { getApps } from 'firebase/app';
 import { BelfitPlus, chargerProgramme, programme, programmeCharge, progOuvert, dossierCoach } from './BelfitPlus.jsx';
 import { QuestionnaireCoach, effacerBrouillon } from './QuestionnaireCoach.jsx';
@@ -51,6 +51,8 @@ const MAIL = 'contact@belfit.be';
 // Interrupteur (26/09, demande de Raci) : questionnaire en relecture,
 // masque en ligne tant qu'il n'est pas valide. true = commandes ouvertes.
 export const COMMANDES_OUVERTES = false;
+// 68.00 -> « 68 », 53.60 -> « 53,60 » (affichage du prix donne par le serveur)
+const prixCourt = (m) => { const t = String(m); return (/\.00$/.test(t) ? t.slice(0, -3) : t).replace('.', ','); };
 // 24/10 : le serveur (mollieEtat) peut ouvrir le paiement a UN compte autorise
 // (test Mollie sur le telephone de Raci) sans l'ouvrir aux autres clients.
 // Lire .value dans un composant le fait se mettre a jour tout seul.
@@ -135,6 +137,9 @@ function RetourPaiement({ retour }) {
 }
 
 export function CoachPage() {
+  const [saisieCode, setSaisieCode] = useState('');     // code de reduction tape
+  const [msgCode, setMsgCode] = useState('');            // erreur affichee sous le champ
+  const [verifCode, setVerifCode] = useState(false);     // verification en cours
   const [achat, setAchat] = useState(null);      // modale de paiement : 'plan' | 'maj' | null
   const [adulte, setAdulte] = useState(null);    // question eliminatoire : 'oui' | 'non'
   const [tca, setTca] = useState(null);          // suivi pour un trouble alimentaire : 'oui' | 'non'
@@ -201,10 +206,42 @@ export function CoachPage() {
     try { localStorage.setItem('belfit_accord_inv', JSON.stringify(a)); } catch (e) { /* rien */ }
     setAccordInv(a); setAchat(null); setRemplir(typeAchat);
   };
+  // Code de reduction (28/10) : premier plan seulement, jamais pour les 60 €. Le prix affiche
+  // vient du serveur, qui recalcule tout au paiement.
+  const red = reduction.value;
+  const appliquerCode = () => {
+    if (verifCode) return;
+    setVerifCode(true); setMsgCode('');
+    verifierCodeReduction(saisieCode).then(r => { if (!r.ok) setMsgCode(r.message); }).finally(() => setVerifCode(false));
+  };
+  const retirerCode = () => { reduction.value = null; setMsgCode(''); setSaisieCode(''); };
+  // Champ « Code de réduction » : meme bloc sous le prix de l'offre (premier mois) et dans la fenetre « Reprendre · 80 € ».
+  const blocCode = (idChamp) => (
+            <div class="cp-code">
+              {red ? (
+                <p class="cp-code-ok" role="status">Code <b>{red.code}</b>&nbsp;: −{red.pourcent}&nbsp;% appliqué. Tu paies <b>{prixCourt(red.montant)} €</b> au lieu de 80 €. <button class="cp-code-lien" onClick={retirerCode}>Retirer</button></p>
+              ) : (
+                <form class="cp-code-form" onSubmit={(e) => { e.preventDefault(); appliquerCode(); }}>
+                  <label class="cp-code-lib" for={idChamp}>Code de réduction</label>
+                  <div class="cp-code-ligne">
+                    <input id={idChamp} class="cp-code-champ" type="text" inputMode="text" autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false}
+                      maxLength={40} placeholder="Ton code" value={saisieCode} aria-invalid={msgCode ? 'true' : undefined} aria-describedby={msgCode ? idChamp + '-err' : undefined}
+                      onInput={(e) => { setSaisieCode(e.target.value); if (msgCode) setMsgCode(''); }} />
+                    <button type="submit" class="cp-code-bt" disabled={verifCode || !saisieCode.trim()}>{verifCode ? '…' : 'Appliquer'}</button>
+                  </div>
+                  {msgCode && <p id={idChamp + '-err'} class="cp-code-err" role="alert">{msgCode}</p>}
+                </form>
+              )}
+            </div>
+          
+  );
   const payer = () => {
     const lien = LIENS_COACH[achat];
     if (paiementOuvert.value) {
-      payerMollie(achat).catch(() => alert('Le paiement n\'a pas pu démarrer. Réessaie ou écris à ' + MAIL + '.'));
+      payerMollie(achat, achat === 'plan' && red ? red.code : undefined).catch((e) => {
+        if (e && e.messageCode) { reduction.value = null; setMsgCode(e.messageCode); setAchat(null); return; }   // le code n'est plus valable : on revient au champ
+        alert('Le paiement n\'a pas pu démarrer. Réessaie ou écris à ' + MAIL + '.');
+      });
     } else if (!lien) {
       const sujet = achat === 'maj' ? 'Continuer mon coaching (mois suivant)' : 'Mon premier mois de coaching';
       window.location.href = `mailto:${MAIL}?subject=${encodeURIComponent(sujet)}`;
@@ -298,8 +335,13 @@ export function CoachPage() {
       {!occupe && !pr && <p class="cp-sec">TARIFS</p>}
       {!occupe && !pr && (
         <div class="cp-carte cp-carte--or cp-offre">
-          <div class="cp-ligne"><span class="cp-nom">Premier mois</span><span class="cp-prix">80 €</span></div>
+          <div class="cp-ligne"><span class="cp-nom">Premier mois</span>
+            {red && paiementOuvert.value
+              ? <span class="cp-prix-bloc"><s class="cp-prix-barre" aria-label="Prix normal 80 euros">80 €</s><span class="cp-prix cp-prix--promo">{prixCourt(red.montant)} €</span></span>
+              : <span class="cp-prix">80 €</span>}
+          </div>
           <p class="cp-txt">{'Un mois de coaching\u00A0: bilan complet, plan alimentaire écrit pour toi, livré sous 48\u00A0h, ajustements inclus pendant le mois.'}</p>
+          {commandesOuvertes() && paiementOuvert.value && blocCode('cp-code-champ')}
           {commandesOuvertes()
             ? <button class="cp-bt cp-bt--or" onClick={() => ouvrirAchat('plan')}>Demander mon plan</button>
             : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
@@ -312,10 +354,11 @@ export function CoachPage() {
         <div class="pg-coach cp-portail"><div class="cp-voile" onClick={(e) => { if (e.target === e.currentTarget) setAchat(null); }}>
           <div class="cp-modale" role="dialog" aria-modal="true">
             {paiementOuvert.value && modeTest.value && !viaInv && <p class="qc-alerte">Mode test&nbsp;: paiement fictif, aucun argent n'est débité.</p>}
-            <p class="cp-nom">{typeAchat === 'maj' ? 'Mois suivant · 60 €' : (pr ? 'Nouveau mois · 80 €' : 'Premier mois · 80 €')}</p>
+            <p class="cp-nom">{typeAchat === 'maj' ? 'Mois suivant · 60 €' : ((pr ? 'Nouveau mois' : 'Premier mois') + ' · ' + (red && !viaInv ? `${prixCourt(red.montant)} € (au lieu de 80 €)` : '80 €'))}</p>
             <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>
             {/* 02/10 : avantage IA annonce explicitement avant le paiement. */}
             <p class="cp-txt cp-inclus">Inclus&nbsp;: analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>
+            {typeAchat === 'plan' && !viaInv && pr && paiementOuvert.value && <div class="cp-code-modale">{blocCode('cp-code-champ-modale')}</div>}
             {typeAchat === 'plan' && (
               <div class="cp-elim">
                 <p class="cp-q">As-tu 18 ans ou plus&nbsp;?</p>
