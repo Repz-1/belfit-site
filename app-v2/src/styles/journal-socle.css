@@ -3567,20 +3567,59 @@ html.avec-avis .pg-besoins { padding-top: var(--haut-avis, 0px); }
 .pg-journal .mc-plan-btn--mange { background: var(--or); border-color: var(--or); color: #2B2100; }
 .pg-journal .mc-plan-btn--autre { flex: 1.7 1 0; }
 .pg-journal .mc-plan-btn:active { transform: scale(.97); }
-/* 25/10 « Autre idee » : discret, sous les trois boutons du plan. */
-.pg-journal .mc-idee { padding: 0 16px 10px; }
-.pg-journal .mc-idee-txt { margin: 0 0 6px; font-size: 12.5px; line-height: 1.4; color: #5C4A1E; }
-.pg-journal .mc-idee-plan { color: #8A8A8A; }
-.pg-journal .mc-idee-verif { display: block; color: #8A6A1E; font-size: 12px; }
-.pg-journal .mc-idee-msg { margin: 0 0 6px; font-size: 12.5px; color: #8A6A1E; }
-.pg-journal .mc-idee-actions { display: flex; gap: 14px; align-items: center; }
-.pg-journal .mc-idee-btn {
-  min-height: 44px; padding: 0 4px; background: none; border: none; cursor: pointer;
-  font: inherit; font-size: 13px; font-weight: 600; color: #8A6A1E; text-decoration: underline;
-  text-underline-offset: 3px; -webkit-tap-highlight-color: transparent;
+/* 25/10 « Autre idee », refait le 28/10 (Raci : bouton plus beau + quantites en grammes).
+   Memes couleurs, arrondis et bordures que les boutons du plan (.mc-plan-btn) :
+   pilule 44 px, bordure doree #E6D9B5, fond creme, texte brun #5C4A1E. */
+.pg-journal .mc-idee { padding: 0 14px 14px; }
+.pg-journal .mc-idee-fiche {
+  margin: 0 0 10px; padding: 12px 14px 10px; border-radius: 16px;
+  background: var(--or-creme, #FFFBEF); border: 1.5px solid #E6D9B5;
+  animation: mc-idee-entree .22s ease-out both;
 }
-.pg-journal .mc-idee-btn--retour { color: #6B6B6B; font-weight: 500; }
-.pg-journal .mc-idee-btn:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; border-radius: 6px; }
+.pg-journal .mc-idee-fiche p { margin: 0; }
+.pg-journal .mc-idee-etiq { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--or-fonce, #8F6200); }
+.pg-journal .mc-idee-nom { margin-top: 2px !important; font-size: 15px; font-weight: 700; line-height: 1.3; color: var(--texte, #191919); }
+.pg-journal .mc-idee-kcal { margin-top: 2px !important; font-size: 13px; color: #5C4A1E; }
+.pg-journal .mc-idee-kcal b { font-weight: 700; }
+.pg-journal .mc-idee-plan { color: var(--texte-3, #8E8B85); }
+.pg-journal .mc-idee-macros { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.pg-journal .mc-idee-macros span {
+  padding: 3px 9px; border-radius: 999px; font-size: 12px; color: #5C4A1E;
+  background: var(--or-pale, #FFF4CC);
+}
+.pg-journal .mc-idee-macros b { font-weight: 700; color: var(--texte, #191919); }
+.pg-journal .mc-idee-liste { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid #EFE4C4; }
+.pg-journal .mc-idee-liste li {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 7px 0; border-bottom: 1px solid #F3EAD0; font-size: 14px; line-height: 1.3;
+}
+.pg-journal .mc-idee-liste li:last-child { border-bottom: none; }
+.pg-journal .mc-idee-ing { min-width: 0; color: var(--texte, #191919); }
+.pg-journal .mc-idee-qte { flex: none; font-weight: 700; color: #5C4A1E; font-variant-numeric: tabular-nums; text-align: right; }
+.pg-journal .mc-idee-verif { margin-top: 6px !important; color: #8A6A1E; font-size: 12px; line-height: 1.35; }
+.pg-journal .mc-idee-msg { margin: 0 0 8px; font-size: 12.5px; color: #8A6A1E; }
+.pg-journal .mc-idee-actions { display: flex; gap: 8px; align-items: stretch; }
+.pg-journal .mc-idee-btn {
+  flex: 1 1 0; min-width: 0; min-height: 44px; padding: 0 14px; border-radius: 22px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--or-creme, #FFFBEF); border: 1.5px solid #E6D9B5; color: #5C4A1E;
+  font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(var(--or-trait-rvb, 176, 116, 0), .10);
+  transition: transform .12s ease, background-color .15s, border-color .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pg-journal .mc-idee-btn:active { transform: scale(.97); background: var(--or-pale, #FFF4CC); border-color: var(--or, #F8CF01); }
+.pg-journal .mc-idee-ic { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--or-trait, #B07400); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.pg-journal .mc-idee-ic--tour { animation: mc-idee-tour .45s ease-out; }
+.pg-journal .mc-idee-btn--retour { flex: 0 1 auto; background: #fff; color: #6B6B6B; font-weight: 500; box-shadow: none; border-color: var(--bordure, #E5E3DE); }
+.pg-journal .mc-idee-btn--retour:active { background: #F4F4F2; border-color: #D8D6D0; }
+.pg-journal .mc-idee-btn:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+@keyframes mc-idee-tour { from { transform: rotate(0); } to { transform: rotate(180deg); } }
+@keyframes mc-idee-entree { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .pg-journal .mc-idee-fiche, .pg-journal .mc-idee-ic--tour { animation: none; }
+  .pg-journal .mc-idee-btn { transition: none; }
+}
 .pg-journal .mc.mc--saute { background: #F4F4F2; border: 1.5px solid #E4E4E0; box-shadow: none; }
 .pg-journal .mc.mc--saute .mc-vignette { opacity: .35; filter: grayscale(1); }
 .pg-journal .mc.mc--saute .mc-titre { color: #8A8A8A; text-decoration: line-through; }
