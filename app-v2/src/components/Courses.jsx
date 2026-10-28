@@ -8,6 +8,7 @@ import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { t } from '../i18n/index.js';
 import { allerOnglet } from './BottomNav.jsx';
+import { ecritureBloquee } from '../store/acces-nutrition.js';
 
 // ============================================================
 // MES COURSES
@@ -133,7 +134,7 @@ export function Courses() {
   };
   const base = baseJournee.value;
 
-  const maj = (o) => { courses.value = { ...courses.value, ...o }; };
+  const maj = (o) => { if (ecritureBloquee()) return; courses.value = { ...courses.value, ...o }; };
 
   const generer = () => maj({ genere: true });
 

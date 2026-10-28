@@ -1,0 +1,17 @@
+/* Carte « Alimentation fermee » (blocage alimentation). Palette Coach. */
+.vr-carte { position: relative; background: #fff; border: 1px solid #DFE3E1; border-radius: 18px; padding: 22px 18px 18px; margin: 12px 0; overflow: hidden; }
+.vr-trait { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: #F5C518; }
+.vr-kicker { font-size: 11px; letter-spacing: .6px; color: #55685D; font-weight: 600; margin: 0 0 6px; }
+.vr-titre { font-size: 20px; line-height: 1.2; font-weight: 700; color: #1B2A22; margin: 0 0 8px; }
+.vr-txt { font-size: 14px; color: #3E5046; margin: 0 0 12px; }
+.vr-liste { list-style: none; margin: 0 0 14px; padding: 0; }
+.vr-liste li { font-size: 14px; color: #1B2A22; padding: 5px 0 5px 24px; position: relative; }
+.vr-liste li::before { content: '✓'; position: absolute; left: 0; color: #2E7D52; font-weight: 700; }
+.vr-bt { width: 100%; border: 0; border-radius: 14px; padding: 14px; font-size: 16px; font-weight: 700; background: #2E7D52; color: #fff; }
+.vr-bt--gris { background: #ECEFED; color: #55685D; }
+.vr-pied { font-size: 12px; color: #55685D; text-align: center; margin: 10px 0 0; }
+/* Lecture seule : la quantite s'affiche comme un texte, pas comme un champ. */
+.mc-ing-champ--lecture { font-weight: 700; color: #1B2A22; min-width: 44px; text-align: right; }
+
+/* Alimentation fermee : le calcul reste consultable, « Appliquer » est grise. */
+.calc-appliquer[aria-disabled="true"]{opacity:.4;pointer-events:none}

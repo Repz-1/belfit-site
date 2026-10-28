@@ -51,6 +51,20 @@ import { MealPage } from './components/MealPage.jsx';
 import { repasOuvertId } from './components/MealCard.jsx';
 import { MesPlats } from './components/MesPlats.jsx';
 import { absenceLongue, decider } from './services/accueil-frequence.js';
+import { commandesSimulees, lectureSeule, offreVisible, causeFermeture, finAccesMs } from './store/acces-nutrition.js';
+import { AlimentationVerrouillee } from './components/AlimentationVerrouillee.jsx';
+import { commandesOuvertes } from './components/CoachPage.jsx';
+
+// Option B (27/10) : sans acces nutrition actif, le Journal reste visible en
+// LECTURE SEULE (historique), avec la carte d'offre au-dessus. Tout est inactif
+// tant que le blocage n'est pas applique (voir store/acces-nutrition.js).
+function CarteOffreAlimentation() {
+  if (!offreVisible.value) return null;
+  const f = finAccesMs.value;
+  const fin = f ? new Date(f).toLocaleDateString('fr-BE', { day: 'numeric', month: 'long' }) : null;
+  const cmd = commandesSimulees.value !== null ? commandesSimulees.value : commandesOuvertes();
+  return <AlimentationVerrouillee cause={causeFermeture.value} fin={fin} commandesOuvertes={cmd} />;
+}
 
 export function OngletJournal() {
   const [modale, setModale] = useState(false);
@@ -65,10 +79,11 @@ export function OngletJournal() {
     <div class="pg-journal">
       <div class="colonne">
         <Entete />
+        <CarteOffreAlimentation />
         <DayDashboard />
         {/* La pilule vit dans la carte Calories ; ici, uniquement le
             panneau qui se deplie, juste sous elle. */}
-        <IdeesRepas panneauSeul />
+        {!lectureSeule.value && <IdeesRepas panneauSeul />}
         <div class="fente-goutte" aria-hidden="true" />
         <WeightNote />
         <div class="jr-repas-kicker">{t('tes_repas')}</div>
@@ -94,12 +109,12 @@ export function OngletJournal() {
         })()}
         {/* L'ajout d'un repas vit desormais dans le flux, sous le
             dernier repas — plus de bouton flottant jaune (Raci). */}
-        <div class="ajout-repas-rang">
+        {!lectureSeule.value && <div class="ajout-repas-rang">
           <button class="ajout-repas" onClick={() => setModale(true)}>
             <svg viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13" /></svg>
             {t('add_meal_btn')}
           </button>
-        </div>
+        </div>}
 
         {/* La ligne « Liste de courses » vivait ici. Retiree le 8/08 (Raci) :
             elle allongeait le Journal pour une entree deja presente dans
@@ -114,13 +129,13 @@ export function OngletJournal() {
         <WaterTracker />
       </div>
 
-      {modale && <AddMealModal montre={true} fermer={() => setModale(false)} />}
+      {modale && !lectureSeule.value && <AddMealModal montre={true} fermer={() => setModale(false)} />}
       {/* Ouvert depuis Mon programme, le calculateur y ramene : sa
           fleche annonce la destination, et la fermeture rebascule sur
           l'onglet BelFit+ ou la page est restee ouverte. Sans ca, on
           atterrissait sur le Journal, trois ecrans plus loin que d'ou
           l'on venait. */}
-      {ouvrirMesPlats.value && <MesPlats fermer={() => { ouvrirMesPlats.value = false; }} />}
+      {ouvrirMesPlats.value && !lectureSeule.value && <MesPlats fermer={() => { ouvrirMesPlats.value = false; }} />}
     </div>
   );
 }
@@ -366,7 +381,7 @@ export function App() {
     ouvrirCalcDemande.value = false;
     // Plan coach actif : les objectifs viennent du plan (27/09), le
     // calcul n'est plus ouvert.
-    if (!planCoachActif.value) {
+    if (!planCoachActif.value && !lectureSeule.value) {
       if (estPremium.value || !calculBaseFait.value) besoinsOuverts.value = true;
       else ongletActif.value = 'premium';
     }
@@ -758,7 +773,7 @@ export function App() {
           );
         })}
       </div>
-      {onglet === 'courses' && (
+      {onglet === 'courses' && !lectureSeule.value && (
         <div class="app-scroll couche-courses">
           <div class="conteneur conteneur--nu"><Courses /></div>
         </div>

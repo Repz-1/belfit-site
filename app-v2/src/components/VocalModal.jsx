@@ -164,7 +164,7 @@ export function VocalModal({ fermer, repasId }) {
         signal: coupe.signal,
       }).finally(() => clearTimeout(minuteur));
       setMsg('Analyse en cours…');
-      if (rep.status === 403) { setMsg(''); setEtat('pret'); setErreur('Réservé Premium (serveur).'); return; }
+      if (rep.status === 403) { let c = ''; try { c = (await rep.json()).error || ''; } catch (e) {} setMsg(''); setEtat('pret'); setErreur(c === 'acces_nutrition' ? "L'alimentation est fermée : l'ajout vocal est réservé à l'offre." : 'Réservé Premium (serveur).'); return; }
       // Quota IA du jour atteint (02/10) : compte par le serveur.
       if (rep.status === 429) { let lim = ''; try { lim = (await rep.json()).limite || ''; } catch (e) {} setMsg(''); setEtat('pret'); setErreur('Tu as utilisé tes ' + lim + ' analyses IA d\'aujourd\'hui. Reviens demain.'); return; }
       if (!rep.ok) {

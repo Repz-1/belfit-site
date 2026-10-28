@@ -12,6 +12,7 @@ import { ideesOuvertes, origineIdees } from './IdeesRepas.jsx';
 import { origineCourses } from './Courses.jsx';
 import { Entete } from './Entete.jsx';
 import { dateBruxelles, resoudreProgramme } from '../store/plans-par-date.js';
+import { lectureSeule, poserAcces, chargerAccesLocal, poserAccesInvite, poserBlocageDistant } from '../store/acces-nutrition.js';
 import '../styles/belfit-plus.css';
 
 const URL_AJUSTEMENT =
@@ -84,6 +85,12 @@ const lireDocUtilisateur = (uid) =>
   import('firebase/firestore').then(({ getFirestore, doc, getDoc }) =>
     getDoc(doc(getFirestore(getApps()[0]), 'users', uid)))
     .then(s => (s.exists() ? s.data() : null));
+/** Interrupteur serveur config/acces (null si illisible : on garde la derniere valeur connue). */
+const lireBlocageDistant = () =>
+  import('firebase/firestore').then(({ getFirestore, doc, getDoc }) =>
+    getDoc(doc(getFirestore(getApps()[0]), 'config', 'acces')))
+    .then(s => (s.exists() && s.data().blocage === true), () => null)
+    .catch(() => null);
 let lecteurProgramme = lireDocUtilisateur;
 /** Banc d'essai uniquement : remplace la lecture Firestore (sans argument : la remet). */
 export function poserLecteurProgramme(f) { lecteurProgramme = f || lireDocUtilisateur; }
@@ -115,6 +122,7 @@ effect(() => {
   const pr = programme.value;
   const o = objectifs.value;
   if (!pr || !(+pr.kcal > 0)) return;
+  if (lectureSeule.value) return;   // alimentation fermee : reprend a l'ouverture de l'acces
   if (o.kcal === pr.kcal && o.prot === pr.prot && o.carbs === pr.carbs && o.lip === pr.lip) return;
   setObjectifs({ kcal: pr.kcal, prot: pr.prot, carbs: pr.carbs, lip: pr.lip });
 });
@@ -132,6 +140,7 @@ effect(() => {
   const pr = programme.value;
   if (!pr || !Array.isArray(pr.repas) || !pr.repas.length) return;
   if (!donneesPretes.value) return;   // journal du compte pas encore charge
+  if (lectureSeule.value) return;     // alimentation fermee : rien n'est pose, rien n'est marque
   const u = utilisateur.peek();
   const cle = CLE_SEME + '_' + (u ? u.uid : 'local');
   // 26/10 : une nouvelle version du plan (plans par date) rejoue le semis ;
@@ -163,10 +172,16 @@ export function chargerProgramme() {
   } catch (e) { /* stockage indisponible : on suit le chemin normal */ }
 
   const u = utilisateur.value;
-  if (!u || !getApps().length) { programmeCharge.value = true; return; }
+  if (!u || !getApps().length) { if (!u) poserAccesInvite(); programmeCharge.value = true; return; }
+  chargerAccesLocal(u.uid);   // copie locale d'abord (hors-ligne), le serveur ensuite
   derniereLecture = Date.now();
+  // Le blocage serveur (config/acces) se lit a part (plus bas) : s'il est illisible,
+  // on garde la derniere valeur connue au lieu de bloquer ou debloquer.
   lecteurProgramme(u.uid)
     .then(d => {
+      poserAcces(u.uid, d && d.accesNutritionJusqu);
+      // Lu un peu apres le demarrage : la copie locale sert en attendant, et le chargement du journal n'est pas ralenti.
+      setTimeout(() => { lireBlocageDistant().then(v => { if (v !== null) poserBlocageDistant(v); }); }, 4000);
       programmeBrut.value = (d && d.programme) || null;
       dossierCoach.value = { questionnaire: (d && d.questionnaireCoach) || null, commande: (d && d.commandeCoach) || null, brouillon: (d && d.brouillonCoach) || null, accesPro: (d && d.accesPro) || null };
       // 21/10 Raci : ajustements illimites pendant le mois de coaching,
@@ -206,6 +221,7 @@ export function relireProgramme() {
       const c = utilisateur.peek();
       if (!c || c.uid !== uid || chargePour !== uid) return;
       if (!d) return;   // pas de document : rien a corriger
+      poserAcces(uid, d.accesNutritionJusqu);   // un paiement/code recu pendant que l'appli etait ouverte
       const neuf = d.programme || null;
       if (!memeContenu(programmeBrut.peek(), neuf)) programmeBrut.value = neuf;
       const avant = dossierCoach.peek();
@@ -535,25 +551,25 @@ export function BelfitPlus() {
           <Fleche />
         </button>
 
-        {/* 3. Recettes */}
-        <button class="bp-carte" onClick={() => { origineIdees.value = 'premium'; allerOnglet('journal'); ideesOuvertes.value = true; }}>
+        {/* 3. Recettes (fermees sans acces alimentation) */}
+        {!lectureSeule.value && <button class="bp-carte" onClick={() => { origineIdees.value = 'premium'; allerOnglet('journal'); ideesOuvertes.value = true; }}>
           <span class="bp-visuel bp-visuel--recettes" aria-hidden="true" />
           <span class="bp-corps">
             <span class="bp-nom">Recettes intelligentes</span>
             <span class="bp-sous">Des idées adaptées à ton objectif.</span>
           </span>
           <Fleche />
-        </button>
+        </button>}
 
         {/* 4. Courses */}
-        <button class="bp-carte" onClick={() => { origineCourses.value = 'premium'; allerOnglet('courses'); }}>
+        {!lectureSeule.value && <button class="bp-carte" onClick={() => { origineCourses.value = 'premium'; allerOnglet('courses'); }}>
           <span class="bp-visuel bp-visuel--courses" aria-hidden="true" />
           <span class="bp-corps">
             <span class="bp-nom">Liste de courses intelligente</span>
             <span class="bp-sous">Générée automatiquement selon tes repas.</span>
           </span>
           <Fleche />
-        </button>
+        </button>}
       </div>
 
     </div>

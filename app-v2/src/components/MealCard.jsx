@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { DB, NOMS_ALIMENTS, macrosOf, scoreRecherche, facteurCuisson, PAIRES_CUISSON } from '../data/aliments.js';
 import { customFoods, Scanner } from './Scanner.jsx';
+import { lectureSeule, ecritureBloquee } from '../store/acces-nutrition.js';
 import { VocalModal } from './VocalModal.jsx';
 import { PhotoModal } from './PhotoModal.jsx';
 import { signal, effect } from '@preact/signals';
@@ -123,6 +124,8 @@ export function LigneIngredient({ repasId, ing }) {
   // Aliment dont le nom porte deja la cuisson : la bascule existe
   // quand meme, elle change d'entree au lieu de convertir.
   const paire = fc ? null : PAIRES_CUISSON[ing.name];
+  // Alimentation fermee : historique en lecture seule (pas de champ, pas de croix).
+  const ro = lectureSeule.value;
 
   // La valeur peut changer ailleurs (vocal, scan) : on resynchronise.
   useEffect(() => { setSaisie(String(ing.portion)); }, [ing.portion]);
@@ -159,7 +162,7 @@ export function LigneIngredient({ repasId, ing }) {
 
         {/* Cru ou cuit : les valeurs d'etiquette valent pour le produit
             cru, alors qu'on pese le plus souvent apres cuisson. */}
-        {fc && (
+        {fc && !ro && (
           <button
             class={'mc-ing-cuisson' + (ing.cuit ? ' est-cuit' : '')}
             onClick={() => basculerCuisson(repasId, ing.id)}
@@ -168,7 +171,7 @@ export function LigneIngredient({ repasId, ing }) {
             <span class={ing.cuit ? 'actif' : ''}>cuit</span>
           </button>
         )}
-        {paire && (
+        {paire && !ro && (
           <button
             class={'mc-ing-cuisson' + (paire.cuit ? ' est-cuit' : '')}
             onClick={() => remplacerAliment(repasId, ing.id, paire.autre)}
@@ -179,6 +182,9 @@ export function LigneIngredient({ repasId, ing }) {
         )}
       </div>
 
+      {ro ? (
+        <div class="mc-ing-champ mc-ing-champ--lecture">{ing.portion}</div>
+      ) : (
       <div class="mc-ing-champ">
         <input
           ref={champQte}
@@ -195,6 +201,7 @@ export function LigneIngredient({ repasId, ing }) {
           }}
         />
       </div>
+      )}
       <span class="mc-ing-unite">{d.unit ? (d.unitLabel || 'pièce') : 'g'}</span>
 
       <div class="mc-ing-macros">
@@ -204,7 +211,7 @@ export function LigneIngredient({ repasId, ing }) {
         </div>
       </div>
 
-      <button class="mc-ing-del" onClick={() => supprimerIngredient(repasId, ing.id)} aria-label="Retirer">✕</button>
+      {!ro && <button class="mc-ing-del" onClick={() => supprimerIngredient(repasId, ing.id)} aria-label="Retirer">✕</button>}
     </div>
   );
 }
@@ -417,7 +424,7 @@ export function Recherche({ repasId, phCourt }) {
         />
         <button
           class="mc-scan"
-          onClick={() => { if (estPremium.value) setScan(true); else ongletActif.value = 'premium'; }}
+          onClick={() => { if (ecritureBloquee()) return; if (estPremium.value) setScan(true); else ongletActif.value = 'premium'; }}
           aria-label="Scanner un code-barres"
         >
           <svg viewBox="0 0 24 24" class="ic" aria-hidden="true">
@@ -428,7 +435,7 @@ export function Recherche({ repasId, phCourt }) {
         {/* Les entrees IA vivent la ou l'on remplit le repas (Raci). */}
         <button
           class="mc-scan"
-          onClick={() => { if (estPremium.value) setIaVocal(true); else ongletActif.value = 'premium'; }}
+          onClick={() => { if (ecritureBloquee()) return; if (estPremium.value) setIaVocal(true); else ongletActif.value = 'premium'; }}
           aria-label="Ajout vocal"
         >
           <svg viewBox="0 0 24 24" class="ic" aria-hidden="true">
@@ -439,7 +446,7 @@ export function Recherche({ repasId, phCourt }) {
         </button>
         <button
           class="mc-scan"
-          onClick={() => { if (estPremium.value) setIaPhoto(true); else ongletActif.value = 'premium'; }}
+          onClick={() => { if (ecritureBloquee()) return; if (estPremium.value) setIaPhoto(true); else ongletActif.value = 'premium'; }}
           aria-label="Photo d'assiette"
         >
           <svg viewBox="0 0 24 24" class="ic" aria-hidden="true">
@@ -541,6 +548,8 @@ export function MealCard({ r, aSuivre, fait }) {
   };
   const vide = r.ings.length === 0;
   const [edite, setEdite] = useState(false);
+  // Alimentation fermee : on consulte, on ne modifie rien (ni cases, ni boutons).
+  const ro = lectureSeule.value;
   // 22/10 : etat d'un repas du plan — prevu, mange, saute, autre (remplace).
   const choisi = r.duPlan && (r.saute || r.remplace);
   // Trois zones : vignette, contenu, actions.
@@ -549,7 +558,7 @@ export function MealCard({ r, aSuivre, fait }) {
   // l'un en haut, l'autre au milieu.
   return (
     <div class={'mc' + (aSuivre ? ' mc--suivant' : '') + (fait ? ' mc--fait' : '') + (r.prevu ? ' mc--prevu' : '') + (r.saute ? ' mc--saute' : '') + (r.remplace ? ' mc--autre' : '') + (r.duPlan ? ' mc--plan' : '')}>
-      <div class="mc-tete" onClick={() => { if (!edite) repasOuvertId.value = r.id; }}>
+      <div class="mc-tete" onClick={() => { if (!edite && !(ro && vide)) repasOuvertId.value = r.id; }}>
 
         <div class="mc-vignette" dangerouslySetInnerHTML={{ __html: illustration(r) }} />
 
@@ -580,13 +589,13 @@ export function MealCard({ r, aSuivre, fait }) {
 
         <div class="mc-actions">
           {/* 22/10 Raci : repas du plan coche en un geste, decochable. */}
-          {choisi && (
+          {choisi && !ro && (
             <button class="mc-annuler" aria-label={`Remettre ${r.nom} en prévu`}
               onClick={e => { e.stopPropagation(); remettrePrevu(r.id); }}>
               <svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5" /><path d="M4 9h10a6 6 0 010 12h-3" /></svg>
             </button>
           )}
-          {r.duPlan && !vide && !choisi && !r.prevu && (
+          {!ro && r.duPlan && !vide && !choisi && !r.prevu && (
             <button
               class="mc-coche mc-coche--fait"
               role="checkbox"
@@ -597,26 +606,26 @@ export function MealCard({ r, aSuivre, fait }) {
               <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
             </button>
           )}
-          {!r.duPlan && <button
+          {!ro && !r.duPlan && <button
             class="mc-crayon"
             onClick={e => { e.stopPropagation(); setEdite(true); }}
             aria-label="Renommer"
           >
             <svg viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
           </button>}
-          {!r.fixe && (
+          {!ro && !r.fixe && (
             <button
               class="mc-suppr"
               onClick={e => { e.stopPropagation(); supprimerRepas(r.id); }}
               aria-label="Supprimer ce repas"
             >✕</button>
           )}
-          <span class="mc-chevron mc-chevron--nav" aria-hidden="true">›</span>
+          {!(ro && vide) && <span class="mc-chevron mc-chevron--nav" aria-hidden="true">›</span>}
         </div>
       </div>
       {/* 24/10 Raci : renommer un repas du plan. Bouton HORS de .mc-tete (donc il
           n'ouvre jamais la fiche), cale juste a gauche du chevron. */}
-      {r.duPlan && !edite && (
+      {!ro && r.duPlan && !edite && (
         <button class="mc-renommer" aria-label={`Renommer ${r.nom}`}
           onClick={e => { e.stopPropagation(); setEdite(true); }}>
           <svg viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
@@ -626,7 +635,7 @@ export function MealCard({ r, aSuivre, fait }) {
       {/* 24/10 Raci : les trois issues d'un repas du plan sont visibles d'emblee,
           HORS de la zone qui ouvre la fiche (.mc-tete) : aucun clic ici n'ouvre le repas,
           sauf « Mangé autre chose » qui ouvre la page pour noter ce qui a ete mange. */}
-      {r.duPlan && r.prevu && !r.remplace && !vide && (
+      {!ro && r.duPlan && r.prevu && !r.remplace && !vide && (
         <div class="mc-plan" role="group" aria-label={`Que s'est-il passé pour ${r.nom} ?`} onClick={e => e.stopPropagation()}>
           <button class="mc-plan-btn mc-plan-btn--mange" onClick={e => { e.stopPropagation(); validerRepas(r.id); }}>✓ Mangé</button>
           <button class="mc-plan-btn mc-plan-btn--saute" onClick={e => { e.stopPropagation(); sauterRepas(r.id); }}>Sauté</button>

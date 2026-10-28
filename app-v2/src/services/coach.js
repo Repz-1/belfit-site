@@ -29,8 +29,12 @@ export async function demanderCoach(message, contexte) {
     throw e;
   }
   if (rep.status === 403) {
-    const e = new Error('not_premium');
-    e.code = 'not_premium';
+    // 403 « acces_nutrition » : alimentation fermee (blocage), distinct de « not_premium ».
+    let corps = null;
+    try { corps = await rep.json(); } catch (x) { /* corps illisible */ }
+    const fermee = !!corps && corps.error === 'acces_nutrition';
+    const e = new Error(fermee ? 'acces_nutrition' : 'not_premium');
+    e.code = fermee ? 'acces_nutrition' : 'not_premium';
     throw e;
   }
   if (rep.status === 404) {

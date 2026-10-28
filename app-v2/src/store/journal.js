@@ -4,6 +4,7 @@ import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { enregistrerJour } from './stats.js';
 import { aujourdhuiBxl } from './plans-par-date.js';
+import { ecritureBloquee, lectureSeule } from './acces-nutrition.js';
 
 // ============================================================
 // STORE DU JOURNAL v2
@@ -59,6 +60,10 @@ export const profilBesoins = signal(null);
 export const rappelIgnoreA = signal(null);
 // Contenance de la bouteille du suivi d'hydratation (litres).
 export const tailleBouteille = signal(1.5);
+// Jour (UTC, comme dateJour) de la derniere saisie d'eau. Sert uniquement quand
+// l'alimentation est fermee : la cloture est alors impossible, l'eau, elle,
+// reste libre et repart de zero chaque jour.
+export const eauDate = signal(null);
 
 // 27/10 : « aujourd'hui » = jour de Bruxelles (etait le jour UTC, qui change
 // a 01h/02h belges : la cloture et le clignotement arrivaient trop tard).
@@ -95,6 +100,7 @@ effect(() => {
       ? completerMacros(d.objectifs, (d && typeof d.poidsCalcul === 'number') ? d.poidsCalcul : null)
       : structuredClone(DEFAUTS.objectifs);
     eau.value = d && typeof d.eau === 'number' ? d.eau : 0;
+    eauDate.value = (d && typeof d.eauDate === 'string') ? d.eauDate : null;
     dateJour.value = (d && d.dateJour) || aujourdhui();
     calculBaseFait.value = !!(d && d.calculBaseFait);
     poidsCalcul.value = (d && typeof d.poidsCalcul === 'number') ? d.poidsCalcul : null;
@@ -159,7 +165,7 @@ function migrerRepas(liste) {
 
 // --- Sauvegarde automatique par compte : local immediat + cloud differe. ---
 effect(() => {
-  const instantane = { repas: repas.value, objectifs: objectifs.value, eau: eau.value, dateJour: dateJour.value, calculBaseFait: calculBaseFait.value, poidsCalcul: poidsCalcul.value, profilBesoins: profilBesoins.value, rappelIgnoreA: rappelIgnoreA.value, tailleBouteille: tailleBouteille.value };
+  const instantane = { repas: repas.value, objectifs: objectifs.value, eau: eau.value, dateJour: dateJour.value, calculBaseFait: calculBaseFait.value, poidsCalcul: poidsCalcul.value, profilBesoins: profilBesoins.value, rappelIgnoreA: rappelIgnoreA.value, tailleBouteille: tailleBouteille.value, eauDate: eauDate.value };
   const u = identite.value;
   if (!u || !donneesPretes.value) return; // ne pas ecraser avant le chargement
   sauvegarder(u, instantane);
@@ -217,6 +223,7 @@ export const kcalRestantes = computed(() =>
 let prochainId = Date.now();
 
 export function setPortion(repasId, ingId, portion) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.map(r =>
     r.id !== repasId ? r : {
       ...r,
@@ -226,6 +233,7 @@ export function setPortion(repasId, ingId, portion) {
 }
 
 export function ajouterIngredient(repasId, name, portion = 100) {
+  if (ecritureBloquee()) return null;   // blocage alimentation : lecture seule
   const id = ++prochainId;
   repas.value = repas.value.map(r =>
     r.id !== repasId ? r : { ...r, ings: [...r.ings, { id, name, portion }] }
@@ -240,6 +248,7 @@ export function ajouterIngredient(repasId, name, portion = 100) {
  * justes sans traitement particulier.
  */
 export function ajouterPlat(repasId, plat, nbPortions = 1) {
+  if (ecritureBloquee()) return null;   // blocage alimentation : lecture seule
   const part = nbPortions / Math.max(1, plat.portions || 1);
   const lignes = (plat.ings || []).map(i => ({
     id: ++prochainId,
@@ -266,6 +275,7 @@ export function ajouterPlat(repasId, plat, nbPortions = 1) {
  * valeurs sont exactes, plutot que d'appliquer un facteur devine.
  */
 export function remplacerAliment(repasId, ingId, nom) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.map(r => r.id !== repasId ? r : {
     ...r,
     ings: r.ings.map(i => i.id !== ingId ? i : { ...i, name: nom, cuit: false }),
@@ -273,6 +283,7 @@ export function remplacerAliment(repasId, ingId, nom) {
 }
 
 export function basculerCuisson(repasId, ingId) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.map(r => r.id !== repasId ? r : {
     ...r,
     ings: r.ings.map(i => i.id !== ingId ? i : { ...i, cuit: !i.cuit }),
@@ -280,12 +291,14 @@ export function basculerCuisson(repasId, ingId) {
 }
 
 export function supprimerIngredient(repasId, ingId) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.map(r =>
     r.id !== repasId ? r : { ...r, ings: r.ings.filter(i => i.id !== ingId) }
   );
 }
 
 export function ajouterRepas(type) {
+  if (ecritureBloquee()) return null;   // blocage alimentation : lecture seule
   const noms = { repas: 'Repas', collation: 'Collation', boisson: 'Boisson' };
   const nb = repas.value.filter(r => r.type === type).length + 1;
   const id = ++prochainId;
@@ -300,11 +313,13 @@ export function ajouterRepas(type) {
 }
 
 export function supprimerRepas(repasId) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.filter(r => r.id !== repasId);
 }
 
 /** Repas prevu -> mange : il compte desormais dans le cadran. */
 export function validerRepas(repasId) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.map(r => r.id === repasId && r.prevu ? { ...r, prevu: false } : r);
 }
 
@@ -321,6 +336,7 @@ export function validerRepas(repasId) {
  * Les autres repas (libres, collations vides...) ne bougent pas.
  */
 export function semerPlan(planRepas) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   const liste = repas.value.map(r => ({ ...r }));
   const nomN = (n) => String(n || '').trim().toLowerCase();
   const cles = new Set();
@@ -376,6 +392,7 @@ export function repasAffiches(liste, planRepas) {
  *  sort du cadran (totauxJour / totauxJourAff ignorent les prevus, la
  *  cloture aussi). Seulement pour les repas venus du plan (duPlan). */
 export function annulerValidation(repasId) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   remettrePrevu(repasId);
 }
 
@@ -387,9 +404,11 @@ export function annulerValidation(repasId) {
  *    il reste « prevu » (hors cadran) jusqu'a « Terminer ».
  *  remettrePrevu annule chacune d'un geste. Seuls les repas duPlan. */
 export function sauterRepas(repasId) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.map(r => r.id === repasId && r.duPlan ? { ...r, prevu: false, saute: true } : r);
 }
 export function mangeAutreChose(repasId) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.map(r => r.id !== repasId || !r.duPlan || r.remplace ? r
     : (() => {   // 25/10 : si une « Autre idee » etait choisie, le PLAN reste ce qui est mis de cote
         const n = { ...r, prevu: true, saute: false, remplace: true, ingsPlan: r.idee ? (r.ingsPlan || []) : r.ings, ings: [] };
@@ -398,6 +417,7 @@ export function mangeAutreChose(repasId) {
       })());
 }
 export function remettrePrevu(repasId) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.map(r => {
     if (r.id !== repasId || !r.duPlan) return r;
     const n = { ...r, prevu: true };
@@ -437,6 +457,7 @@ export function annulerIdee(repasId) {
 }
 
 export function renommerRepas(repasId, nom) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.map(r => r.id !== repasId ? r : { ...r, nom });
 }
 
@@ -449,6 +470,7 @@ export function renommerRepas(repasId, nom) {
 export const clotures = signal(0);
 
 export function nouvelleJournee() {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = structuredClone(DEFAUTS.repas);
   eau.value = 0;
   dateJour.value = aujourdhui();
@@ -462,7 +484,16 @@ export function nouvelleJournee() {
 // la carte Calories. Une journee non cloturee reste ouverte ; la ligne
 // de date affiche alors son vrai jour (« vendredi 7 aout »).
 
+// Alimentation fermee : l'eau (libre) se remet a zero chaque nouveau jour.
+effect(() => {
+  if (!lectureSeule.value || !donneesPretes.value) return;
+  const auj = aujourdhui();
+  if (eauDate.peek() !== auj && eau.peek() > 0) eau.value = 0;
+  if (eauDate.peek() !== auj) eauDate.value = auj;
+});
+
 export function ajouterEau(litres) {
+  eauDate.value = aujourdhui();
   // Precision au millieme : le pas v1 est de 75 ml (0,075 L).
   eau.value = Math.max(0, Math.round((eau.value + litres) * 1000) / 1000);
 }
@@ -506,6 +537,7 @@ export function completerMacros(o, poids) {
 }
 
 export function setObjectifs(nouveaux) {
+  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   const avant = objectifs.value;
   const macrosFournies = ['prot', 'carbs', 'lip'].some(k => nouveaux[k] != null);
   const kcal = +nouveaux.kcal || 0;
