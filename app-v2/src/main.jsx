@@ -50,7 +50,7 @@ import { WeightNote } from './components/WeightNote.jsx';
 import { MealPage } from './components/MealPage.jsx';
 import { repasOuvertId } from './components/MealCard.jsx';
 import { MesPlats } from './components/MesPlats.jsx';
-import { absenceLongue } from './services/accueil-frequence.js';
+import { absenceLongue, decider } from './services/accueil-frequence.js';
 
 export function OngletJournal() {
   const [modale, setModale] = useState(false);
@@ -229,6 +229,14 @@ function AvisAccesInvite() {
  */
 const CLE_CONNU = 'belfit_accueil_connu';
 const modeDirect = !!window.__accueilAttendu;
+// Une ouverture sur cinq (decision prise par le script de index.html, avant le premier rendu).
+// Absent (page lancee sans ce script, banc d'essai) : comme avant, le message est montre.
+const ouvertureAvecMessage = window.__accueilOuverture !== 0;
+function retourAvecMessage() {
+  let st = null;
+  try { st = window.localStorage; } catch (e) { /* stockage refuse : decider tire au sort */ }
+  return decider(st);
+}
 const directSig = signal(modeDirect);
 let cartePromesse = null;
 let splashDirectPret = false;
@@ -262,15 +270,17 @@ function abandonnerDirect(effacer) {
 }
 
 /**
- * Ecran de bienvenue (28/10, Raci). Une fois a chaque ouverture « a froid »,
- * puis au retour au premier plan SEULEMENT apres plus de 30 min d'absence.
+ * Ecran de bienvenue (28/10, Raci). Une ouverture « a froid » sur CINQ (voir
+ * services/accueil-frequence.js), puis au retour au premier plan SEULEMENT apres plus de
+ * 30 min d'absence, avec la meme frequence.
  * Jamais bloquant (un tap le ferme). Seule la decision vit dans le paquet
  * principal ; l'ecran (AccueilJour.jsx) est charge a la demande.
  */
 export function AccueilGarde() {
   const [carte, setCarte] = useState(null);
   const [relance, setRelance] = useState(0);   // +1 a chaque retour apres longue absence
-  const montreePour = useRef(-1);
+  // Ouverture « sans message » : on marque la 1re (relance 0) comme deja traitee.
+  const montreePour = useRef(ouvertureAvecMessage ? -1 : 0);
   const u = utilisateur.value;
   const direct = directSig.value;
   const authOk = authPrete.value;
@@ -280,7 +290,8 @@ export function AccueilGarde() {
     let masqueA = null;
     const f = () => {
       if (document.visibilityState === 'hidden') { masqueA = Date.now(); return; }
-      if (absenceLongue(masqueA, Date.now())) setRelance((n) => n + 1);
+      // Meme frequence (1 sur 5) qu'a l'ouverture : chaque retour apres longue absence compte pour une.
+      if (absenceLongue(masqueA, Date.now()) && retourAvecMessage()) setRelance((n) => n + 1);
       masqueA = null;
     };
     document.addEventListener('visibilitychange', f);

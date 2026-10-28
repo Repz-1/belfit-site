@@ -43,11 +43,13 @@ const MOYEN = { latence: 120, bas: 450 * 1024 };    // ~3,6 Mbit/s : « 4G » mo
 const LENT = { latence: 150, bas: 200 * 1024 };      // ~1,6 Mbit/s : « Slow 4G »
 
 /** Un demarrage complet ; retourne les mesures. */
-async function demarrer({ nom, connu = true, query = '', reduit = false, reseau = LENT, cpu = 4, duree = 9000, sauver = false }) {
+async function demarrer({ nom, connu = true, compteur = null, query = '', reduit = false, reseau = LENT, cpu = 4, duree = 9000, sauver = false }) {
   const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: 'fr-BE', timezoneId: 'Europe/Brussels', deviceScaleFactor: 1, reducedMotion: reduit ? 'reduce' : 'no-preference' });
-  await ctx.addInitScript(([connu]) => {
+  await ctx.addInitScript(([connu, compteur]) => {
     Math.random = () => 0;
     try { if (connu) localStorage.setItem('belfit_accueil_connu', '1'); } catch (e) {}
+    // Frequence 1 sur 5 : compteur d'ouvertures amorce (null = absent = toute premiere ouverture).
+    try { if (compteur !== null && !sessionStorage.getItem('__amorce')) { localStorage.setItem('belfit_accueil_n', String(compteur)); sessionStorage.setItem('__amorce', '1'); } } catch (e) {}
     // mouchard : a chaque image du navigateur, l'opacite cumulee des couches qui couvrent la page
     window.__img = [];
     const opa = (el) => { let a = 1; for (let e = el; e && e !== document.documentElement; e = e.parentElement) a *= parseFloat(getComputedStyle(e).opacity); return a; };
@@ -65,7 +67,7 @@ async function demarrer({ nom, connu = true, query = '', reduit = false, reseau 
     requestAnimationFrame(boucle);
     // bandeau EXEMPLE (ajoute a <html>, hors de #app, ne touche a rien)
     document.addEventListener('DOMContentLoaded', () => { const d = document.createElement('div'); d.textContent = 'EXEMPLE · démarrage simulé · données de test'; d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:2147483647;background:#d00;color:#fff;font:700 12px sans-serif;text-align:center;padding:4px 6px;pointer-events:none'; document.documentElement.appendChild(d); });
-  }, [connu]);
+  }, [connu, compteur]);
   const page = await ctx.newPage();
   const cdp = await ctx.newCDPSession(page);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: cpu });
@@ -79,7 +81,7 @@ async function demarrer({ nom, connu = true, query = '', reduit = false, reseau 
   await page.goto('http://localhost:' + PORT + '/demarrage.html' + query, { waitUntil: 'commit' });
   await page.waitForTimeout(duree);
   await cdp.send('Page.stopScreencast');
-  const mesures = await page.evaluate(() => ({ img: window.__img, marqueur: localStorage.getItem('belfit_accueil_connu'), classes: document.documentElement.className, voiles: document.querySelectorAll('.acc-voile').length }));
+  const mesures = await page.evaluate(() => ({ img: window.__img, marqueur: localStorage.getItem('belfit_accueil_connu'), compteur: localStorage.getItem('belfit_accueil_n'), ouverture: window.__accueilOuverture, classes: document.documentElement.className, voiles: document.querySelectorAll('.acc-voile').length }));
   await ctx.close();
   // images reelles -> disque -> analyse pixel
   const dossier = '/tmp/seq-' + nom; rmSync(dossier, { recursive: true, force: true }); mkdirSync(dossier, { recursive: true });
@@ -116,7 +118,7 @@ const premierOpaque = (img) => { const f = img.find(x => x.vo && x.aV >= SEUIL_C
 /** Images (navigateur) ou la page principale aurait pu etre vue avant que l'accueil soit pret. */
 const fuites = (img) => { const t = premierOpaque(img); return img.filter(x => x.app && x.couv < SEUIL_COUVERT && (t === null || x.t < t)); };
 
-const cas = process.argv[2] ? process.argv[2].split(',') : ['direct-lent', 'direct-moyen', 'direct-donnees-lentes', 'direct-mouvement-reduit', 'sans-accueil-premiere-ouverture', 'deconnecte', 'auth-tres-lente'];
+const cas = process.argv[2] ? process.argv[2].split(',') : ['direct-lent', 'direct-moyen', 'direct-donnees-lentes', 'direct-mouvement-reduit', 'sans-accueil-premiere-ouverture', 'deconnecte', 'auth-tres-lente', 'une-sur-5-avec-message', 'une-sur-5-sans-message', 'une-sur-5-sans-message-lent'];
 async function lancer(n) { return demarrer(DEFS[n]); }
 const DEFS = {
   'direct-lent': { nom: 'reseau-lent', reseau: LENT, query: '', sauver: true },
@@ -125,6 +127,9 @@ const DEFS = {
   'direct-mouvement-reduit': { nom: 'mouvement-reduit', reseau: MOYEN, reduit: true, sauver: false },
   'sans-accueil-premiere-ouverture': { nom: 'sans-marqueur', connu: false, reseau: MOYEN, sauver: true },
   'deconnecte': { nom: 'deconnecte', reseau: MOYEN, query: '?sansutilisateur', sauver: true },
+  'une-sur-5-avec-message': { nom: '1sur5-avec-message', compteur: 0, reseau: MOYEN, sauver: true },
+  'une-sur-5-sans-message': { nom: '1sur5-sans-message', compteur: 2, reseau: MOYEN, sauver: true },
+  'une-sur-5-sans-message-lent': { nom: '1sur5-sans-message-lent', compteur: 4, reseau: LENT, sauver: false },
   'auth-tres-lente': { nom: 'auth-tres-lente', reseau: MOYEN, query: '?auth=3600&donnees=4200', sauver: true },
 };
 
@@ -136,7 +141,7 @@ for (const n of cas) {
   const premiereCreme = r.lignes.findIndex(l => l.hors < 0.1);   // avant : page blanche du navigateur, pas encore la notre
   const pixelFuite = r.lignes.filter((l, i) => i > premiereCreme && l.hors > seuilPixels(n) && (t === null || l.t < t - 60));
   console.log('  ' + r.img.length + ' images navigateur, ' + r.nImages + ' images reelles, accueil opaque a ' + t + ' ms');
-  if (n.startsWith('direct') || n === 'auth-tres-lente') {
+  if (n.startsWith('direct') || n === 'auth-tres-lente' || n === 'une-sur-5-avec-message') {
     ok(t !== null, n + ' : l\'accueil s\'affiche (opaque a ' + t + ' ms)');
     ok(F.length === 0, n + ' : AUCUNE image du navigateur ne laisse voir la page principale avant l\'accueil (' + F.length + ' sur ' + r.img.length + ')' + (F.length ? ' ex. t=' + F[0].t + ' ms couverture=' + F[0].couv : ''));
     ok(pixelFuite.length === 0, n + ' : AUCUNE image reelle (pixels) ne montre la page principale avant l\'accueil (' + pixelFuite.length + '/' + r.nImages + ')' + (pixelFuite.length ? ' ex. t=' + pixelFuite[0].t + ' ms hors-creme=' + pixelFuite[0].hors : ''));
@@ -151,6 +156,22 @@ for (const n of cas) {
     const dernier = r.img[r.img.length - 1];
     ok(!dernier.sp && !dernier.vo && dernier.app, n + ' : a la fin, plus de splash ni de voile, l\'app est la');
     ok(r.marqueur === '1', n + ' : marqueur « connu » conserve');
+  }
+  if (n === 'une-sur-5-avec-message') {
+    ok(r.ouverture === 1 && r.compteur === '1', n + ' : decision « message » prise avant le rendu (window.__accueilOuverture = 1), compteur 0 -> 1');
+  }
+  if (n.startsWith('une-sur-5-sans-message')) {
+    const s0 = r.img.find(x => x.sp), dernier = r.img[r.img.length - 1];
+    ok(r.ouverture === 0 && r.compteur === String((DEFS[n].compteur + 1) % 5), n + ' : decision « pas de message » (window.__accueilOuverture = 0), compteur ' + DEFS[n].compteur + ' -> ' + r.compteur);
+    ok(!/acc-attendu/.test(r.classes) && s0 && /rgb\(244, 243, 240\)/.test(s0.spBg), n + ' : splash habituel (fond #F4F3F0, pas de splash sans logo)');
+    ok(Math.max(...r.img.map(x => x.lS)) > 0.9, n + ' : le logo est bien present sur le splash de chargement (opacite max ' + Math.max(...r.img.map(x => x.lS)) + ')');
+    ok(!r.img.some(x => x.vo) && r.voiles === 0, n + ' : AUCUN message de bienvenue, a aucun moment');
+    ok(!dernier.sp && dernier.app, n + ' : l\'app s\'ouvre directement : plus de splash, l\'app est la');
+    // la page principale n'est jamais vue AVANT que le splash (opaque, avec son logo) ne se retire
+    const tPartie = (r.img.find(x => x.sp && x.aS < 0.99) || {}).t;
+    const fuiteSp = r.img.filter(x => x.app && x.sp && x.aS < 0.99 && x.t < (tPartie ?? 0));
+    ok(r.img.filter(x => x.app && x.sp).every(x => x.aS >= 0.99 || x.t >= (tPartie ?? 0)), n + ' : le splash couvre la page tant qu\'il n\'a pas commence a se retirer (' + fuiteSp.length + ' fuite)');
+    ok(r.marqueur === '1', n + ' : marqueur « connu » inchange');
   }
   if (n === 'sans-accueil-premiere-ouverture') {
     const s0 = r.img.find(x => x.sp);

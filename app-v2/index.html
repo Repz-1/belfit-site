@@ -14,15 +14,27 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#F4F3F0">
-<!-- Accueil « direct » (Raci, 28/10) : a l'ouverture, on sait AVANT le premier rendu si le
-     message de bienvenue va suivre (une ouverture precedente l'a deja affiche, et la personne
-     ne s'est pas deconnectee). Si oui, le splash de chargement n'a pas de logo (meme creme que
-     l'accueil, qui porte le sien) : on ne voit jamais le logo deux fois, ni la page principale
-     entre les deux. Sinon rien ne change. Voir AccueilGarde (main.jsx). -->
+<!-- Message de bienvenue : UNE ouverture sur CINQ (Raci, 28/10 : « sur 5 ouvertures il faut le
+     faire 1 seule fois »). La decision est prise ICI, de facon synchrone, AVANT le premier rendu
+     (copie conforme de `decider`, app-v2/src/services/accueil-frequence.js, qui explique la regle) :
+     compteur local 0-4, message quand il vaut 0 (1re ouverture, puis 6e, 11e...), pas de nouveau
+     comptage dans les 60 s qui suivent un comptage (rechargement), stockage indisponible = tirage 1/5.
+     Resultat : window.__accueilOuverture = 1 (message) ou 0 ; main.jsx ne fait que le lire.
+     Accueil « direct » : si le message va suivre ET qu'une ouverture precedente l'a deja affiche
+     (marqueur) et que la personne ne s'est pas deconnectee, le splash de chargement n'a pas de logo
+     (meme creme que l'accueil, qui porte le sien) : on ne voit jamais le logo deux fois, ni la
+     page principale entre les deux. Sinon rien ne change : le splash garde son logo et l'app
+     s'ouvre directement. Voir AccueilGarde (main.jsx). -->
 <script>
-try{var l=localStorage;if(l.getItem('belfit_accueil_connu')==='1'&&l.getItem('belfit_sortie')!=='1'){
-document.documentElement.className+=' acc-attendu';window.__accueilAttendu=1;
-var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f7f4ef')}}catch(e){}
+(function(){var w=window,ok=false,connu=false,sortie=false,l;
+try{l=localStorage;var now=Date.now(),t=parseInt(l.getItem('belfit_accueil_t'),10);
+if(t>=0&&now-t>=0&&now-t<60000){ok=false}else{var n=parseInt(l.getItem('belfit_accueil_n'),10);if(!(n>=0))n=0;
+ok=n%5===0;l.setItem('belfit_accueil_n',String((n%5+1)%5));l.setItem('belfit_accueil_t',String(now))}}
+catch(e){try{ok=Number((w.__accueilTirage||Math.random)())<0.2}catch(e2){ok=false}}
+w.__accueilOuverture=ok?1:0;
+try{connu=l.getItem('belfit_accueil_connu')==='1';sortie=l.getItem('belfit_sortie')==='1'}catch(e){}
+if(ok&&connu&&!sortie){document.documentElement.className+=' acc-attendu';w.__accueilAttendu=1;
+var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#f7f4ef')}})();
 </script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
