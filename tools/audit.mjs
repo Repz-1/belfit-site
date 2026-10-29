@@ -3347,6 +3347,41 @@ const DECALAGE_SW_V2 = 232;
 }
 
 // ------------------------------------------------------------
+// R91 — Blocage de l'alimentation : le verrou reste coherent (27/10).
+// Raci : « il faut bloquer ca sinon ca n'a aucun interet ». Sans acces
+// actif : lecture seule. Cette regle ne dit pas SI le blocage est allume
+// (c'est une decision de Raci), elle garde le mecanisme en etat :
+// les cles « nutrition » du client = celles des regles Firestore ; chaque
+// action qui ecrit le journal passe par le garde ; aucune adresse reelle
+// dans le script de migration (le depot est public).
+// ------------------------------------------------------------
+{
+  const soucis = [];
+  const cli = lire('app-v2/src/store/acces-nutrition.js');
+  const regles = lire('firestore.rules');
+  const jrn = lire('app-v2/src/store/journal.js');
+  const mig = lire('tools/migration-acces-nutrition.mjs');
+  if (cli && regles) {
+    const liste = (t, re) => ((t.match(re) || [, ''])[1].match(/'([^']+)'/g) || []).sort().join(',');
+    const a = liste(cli, /CLES_NUTRITION = \[([^\]]+)\]/), b = liste(regles, /function nutriCles\(\) \{\s*return \[([^\]]+)\]/);
+    if (!a || a !== b) soucis.push('les cles nutrition du client et des regles Firestore different');
+    if (!/export const BLOCAGE_ALIMENTATION = (true|false);/.test(cli)) soucis.push('le drapeau BLOCAGE_ALIMENTATION a disparu');
+  } else soucis.push('acces-nutrition.js ou firestore.rules introuvable');
+  if (jrn) {
+    for (const f of ['setPortion', 'ajouterIngredient', 'ajouterPlat', 'remplacerAliment', 'basculerCuisson', 'supprimerIngredient', 'ajouterRepas', 'supprimerRepas', 'validerRepas', 'semerPlan', 'annulerValidation', 'sauterRepas', 'mangeAutreChose', 'remettrePrevu', 'renommerRepas', 'nouvelleJournee', 'setObjectifs']) {
+      const m = jrn.match(new RegExp('export function ' + f + '\\([^)]*\\) \\{\\s*\\n?\\s*if \\(ecritureBloquee\\(\\)\\)'));
+      if (!m) soucis.push(f + ' ecrit le journal sans le garde ecritureBloquee()');
+    }
+  }
+  const coachSrv = lire('functions/coach.js');
+  if (coachSrv && !/blocageActif\(db\)[\s\S]{0,120}accesActif\([\s\S]{0,200}acces_nutrition/.test(coachSrv)) soucis.push('le coach IA texte (functions/coach.js) ne verifie plus l\'acces nutrition');
+  if (mig && /premiumSansDate|premium-sans-date/.test(mig)) soucis.push('le cas « ancien abonnement » est revenu dans la migration (aucun ancien abonne, decision de Raci 28/10)');
+  if (mig && /@(belfit|gmail|outlook|hotmail|yahoo)\./i.test(mig)) soucis.push('une adresse e-mail reelle est ecrite en dur dans le script de migration');
+  if (soucis.length) faute('R91 blocage alimentation', soucis.join(' ; '));
+  else passe('R91 blocage alimentation');
+}
+
+// ------------------------------------------------------------
 // Rapport
 // ------------------------------------------------------------
 for (const r of ok) console.log(`  ok    ${r}`);

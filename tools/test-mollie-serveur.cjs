@@ -71,6 +71,7 @@ const post = (type, tok = "tok") => ({method: "POST", body: {type}, get: (h) => 
   r = await run(mol.mollieEtat, etat("tok", true)); ok(r.body.paiement.statut === "open" && r.body.paiement.activee === false && !store["users/u1"], "retour sans avoir payé (open) : rien activé");
   paiementRetour = {id: "tr_x2", status: "paid", paidAt: new Date().toISOString(), amount: {value: "80.00"}, metadata: {uid: "u1", type: "plan"}};
   r = await run(mol.mollieEtat, etat("tok", true)); ok(r.body.paiement.statut === "paid" && r.body.paiement.activee === true && store["users/u1"].commandeCoach.commande === "tr_x2" && store["quotasIA/u1"].illimiteJusqu, "retour payé, webhook pas encore passé : activé par mollieEtat");
+  ok(store["users/u1"].accesNutritionJusqu && store["users/u1"].accesNutritionJusqu.toMillis() > Date.now() + 43 * 864e5, "retour payé : accès nutrition ouvert 44 jours (champ serveur)");
   r = await run(mol.mollieEtat, etat("autre", true)); ok(r.body.paiement.statut === "aucune", "retour d'un autre compte : voit seulement SES paiements (aucune)");
   // l'autorisation se perd (liste modifiée) : la commande déjà créée ne s'active pas pour un e-mail retiré
   for (const k of Object.keys(store)) if (k.startsWith("commandes/")) delete store[k]; delete store["users/u1"];

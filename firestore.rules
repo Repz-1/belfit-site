@@ -6,6 +6,39 @@ service cloud.firestore {
     // Phase 1 (test) : le client peut poser premium via le code promo.
     // Phase 2 (lancement) : durcir en interdisant l'écriture de "premium"
     //   côté client (seule la Cloud Function, en admin, l'écrira).
+    //
+    // BLOCAGE ALIMENTATION : sans acces nutrition actif, le client ne peut plus
+    // ecrire les cles « nutrition » de v2Data. Les autres cles (seances, poids,
+    // eau, reglages...) restent ecrivables : l'application n'envoie plus les
+    // cles nutrition tant que l'acces est ferme, pour ne jamais faire echouer
+    // une ecriture groupee. `accesNutritionJusqu` (Timestamp) n'est ecrit que
+    // par le serveur. INTERRUPTEUR : le blocage n'existe que si le document
+    // config/acces contient { blocage: true } ; sinon (ou si ce document est
+    // absent) rien n'est bloque, meme apres un deploiement accidentel.
+    function blocageActif() {
+      return exists(/databases/$(database)/documents/config/acces)
+             && get(/databases/$(database)/documents/config/acces).data.get('blocage', false) == true;
+    }
+    function nutriCles() {
+      return ['repas', 'objectifs', 'calculBaseFait', 'poidsCalcul', 'profilBesoins',
+              'rappelIgnoreA', 'favoris', 'usages', 'plats', 'customFoods', 'courses', 'histoJours'];
+    }
+    function accesOuvert() {
+      return 'accesNutritionJusqu' in resource.data
+             && resource.data.accesNutritionJusqu is timestamp
+             && resource.data.accesNutritionJusqu > request.time;
+    }
+    function nutriToucheeMaj() {
+      return request.resource.data.get('v2Data', {}).diff(resource.data.get('v2Data', {}))
+               .affectedKeys().hasAny(nutriCles());
+    }
+    function nutriAutoriseeMaj() {
+      return !blocageActif() || accesOuvert() || !nutriToucheeMaj();
+    }
+    function nutriAutoriseeCreation() {
+      return !blocageActif() || !request.resource.data.get('v2Data', {}).keys().hasAny(nutriCles());
+    }
+
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       // Le pseudo n'est modifiable que par la Cloud Function (accès admin),
@@ -15,7 +48,9 @@ service cloud.firestore {
                     && !("pseudo" in request.resource.data.keys())
                     && !("programme" in request.resource.data.keys())
                     && !("ajustements" in request.resource.data.keys())
-                    && !("commandeCoach" in request.resource.data.keys());
+                    && !("commandeCoach" in request.resource.data.keys())
+                    && !("accesNutritionJusqu" in request.resource.data.keys())
+                    && nutriAutoriseeCreation();
       // À la mise à jour, pseudo, programme et ajustements doivent rester
       // inchangés. Sans la protection du compteur, le quota ne vaudrait rien :
       // il suffirait de le remettre à zéro depuis le navigateur.
@@ -28,7 +63,10 @@ service cloud.firestore {
                     && !("ajustements" in request.resource.data.diff(resource.data).affectedKeys())
                     // 26/09 : la commande coaching n'est ecrite que par le
                     // webhook de paiement ; sinon on s'offrirait un plan.
-                    && !("commandeCoach" in request.resource.data.diff(resource.data).affectedKeys());
+                    && !("commandeCoach" in request.resource.data.diff(resource.data).affectedKeys())
+                    // Blocage alimentation : champ serveur + cles nutrition.
+                    && !("accesNutritionJusqu" in request.resource.data.diff(resource.data).affectedKeys())
+                    && nutriAutoriseeMaj();
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
@@ -49,6 +87,13 @@ service cloud.firestore {
     }
     match /quotasIA/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+    // Interrupteur du blocage alimentation : lisible par les comptes
+    // connectes (l'application s'en sert pour fermer l'alimentation),
+    // jamais modifiable depuis un navigateur (console Firebase / admin).
+    match /config/{doc} {
+      allow read: if request.auth != null;
       allow write: if false;
     }
     match /usernames/{pseudo} {

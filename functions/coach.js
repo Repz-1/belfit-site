@@ -9,6 +9,7 @@
 const {onRequest} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
+const accesNutrition = require("./acces-nutrition");
 
 // Doit rester egal a PREMIUM_OUVERT dans functions/index.js
 // et app-v2/src/acces-libre.js.
@@ -99,6 +100,15 @@ exports.coachAgent = onRequest(
         (userDoc.exists && userDoc.data().premium === true);
       if (!estPremium) {
         res.status(403).json({error: "not_premium"});
+        return;
+      }
+
+      // Blocage alimentation : le coach texte lit les repas, il est ferme comme
+      // la voix et la photo. Sans effet tant que config/acces.blocage n'est pas
+      // a true. La barre de la seance ne passe pas par ici (elle est locale).
+      if (await accesNutrition.blocageActif(db) &&
+          !accesNutrition.accesActif(userDoc.exists ? userDoc.data() : null)) {
+        res.status(403).json({error: "acces_nutrition"});
         return;
       }
 
