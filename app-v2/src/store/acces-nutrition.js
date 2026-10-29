@@ -6,12 +6,12 @@
 // users/{uid}. Il n'est ecrit que par le serveur (voir firestore.rules).
 //
 // DEUX INTERRUPTEURS (le blocage n'existe que si l'un des deux est vrai) :
-//   - BLOCAGE_ALIMENTATION (ce fichier) : false dans le code livre.
+//   - BLOCAGE_ALIMENTATION (ce fichier) : true depuis v639 (allumage 29/10, OK Raci).
 //   - config/acces { blocage: true } (Firestore) : l'interrupteur serveur.
 // Tant qu'aucun n'est vrai, l'application se comporte exactement comme avant.
 import { signal, computed } from '@preact/signals';
 
-export const BLOCAGE_ALIMENTATION = false;
+export const BLOCAGE_ALIMENTATION = true;
 
 const CLE_ACCES = 'belfit_v2_acces_nutrition_';
 const CLE_BLOCAGE = 'belfit_v2_blocage_distant';
