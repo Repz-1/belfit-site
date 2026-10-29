@@ -1,8 +1,8 @@
 // Blocage de l'alimentation (option B : historique en lecture seule) — cote application.
 // ETATS SIMULES dans le banc d'essai (aucun vrai compte, aucun serveur). DONNEES DE TEST uniquement.
 // Prerequis : apercu construit (npx vite build --config apercu.config.js dans app-v2).
-// NB : le drapeau BLOCAGE_ALIMENTATION reste a false ; le blocage est allume ici par
-// l'interrupteur « distant » simule (config/acces), exactement comme en production.
+// NB : depuis v639 le drapeau BLOCAGE_ALIMENTATION est a true (blocage allume, OK Raci 29/10) ;
+// l'interrupteur « distant » simule (config/acces) reste teste en plus.
 import { spawn } from 'child_process';
 import { createRequire } from 'module';
 import { readFileSync } from 'fs';
@@ -53,19 +53,20 @@ const tenter = (page) => page.evaluate(() => {
   p.basculerFavori('Riz cuit'); p.noterUsage('Riz cuit'); p.enregistrerPlat({ id: 9, nom: 'P', ings: [], portions: 1 }); p.supprimerPlat(9);
   return snap() === avant;
 });
-// Ouvre le premier repas et compte les entrees « scan / voix / photo » (3 boutons .mc-scan quand tout est ouvert).
+// Ouvre le premier repas et compte les entrees « scan / voix / photo » (2 boutons .mc-scan quand tout est ouvert, photo retiree v638).
 const ouvrirRepas = async (page) => { await page.locator('.mc-tete').first().click(); await page.waitForTimeout(800); return page.evaluate(() => ({ entrees: document.querySelectorAll('.mc-scan').length, champsLecture: document.querySelectorAll('.mc-ing-champ--lecture').length })); };
 const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.waitForTimeout(500);
 
-// ---- 0. Livraison : drapeau a false, rien ne change sans interrupteur ----
+// ---- 0. Livraison : drapeau a true (v639), blocage actif meme sans interrupteur distant ----
 {
   const src = readFileSync(new URL('../app-v2/src/store/acces-nutrition.js', import.meta.url), 'utf8');
-  ok(/export const BLOCAGE_ALIMENTATION = false;/.test(src), 'drapeau BLOCAGE_ALIMENTATION = false dans le code livré');
+  ok(/export const BLOCAGE_ALIMENTATION = true;/.test(src), 'drapeau BLOCAGE_ALIMENTATION = true dans le code livré (v639)');
   const { ctx, page } = await ouvrir();
+  await simuler(page, () => { const a = window.__banc.accesNut; a.poserBlocageDistant(false); a.poserAcces('test', null); });
+  await pause(page);
   const s = await lire(page);
-  ok(s.flag === false && !s.ro && !s.offre && !s.carte, 'sans interrupteur : journal normal, aucune carte');
-  ok(s.ajoutRepas, 'sans interrupteur : « ajouter un repas » présent');
-  ok(await tenter(page) === false, 'sans interrupteur : les écritures fonctionnent comme avant');
+  ok(s.flag === true && s.ro && s.offre, 'drapeau seul (interrupteur distant a false) : alimentation en lecture seule + offre');
+  ok(await tenter(page) === true, 'drapeau seul : aucune écriture alimentaire ne passe');
   await ctx.close();
 }
 // ---- 1. Jamais payé ----
@@ -86,7 +87,7 @@ const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.wait
   // Eau libre
   const eau = await page.evaluate(() => { const j = window.__banc.jrn; j.eau.value = 0; j.ajouterEau(0.5); return j.eau.value; });
   ok(eau === 0.5, 'eau : reste libre (par défaut, à confirmer par Raci)');
-  const eau0 = await page.evaluate(async () => { const j = window.__banc.jrn, a = window.__banc.accesNut; j.eau.value = 1; j.eauDate.value = '2000-01-01'; a.poserBlocageDistant(false); await new Promise(r => setTimeout(r, 100)); a.poserBlocageDistant(true); await new Promise(r => setTimeout(r, 100)); return j.eau.value; });
+  const eau0 = await page.evaluate(async () => { const j = window.__banc.jrn, a = window.__banc.accesNut; j.eau.value = 1; j.eauDate.value = '2000-01-01'; a.poserAcces('test', Date.now() + 864e5); await new Promise(r => setTimeout(r, 100)); a.poserAcces('test', null); await new Promise(r => setTimeout(r, 100)); return j.eau.value; });
   ok(eau0 === 0, 'eau : repart à zéro chaque jour tant que l’alimentation est fermée');
   // Cles envoyees au cloud
   const cles = await page.evaluate(() => { const a = window.__banc.accesNut; const o = { repas: 1, objectifs: 1, histoJours: 1, courses: 1, customFoods: 1, plats: 1, favoris: 1, usages: 1, seances: 1, poids: 1, eau: 1, reglages: 1 }; return Object.keys(a.sansNutrition(o)); });
@@ -115,7 +116,7 @@ for (const [nom, delta] of [['actif (+10 jours)', 10 * J], ['illimité / propri�
   ok(!s.ro && !s.offre && !s.carte && s.ajoutRepas, nom + ' : tout est ouvert, aucune carte');
   ok(await tenter(page) === false, nom + ' : les écritures passent');
   const e = await ouvrirRepas(page);
-  ok(e.entrees === 3 && e.champsLecture === 0, nom + ' : repas ouvert = scan, voix et photo présents');
+  ok(e.entrees === 2 && e.champsLecture === 0, nom + ' : repas ouvert = scan et voix présents (photo retirée v638)');
   await ctx.close();
 }
 // ---- 4. Acces inconnu (premier lancement, hors ligne, sans copie) ----
