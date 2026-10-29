@@ -527,7 +527,7 @@ export function MealCard({ r, aSuivre, fait }) {
     const d = dossierCoach.value || {};
     const prefs = preferencesDe((d.questionnaire && d.questionnaire.reponses) || (d.brouillon && d.brouillon.rep) || null);
     if (!ideesVues.has(r.id)) ideesVues.set(r.id, new Set());
-    const p = prochaineIdee(cible, prefs, ideesVues.get(r.id), r.idee && r.idee.nom);
+    const p = prochaineIdee(cible, prefs, ideesVues.get(r.id), r.idee && r.idee.nom, r.cle || r.nom);
     if (!p) { setMsgIdee(`Pas d'autre idée proche de ${Math.round(cible)} kcal avec tes préférences.`); return; }
     setMsgIdee(null);
     appliquerIdee(r.id, p);

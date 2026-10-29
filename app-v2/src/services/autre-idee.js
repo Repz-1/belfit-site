@@ -12,7 +12,7 @@
 // La detection se fait par MOTS-CLES sur les noms d'ingredients : c'est un
 // filet de securite, pas une garantie. L'interface dit toujours
 // « verifie les ingredients ».
-import { EAT_IDEAS, CATEGORIES_IDEES } from '../data/idees.js';
+import { EAT_IDEAS, CATEGORIES_IDEES, IDEES_PETIT_DEJ } from '../data/idees.js';
 import { DB, macrosOf } from '../data/aliments.js';
 import { limitesPortion } from '../data/portions.js';
 
@@ -98,7 +98,7 @@ const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0
 // Allergenes : cle = libelle des options du questionnaire (allergies).
 const ALLERGENES = [
   { re: /\boeuf|\boeufs|omelette|cantonais|mayonnaise|\bmayo\b|meringue|hollandaise|bearnaise|gribiche|carbonara|caesar/, noms: ['oeuf', 'oeufs'] },
-  { re: /lait(?! de coco)|fromage|skyr|yaourt|yogourt|whey|caseine|cheddar|mozzarella|parmesan|emmental|feta|ricotta|kefir|mascarpone|creme|beurre(?! (de )?(cacahu|arachide|amande|noix))|quark|gouda|burrata|cottage|faisselle/, noms: ['lait', 'lactose', 'laitier', 'laitiers', 'laitage', 'produits laitiers', 'fromage'] },
+  { re: /lait(?! de coco)|fromage|skyr|yaourt|yogourt|whey|caseine|cheddar|mozzarella|parmesan|emmental|feta|ricotta|kefir|mascarpone|creme(?! de (riz|coco))|beurre(?! (de )?(cacahu|arachide|amande|noix))|quark|gouda|burrata|cottage|faisselle/, noms: ['lait', 'lactose', 'laitier', 'laitiers', 'laitage', 'produits laitiers', 'fromage'] },
   { re: /\bble\b|ble |pain|pates|spaghetti|penne|macaroni|avoine|wrap|tortilla|semoule|boulgour|couscous|seigle|orge|epeautre|biscuit|gateau|granola|cereales|muesli|pizza|brioche|croissant|baguette|burger|panure|panko|farine|crepe|gaufre|pancake|nouilles|galette de ble|cracker|bretzel|cantonais|sauce soja|tamari|teriyaki/, noms: ['gluten', 'ble', 'cereales'] },
   { re: /cacahu|arachide/, noms: ['arachide', 'arachides', 'cacahuete', 'cacahuetes'] },
   { re: /amande|noix|noisette|pistache|cajou|pecan|macadamia|praline|pralin|nutella|pate a tartiner/, noms: ['fruits a coque', 'fruit a coque', 'noix', 'amande', 'amandes', 'noisette', 'noisettes'] },
@@ -213,8 +213,16 @@ export function kcalIngs(ings) {
   return (ings || []).reduce((s, i) => s + macrosOf(i).kcal, 0);
 }
 
-/** Toutes les idees, a plat, avec leur categorie. */
-export function toutesLesIdees() {
+/** Creneau « petit-dejeuner » ? (cle 'pdej' du journal, ou nom du repas). */
+export function estPetitDej(creneau) {
+  const n = norm(creneau).replace(/[-_]/g, ' ');
+  return n === 'pdej' || /petit|breakfast|ontbijt|matinal/.test(n);
+}
+
+/** Toutes les idees, a plat, avec leur categorie.
+ *  29/10 Raci : au petit-dejeuner, UNIQUEMENT les idees du matin. */
+export function toutesLesIdees(creneau) {
+  if (estPetitDej(creneau)) return IDEES_PETIT_DEJ.map(idee => ({ ...idee, cat: 'pdej', catLabel: 'Petit-déjeuner' }));
   const sortie = [];
   for (const c of CATEGORIES_IDEES) for (const idee of EAT_IDEAS[c.k]) sortie.push({ ...idee, cat: c.k, catLabel: c.label });
   return sortie;
@@ -241,10 +249,11 @@ export function caler(idee, cible) {
  * eloignee de la cible.
  * @param cible kcal du repas du PLAN
  * @param prefs preferencesDe(...)
+ * @param creneau cle du repas ('pdej'...) ou son nom ; petit-dejeuner -> idees du matin seulement
  */
-export function proposables(cible, prefs) {
+export function proposables(cible, prefs, creneau) {
   const sortie = [];
-  for (const idee of toutesLesIdees()) {
+  for (const idee of toutesLesIdees(creneau)) {
     if (raisonExclusion(idee, prefs)) continue;
     const c = caler(idee, cible);
     if (c) sortie.push({ idee, calage: c });
@@ -258,8 +267,8 @@ export function proposables(cible, prefs) {
  * @param actuelle nom de l'idee affichee (jamais re-proposee de suite)
  * @returns { nom, cat, catLabel, ings, kcal, prot, carbs, lip, cible, ecartPct } | null
  */
-export function prochaineIdee(cible, prefs, vues, actuelle) {
-  const liste = proposables(cible, prefs).filter(x => x.idee.nom !== actuelle);
+export function prochaineIdee(cible, prefs, vues, actuelle, creneau) {
+  const liste = proposables(cible, prefs, creneau).filter(x => x.idee.nom !== actuelle);
   if (liste.length === 0) return null;
   let choix = liste.find(x => !vues.has(x.idee.nom));
   if (!choix) { vues.clear(); choix = liste[0]; }
