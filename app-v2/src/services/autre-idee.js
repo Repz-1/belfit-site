@@ -4,7 +4,7 @@
 // Module PUR (aucun composant, aucun Firebase) : testable sous Node.
 //
 // Garde-fous, dans cet ordre :
-//  1. calories : l'idee, remise a l'echelle, doit tomber a ±7 % du repas
+//  1. calories : l'idee, remise a l'echelle puis ajustee, doit tomber a ±2 % (±15 kcal) du repas
 //     du plan (les kcal affichees sont celles de l'idee REELLEMENT calee) ;
 //  2. regime declare au questionnaire (vegetarien, vegan, sans porc…) ;
 //  3. allergies declarees (liste + texte libre) ;
@@ -228,20 +228,70 @@ export function toutesLesIdees(creneau) {
   return sortie;
 }
 
+// 29/10 Raci (option A) : l'idee proposee doit avoir les MEMES kcal que le
+// repas du plan (650 -> 650, pas 580), pour que le total du jour reste juste.
+// Tolerance finale : ±2 % ou ±15 kcal (le plus large des deux).
+export const TOLERANCE_PCT = 0.02;
+export const TOLERANCE_ABS = 15;
+export const toleranceKcal = (cible) => Math.max(TOLERANCE_ABS, cible * TOLERANCE_PCT);
+
+/** Totaux d'une liste ings (format journal), calcules comme l'affichage/le journal. */
+function totaux(ings) {
+  let kcal = 0, prot = 0, carbs = 0, lip = 0;
+  for (const i of ings) { const m = macrosOf({ name: i.name, portion: i.portion }); kcal += m.kcal; prot += m.prot || 0; carbs += m.carbs || 0; lip += m.lip || 0; }
+  return { kcal, prot, carbs, lip };
+}
+
 /**
- * Cale une idee sur une cible : balaie le ratio et garde celui dont les kcal
- * (apres arrondis et plafonds de portion) sont les plus proches de la cible.
- * Renvoie null si l'ecart reste > 7 %.
+ * Ajustement fin : apres la mise a l'echelle, les arrondis laissent un ecart.
+ * On le comble pas a pas (5 g pour un aliment pese, 1 piece pour un œuf),
+ * toujours dans les plafonds de portion, en prenant a chaque pas le
+ * changement qui rapproche le plus de la cible.
+ */
+function ajusterFin(ings, cible) {
+  const cur = ings.map(i => ({ ...i }));
+  let k = totaux(cur).kcal;
+  for (let n = 0; n < 60 && Math.abs(k - cible) > 2; n++) {
+    let best = null;
+    cur.forEach((i, idx) => {
+      const d = DB[i.name]; if (!d) return;
+      const lim = limitesPortion(i.name);
+      const pas = d.unit ? 1 : 5;
+      for (const dir of [1, -1]) {
+        const q = i.portion + dir * pas;
+        if (q < lim.min || q > lim.max || q <= 0) continue;
+        const nk = k - macrosOf({ name: i.name, portion: i.portion }).kcal + macrosOf({ name: i.name, portion: q }).kcal;
+        const e = Math.abs(nk - cible);
+        if (e < Math.abs(k - cible) - 0.5 && (!best || e < best.e)) best = { idx, q, nk, e };
+      }
+    });
+    if (!best) break;
+    cur[best.idx].portion = best.q; k = best.nk;
+  }
+  return cur;
+}
+
+/**
+ * Cale une idee sur une cible : balaie le ratio, garde le plus proche,
+ * puis ajuste finement les grammes. Renvoie null si l'ecart final depasse
+ * la tolerance (±2 % / ±15 kcal). Les kcal/macros renvoyes sont ceux des
+ * quantites FINALES (celles affichees et notees au journal).
  */
 export function caler(idee, cible) {
+  if (!(cible > 0)) return null;
   let meilleur = null;
   for (let ratio = RATIO_MIN; ratio <= RATIO_MAX + 1e-9; ratio += 0.01) {
     const q = quantitesIdee(idee, ratio);
     const ecart = Math.abs(q.kcal - cible);
     if (!meilleur || ecart < meilleur.ecart - 1e-9) meilleur = { ...q, ecart, ratio };
   }
-  if (!meilleur || cible <= 0 || meilleur.ecart / cible > TOLERANCE_KCAL) return null;
-  return meilleur;
+  if (!meilleur || meilleur.ecart / cible > 0.25) return null;
+  const ings = ajusterFin(meilleur.ings, cible);
+  const t = totaux(ings);
+  const ecart = Math.abs(t.kcal - cible);
+  if (ecart > toleranceKcal(cible)) return null;
+  const parts = lignesIdee(ings, Object.fromEntries(ings.filter(i => i.l).map(i => [i.name, i.l]))).map(l => l.pieces ? l.nom + ' (' + l.detail + ')' : l.grammes + 'g ' + l.nom);
+  return { parts, ings, kcal: Math.round(t.kcal), prot: Math.round(t.prot), carbs: Math.round(t.carbs), lip: Math.round(t.lip), ecart, ratio: meilleur.ratio };
 }
 
 /**
