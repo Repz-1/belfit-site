@@ -61,3 +61,28 @@ export const CATEGORIES_IDEES = [
   { k: 'plaisir', label: 'Plaisir' },
   { k: 'vege',    label: 'Végé' },
 ].filter(c => EAT_IDEAS[c.k] && EAT_IDEAS[c.k].length);
+
+// 29/10 Raci : idees du PETIT-DEJEUNER, seules proposees par « Autre idee »
+// sur ce creneau. Jamais de plat du soir (pates bolognaise, poulet-riz...).
+// Ingredients autorises par Raci : oeufs, lait, fromage light / 0 %, avoine,
+// creme de riz, riz basmati, pain complet cereales, pain blanc, plus les
+// produits typiques du matin (skyr, yaourt, fruits, beurre de cacahuete,
+// confiture, miel, whey). Aucune viande ni poisson : vegetarien par nature.
+export const IDEES_PETIT_DEJ = [
+  { nom:'Porridge avoine + lait + banane', ings:[{n:'Flocons avoine',q:60,l:'avoine'},{n:'Lait 1/2 écrémé',q:250,l:'lait demi-écrémé'},{n:'Banane',q:100,l:'banane'}] },
+  { nom:'Porridge avoine + skyr + myrtilles + miel', ings:[{n:'Flocons avoine',q:50,l:'avoine'},{n:'Skyr',q:200,l:'skyr'},{n:'Myrtilles',q:80,l:'myrtilles'},{n:'Miel',q:10,l:'miel'}] },
+  { nom:'Crème de riz + lait + beurre de cacahuète', ings:[{n:'Crème de riz',q:60,l:'crème de riz'},{n:'Lait 1/2 écrémé',q:200,l:'lait demi-écrémé'},{n:'Beurre cacahuète',q:15,l:'beurre de cacahuète'}] },
+  { nom:'Crème de riz + whey + fruits rouges', ings:[{n:'Crème de riz',q:60,l:'crème de riz'},{n:'Whey',q:25,l:'whey'},{n:'Framboises',q:100,l:'framboises'}] },
+  { nom:'Omelette + pain complet aux céréales', ings:[{n:'Oeuf entier M (50g)',q:3,l:'œuf'},{n:'Pain aux céréales',q:70,l:'pain complet aux céréales'}] },
+  { nom:'Œufs brouillés + pain blanc + kiwi', ings:[{n:'Oeuf entier M (50g)',q:2,l:'œuf'},{n:'Pain blanc',q:70,l:'pain blanc'},{n:'Kiwi',q:100,l:'kiwi'}] },
+  { nom:'Tartines fromage blanc 0% + confiture', ings:[{n:'Pain aux céréales',q:80,l:'pain complet aux céréales'},{n:'Fromage blanc 0%',q:150,l:'fromage blanc 0%'},{n:'Confiture',q:20,l:'confiture'}] },
+  { nom:'Tartines beurre de cacahuète + banane', ings:[{n:'Pain complet',q:70,l:'pain complet'},{n:'Beurre cacahuète',q:20,l:'beurre de cacahuète'},{n:'Banane',q:100,l:'banane'}] },
+  { nom:'Pancakes avoine + œufs + myrtilles', ings:[{n:'Flocons avoine',q:50,l:'avoine'},{n:'Oeuf entier M (50g)',q:2,l:'œuf'},{n:'Lait 1/2 écrémé',q:100,l:'lait demi-écrémé'},{n:'Myrtilles',q:80,l:'myrtilles'}] },
+  { nom:'Riz au lait basmati + miel + pomme', ings:[{n:'Riz basmati (cuit)',q:150,l:'riz basmati cuit'},{n:'Lait 1/2 écrémé',q:200,l:'lait demi-écrémé'},{n:'Miel',q:10,l:'miel'},{n:'Pomme',q:120,l:'pomme'}] },
+  { nom:'Skyr + avoine + fraises', ings:[{n:'Skyr',q:250,l:'skyr'},{n:'Flocons avoine',q:40,l:'avoine'},{n:'Fraises',q:120,l:'fraises'}] },
+  { nom:'Fromage blanc 0% + avoine + banane', ings:[{n:'Fromage blanc 0%',q:250,l:'fromage blanc 0%'},{n:'Flocons avoine',q:40,l:'avoine'},{n:'Banane',q:100,l:'banane'}] },
+  { nom:'Yaourt grec 0% + granola + framboises', ings:[{n:'Yaourt grec 0%',q:200,l:'yaourt grec 0%'},{n:'Granola',q:40,l:'granola'},{n:'Framboises',q:80,l:'framboises'}] },
+  { nom:'Œufs + pain blanc + mozzarella light', ings:[{n:'Oeuf entier M (50g)',q:2,l:'œuf'},{n:'Pain blanc',q:60,l:'pain blanc'},{n:'Mozzarella light',q:30,l:'mozzarella light'}] },
+  { nom:'Cottage cheese + pain complet + pomme', ings:[{n:'Cottage cheese',q:150,l:'cottage cheese'},{n:'Pain complet',q:70,l:'pain complet'},{n:'Pomme',q:120,l:'pomme'}] },
+  { nom:'Overnight oats lait + miel + banane', ings:[{n:'Flocons avoine',q:60,l:'avoine'},{n:'Lait 1/2 écrémé',q:200,l:'lait demi-écrémé'},{n:'Miel',q:10,l:'miel'},{n:'Banane',q:80,l:'banane'}] },
+];

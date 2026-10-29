@@ -17,7 +17,7 @@ const rep = (o) => o;   // reponses du questionnaire (format reel : { id: { vale
 const TOUT = A.preferencesDe(null);
 
 // ---- Liste ----
-ok(tout.length === 40, `la liste compte ${tout.length} idées (4 catégories : ` + [...new Set(tout.map(i => i.catLabel))].join(', ') + ')');
+ok(tout.length === 40 && A.toutesLesIdees('pdej').length >= 12, `la liste compte ${tout.length} idées (4 catégories : ` + [...new Set(tout.map(i => i.catLabel))].join(', ') + ')');
 ok(tout.every(i => i.ings.every(g => DB[g.n])), 'tous les ingrédients des idées existent dans la base');
 const vege = tout.filter(i => i.cat === 'vege');
 ok(vege.length > 0 && vege.every(A.estVegetarienne), `« Végé » = végétarien : les ${vege.length} idées Végé n'ont ni viande ni poisson`);
@@ -161,7 +161,7 @@ async function ouvrir(reponses, nomCtx) {
   }, [PLAN, dossier(reponses), VIDE]);
   const p = await ctx.newPage();
   p.on('pageerror', e => { console.log('ERREUR JS', e.message); code = 1; });
-  await p.goto('http://localhost:8096/app.html'); await p.waitForTimeout(2600);
+  await p.goto('http://localhost:8096/app.html?verrou=ouvert');   // blocage allume (v639) : acces simule ouvert await p.waitForTimeout(2600);
   return [ctx, p];
 }
 const carte = (p, nom) => p.locator('.mc', { hasText: new RegExp('^\\s*' + nom) }).first();
@@ -241,5 +241,24 @@ const msg = await carte(p, 'Dîner').innerText();
 const rd = (await etat(p)).find(x => x.cle === 'diner');
 ok(/Pas d'autre idée proche/.test(msg) && !rd.idee, 'aucune idée compatible : message « Pas d\'autre idée proche… », plan intact (' + (msg.match(/Pas d'autre idée[^\n]*/) || [''])[0] + ')');
 await p.screenshot({ path: SHOTS + '/autre-idee-4-aucune-390.png' });
+await ctx.close();
+// 5) 29/10 Raci : petit-déjeuner = idées du matin UNIQUEMENT (jamais de pâtes bolognaise)
+[ctx, p] = await ouvrir({ regime: { valeur: 'Tout' }, allergie: { valeur: 'Non, aucune' } });
+await p.waitForTimeout(2000);   // laisse le semis du plan se stabiliser
+const nomsPdej = new Set(A.toutesLesIdees('pdej').map(i => i.nom));
+const vusPdej = [];
+for (let k = 0; k < 12; k++) {
+  const avantNom = ((await etat(p)).find(x => x.cle === 'pdej').idee || {}).nom || null;
+  await carte(p, 'Petit-déjeuner').locator('.mc-idee-btn', { hasText: 'Autre idée' }).click();
+  // Attend que l'idee change (le 1er clic apres chargement est parfois lent).
+  await p.waitForFunction((a) => { const r = window.__banc.repas.value.find(x => x.cle === 'pdej'); return r.idee && r.idee.nom !== a; }, avantNom, { timeout: 3000 }).catch(() => {});
+  await p.waitForTimeout(200);
+  const r = (await etat(p)).find(x => x.cle === 'pdej');
+  vusPdej.push(r.idee ? r.idee.nom : '(aucune)');
+  if (k < 3) { await carte(p, 'Petit-déjeuner').scrollIntoViewIfNeeded(); await p.evaluate(() => window.scrollBy(0, -80)); await p.waitForTimeout(800);
+    await p.screenshot({ path: SHOTS + '/autre-idee-5-petit-dej-' + (k + 1) + '-390.png' }); }
+}
+console.log('  idées proposées (petit-déjeuner) :\n   - ' + vusPdej.join('\n   - '));
+ok(vusPdej.every(n => nomsPdej.has(n)) && !vusPdej.some(n => /bolognaise|poulet|pâtes/i.test(n)), 'petit-déjeuner : 12 clics, uniquement des idées du matin');
 await ctx.close();
 await nav.close(); try { process.kill(-srv.pid); } catch {} srv.kill(); process.exit(code);
