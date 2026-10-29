@@ -5,6 +5,8 @@ import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { enregistrerJour } from './stats.js';
 import { aujourdhuiBxl } from './plans-par-date.js';
 import { ecritureBloquee, lectureSeule } from './acces-nutrition.js';
+import { recalerJour, confirmerIdeeJour } from '../services/recalage-jour.js';
+import { calerParNom } from '../services/autre-idee.js';
 
 // ============================================================
 // STORE DU JOURNAL v2
@@ -317,9 +319,18 @@ export function supprimerRepas(repasId) {
   repas.value = repas.value.filter(r => r.id !== repasId);
 }
 
+/** 29/10 option B : remet le total du jour sur le plan (repas encore prevus). */
+function recaler() {
+  if (!repas.value.some(r => r.ingsOrig || (r.idee && r.idee.confirme))) return;
+  repas.value = recalerJour(repas.value).liste;
+}
+
 /** Repas prevu -> mange : il compte desormais dans le cadran. */
 export function validerRepas(repasId) {
   if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
+  // Idee affichee mais pas encore choisie : « Mangé » vaut choix (le total reste juste).
+  const x = repas.value.find(r => r.id === repasId);
+  if (x && x.idee && !x.idee.confirme) choisirIdee(repasId);
   repas.value = repas.value.map(r => r.id === repasId && r.prevu ? { ...r, prevu: false } : r);
 }
 
@@ -360,6 +371,7 @@ export function semerPlan(planRepas) {
     if (r.ings.length === 0 || (r.duPlan && r.prevu)) liste[i] = { ...neuf(r.id), fixe: r.fixe, cle: r.cle || cle };
   });
   repas.value = liste.filter(r => !(r.duPlan && r.prevu && !r.remplace && !cles.has(r.cle || nomN(r.nom))));
+  recaler();
 }
 
 /**
@@ -406,6 +418,7 @@ export function annulerValidation(repasId) {
 export function sauterRepas(repasId) {
   if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.map(r => r.id === repasId && r.duPlan ? { ...r, prevu: false, saute: true } : r);
+  recaler();
 }
 export function mangeAutreChose(repasId) {
   if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
@@ -415,6 +428,7 @@ export function mangeAutreChose(repasId) {
         delete n.idee;
         return n;
       })());
+  recaler();
 }
 export function remettrePrevu(repasId) {
   if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
@@ -425,6 +439,7 @@ export function remettrePrevu(repasId) {
     if (r.remplace) { n.ings = r.ingsPlan || []; delete n.remplace; delete n.ingsPlan; }
     return n;
   });
+  recaler();
 }
 
 /** 25/10 « Autre idee » : remplace les aliments d'un repas du plan par ceux
@@ -437,7 +452,9 @@ export function remettrePrevu(repasId) {
 export function appliquerIdee(repasId, idee) {
   repas.value = repas.value.map(r => {
     if (r.id !== repasId || !r.duPlan || r.saute || r.remplace) return r;
-    const base = r.idee ? (r.ingsPlan || []) : r.ings;
+    // Plan du coach (jamais l'ajustement) : c'est lui qu'on retrouve sur « Revenir au plan ».
+    const base = r.idee ? (r.ingsPlan || []) : (r.ingsOrig || r.ings);
+    const n0 = { ...r }; delete n0.ingsOrig; delete n0.ajuste; r = n0;
     return {
       // libelles : noms courts des ingredients (« poulet cuit », « œuf »), pour la liste en grammes.
       ...r, idee: { nom: idee.nom, kcal: idee.kcal, cible: idee.cible,
@@ -445,6 +462,17 @@ export function appliquerIdee(repasId, idee) {
       ings: idee.ings.map(i => ({ id: ++prochainId, name: i.name, portion: i.portion })),
     };
   });
+  recaler();   // si ce repas etait deja choisi, sa compensation est retiree (on redefile)
+}
+
+/** 29/10 « Je choisis ce repas » : l'idee affichee devient le repas, et
+ *  l'ecart de kcal est reparti sur les repas encore prevus du jour
+ *  (dernier repas : l'idee elle-meme est calee sur le plan). */
+export function choisirIdee(repasId) {
+  if (ecritureBloquee()) return null;
+  const res = confirmerIdeeJour(repas.value, repasId, calerParNom);
+  repas.value = res.liste;
+  return res;
 }
 /** Annule « Autre idee » : le repas du plan revient tel qu'il etait prevu. */
 export function annulerIdee(repasId) {
@@ -454,6 +482,7 @@ export function annulerIdee(repasId) {
     delete n.idee; delete n.ingsPlan;
     return n;
   });
+  recaler();
 }
 
 export function renommerRepas(repasId, nom) {

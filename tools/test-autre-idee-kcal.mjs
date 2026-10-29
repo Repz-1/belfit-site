@@ -1,6 +1,8 @@
 // 29/10 Raci (option A) : « Autre idée » = MEMES kcal que le repas du plan
 // (plan 650 -> idee 650, pas 580). Ecart final <= max(2 %, 15 kcal), sur
 // beaucoup de cibles, tous les creneaux et plusieurs profils.
+// 29/10 (option B) : le DEFILEMENT est a ±7 % ; caler() strict sert au dernier
+// repas du jour (option A de repli). On teste donc caler() directement.
 // Lancer : node tools/test-autre-idee-kcal.mjs
 const racine = new URL('../app-v2/', import.meta.url).pathname;
 const A = await import(racine + 'src/services/autre-idee.js');
@@ -19,7 +21,7 @@ const CIBLES = [];
 for (let c = 200; c <= 1100; c += 25) CIBLES.push(c);
 let n = 0, horsTol = 0, maxPct = 0, maxAbs = 0, incoherent = 0, horsPlafond = 0, arrondi = 0, vides = 0, filtre = 0;
 for (const cr of CRENEAUX) for (const [pn, prefs] of Object.entries(profils)) for (const cible of CIBLES) {
-  const liste = A.proposables(cible, prefs, cr);
+  const liste = A.toutesLesIdees(cr).filter(i => !A.raisonExclusion(i, prefs)).map(idee => ({ idee, calage: A.caler(idee, cible) })).filter(x => x.calage);
   if (!liste.length) { vides++; continue; }
   for (const { idee, calage } of liste) {
     n++;
@@ -48,6 +50,6 @@ console.log(`  (${vides} combinaisons sans idée possible sur ${CIBLES.length * 
 const vues = new Set();
 for (let k = 0; k < 5; k++) {
   const p = A.prochaineIdee(650, profils.tout, vues, null, 'pdej');
-  ok(p && Math.abs(A.kcalIngs(p.ings) - 650) <= 15, `pdej 650 → « ${p && p.nom} » ${p && p.kcal} kcal`);
+  ok(p && Math.abs(A.kcalIngs(p.ings) - 650) <= 650 * 0.0701, `defilement pdej 650 (±7 %) → « ${p && p.nom} » ${p && p.kcal} kcal`);
 }
 process.exit(code);

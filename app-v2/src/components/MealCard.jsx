@@ -45,7 +45,8 @@ import {
   repas, totauxRepas, setPortion, ajouterIngredient, ajouterPlat,
   supprimerIngredient, supprimerRepas, renommerRepas, basculerCuisson,
   fourchetteRepas, remplacerAliment, validerRepas, annulerValidation, sauterRepas, mangeAutreChose, remettrePrevu,
-  appliquerIdee, annulerIdee } from '../store/journal.js';
+  appliquerIdee, annulerIdee, choisirIdee, repas as repasJour } from '../store/journal.js';
+import { totalPlanJour, totalJourPrevu } from '../services/recalage-jour.js';
 import { dossierCoach } from './BelfitPlus.jsx';
 import { preferencesDe, prochaineIdee, kcalIngs, lignesIdee } from '../services/autre-idee.js';
 
@@ -532,6 +533,16 @@ export function MealCard({ r, aSuivre, fait }) {
     setMsgIdee(null);
     appliquerIdee(r.id, p);
   };
+  // 29/10 option B : la compensation ne se fait QUE sur ce bouton.
+  const choisir = () => {
+    const res = choisirIdee(r.id);
+    if (!res || !res.mode) return;
+    const tp = Math.round(totalPlanJour(repasJour.value)), tj = Math.round(totalJourPrevu(repasJour.value));
+    setMsgIdee(res.mode === 'A'
+      ? `Dernier repas du jour : quantités ajustées pour ${Math.round(r.idee.cible)} kcal. Total du jour : ${tj} kcal (plan ${tp}).`
+      : !res.ajustes.length ? `Mêmes calories que le plan : rien à ajuster. Total du jour : ${tj} kcal (plan ${tp}).`
+      : `${res.ajustes.length} repas suivant${res.ajustes.length > 1 ? 's' : ''} ajusté${res.ajustes.length > 1 ? 's' : ''} (${res.ecartReparti > 0 ? '+' : ''}${res.ecartReparti} kcal). Total du jour : ${tj} kcal (plan ${tp}).`);
+  };
   const vide = r.ings.length === 0;
   const [edite, setEdite] = useState(false);
   // Alimentation fermee : on consulte, on ne modifie rien (ni cases, ni boutons).
@@ -566,6 +577,7 @@ export function MealCard({ r, aSuivre, fait }) {
             r.saute ? 'Sauté · 0 kcal'
             : r.remplace ? (r.prevu ? 'Autre chose · à noter' : `Autre chose · ${tot.kcal.toFixed(0)} kcal`)
             : !vide ? (r.prevu ? `Prévu · ${tot.kcal.toFixed(0)} kcal` : `${tot.kcal.toFixed(0)} kcal`)
+              + (r.ajuste && Math.round(tot.kcal) !== r.ajuste.kcalPlan ? ` · ajusté` : '')
               : (() => {
                   const f = fourchetteRepas(r.cle);
                   return f ? `${t('mc_reco')} ${f.min} – ${f.max} kcal` : t('mc_empty');
@@ -636,7 +648,7 @@ export function MealCard({ r, aSuivre, fait }) {
         <div class="mc-idee" onClick={e => e.stopPropagation()}>
           {r.idee && (
             <div class="mc-idee-fiche" key={r.idee.nom}>
-              <p class="mc-idee-etiq">Idée du jour</p>
+              <p class="mc-idee-etiq">{r.idee.confirme ? '✓ Repas choisi' : 'Idée du jour'}</p>
               <p class="mc-idee-nom">{r.idee.nom}</p>
               <p class="mc-idee-kcal">
                 <b>{Math.round(tot.kcal)} kcal</b>
@@ -659,6 +671,9 @@ export function MealCard({ r, aSuivre, fait }) {
             </div>
           )}
           {msgIdee && <p class="mc-idee-msg" role="status">{msgIdee}</p>}
+          {r.prevu && r.idee && !r.idee.confirme && !ro && (
+            <button class="mc-idee-choisir" onClick={e => { e.stopPropagation(); choisir(); }}>Je choisis ce repas</button>
+          )}
           {r.prevu && (
             <div class="mc-idee-actions">
               <button class="mc-idee-btn" onClick={e => { e.stopPropagation(); setTour(n => n + 1); autreIdee(); }}>

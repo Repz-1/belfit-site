@@ -4,8 +4,8 @@
 // Module PUR (aucun composant, aucun Firebase) : testable sous Node.
 //
 // Garde-fous, dans cet ordre :
-//  1. calories : l'idee, remise a l'echelle puis ajustee, doit tomber a ±2 % (±15 kcal) du repas
-//     du plan (les kcal affichees sont celles de l'idee REELLEMENT calee) ;
+//  1. calories : l'idee, remise a l'echelle, doit tomber a ±7 % du repas du plan
+//     pour etre proposee ; a la confirmation, l'ecart est compense (recalage-jour.js) ;
 //  2. regime declare au questionnaire (vegetarien, vegan, sans porc…) ;
 //  3. allergies declarees (liste + texte libre) ;
 //  4. aliments refuses (texte libre du questionnaire).
@@ -295,6 +295,33 @@ export function caler(idee, cible) {
 }
 
 /**
+ * 29/10 (option B) : pour FAIRE DEFILER les idees, tolerance large (±7 %,
+ * comme en v640) pour ne pas tomber a court. Rien n'est recalcule pendant le
+ * defilement : la compensation se fait seulement sur « Je choisis ce repas »
+ * (services/recalage-jour.js).
+ */
+export function calerLarge(idee, cible) {
+  if (!(cible > 0)) return null;
+  let meilleur = null;
+  for (let ratio = RATIO_MIN; ratio <= RATIO_MAX + 1e-9; ratio += 0.01) {
+    const q = quantitesIdee(idee, ratio);
+    const ecart = Math.abs(q.kcal - cible);
+    if (!meilleur || ecart < meilleur.ecart - 1e-9) meilleur = { ...q, ecart, ratio };
+  }
+  if (!meilleur || meilleur.ecart / cible > TOLERANCE_KCAL) return null;
+  return meilleur;
+}
+
+/** Cale l'idee nommee sur une cible (option A du dernier repas). */
+export function calerParNom(nom, cible) {
+  for (const cr of [undefined, 'pdej']) {
+    const idee = toutesLesIdees(cr).find(i => i.nom === nom);
+    if (idee) return caler(idee, cible);
+  }
+  return null;
+}
+
+/**
  * Liste des idees proposables pour un repas, de la plus proche a la plus
  * eloignee de la cible.
  * @param cible kcal du repas du PLAN
@@ -305,7 +332,7 @@ export function proposables(cible, prefs, creneau) {
   const sortie = [];
   for (const idee of toutesLesIdees(creneau)) {
     if (raisonExclusion(idee, prefs)) continue;
-    const c = caler(idee, cible);
+    const c = calerLarge(idee, cible);
     if (c) sortie.push({ idee, calage: c });
   }
   return sortie.sort((a, b) => a.calage.ecart - b.calage.ecart || a.idee.nom.localeCompare(b.idee.nom, 'fr'));
