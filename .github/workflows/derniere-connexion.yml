@@ -1,0 +1,40 @@
+name: Diagnostic derniere connexion (lecture seule)
+# Lecture seule. Depot public : le journal ne contient que des dates et des noms de champs.
+on:
+  workflow_dispatch:
+    inputs:
+      compte:
+        description: "E-mail du compte (jamais affiche)"
+        required: true
+permissions:
+  contents: read
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Garde-fou (jamais d'ecriture ici)
+        run: |
+          if grep -nE "\.doc\(|\.(update|delete|add|create|set)\(|batch\(|runTransaction|setCustomUserClaims|updateUser" tools/diagnostic/derniere-connexion.mjs; then
+            echo "Ecriture detectee : arret."; exit 1
+          fi
+      - name: Cle du compte de service
+        env:
+          CLE: ${{ secrets.FIREBASE_SA_KEY }}
+        run: |
+          umask 077
+          printf '%s' "$CLE" > "$RUNNER_TEMP/cle.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/cle.json" >> "$GITHUB_ENV"
+      - run: npm ci --prefix functions --no-audit --no-fund --ignore-scripts
+      - name: Diagnostic (dates seulement)
+        run: |
+          set -e
+          node tools/diagnostic/derniere-connexion.mjs > "$RUNNER_TEMP/j.txt"
+          if grep -qE '[A-Za-z0-9._+-]@' "$RUNNER_TEMP/j.txt"; then echo "Adresse dans le journal : arret."; exit 1; fi
+          cat "$RUNNER_TEMP/j.txt"
+      - name: Nettoyage
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cle.json" "$RUNNER_TEMP/j.txt"
