@@ -1,0 +1,54 @@
+name: Interrupteur blocage alimentation (config/acces)
+
+# Lit ou ecrit le document Firestore config/acces { blocage }.
+#   action=lire  : lecture seule (defaut).
+#   action=allumer / eteindre : ecrit blocage true / false, SEULEMENT avec confirme=OUI.
+# Retour arriere : action=eteindre, confirme=OUI.
+# Depot public : le journal ne contient que l'etat (aucune adresse, aucun uid).
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "lire | allumer | eteindre"
+        required: true
+        default: "lire"
+        type: choice
+        options: [lire, allumer, eteindre]
+      confirme:
+        description: "OUI pour ecrire reellement"
+        required: false
+        default: "NON"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: interrupteur-blocage
+  cancel-in-progress: false
+
+jobs:
+  interrupteur:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Cle du compte de service
+        env:
+          CLE: ${{ secrets.FIREBASE_SA_KEY }}
+        run: |
+          umask 077
+          printf '%s' "$CLE" > "$RUNNER_TEMP/cle.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/cle.json" >> "$GITHUB_ENV"
+      - name: Dependances
+        run: npm ci --prefix functions --no-audit --no-fund --ignore-scripts
+      - name: Interrupteur (journal = etat seulement)
+        run: |
+          node tools/diagnostic/interrupteur-blocage.mjs > "$RUNNER_TEMP/journal.txt" 2>&1 || { st=$?; grep -qE '@' "$RUNNER_TEMP/journal.txt" || cat "$RUNNER_TEMP/journal.txt"; exit $st; }
+          if grep -qE '@' "$RUNNER_TEMP/journal.txt"; then echo "Adresse dans le journal : masque."; exit 1; fi
+          cat "$RUNNER_TEMP/journal.txt"
+      - name: Nettoyage
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cle.json" "$RUNNER_TEMP/journal.txt"
