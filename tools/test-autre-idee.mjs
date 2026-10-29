@@ -185,7 +185,7 @@ ok(/Idée du jour/i.test(txt) && /kcal/.test(txt) && /plan : \d+ kcal/.test(txt)
 ok(/Vérifie les ingrédients/.test(txt), 'message « Vérifie les ingrédients » affiché');
 const kcalIdeeAff = +(/(\d+) kcal\s*·\s*plan/.exec(txt) || [])[1];
 const planKcal = +(/plan : (\d+) kcal/.exec(txt) || [])[1];
-ok(Math.abs(kcalIdeeAff - planKcal) / planKcal <= 0.07, `écart affiché ${kcalIdeeAff} vs ${planKcal} kcal = ${((kcalIdeeAff - planKcal) / planKcal * 100).toFixed(1)} % (≤ 7 %)`);
+ok(Math.abs(kcalIdeeAff - planKcal) <= Math.max(15, planKcal * 0.02), `écart affiché ${kcalIdeeAff} vs ${planKcal} kcal = ${((kcalIdeeAff - planKcal) / planKcal * 100).toFixed(1)} % (≤ 2 % ou 15 kcal)`);
 const sous = await carte(p, 'Déjeuner').locator('.mc-sous').innerText();
 ok(new RegExp('Prévu · ' + kcalIdeeAff + ' kcal').test(sous), 'la carte annonce « ' + sous + ' » (kcal de l\'idée)');
 await p.screenshot({ path: SHOTS + '/autre-idee-2-propose-390.png' });
