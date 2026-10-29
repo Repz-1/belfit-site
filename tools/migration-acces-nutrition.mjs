@@ -67,7 +67,7 @@ export function planifier(comptes, { maintenantMs = Date.now(), illimites = [], 
   const sortie = { ecrire: [], ignorer: [] };
   for (const c of comptes) {
     const mail = String(c.email || '').toLowerCase();
-    if (seulement && !cli.has(mail)) continue;
+    if (seulement && !cli.has(mail) && !ill.has(mail)) continue;
     const u = c.user || {}; const q = c.quota || {};
     const actuelle = ms(u.accesNutritionJusqu);
     const candidats = [];
@@ -79,7 +79,11 @@ export function planifier(comptes, { maintenantMs = Date.now(), illimites = [], 
       candidats.push({ fin: aj === null ? FIN_ILLIMITEE_MS : aj, raison: 'accès offert ou code' });
     }
     if (mail && cli.has(mail) && cli.get(mail) !== null) candidats.push({ fin: cli.get(mail), raison: 'client de coaching à durée fixe (argument)' });
-    if (!candidats.length) { sortie.ignorer.push({ uid: c.uid, raison: 'aucun accès existant' }); continue; }
+    if (!candidats.length) {
+      // Un accès déjà écrit (ex. sans fin) et encore valable compte comme « déjà à jour ».
+      if (actuelle !== null && actuelle > maintenantMs) { sortie.ignorer.push({ uid: c.uid, raison: 'déjà à jour' }); continue; }
+      sortie.ignorer.push({ uid: c.uid, raison: 'aucun accès existant' }); continue;
+    }
     const meilleur = candidats.reduce((a, b) => (b.fin > a.fin ? b : a));
     // Un accès déjà expiré ne sert à rien d'être écrit (le compte reste fermé).
     if (meilleur.fin <= maintenantMs) { sortie.ignorer.push({ uid: c.uid, raison: 'accès déjà terminé (' + meilleur.raison + ')' }); continue; }
@@ -104,7 +108,7 @@ async function principal() {
     clients.push({ email: arg('compte'), finMs });
   }
   const seulement = a('seulement');
-  if (seulement && !clients.length) { console.error('--seulement demande --compte=... et --jusqu=...'); process.exit(2); }
+  if (seulement && !clients.length && !illimites.length) { console.error('--seulement demande --compte=... et --jusqu=...'); process.exit(2); }
   const exiger = createRequire(new URL('../functions/package.json', import.meta.url));
   const admin = exiger('firebase-admin');
   admin.initializeApp({ projectId: 'repz-baf60' });

@@ -1,0 +1,67 @@
+name: Migration ciblee acces nutrition (comptes listes seulement)
+
+# Ecrit accesNutritionJusqu UNIQUEMENT pour les comptes donnes en entree.
+# Sans liste de comptes : refus. Sans confirme=OUI : simulation.
+# Depot public : journal = nombres et dates seulement (garde anti-adresse).
+
+on:
+  workflow_dispatch:
+    inputs:
+      illimites:
+        description: "Adresses a acces sans fin (virgules)"
+        required: false
+        default: ""
+      compte:
+        description: "Client a duree fixe (optionnel)"
+        required: false
+        default: ""
+      jusqu:
+        description: "Fin incluse du client (AAAA-MM-JJ)"
+        required: false
+        default: ""
+      confirme:
+        description: "OUI pour ecrire reellement"
+        required: false
+        default: "NON"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migration-ciblee
+  cancel-in-progress: false
+
+jobs:
+  migration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Garde-fou (liste explicite obligatoire)
+        run: |
+          node -e 'const i=JSON.parse(require("fs").readFileSync(process.env.GITHUB_EVENT_PATH,"utf8")).inputs||{};if(!String(i.illimites||"").trim()&&!String(i.compte||"").trim()){console.log("Aucune liste de comptes : arret.");process.exit(1)}'
+          if grep -nE "collection\('users'\)\.get\(|\.listUsers\(" tools/diagnostic/migration-ciblee.mjs; then
+            echo "Lecture de tous les comptes detectee : arret."; exit 1
+          fi
+      - name: Cle du compte de service
+        env:
+          CLE: ${{ secrets.FIREBASE_SA_KEY }}
+        run: |
+          umask 077
+          printf '%s' "$CLE" > "$RUNNER_TEMP/cle.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/cle.json" >> "$GITHUB_ENV"
+      - name: Dependances
+        run: npm ci --prefix functions --no-audit --no-fund --ignore-scripts
+      - name: Migration (journal = nombres seulement)
+        run: |
+          set -e
+          node tools/diagnostic/migration-ciblee.mjs > "$RUNNER_TEMP/journal.txt" 2>&1 || { st=$?; grep -qE '@' "$RUNNER_TEMP/journal.txt" || cat "$RUNNER_TEMP/journal.txt"; exit $st; }
+          if grep -qE '@' "$RUNNER_TEMP/journal.txt"; then
+            echo "Une adresse est apparue dans le journal : masque."; exit 1
+          fi
+          cat "$RUNNER_TEMP/journal.txt"
+      - name: Nettoyage
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cle.json" "$RUNNER_TEMP/journal.txt"
