@@ -12,6 +12,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const reduction = require("./reduction");
+const accesNutrition = require("./acces-nutrition");
 
 const MOLLIE_API_KEY = defineSecret("MOLLIE_API_KEY");
 const MOLLIE_TEST_EMAILS = defineSecret("MOLLIE_TEST_EMAILS");
@@ -142,6 +143,13 @@ async function traiterPaiement(p) {
     const fin44 = (Date.parse(p.paidAt) || Date.now()) + JOURS_ACCES * 864e5;
     await refQ.set({illimiteJusqu: new Date(Math.max(fin44, fin || 0)).toISOString()}, {merge: true});
     console.log("Commande Mollie payee :", uid, type, p.id);
+  }
+  // Acces nutrition (blocage) : meme date que l'IA illimitee. Idempotent
+  // (fin = max(existante, paiement + 44 j)) : on le repasse aussi pour un
+  // paiement deja active, et on laisse l'erreur remonter (strict) pour que
+  // Mollie rappelle le webhook si l'ecriture a echoue.
+  if (uid && p.status === "paid" && (r.nouveau || r.deja)) {
+    await accesNutrition.accorderAcces(db(), uid, {depuisMs: Date.parse(p.paidAt) || Date.now(), strict: true});
   }
   return {statut: p.status, activee: r.nouveau || r.deja};
 }

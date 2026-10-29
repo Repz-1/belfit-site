@@ -6,6 +6,7 @@ const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
 const plansVersions = require("./plans-versions");
+const accesNutrition = require("./acces-nutrition");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -100,6 +101,8 @@ exports.lemonWebhook = onRequest(
           const finActuelle = sq.exists && sq.data().illimiteJusqu ? Date.parse(sq.data().illimiteJusqu) : 0;
           const fin44 = Date.now() + JOURS_ACCES * 864e5;
           await refQ.set({illimiteJusqu: new Date(Math.max(fin44, finActuelle || 0)).toISOString()}, {merge: true});
+          // Acces nutrition (blocage) : paiement + 44 j, jamais raccourci.
+          await accesNutrition.accorderAcces(db, uid, {depuisMs: Date.now()});
           console.log("Commande coaching:", uid, typeCoach);
           res.status(200).send("ok");
           return;
@@ -200,6 +203,12 @@ async function consommerQuotaIA(uid, userData) {
   const snap = await ref.get();
   const q = snap.exists ? snap.data() : {};
   const coachingActif = q.illimiteJusqu && Date.parse(q.illimiteJusqu) > maintenant;
+  // Blocage alimentation : sans acces nutrition actif, plus d'IA repas du tout
+  // (ni quota gratuit, ni decouverte). Sans effet tant que config/acces.blocage
+  // n'est pas a true.
+  if (await accesNutrition.blocageActif(db, maintenant) && !accesNutrition.accesActif(u, maintenant)) {
+    return {ok: false, bloque: true, limite: 0, restant: 0};
+  }
   if (proActif || coachingActif) return {ok: true, illimite: true};
 
   let creeLe = maintenant;
@@ -258,7 +267,10 @@ exports.transcrireVocal = onRequest(
 
       const userDoc = await db.collection("users").doc(uid).get();
       quota = await consommerQuotaIA(uid, userDoc.exists ? userDoc.data() : null);
-      if (!quota.ok) { res.status(429).json({error: "quota", limite: quota.limite}); return; }
+      if (!quota.ok) {
+        if (quota.bloque) { res.status(403).json({error: "acces_nutrition"}); return; }
+        res.status(429).json({error: "quota", limite: quota.limite}); return;
+      }
       res.set("X-Quota-Restant", quota.illimite ? "illimite" : String(quota.restant));
 
       // 2) Recuperer l'audio (base64) et son type
@@ -389,7 +401,10 @@ exports.coachAgent = onRequest(
 
         const userDoc = await db.collection("users").doc(uid).get();
         quota = await consommerQuotaIA(uid, userDoc.exists ? userDoc.data() : null);
-        if (!quota.ok) { res.status(429).json({error: "quota", limite: quota.limite}); return; }
+        if (!quota.ok) {
+          if (quota.bloque) { res.status(403).json({error: "acces_nutrition"}); return; }
+          res.status(429).json({error: "quota", limite: quota.limite}); return;
+        }
         res.set("X-Quota-Restant", quota.illimite ? "illimite" : String(quota.restant));
 
         const prompt = `Tu es le coach nutrition de l'app BELFIT. L'utilisateur ecrit ce qu'il a mange ou bu, en francais (parfois avec des fautes ou en abrege).
@@ -478,7 +493,10 @@ exports.analyserPhoto = onRequest(
 
       const userDoc = await db.collection("users").doc(uid).get();
       quota = await consommerQuotaIA(uid, userDoc.exists ? userDoc.data() : null);
-      if (!quota.ok) { res.status(429).json({error: "quota", limite: quota.limite}); return; }
+      if (!quota.ok) {
+        if (quota.bloque) { res.status(403).json({error: "acces_nutrition"}); return; }
+        res.status(429).json({error: "quota", limite: quota.limite}); return;
+      }
       res.set("X-Quota-Restant", quota.illimite ? "illimite" : String(quota.restant));
 
       // 2) Recuperer l'image (base64) et son type
@@ -1642,6 +1660,7 @@ exports.espaceCoach = onRequest(
           accesPro: {jusqu, source: "offert", le},
           premium: true, premiumJusqu: jusqu,
         }, {merge: true});
+        await accesNutrition.accorderAcces(db, compte.uid, {jusquISO: jusqu});
         await db.collection("accesOfferts").add({uid: compte.uid, email: compte.email || cible, jusqu, duree: corps.duree, le});
         res.json({ok: true, jusqu, email: compte.email || cible});
         return;
@@ -1695,6 +1714,8 @@ exports.espaceCoach = onRequest(
         const fin = sq.exists && sq.data().illimiteJusqu ? Date.parse(sq.data().illimiteJusqu) : 0;
         const fin44 = Date.now() + JOURS_ACCES * 864e5;
         await refQ.set({illimiteJusqu: new Date(Math.max(fin44, fin || 0)).toISOString()}, {merge: true});
+        // Acces nutrition : seulement a la reception du virement (comme l'IA).
+        await accesNutrition.accorderAcces(db, uid, {depuisMs: Date.now()});
         if (cmd.commande) await db.collection("invitations").doc(cmd.commande).set({virementRecuLe: le}, {merge: true});
         res.json({ok: true, recuLe: le});
         return;
@@ -1935,10 +1956,13 @@ exports.utiliserCode = onRequest(
           if (uids.includes(uid)) return {ok: true, raison: "deja_le_tien"};
           if ((d.utilisations || 0) >= d.max) return {ok: false, raison: "epuise"};
           const jusqu2 = d.mois ? new Date(Date.now() + d.mois * 30 * 864e5).toISOString() : null;
+          const suA = await tx.get(refUser);
+          const finA = accesNutrition.nouvelleFinJusqu(suA.exists ? suA.data().accesNutritionJusqu : null, jusqu2);
           tx.update(refCode, {utilisations: (d.utilisations || 0) + 1, uids: [...uids, uid]});
           tx.set(refUser, {
             premium: true, source: "code", codeUtilise: code, premiumJusqu: jusqu2,
             accesPro: {jusqu: jusqu2, source: "code", code, le: new Date().toISOString()},
+            accesNutritionJusqu: admin.firestore.Timestamp.fromMillis(finA),
           }, {merge: true});
           return {ok: true, raison: "active", jusqu: jusqu2};
         }
@@ -1956,6 +1980,8 @@ exports.utiliserCode = onRequest(
         const jusqu = d.mois ?
           new Date(Date.now() + d.mois * 30 * 864e5).toISOString() : null;
 
+        const suB = await tx.get(refUser);
+        const finB = accesNutrition.nouvelleFinJusqu(suB.exists ? suB.data().accesNutritionJusqu : null, jusqu);
         tx.update(refCode, {
           utilise: true,
           uid,
@@ -1967,6 +1993,7 @@ exports.utiliserCode = onRequest(
           codeUtilise: code,
           premiumJusqu: jusqu,
           accesPro: {jusqu, source: "code", code, le: new Date().toISOString()},
+          accesNutritionJusqu: admin.firestore.Timestamp.fromMillis(finB),
         }, {merge: true});
 
         return {ok: true, raison: "active", jusqu};
