@@ -1,0 +1,61 @@
+name: Simulation migration acces nutrition (lecture seule)
+
+# ESSAI A BLANC de tools/migration-acces-nutrition.mjs (logique planifier(),
+# SANS --execute) : aucune ecriture, aucune suppression, aucun e-mail envoye.
+# Se lance a la main uniquement (Actions > Run workflow).
+# Le depot est public : le journal ne contient que des nombres et des dates
+# (aucune adresse, aucun uid). L'adresse du client a duree fixe est lue dans la
+# charge utile de l'evenement par le script, jamais dans un env: de step.
+
+on:
+  workflow_dispatch:
+    inputs:
+      compte:
+        description: "E-mail du client a duree fixe (optionnel)"
+        required: false
+        default: ""
+      jusqu:
+        description: "Fin d'acces incluse du client (AAAA-MM-JJ)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: simulation-migration
+  cancel-in-progress: false
+
+jobs:
+  simulation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Garde-fou (jamais d'ecriture ici)
+        run: |
+          if grep -nE "\.doc\(|\.(update|delete|add|create)\(|batch\(|runTransaction|setCustomUserClaims|updateUser" tools/diagnostic/simulation-migration.mjs; then
+            echo "Ecriture detectee dans le script de simulation : arret."; exit 1
+          fi
+      - name: Cle du compte de service
+        env:
+          CLE: ${{ secrets.FIREBASE_SA_KEY }}
+        run: |
+          umask 077
+          printf '%s' "$CLE" > "$RUNNER_TEMP/cle.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/cle.json" >> "$GITHUB_ENV"
+      - name: Dependances (firebase-admin, comme les fonctions)
+        run: npm ci --prefix functions --no-audit --no-fund --ignore-scripts
+      - name: Simulation (journal = nombres seulement)
+        run: |
+          set -e
+          node tools/diagnostic/simulation-migration.mjs > "$RUNNER_TEMP/journal.txt"
+          if grep -qE '[A-Za-z0-9._+-]@' "$RUNNER_TEMP/journal.txt"; then
+            echo "Une adresse est apparue dans le journal : arret."; exit 1
+          fi
+          cat "$RUNNER_TEMP/journal.txt"
+      - name: Nettoyage
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cle.json" "$RUNNER_TEMP/journal.txt"
