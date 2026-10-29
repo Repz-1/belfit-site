@@ -4,7 +4,6 @@ import { DB, NOMS_ALIMENTS, macrosOf, scoreRecherche, facteurCuisson, PAIRES_CUI
 import { customFoods, Scanner } from './Scanner.jsx';
 import { lectureSeule, ecritureBloquee } from '../store/acces-nutrition.js';
 import { VocalModal } from './VocalModal.jsx';
-import { PhotoModal } from './PhotoModal.jsx';
 import { signal, effect } from '@preact/signals';
 
 // Ouverture de la bibliotheque de plats. Elle a quitte les actions
@@ -218,7 +217,6 @@ export function LigneIngredient({ repasId, ing }) {
 
 export function Recherche({ repasId, phCourt }) {
   const [iaVocal, setIaVocal] = useState(false);
-  const [iaPhoto, setIaPhoto] = useState(false);
   const champRef = useRef(null);
   const zoneRef = useRef(null);
   const [q, setQ] = useState('');
@@ -444,20 +442,8 @@ export function Recherche({ repasId, phCourt }) {
           </svg>
           {!estPremium.value && <i class="mc-scan-pro">✦</i>}
         </button>
-        <button
-          class="mc-scan"
-          onClick={() => { if (ecritureBloquee()) return; if (estPremium.value) setIaPhoto(true); else ongletActif.value = 'premium'; }}
-          aria-label="Photo d'assiette"
-        >
-          <svg viewBox="0 0 24 24" class="ic" aria-hidden="true">
-            <path d="M3.5 8.5A2.5 2.5 0 016 6h1.9l1.2-1.9a1.6 1.6 0 011.36-.75h3.08c.55 0 1.06.28 1.36.75L16.1 6H18a2.5 2.5 0 012.5 2.5v8A2.5 2.5 0 0118 19H6a2.5 2.5 0 01-2.5-2.5v-8z" />
-            <circle cx="12" cy="12.4" r="3.6" />
-          </svg>
-          {!estPremium.value && <i class="mc-scan-pro">✦</i>}
-        </button>
       </div>
       {iaVocal && <VocalModal repasId={repasId} fermer={() => setIaVocal(false)} />}
-      {iaPhoto && <PhotoModal repasId={repasId} fermer={() => setIaPhoto(false)} />}
 
       {actif && (platsTrouves.length > 0 || !listeVide) && (
         <div class="mc-resultats" style={{ maxHeight: hListe + 'px' }}>
