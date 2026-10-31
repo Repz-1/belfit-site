@@ -10,6 +10,7 @@ import { limite60, moisCoaching, poidsDepuisPlan, prochainRepas } from '../store
 import { ongletActif } from './BottomNav.jsx';
 import { macrosOf } from '../data/aliments.js';
 import { Icone } from './IconesCoach.jsx';
+import { APP_ANDROID } from '../services/app-android.js';
 
 const dateCourte = (d) => d ? new Date(d).toLocaleDateString('fr-BE', { day: 'numeric', month: 'long' }) : '';
 const kg = (v) => String(Math.round(v * 10) / 10).replace('.', ',');
@@ -130,18 +131,19 @@ export function SuiviClient({ onContinuer, onNouveau }) {
             {/* 22/10 Raci : vraie date de fin, d'apres payeLe + 44 jours. */}
             <p class="cp-txt sv-acces">Accès nutrition jusqu'au {dateCourte(lim)}.</p>
             {/* 21/10 Raci : 60 € discret, seulement dans les 7 derniers jours du mois ou apres sa fin. */}
-            {(mois.fini || mois.restants <= 7) && (commandesOuvertes()
+            {!APP_ANDROID && (mois.fini || mois.restants <= 7) && (commandesOuvertes()
               ? <button type="button" class="sv-lien" onClick={onContinuer}>Envie de continuer&nbsp;? Le mois suivant est à 60 €, jusqu'au {dateCourte(lim)}.</button>
               : <p class="sv-lien sv-lien--off" aria-disabled="true">Envie de continuer&nbsp;? Le mois suivant à 60 € sera bientôt disponible.</p>
             )}
           </>
         ) : pr ? (
           <>
-            <p class="cp-nom">Un nouveau mois de coaching</p>
-            <p class="cp-txt">On repart d'un bilan complet, ajustements inclus pendant le mois.</p>
+            {!APP_ANDROID && <p class="cp-nom">Un nouveau mois de coaching</p>}
+            {!APP_ANDROID && <p class="cp-txt">On repart d'un bilan complet, ajustements inclus pendant le mois.</p>}
+            {APP_ANDROID && !(lim && Date.now() >= lim.getTime()) && <p class="cp-txt">Ton plan reste consultable dans l'app.</p>}
             {/* 22/10 Raci : acces ferme (payeLe reel + 44 j), date discrete, sans 60 €. */}
             {lim && Date.now() >= lim.getTime() && <p class="cp-txt sv-acces">Accès nutrition terminé le {dateCourte(lim)}.</p>}
-            {commandesOuvertes()
+            {APP_ANDROID ? null : commandesOuvertes()
               ? <button class="cp-bt cp-bt--or" onClick={onNouveau}>Reprendre · 80 €</button>
               : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
           </>

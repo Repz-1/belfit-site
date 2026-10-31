@@ -171,7 +171,13 @@ for (const [v, attendu] of [['jamais', true], ['expire', true], ['ouvert', false
 {
   const { execSync } = await import('child_process');
   const modifies = execSync('git status --porcelain app-v2/src functions mollie* 2>/dev/null; git diff --name-only origin/main -- app-v2/src', { encoding: 'utf8' });
-  ok(!/CoachPage|PremiumPage|store\/coach\.js|ListeOffres|cgv/.test(modifies), 'offre unique (80 € / 60 €) : fichiers de l’offre non modifiés');
+  // 31/10 (v643) : CoachPage.jsx recoit le masquage de l'app Android (TWA). Les prix
+  // eux-memes ne doivent pas bouger : memes montants « NN € » qu'origin/main.
+  ok(!/PremiumPage|store\/coach\.js|ListeOffres|cgv/.test(modifies), 'offre unique (80 € / 60 €) : fichiers de l’offre non modifiés');
+  const prix = t => (t.match(/\d+ €/g) || []).sort().join(',');
+  let avant = ''; try { avant = execSync('git show origin/main:app-v2/src/components/CoachPage.jsx', { encoding: 'utf8' }); } catch (e) { avant = ''; }
+  const apres = (await import('fs')).readFileSync('app-v2/src/components/CoachPage.jsx', 'utf8');
+  ok(!avant || prix(avant) === prix(apres), 'offre unique : montants de CoachPage.jsx identiques à origin/main');
   const src = readFileSync(new URL('../app-v2/src/components/CoachPage.jsx', import.meta.url), 'utf8');
   ok(/Premier mois<\/span>/.test(src) && /<span class="cp-prix">80 €<\/span>/.test(src) && /Mois suivant · 60 €/.test(src), 'page d’offre : un seul plan, 80 € (1er mois) et 60 € (mois suivant), inchangé');
 }

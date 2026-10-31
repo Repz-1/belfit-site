@@ -5,9 +5,20 @@
 // applique (voir store/acces-nutrition.js).
 import { allerOnglet } from './BottomNav.jsx';
 import '../styles/alimentation-verrouillee.css';
+import { APP_ANDROID, MSG_INACTIF } from '../services/app-android.js';
 
 export function AlimentationVerrouillee({ cause = 'jamais', fin = null, commandesOuvertes = true }) {
   const expire = cause === 'expire';
+  // App Android (Play) : message neutre, sans offre, sans lien, sans prix.
+  if (APP_ANDROID) {
+    return (
+      <div class="vr-carte" role="region" aria-label="Alimentation" data-android-inactif>
+        <span class="vr-trait" aria-hidden="true" />
+        <p class="vr-kicker">ALIMENTATION</p>
+        <p class="vr-txt">{MSG_INACTIF}{expire ? ' Tes anciens repas restent consultables ci-dessous.' : ''}</p>
+      </div>
+    );
+  }
   return (
     <div class="vr-carte" role="region" aria-label="Alimentation">
       <span class="vr-trait" aria-hidden="true" />
