@@ -482,7 +482,7 @@
     .steps {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 1.5rem;
+      gap: 0.75rem;
       counter-reset: step;
       list-style: none;
       padding: 0;
@@ -490,15 +490,18 @@
     }
 
     @media (min-width: 768px) {
-      .steps { grid-template-columns: repeat(3, 1fr); gap: 1.75rem; }
+      .steps { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
     }
 
     .step {
       background: var(--bg-card);
       border-radius: var(--radius-sm);
-      padding: 1.5rem;
+      padding: 0.9rem 1.1rem;
       border: 1px solid var(--border);
       counter-increment: step;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
     }
 
     .step-num {
@@ -512,7 +515,7 @@
       color: #fff;
       font-weight: 800;
       font-size: 0.95rem;
-      margin-bottom: 1rem;
+      flex: none;
     }
 
     .step-num::before {
@@ -523,12 +526,7 @@
       font-size: 1.1rem;
       font-weight: 800;
       letter-spacing: -0.02em;
-      margin-bottom: 0.45rem;
-    }
-
-    .step p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
+      line-height: 1.25;
     }
 
     /* Value strip */
@@ -688,6 +686,39 @@
       font-size: 0.8rem;
     }
 
+    .eyebrow-plus { color: var(--accent); }
+    .train-grid { display: grid; gap: 0.9rem; grid-template-columns: 1fr 1fr; }
+    @media (min-width: 768px) { .train-grid { grid-template-columns: repeat(4, 1fr); } }
+    .train-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem; box-shadow: var(--shadow); }
+    .train-ico { font-size: 1.6rem; display: block; margin-bottom: 0.4rem; }
+    .train-item h3 { font-size: 1rem; margin: 0 0 0.3rem; }
+    .train-item p { font-size: 0.88rem; color: var(--text-muted); margin: 0; }
+    .cm-fond { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem;
+      background: rgba(22,19,15,0.45); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; transition: opacity .22s ease; }
+    .cm-fond[hidden] { display: none; }
+    .cm-fond.ouvert { opacity: 1; }
+    .cm-carte { position: relative; width: 100%; max-width: 440px; max-height: calc(100vh - 2rem); overflow-y: auto; background: var(--bg-card);
+      border-radius: var(--radius); padding: 1.6rem 1.4rem 1.3rem; box-shadow: 0 24px 60px rgba(22,19,15,0.22); transform: scale(.94); transition: transform .22s ease; font-family: var(--font); }
+    .cm-fond.ouvert .cm-carte { transform: scale(1); }
+    .cm-carte h2 { margin: 0 0 0.2rem; font-size: 1.35rem; }
+    .cm-sous { margin: 0 0 1rem; color: var(--text-muted); font-size: 0.92rem; }
+    .cm-x { position: absolute; top: 0.6rem; right: 0.7rem; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--bg-soft); font-size: 1.4rem; line-height: 1; cursor: pointer; color: var(--text); }
+    #cm-form { display: grid; gap: 0.75rem; }
+    #cm-form label { display: grid; gap: 0.3rem; font-size: 0.85rem; font-weight: 700; }
+    #cm-form input:not([type=checkbox]), #cm-form select, #cm-form textarea { font: inherit; font-weight: 400; font-size: 16px; padding: 0.7rem 0.8rem; border: 1px solid rgba(22,19,15,0.15); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); width: 100%; box-sizing: border-box; }
+    #cm-form input:focus, #cm-form select:focus, #cm-form textarea:focus { outline: 2px solid var(--yellow); border-color: transparent; }
+    #cm-form .cm-rgpd { display: flex; gap: 0.55rem; align-items: flex-start; font-weight: 400; font-size: 0.82rem; color: var(--text-muted); }
+    .cm-rgpd input { margin-top: 0.15rem; accent-color: var(--accent); width: 18px; height: 18px; flex: none; }
+    .cm-rgpd a { color: var(--accent); }
+    .cm-erreur { margin: 0; color: #B00020; font-size: 0.85rem; }
+    .cm-envoyer { width: 100%; justify-content: center; }
+    #contact-modal [hidden] { display: none !important; }
+    .cm-pot { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .cm-merci { text-align: center; padding: 1rem 0 0.4rem; }
+    .cm-merci-ico { width: 64px; height: 64px; margin: 0 auto 0.8rem; border-radius: 50%; background: var(--yellow); color: var(--text); font-size: 2rem; font-weight: 900; display: flex; align-items: center; justify-content: center; animation: cm-pop .35s ease; }
+    @keyframes cm-pop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .cm-merci h2 { margin: 0 0 .3rem; } .cm-merci p { color: var(--text-muted); margin: 0 0 1.1rem; }
+    .cm-note { margin: 0; font-size: 0.75rem; color: var(--text-muted); text-align: center; }
   </style>
 </head>
 <body>
@@ -700,7 +731,6 @@
       <nav class="nav" aria-label="Navigation principale">
         <a class="nav-link" href="#offre">Offre</a>
         <a class="nav-link" href="#processus">Processus</a>
-        <a class="btn btn-primary btn-sm" href="/v2/">Ouvrir l’app</a>
       </nav>
     </div>
   </header>
@@ -709,7 +739,7 @@
     <section class="hero">
       <div class="wrap">
         <img class="hero-logo" src="belfit-logo-bf.png" width="180" height="74" alt="BelFit">
-        <div class="eyebrow">Belgique · Coaching nutrition</div>
+        <div class="eyebrow">Coaching nutrition</div>
         <h1>Votre plan alimentaire, coaché et personnalisé</h1>
         <p class="hero-lead">
           BelFit combine un accompagnement nutritionnel sur mesure et une application simple pour suivre votre plan au quotidien.
@@ -717,7 +747,7 @@
         <div class="hero-ctas">
           <a class="btn btn-primary" href="/v2/">Ouvrir l’app</a>
           <a class="btn btn-secondary" href="/v2/">Acheter un plan</a>
-          <a class="btn btn-ghost" href="mailto:contact@belfit.be">Contacter</a>
+          <a class="btn btn-ghost" href="mailto:contact@belfit.be" data-contact>Contacter</a>
         </div>
         <div class="hero-card">
           <p>
@@ -753,6 +783,7 @@
               <li>Questionnaire dans l’application</li>
               <li>Livraison sous 48&nbsp;h (formulaire sous 7&nbsp;jours)</li>
               <li>Accès à l’app BelFit</li>
+              <li><strong>+ Entraînement offert</strong> dans l’app</li>
             </ul>
             <a class="btn btn-accent" href="/v2/">Commencer, 80&nbsp;€</a>
           </article>
@@ -778,6 +809,22 @@
       </div>
     </section>
 
+    <section id="entrainement">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="section-label">Entraînement</p>
+          <h2 class="section-title">L’entraînement, c’est offert</h2>
+          <p class="section-intro">Dans l’app BelFit, l’onglet «&nbsp;S’entraîner&nbsp;» est <strong>gratuit</strong>.</p>
+        </div>
+        <div class="train-grid">
+          <div class="train-item"><span class="train-ico" aria-hidden="true">📋</span><h3>Des programmes prêts</h3><p>Choisissez un programme (haut/bas du corps, push/pull…) et placez vos séances dans le calendrier.</p></div>
+          <div class="train-item"><span class="train-ico" aria-hidden="true">🏋️</span><h3>Séances guidées</h3><p>Exercices expliqués en images, séries, répétitions et minuteur de repos.</p></div>
+          <div class="train-item"><span class="train-ico" aria-hidden="true">⚡</span><h3>Séance libre</h3><p>Composez votre séance vous-même, exercice par exercice.</p></div>
+          <div class="train-item"><span class="train-ico" aria-hidden="true">🏠</span><h3>Selon votre matériel</h3><p>Salle ou maison&nbsp;: filtrez les exercices selon le matériel que vous avez.</p></div>
+        </div>
+      </div>
+    </section>
+
     <section id="processus">
       <div class="wrap">
         <div class="process">
@@ -790,17 +837,14 @@
             <li class="step">
               <div class="step-num" aria-hidden="true"></div>
               <h3>Payez votre mois de coaching</h3>
-              <p>80&nbsp;€ en ligne par Bancontact ou carte (via Mollie), ou virement bancaire sur invitation. Sans engagement.</p>
             </li>
             <li class="step">
               <div class="step-num" aria-hidden="true"></div>
               <h3>Remplissez le questionnaire</h3>
-              <p>Dans l’app BelFit, décrivez vos objectifs, habitudes et contraintes alimentaires.</p>
             </li>
             <li class="step">
               <div class="step-num" aria-hidden="true"></div>
               <h3>Recevez votre plan</h3>
-              <p>Votre plan coaché est livré sous 48&nbsp;h si le formulaire est envoyé dans les 7&nbsp;jours.</p>
             </li>
           </ol>
         </div>
@@ -829,18 +873,6 @@
       </div>
     </section>
 
-    <section>
-      <div class="wrap">
-        <div class="cta-band">
-          <h2>Prêt à démarrer&nbsp;?</h2>
-          <p>Ouvrez l’application BelFit pour acheter votre plan ou poursuivre votre coaching nutrition.</p>
-          <div class="hero-ctas">
-            <a class="btn btn-primary" href="/v2/">Ouvrir l’app</a>
-            <a class="btn btn-secondary" href="mailto:contact@belfit.be">Contacter</a>
-          </div>
-        </div>
-      </div>
-    </section>
   </main>
 
   <footer class="site-footer">
@@ -868,5 +900,90 @@
       </div>
     </div>
   </footer>
+
+  <div id="contact-modal" class="cm-fond" hidden>
+    <div class="cm-carte" role="dialog" aria-modal="true" aria-labelledby="cm-titre">
+      <button type="button" class="cm-x" data-fermer aria-label="Fermer">&times;</button>
+      <h2 id="cm-titre">Contactez BelFit</h2>
+      <p class="cm-sous">Une question&nbsp;? Écrivez-nous, on répond vite.</p>
+      <form id="cm-form" novalidate>
+        <label>Nom<input name="nom" autocomplete="name" required maxlength="80"></label>
+        <label>E-mail<input name="email" type="email" autocomplete="email" required maxlength="120"></label>
+        <label>Sujet<select name="sujet" required>
+          <option value="Question">Question</option>
+          <option value="Achat">Achat</option>
+          <option value="Suivi">Suivi</option>
+          <option value="Autre">Autre</option>
+        </select></label>
+        <label>Message<textarea name="message" rows="4" required maxlength="2000"></textarea></label>
+        <label class="cm-rgpd"><input type="checkbox" name="rgpd" required>
+          <span>J’accepte que BelFit utilise ces informations pour me répondre. <a href="/confidentialite.html" target="_blank" rel="noopener">Politique de confidentialité</a></span></label>
+        <p class="cm-erreur" role="alert" hidden></p>
+        <div class="cm-pot" aria-hidden="true"><label>Site web<input name="site" tabindex="-1" autocomplete="off"></label></div>
+        <button type="submit" class="btn btn-primary cm-envoyer">Envoyer</button>
+        <p class="cm-note">Votre message arrive directement à contact@belfit.be.</p>
+      </form>
+      <div class="cm-merci" hidden>
+        <div class="cm-merci-ico" aria-hidden="true">✓</div>
+        <h2>Message envoyé&nbsp;!</h2>
+        <p>Merci, on vous répond très vite par e-mail.</p>
+        <button type="button" class="btn btn-primary" data-fermer>Fermer</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var m = document.getElementById('contact-modal'), f = document.getElementById('cm-form');
+      var err = m.querySelector('.cm-erreur'), merci = m.querySelector('.cm-merci'), btn = f.querySelector('.cm-envoyer'), dernier = null;
+      var API = 'https://europe-west1-repz-baf60.cloudfunctions.net/envoyerContact';
+      function ouvrir(e) {
+        e.preventDefault(); dernier = e.currentTarget;
+        m.hidden = false; document.body.style.overflow = 'hidden';
+        f.hidden = false; merci.hidden = true; m.querySelector('.cm-sous').hidden = false; m.querySelector('#cm-titre').hidden = false;
+        requestAnimationFrame(function () { m.classList.add('ouvert'); f.nom.focus(); });
+      }
+      function fermer() {
+        m.classList.remove('ouvert'); document.body.style.overflow = '';
+        setTimeout(function () { m.hidden = true; if (dernier) dernier.focus(); }, 220);
+      }
+      document.querySelectorAll('[data-contact]').forEach(function (b) { b.addEventListener('click', ouvrir); });
+      m.querySelectorAll('[data-fermer]').forEach(function (b) { b.addEventListener('click', fermer); });
+      m.addEventListener('click', function (e) { if (e.target === m) fermer(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !m.hidden) fermer(); });
+      f.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var msg = '';
+        if (!f.nom.value.trim()) msg = 'Indiquez votre nom.';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.value.trim())) msg = 'Indiquez un e-mail valide.';
+        else if (!f.message.value.trim()) msg = 'Écrivez votre message.';
+        else if (!f.rgpd.checked) msg = 'Cochez la case de consentement.';
+        err.textContent = msg; err.hidden = !msg;
+        if (msg) return;
+        var d = { nom: f.nom.value.trim(), email: f.email.value.trim(), sujet: f.sujet.value,
+          message: f.message.value.trim(), consentement: f.rgpd.checked, site: f.site.value };
+        // Secours : ouvre la messagerie avec le message prerempli.
+        function secours() {
+          var corps = 'Nom : ' + d.nom + '\nE-mail : ' + d.email + '\nSujet : ' + d.sujet + '\n\n' + d.message;
+          window.location.href = 'mailto:contact@belfit.be?subject=' +
+            encodeURIComponent('[BelFit] ' + d.sujet + ' – ' + d.nom) + '&body=' + encodeURIComponent(corps);
+        }
+        btn.disabled = true; btn.textContent = 'Envoi…';
+        fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) })
+          .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
+          .then(function (x) {
+            if (x.s === 200 && x.j.ok) {
+              f.reset(); f.hidden = true; m.querySelector('.cm-sous').hidden = true; m.querySelector('#cm-titre').hidden = true;
+              merci.hidden = false; merci.querySelector('button').focus();
+            } else if (x.s === 400) {
+              err.textContent = 'Vérifiez les champs du formulaire.'; err.hidden = false;
+            } else if (x.s === 429) {
+              err.textContent = 'Trop de messages envoyés. Réessayez plus tard ou écrivez à contact@belfit.be.'; err.hidden = false;
+            } else { secours(); }
+          })
+          .catch(secours)
+          .then(function () { btn.disabled = false; btn.textContent = 'Envoyer'; });
+      });
+    })();
+  </script>
 </body>
 </html>
