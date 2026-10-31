@@ -642,8 +642,8 @@ const DECALAGE_SW_V2 = 232;
     if (!/if \(!muscles\.length && !repos\)/.test(entr)) {
       soucis.push('une seance prevue peut recouvrir une seance reellement notee');
     }
-    // Quota gratuit : 4 seances hebdomadaires, au-dela Premium.
-    if (!/SEANCES_LIBRES = 4/.test(store)) soucis.push('le quota gratuit de 4 seances a change sans decision');
+    // Raci, 31/10 : entrainement entierement libre, plus aucun quota.
+    if (!/SEANCES_LIBRES = Infinity/.test(store)) soucis.push('un quota d\'entrainement est revenu sans decision');
     if (soucis.length) faute('R17 demarrer une seance', soucis.join(' ; '));
     else passe('R17 demarrer une seance');
   }

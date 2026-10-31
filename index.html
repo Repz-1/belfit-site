@@ -695,8 +695,6 @@
     .train-ico { font-size: 1.6rem; display: block; margin-bottom: 0.4rem; }
     .train-item h3 { font-size: 1rem; margin: 0 0 0.3rem; }
     .train-item p { font-size: 0.88rem; color: var(--text-muted); margin: 0; }
-    .train-cta { display: flex; align-items: center; justify-content: center; gap: 0.8rem; margin-top: 1.4rem; flex-wrap: wrap; }
-    .train-badge { background: var(--yellow); color: var(--text); font-weight: 900; border-radius: 999px; padding: 0.45rem 0.9rem; }
     .cm-fond { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem;
       background: rgba(22,19,15,0.45); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; transition: opacity .22s ease; }
     .cm-fond[hidden] { display: none; }
@@ -716,6 +714,12 @@
     .cm-rgpd a { color: var(--accent); }
     .cm-erreur { margin: 0; color: #B00020; font-size: 0.85rem; }
     .cm-envoyer { width: 100%; justify-content: center; }
+    #contact-modal [hidden] { display: none !important; }
+    .cm-pot { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .cm-merci { text-align: center; padding: 1rem 0 0.4rem; }
+    .cm-merci-ico { width: 64px; height: 64px; margin: 0 auto 0.8rem; border-radius: 50%; background: var(--yellow); color: var(--text); font-size: 2rem; font-weight: 900; display: flex; align-items: center; justify-content: center; animation: cm-pop .35s ease; }
+    @keyframes cm-pop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .cm-merci h2 { margin: 0 0 .3rem; } .cm-merci p { color: var(--text-muted); margin: 0 0 1.1rem; }
     .cm-note { margin: 0; font-size: 0.75rem; color: var(--text-muted); text-align: center; }
   </style>
 </head>
@@ -812,7 +816,7 @@
         <div class="section-head">
           <p class="section-label">Entraînement</p>
           <h2 class="section-title">L’entraînement, c’est offert</h2>
-          <p class="section-intro">Dans l’app BelFit, l’onglet «&nbsp;S’entraîner&nbsp;» est <strong>gratuit</strong>&nbsp;: pas besoin d’acheter un plan pour vous entraîner.</p>
+          <p class="section-intro">Dans l’app BelFit, l’onglet «&nbsp;S’entraîner&nbsp;» est <strong>gratuit</strong>.</p>
         </div>
         <div class="train-grid">
           <div class="train-item"><span class="train-ico" aria-hidden="true">📋</span><h3>Des programmes prêts</h3><p>Choisissez un programme (haut/bas du corps, push/pull…) et placez vos séances dans le calendrier.</p></div>
@@ -820,7 +824,6 @@
           <div class="train-item"><span class="train-ico" aria-hidden="true">⚡</span><h3>Séance libre</h3><p>Composez votre séance vous-même, exercice par exercice.</p></div>
           <div class="train-item"><span class="train-ico" aria-hidden="true">🏠</span><h3>Selon votre matériel</h3><p>Salle ou maison&nbsp;: filtrez les exercices selon le matériel que vous avez.</p></div>
         </div>
-        <div class="train-cta"><span class="train-badge">0&nbsp;€</span><a class="btn btn-primary" href="/v2/?onglet=entrainer">Je m’entraîne gratuitement</a></div>
       </div>
     </section>
 
@@ -921,18 +924,27 @@
         <label class="cm-rgpd"><input type="checkbox" name="rgpd" required>
           <span>J’accepte que BelFit utilise ces informations pour me répondre. <a href="/confidentialite.html" target="_blank" rel="noopener">Politique de confidentialité</a></span></label>
         <p class="cm-erreur" role="alert" hidden></p>
+        <div class="cm-pot" aria-hidden="true"><label>Site web<input name="site" tabindex="-1" autocomplete="off"></label></div>
         <button type="submit" class="btn btn-primary cm-envoyer">Envoyer</button>
-        <p class="cm-note">L’envoi ouvre votre messagerie avec le message prérempli, vers contact@belfit.be.</p>
+        <p class="cm-note">Votre message arrive directement à contact@belfit.be.</p>
       </form>
+      <div class="cm-merci" hidden>
+        <div class="cm-merci-ico" aria-hidden="true">✓</div>
+        <h2>Message envoyé&nbsp;!</h2>
+        <p>Merci, on vous répond très vite par e-mail.</p>
+        <button type="button" class="btn btn-primary" data-fermer>Fermer</button>
+      </div>
     </div>
   </div>
   <script>
     (function () {
       var m = document.getElementById('contact-modal'), f = document.getElementById('cm-form');
-      var err = m.querySelector('.cm-erreur'), dernier = null;
+      var err = m.querySelector('.cm-erreur'), merci = m.querySelector('.cm-merci'), btn = f.querySelector('.cm-envoyer'), dernier = null;
+      var API = 'https://europe-west1-repz-baf60.cloudfunctions.net/envoyerContact';
       function ouvrir(e) {
         e.preventDefault(); dernier = e.currentTarget;
         m.hidden = false; document.body.style.overflow = 'hidden';
+        f.hidden = false; merci.hidden = true; m.querySelector('.cm-sous').hidden = false; m.querySelector('#cm-titre').hidden = false;
         requestAnimationFrame(function () { m.classList.add('ouvert'); f.nom.focus(); });
       }
       function fermer() {
@@ -940,7 +952,7 @@
         setTimeout(function () { m.hidden = true; if (dernier) dernier.focus(); }, 220);
       }
       document.querySelectorAll('[data-contact]').forEach(function (b) { b.addEventListener('click', ouvrir); });
-      m.querySelector('[data-fermer]').addEventListener('click', fermer);
+      m.querySelectorAll('[data-fermer]').forEach(function (b) { b.addEventListener('click', fermer); });
       m.addEventListener('click', function (e) { if (e.target === m) fermer(); });
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !m.hidden) fermer(); });
       f.addEventListener('submit', function (e) {
@@ -952,12 +964,29 @@
         else if (!f.rgpd.checked) msg = 'Cochez la case de consentement.';
         err.textContent = msg; err.hidden = !msg;
         if (msg) return;
-        var corps = 'Nom : ' + f.nom.value.trim() + '\nE-mail : ' + f.email.value.trim() +
-          '\nSujet : ' + f.sujet.value + '\n\n' + f.message.value.trim();
-        window.location.href = 'mailto:contact@belfit.be?subject=' +
-          encodeURIComponent('[BelFit] ' + f.sujet.value + ' – ' + f.nom.value.trim()) +
-          '&body=' + encodeURIComponent(corps);
-        fermer();
+        var d = { nom: f.nom.value.trim(), email: f.email.value.trim(), sujet: f.sujet.value,
+          message: f.message.value.trim(), consentement: f.rgpd.checked, site: f.site.value };
+        // Secours : ouvre la messagerie avec le message prerempli.
+        function secours() {
+          var corps = 'Nom : ' + d.nom + '\nE-mail : ' + d.email + '\nSujet : ' + d.sujet + '\n\n' + d.message;
+          window.location.href = 'mailto:contact@belfit.be?subject=' +
+            encodeURIComponent('[BelFit] ' + d.sujet + ' – ' + d.nom) + '&body=' + encodeURIComponent(corps);
+        }
+        btn.disabled = true; btn.textContent = 'Envoi…';
+        fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) })
+          .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
+          .then(function (x) {
+            if (x.s === 200 && x.j.ok) {
+              f.reset(); f.hidden = true; m.querySelector('.cm-sous').hidden = true; m.querySelector('#cm-titre').hidden = true;
+              merci.hidden = false; merci.querySelector('button').focus();
+            } else if (x.s === 400) {
+              err.textContent = 'Vérifiez les champs du formulaire.'; err.hidden = false;
+            } else if (x.s === 429) {
+              err.textContent = 'Trop de messages envoyés. Réessayez plus tard ou écrivez à contact@belfit.be.'; err.hidden = false;
+            } else { secours(); }
+          })
+          .catch(secours)
+          .then(function () { btn.disabled = false; btn.textContent = 'Envoyer'; });
       });
     })();
   </script>

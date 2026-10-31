@@ -15,3 +15,11 @@
 
 /* Alimentation fermee : le calcul reste consultable, « Appliquer » est grise. */
 .calc-appliquer[aria-disabled="true"]{opacity:.4;pointer-events:none}
+
+/* Bulle compacte (Raci, 31/10), style des badges de la vitrine. */
+.vr-carte.vr-bulle { background: #FFF6DB; border: 1px solid rgba(245,197,24,.45); border-radius: 16px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
+.vr-bulle .vr-txt { margin: 0; font-size: 13px; line-height: 1.35; color: #3E3426; flex: 1; }
+.vr-bulle .vr-txt b { color: #1F1A12; }
+.vr-offert { color: #2E7D52; font-weight: 600; }
+.vr-lien { flex: none; border: 0; background: none; padding: 4px 0; font-size: 13px; font-weight: 700; color: #B34700; white-space: nowrap; cursor: pointer; }
+.vr-lien--gris { color: #8A8174; font-weight: 600; cursor: default; }

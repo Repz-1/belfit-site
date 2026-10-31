@@ -71,11 +71,13 @@ export const planifs = signal({});
  * meme mais sur ce qui est pose au calendrier : au 5e jour coche, un
  * message s'affiche au lieu de la coche.
  */
-export const SEANCES_LIBRES = 4;
+// Raci, 31/10 : l'entrainement est entierement libre. Plus de quota :
+// un compte non Premium planifie autant de seances qu'il veut.
+export const SEANCES_LIBRES = Infinity;
 
 /** Peut-on encore planifier une seance de plus sans Premium ? */
 export function quotaAtteint(nbDejaChoisi, premium) {
-  return !premium && nbDejaChoisi >= SEANCES_LIBRES;
+  return false;
 }
 
 /** Le programme, retrouve par son identifiant. */
@@ -94,7 +96,7 @@ export function progParId(id) {
  */
 export function exigePremium(id) {
   const p = progParId(id);
-  return !!p && p.seances.length > SEANCES_LIBRES;
+  return false;
 }
 
 let uidP = null, pretP = false;
