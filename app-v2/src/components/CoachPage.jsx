@@ -18,6 +18,7 @@ import { CarteProgramme, allerVers } from './Entrainer.jsx';
 import { programmeActif } from '../store/programme.js';
 import { ongletActif } from './BottomNav.jsx';
 import { Icone } from './IconesCoach.jsx';
+import { APP_ANDROID, MSG_INACTIF } from '../services/app-android.js';
 
 // Onglets du coaching (20/10, Raci) : visibles seulement pour un client
 // qui a un plan ou une commande. Le choix est memorise sur l'appareil.
@@ -193,7 +194,8 @@ export function CoachPage() {
   const { aRemplir, enPrep, tardif, type: typePaye, payeLe: payeLeEtat } = etatCoach(dossierCoach.value, pr);
   const occupe = aRemplir || enPrep;
 
-  const ouvrirAchat = t => { setAdulte(null); setTca(null); setConsent(false); setConsent2(false); setAchat(t); };
+  // App Android (Play) : aucun achat dans l'app.
+  const ouvrirAchat = t => { if (APP_ANDROID) return; setAdulte(null); setTca(null); setConsent(false); setConsent2(false); setAchat(t); };
   const aAchat = !!pr || !!payeLeEtat;
   const vue = aAchat ? (vueChoisie || (pr ? 'suivi' : 'programme')) : 'programme';
   const viaInv = !!achat && achat.startsWith('invitation:');
@@ -276,10 +278,15 @@ export function CoachPage() {
         <div class="prog-onglets" role="tablist">
           {VUES.map(([k, l]) => <button type="button" role="tab" aria-selected={vue === k} class={vue === k ? 'actif' : ''} onClick={() => choisirVue(k)}>{l}</button>)}
         </div>
-      ) : <p class="cp-sous">L'app est gratuite. Le plan sur mesure, c'est moi.</p>}
+      ) : (APP_ANDROID ? null : <p class="cp-sous">L'app est gratuite. Le plan sur mesure, c'est moi.</p>)}
       {vue === 'suivi' && <SuiviClient onContinuer={() => ouvrirAchat('maj')} onNouveau={() => ouvrirAchat('plan')} />}
       {vue === 'seances' && <TesSeances />}
-      {vue === 'programme' && (<>
+      {vue === 'programme' && APP_ANDROID && !pr && !occupe && (
+        <div class="cp-carte cp-android-inactif" data-android-inactif>
+          <p class="cp-txt">{MSG_INACTIF}</p>
+        </div>
+      )}
+      {vue === 'programme' && !(APP_ANDROID && !pr && !occupe) && (<>
 
       {/* 25/10 : plus d'avatar-icone ni de photo de salle (aucun vrai portrait dans le depot).
           Les 3 « preuves » deviennent une carte : le delai (48 h) en gros, deux garanties en lignes. */}
@@ -295,7 +302,7 @@ export function CoachPage() {
 
       {aRemplir && (
         <div class="cp-carte cp-carte--or">
-          <p class="cp-nom">{invite ? 'Invitation de ton coach' : 'Paiement reçu'}</p>
+          <p class="cp-nom">{invite ? 'Invitation de ton coach' : (APP_ANDROID ? 'Programme activé' : 'Paiement reçu')}</p>
           <p class="cp-txt">Remplis ton questionnaire pour que je prépare ton plan. {tardif
             ? 'Ton délai de 7 jours est passé\u00A0: ta demande rejoint la file.'
             : `Livraison sous 48\u00A0h si tu le remplis dans les ${DELAI_QUESTIONNAIRE} jours suivant ton paiement.`}</p>
@@ -350,15 +357,15 @@ export function CoachPage() {
       {!occupe && !pr && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement&nbsp;: tu décides de continuer. Accès nutrition inclus pendant ton mois payé et les 2 semaines qui suivent.</p>}
       </>)}
 
-      {achat && createPortal(
+      {achat && (!APP_ANDROID || viaInv) && createPortal(
         <div class="pg-coach cp-portail"><div class="cp-voile" onClick={(e) => { if (e.target === e.currentTarget) setAchat(null); }}>
           <div class="cp-modale" role="dialog" aria-modal="true">
             {paiementOuvert.value && modeTest.value && !viaInv && <p class="qc-alerte">Mode test&nbsp;: paiement fictif, aucun argent n'est débité.</p>}
-            <p class="cp-nom">{typeAchat === 'maj' ? 'Mois suivant · 60 €' : ((pr ? 'Nouveau mois' : 'Premier mois') + ' · ' + (red && !viaInv ? `${prixCourt(red.montant)} € (au lieu de 80 €)` : '80 €'))}</p>
-            <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>
+            {APP_ANDROID ? <p class="cp-nom">Invitation de ton coach</p> : <p class="cp-nom">{typeAchat === 'maj' ? 'Mois suivant · 60 €' : ((pr ? 'Nouveau mois' : 'Premier mois') + ' · ' + (red && !viaInv ? `${prixCourt(red.montant)} € (au lieu de 80 €)` : '80 €'))}</p>}
+            {!APP_ANDROID && <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>}
             {/* 02/10 : avantage IA annonce explicitement avant le paiement. */}
-            <p class="cp-txt cp-inclus">Inclus&nbsp;: analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>
-            {typeAchat === 'plan' && !viaInv && pr && paiementOuvert.value && <div class="cp-code-modale">{blocCode('cp-code-champ-modale')}</div>}
+            {!APP_ANDROID && <p class="cp-txt cp-inclus">Inclus&nbsp;: analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>}
+            {!APP_ANDROID && typeAchat === 'plan' && !viaInv && pr && paiementOuvert.value && <div class="cp-code-modale">{blocCode('cp-code-champ-modale')}</div>}
             {typeAchat === 'plan' && (
               <div class="cp-elim">
                 <p class="cp-q">As-tu 18 ans ou plus&nbsp;?</p>
@@ -381,13 +388,13 @@ export function CoachPage() {
                     Deux cases distinctes, decochees. Texte a faire valider. */}
                 <label class="cp-consent">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-                  <span>Je demande que mon coach commence mon plan dès réception de mon {viaInv ? 'virement' : 'questionnaire'}, pour une livraison sous 48&nbsp;h. Je reconnais perdre mon droit de rétractation de 14 jours une fois le plan livré.</span>
+                  <span>Je demande que mon coach commence mon plan dès réception de mon {viaInv && !APP_ANDROID ? 'virement' : 'questionnaire'}, pour une livraison sous 48&nbsp;h. Je reconnais perdre mon droit de rétractation de 14 jours une fois le plan livré.</span>
                 </label>
                 <label class="cp-consent">
                   <input type="checkbox" checked={consent2} onChange={(e) => setConsent2(e.target.checked)} />
                   <span>J'accepte les <a href="https://www.belfit.be/cgv.html" target="_blank" rel="noopener">conditions et la FAQ</a>. Je comprends que ce plan n'est pas un avis médical.</span>
                 </label>
-                {viaInv
+                {APP_ANDROID ? null : viaInv
                   ? <p class="cp-txt cp-petit">Livraison sous 48&nbsp;h après la réception du virement. Détails dans les conditions générales.</p>
                   : <p class="cp-txt cp-petit">Questionnaire à remplir dans les {DELAI_QUESTIONNAIRE} jours suivant le paiement pour une livraison sous 48&nbsp;h. Détails dans les conditions générales.</p>}
                 <button class="cp-bt cp-bt--or" disabled={!consent || !consent2} onClick={viaInv ? accepterInv : payer}>{viaInv ? 'Continuer vers le questionnaire' : 'Continuer vers le paiement'}</button>

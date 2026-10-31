@@ -1,8 +1,8 @@
 {
   "packageId": "be.belfit.app",
-  "host": "belfit.be",
-  "name": "BELFIT",
-  "launcherName": "BELFIT",
+  "host": "www.belfit.be",
+  "name": "BelFit",
+  "launcherName": "BelFit",
   "display": "standalone",
   "orientation": "portrait",
   "themeColor": "#F4F3F0",
@@ -12,53 +12,34 @@
   "navigationDividerColor": "#F4F3F0",
   "navigationDividerColorDark": "#F4F3F0",
   "backgroundColor": "#F4F3F0",
-  "enableNotifications": true,
-  "startUrl": "/index.html",
-  "iconUrl": "https://belfit.be/icon-512-v9.png",
-  "maskableIconUrl": "https://belfit.be/icon-maskable-512-v9.png",
+  "enableNotifications": false,
+  "startUrl": "/v2/?source=twa",
+  "iconUrl": "https://www.belfit.be/icon-512-v9.png",
+  "maskableIconUrl": "https://www.belfit.be/icon-maskable-512-v9.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "./android-keystore.jks",
-    "alias": "belfit"
+    "path": "./belfit-upload.jks",
+    "alias": "upload"
   },
   "appVersionName": "1.0.0",
   "appVersionCode": 1,
-  "shortcuts": [
-    {
-      "name": "Mon journal",
-      "short_name": "Journal",
-      "url": "/main.html#0",
-      "chosenIconUrl": "https://belfit.be/icon-192-v9.png"
-    },
-    {
-      "name": "M'entrainer",
-      "short_name": "Training",
-      "url": "/main.html#1",
-      "chosenIconUrl": "https://belfit.be/icon-192-v9.png"
-    },
-    {
-      "name": "Mes stats",
-      "short_name": "Stats",
-      "url": "/main.html#2",
-      "chosenIconUrl": "https://belfit.be/icon-192-v9.png"
-    }
-  ],
+  "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://belfit.be/manifest.json",
+  "webManifestUrl": "https://www.belfit.be/v2/manifest.json",
   "fallbackType": "customtabs",
   "features": {
     "playBilling": {
-      "enabled": true
+      "enabled": false
     }
   },
   "alphaDependencies": {
-    "enabled": true
+    "enabled": false
   },
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
-  "fullScopeUrl": "https://belfit.be/",
-  "minSdkVersion": 23,
-  "appVersion": "1.0.0",
-  "orientationLock": true
+  "fullScopeUrl": "https://www.belfit.be/v2/",
+  "minSdkVersion": 24,
+  "orientationLock": true,
+  "appVersion": "1.0.0"
 }

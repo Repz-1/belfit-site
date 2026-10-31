@@ -1,5 +1,14 @@
 # BELFIT — Publication Google Play (TWA)
 
+> **Mise à jour 31/10/2026 (v643)** — configuration retenue pour la première publication :
+> hôte `www.belfit.be`, `startUrl` `/v2/?source=twa`, **Play Billing désactivé** (option A :
+> aucun achat dans l'app Android, le paiement Mollie reste sur le web ; l'app masque prix et
+> boutons d'achat en mode TWA, voir `app-v2/src/services/app-android.js`), clé d'upload
+> alias `upload` (empreinte SHA-256 dans `.well-known/assetlinks.json`). L'empreinte de la clé
+> Play App Signing sera ajoutée à `assetlinks.json` après création de l'app dans la Play Console.
+> La section 6 (Play Billing) ne s'applique pas à cette version.
+
+
 Procédure à exécuter **sur ta machine**, pas depuis Claude : la construction
 d'un APK nécessite le SDK Android, qui n'est pas accessible depuis
 l'environnement de développement distant.

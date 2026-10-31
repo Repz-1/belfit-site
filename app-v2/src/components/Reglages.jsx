@@ -12,6 +12,7 @@ import { ongletActif } from './BottomNav.jsx';
 import { Entete } from './Entete.jsx';
 import { VERSION_APP } from '../version.js';
 import { PREMIUM_OUVERT } from '../acces-libre.js';
+import { APP_ANDROID } from '../services/app-android.js';
 import '../styles/reglages.css';
 import { sexe } from '../store/perso.js';
 
@@ -223,11 +224,11 @@ function EcranAbonnement({ retour }) {
             </div>
             {paye ? (
               <div class="rg-carte">
-                {lien && <Rangee titre={t('abo_gerer_paiement')} sous={t('abo_gerer_paiement_sub')} href={lien} />}
+                {lien && !APP_ANDROID && <Rangee titre={t('abo_gerer_paiement')} sous={t('abo_gerer_paiement_sub')} href={lien} />}
                 <Rangee titre={t('set_cancel')} sous={t('set_cancel_sub')} danger
                         onClick={() => { vueReglages.value = 'resilier'; }} />
               </div>
-            ) : (
+            ) : APP_ANDROID ? null : (
               <button class="rg-principal" onClick={() => { fermerReglages(); ongletActif.value = 'premium'; }}>
                 {t('abo_voir_offre')}
               </button>
@@ -454,7 +455,7 @@ export function Reglages() {
                   href="mailto:contact@belfit.be?subject=Suggestion" />
           <Rangee titre="J'ai un code" sous="Débloquer l'accès PRO" onClick={() => { codeOuvert.value = true; }} />
           <CodeAcces />
-          <Rangee titre={t('set_coach_cgv')} href="https://www.belfit.be/cgv.html" />
+          {!APP_ANDROID && <Rangee titre={t('set_coach_cgv')} href="https://www.belfit.be/cgv.html" />}
           <Rangee titre={t('set_privacy')} href="https://www.belfit.be/confidentialite.html" />
         </div>
 

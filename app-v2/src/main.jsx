@@ -1,3 +1,5 @@
+// En premier : detecte le mode app Android (TWA) avant tout nettoyage d'adresse.
+import './services/app-android.js';
 import { render } from 'preact';
 import { createPortal } from 'preact/compat';
 import { useState, useRef, useEffect } from 'preact/hooks';
