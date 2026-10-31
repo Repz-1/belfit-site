@@ -76,7 +76,7 @@ const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.wait
   await pause(page);
   const s = await lire(page);
   ok(s.ro && s.offre && s.cause === 'jamais', 'jamais payé : lecture seule + offre');
-  ok(s.carte && /Alimentation.*payante/.test(s.texte) && /entraînement reste offert/.test(s.texte), 'jamais payé : bulle « Alimentation : payante » + entraînement offert');
+  ok(s.carte && /Alimentation.*payante/.test(s.texte) && /Entraînement offert/.test(s.texte), 'jamais payé : bulle « Alimentation : formule payante » + entraînement offert');
   ok(/Bientôt disponible/.test(s.texte) && !/Voir l'offre/.test(s.texte), 'achat fermé : « Bientôt disponible » (rien ne s’ouvre)');
   ok(!/€/.test(s.texte) && !/gratuit/i.test(s.texte), 'carte : aucun prix, jamais « gratuit »');
   ok((s.texte.match(/coach/gi) || []).length <= 1, 'carte : le mot « coach » pas répété');

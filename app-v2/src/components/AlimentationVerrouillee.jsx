@@ -19,19 +19,17 @@ export function AlimentationVerrouillee({ cause = 'jamais', fin = null, commande
       </div>
     );
   }
-  // Raci, 31/10 : bulle compacte (style vitrine) au lieu de la grande carte.
+  // Raci, 31/10 : bulle compacte dans le style de la carte d'offre de la vitrine.
+  const puces = expire
+    ? [fin ? `Accès terminé le ${fin}` : 'Accès terminé', 'Tes anciens repas restent consultables', 'Entraînement offert']
+    : ['Plan écrit pour toi sous 48 h', 'Journal et analyses IA', 'Entraînement offert'];
   return (
     <div class="vr-carte vr-bulle" role="region" aria-label="Alimentation">
-      <p class="vr-txt">
-        <b>{expire ? 'Ton accès alimentation est terminé.' : 'Alimentation : payante.'}</b>{' '}
-        {expire
-          ? `${fin ? `Fin le ${fin}. ` : ''}Tes anciens repas restent consultables ci-dessous.`
-          : 'Plan écrit pour toi sous 48 h, journal et analyses IA.'}
-        {' '}<span class="vr-offert">L'entraînement reste offert.</span>
-      </p>
+      <p class="vr-titre">{expire ? 'Alimentation : accès terminé' : 'Alimentation : formule payante'}</p>
+      <ul class="vr-puces">{puces.map(t => <li key={t}>{t}</li>)}</ul>
       {commandesOuvertes
-        ? <button class="vr-lien" onClick={() => allerOnglet('premium')}>Voir l'offre ›</button>
-        : <span class="vr-lien vr-lien--gris" aria-disabled="true">Bientôt disponible</span>}
+        ? <button class="vr-btn" onClick={() => allerOnglet('premium')}>Voir l'offre</button>
+        : <span class="vr-btn vr-btn--off" aria-disabled="true">Bientôt disponible</span>}
     </div>
   );
 }

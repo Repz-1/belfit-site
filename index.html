@@ -482,7 +482,7 @@
     .steps {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 1.5rem;
+      gap: 0.75rem;
       counter-reset: step;
       list-style: none;
       padding: 0;
@@ -490,15 +490,18 @@
     }
 
     @media (min-width: 768px) {
-      .steps { grid-template-columns: repeat(3, 1fr); gap: 1.75rem; }
+      .steps { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
     }
 
     .step {
       background: var(--bg-card);
       border-radius: var(--radius-sm);
-      padding: 1.5rem;
+      padding: 0.9rem 1.1rem;
       border: 1px solid var(--border);
       counter-increment: step;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
     }
 
     .step-num {
@@ -512,7 +515,7 @@
       color: #fff;
       font-weight: 800;
       font-size: 0.95rem;
-      margin-bottom: 1rem;
+      flex: none;
     }
 
     .step-num::before {
@@ -523,12 +526,7 @@
       font-size: 1.1rem;
       font-weight: 800;
       letter-spacing: -0.02em;
-      margin-bottom: 0.45rem;
-    }
-
-    .step p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
+      line-height: 1.25;
     }
 
     /* Value strip */
@@ -839,17 +837,14 @@
             <li class="step">
               <div class="step-num" aria-hidden="true"></div>
               <h3>Payez votre mois de coaching</h3>
-              <p>80&nbsp;€ en ligne par Bancontact ou carte (via Mollie), ou virement bancaire sur invitation. Sans engagement.</p>
             </li>
             <li class="step">
               <div class="step-num" aria-hidden="true"></div>
               <h3>Remplissez le questionnaire</h3>
-              <p>Dans l’app BelFit, décrivez vos objectifs, habitudes et contraintes alimentaires.</p>
             </li>
             <li class="step">
               <div class="step-num" aria-hidden="true"></div>
               <h3>Recevez votre plan</h3>
-              <p>Votre plan coaché est livré sous 48&nbsp;h si le formulaire est envoyé dans les 7&nbsp;jours.</p>
             </li>
           </ol>
         </div>
