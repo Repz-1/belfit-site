@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       code: {description: "Nom du code", required: true, default: "RACI99LIVE"}
-      action: {description: "creer ou desactiver", required: true, default: "creer"}
+      action: {description: "creer, desactiver ou relier", required: true, default: "creer"}
+      email: {description: "relier : e-mail du compte BelFit a qui lier le code", required: false, default: ""}
 permissions:
   contents: read
 jobs:
@@ -21,6 +22,7 @@ jobs:
           EMAILS: ${{ secrets.MOLLIE_TEST_EMAILS }}
           CODE: ${{ inputs.code }}
           ACTION: ${{ inputs.action }}
+          EMAIL: ${{ inputs.email }}
         run: |
           printf '%s' "$CLE" > "$RUNNER_TEMP/cle.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/cle.json"
@@ -31,6 +33,13 @@ jobs:
             const ref = a.firestore().collection("codesReduction").doc(nom);
             (async () => {
               if (process.env.ACTION === "desactiver") { await ref.update({actif: false}); console.log("Code desactive :", nom); return; }
+              if (process.env.ACTION === "relier") {
+                const v = await a.auth().getUserByEmail(String(process.env.EMAIL).trim());
+                const d = (await ref.get()).data();
+                if (!d || d.statut === "utilise") { console.log("Code absent ou deja utilise :", nom); process.exit(1); }
+                await ref.update({pourUid: v.uid, actif: true, reservePar: null, reserveJusqu: null, reserveCommande: null});
+                console.log("Code relie au nouveau compte :", nom); return;
+              }
               const email = String(process.env.EMAILS).split(/[,;\s]+/).filter(Boolean)[0];
               const u = await a.auth().getUserByEmail(email);
               if ((await ref.get()).exists) { console.log("Code deja existant :", nom); process.exit(1); }
