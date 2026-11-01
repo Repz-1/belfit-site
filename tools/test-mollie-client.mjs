@@ -56,14 +56,15 @@ const permis = (retour) => (nom, corps) => {
 try {
   // 1) Compte NON autorise : rien ne change
   let p = await page((nom) => nom === 'mollieEtat' ? refuse() : { status: 404, body: {} });
-  ok(await p.locator('.cp-bt', { hasText: 'Bientôt disponible' }).isDisabled(), 'non autorisé : « Bientôt disponible » désactivé');
-  ok(await p.locator('.cp-bt', { hasText: 'Demander mon plan' }).count() === 0, 'non autorisé : pas de bouton Payer');
+  // 01/11 : COMMANDES_OUVERTES = true -> le bouton est visible pour tous ; le serveur reste seul juge du paiement.
+  ok(await p.locator('.cp-bt', { hasText: 'Bientôt disponible' }).count() === 0, 'vente ouverte : jamais « Bientôt disponible »');
+  ok(await p.locator('.cp-bt', { hasText: 'Demander mon plan' }).count() === 1, 'vente ouverte : bouton « Demander mon plan » visible');
   ok(p.appels.length === 1 && p.appels[0].nom === 'mollieEtat' && /^Bearer /.test(p.appels[0].auth), 'non autorisé : une seule question au serveur, avec le jeton');
   await shot(p, 'mollie-non-autorise-coach'); await p.context().close();
 
   // 2) Serveur en erreur (401) : meme comportement
   p = await page(() => ({ status: 401, body: { ok: false, autorise: false } }));
-  ok(await p.locator('.cp-bt', { hasText: 'Bientôt disponible' }).count() === 1 && await p.locator('.cp-bt', { hasText: 'Demander mon plan' }).count() === 0, '401 : « Bientôt disponible »');
+  ok(await p.locator('.cp-bt', { hasText: 'Bientôt disponible' }).count() === 0 && await p.locator('.cp-bt', { hasText: 'Demander mon plan' }).count() === 1, '401 : bouton visible, jamais « Bientôt disponible »');
   await p.context().close();
 
   // 3) Compte autorise : bouton actif, mode test, creation du paiement
