@@ -518,7 +518,7 @@ export function Recherche({ repasId, phCourt }) {
 // repeter tant qu'il en reste), oubliees au rechargement.
 const ideesVues = new Map();
 
-export function MealCard({ r, aSuivre, fait }) {
+export function MealCard({ r, aSuivre, fait, puce }) {
   const tot = totauxRepas(r);
   const [msgIdee, setMsgIdee] = useState(null);
   const [tour, setTour] = useState(0);   // relance la petite rotation de l'icone a chaque clic
@@ -586,6 +586,7 @@ export function MealCard({ r, aSuivre, fait }) {
         </div>
 
         <div class="mc-actions">
+          {puce}
           {/* 22/10 Raci : repas du plan coche en un geste, decochable. */}
           {choisi && !ro && (
             <button class="mc-annuler" aria-label={`Remettre ${r.nom} en prévu`}
@@ -729,19 +730,19 @@ export function RepasTimeline({ r, aSuivre, fait }) {
   const ro = lectureSeule.value;
   return (
     <div class={'tl-it' + (mange ? ' tl-it--mange' : '') + (r.saute ? ' tl-it--saute' : '')}>
-      {reelle && !ro ? (
-        <button class={'tl-heure tl-heure--reelle' + (choix ? ' tl-heure--edition' : '')}
-          aria-label={`Heure du repas ${r.nom} : ${heure}. Modifier`} onClick={() => setChoix(!choix)}>
-          <span>{heure}</span>
+      {/* 01/11 v654 Raci (maquette B) : plus de colonne d'heures ; l'heure est une
+          petite pastille grise en haut a droite de la carte, pleine largeur. */}
+      {choix && <SelecteurHeure heure={heure} titre={'Heure du ' + String(r.nom).toLowerCase()}
+        fermer={() => setChoix(false)} valider={(v) => { setHeureRepas(r.id, v); setChoix(false); }} />}
+      <MealCard r={r} aSuivre={aSuivre} fait={fait} puce={reelle && !ro ? (
+        <button class={'tl-puce tl-puce--reelle' + (choix ? ' tl-puce--edition' : '')}
+          aria-label={`Heure du repas ${r.nom} : ${heure}. Modifier`} onClick={e => { e.stopPropagation(); setChoix(!choix); }}>
+          ✓ {heure.replace(':', 'h')}
           <svg class="tl-crayon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
         </button>
       ) : (
-        <span class={'tl-heure' + (reelle ? ' tl-heure--reelle' : ' tl-heure--prevue')}>{heure}</span>
-      )}
-      <span class="tl-point" aria-hidden="true" />
-      {choix && <SelecteurHeure heure={heure} titre={'Heure du ' + String(r.nom).toLowerCase()}
-        fermer={() => setChoix(false)} valider={(v) => { setHeureRepas(r.id, v); setChoix(false); }} />}
-      <MealCard r={r} aSuivre={aSuivre} fait={fait} />
+        <span class={'tl-puce' + (reelle ? ' tl-puce--reelle' : '')}>{reelle ? '✓ ' : ''}{heure.replace(':', 'h')}</span>
+      )} />
     </div>
   );
 }
