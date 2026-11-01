@@ -1491,19 +1491,17 @@ function besoinsDe(rep) {
   const n = (id) => parseFloat(String(v(id) || "").replace(",", "."));
   const poids = n("poids"), taille = n("taille"), age = n("age");
   if (!(poids > 30) || !(taille > 120) || !(age > 10)) return null;
-  const homme = v("sexe") !== "Femme";
-  const bmr = 10 * poids + 6.25 * taille - 5 * age + (homme ? 5 : -161);
-  const base = {"Assis la plupart de la journée": 1.2,
-    "Debout ou marche au travail": 1.375, "Métier physique": 1.55}[v("activite")] || 1.3;
-  const seances = Math.min(14, Math.max(0, n("seances") || 0));
-  const facteur = Math.min(2.2, base + seances * 0.03);
-  const ajust = {"Perdre du gras": -400, "Prendre du muscle": 300,
-    "Recomposition": -150}[v("objectif")] || 0;
-  const kcal = Math.round((bmr * facteur + ajust) / 10) * 10;
-  const prot = Math.round(poids * (v("objectif") === "Prendre du muscle" ? 2.0 : 1.8));
-  const lip = Math.round(kcal * 0.27 / 9);
-  const carbs = Math.max(0, Math.round((kcal - prot * 4 - lip * 9) / 4));
-  return {kcal, prot, carbs, lip};
+  const bmr = 10 * poids + 6.25 * taille - 5 * age + (v("sexe") !== "Femme" ? 5 : -161);
+  // 01/11 v654 (Partenaire sportif) : metier + 0,04/seance, plafond 1,9 ; objectif en % ; plancher 1,2 x BMR.
+  const base = { "Assis la plupart de la journée": 1.2, "Debout ou marche au travail": 1.3, "Métier physique": 1.45 }[v("activite")] || 1.25;
+  const facteur = Math.min(1.9, base + Math.min(14, Math.max(0, n("seances") || 0)) * 0.04);
+  const maintien = bmr * facteur;
+  const pct = { "Perdre du gras": -0.15, "Prendre du muscle": 0.10, "Recomposition": -0.05 }[v("objectif")] || 0;
+  const kcal = Math.round(Math.max(bmr * 1.2, maintien * (1 + pct)) / 10) * 10;
+  const prot = Math.round(poids * (v("objectif") === "Perdre du gras" ? 2.2 : 2.0));
+  const lip = Math.max(Math.round(kcal * 0.27 / 9), Math.round(poids * 0.8));
+  const deficit = Math.round((1 - kcal / maintien) * 1000) / 10;
+  return { kcal, prot, lip, carbs: Math.max(0, Math.round((kcal - prot * 4 - lip * 9) / 4)), maintien: Math.round(maintien / 10) * 10, bmr: Math.round(bmr), deficit };
 }
 
 /** Appel Gemini en JSON, avec la meme liste de repli que le reste. */
