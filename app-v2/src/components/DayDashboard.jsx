@@ -6,7 +6,7 @@ export const ouvrirCalcDemande = signal(false);
 import { repas, objectifs, totauxJourAff, kcalRestantes, donneesPretes, poidsCalcul, rappelIgnoreA, dateJour, nouvelleJournee, journalDUnJourPasse } from '../store/journal.js';
 import { weightLog, enregistrerJour } from '../store/stats.js';
 import { IdeesRepas } from './IdeesRepas.jsx';
-import { lectureSeule } from '../store/acces-nutrition.js';
+import { lectureSeule, calculReserveCoach } from '../store/acces-nutrition.js';
 import { t } from '../i18n/index.js';
 import { aujourdhuiBxl } from '../store/plans-par-date.js';
 
@@ -224,6 +224,7 @@ function RappelRecalcul() {
   const log = weightLog.value;
   // Plan coach actif (27/09) : pas d'invitation a recalculer.
   if (planCoachActif.value) return null;
+  if (calculReserveCoach.value) return null;   // 01/11 : le coach fixe les calories
   if (!base || !log.length) return null;
   const actuel = parseFloat(log[log.length - 1].weight ?? log[log.length - 1].kg);
   if (!isFinite(actuel)) return null;

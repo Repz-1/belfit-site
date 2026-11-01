@@ -66,6 +66,13 @@ export function accesOuvert(jusquMs, maintenant = Date.now()) {
 /** Le blocage est-il applique ? */
 export const blocageApplique = computed(() => BLOCAGE_ALIMENTATION || blocageDistant.value || etatSimule.value !== null);
 
+/** 01/11 (Raci) : avec le blocage, c'est le COACH qui fixe les calories (plan
+ *  livre apres le questionnaire). Le calcul automatique (ecran Besoins/TDEE)
+ *  n'est alors jamais force ni propose, meme une fois l'acces ouvert par le
+ *  paiement. Avant ce correctif, l'ouverture de l'acces relachait la garde
+ *  `lectureSeule` de besoinsRequis() et l'ecran de calcul s'imposait. */
+export const calculReserveCoach = computed(() => blocageApplique.value);
+
 function etatEffectif() {
   const sim = etatSimule.value;
   if (sim) {
