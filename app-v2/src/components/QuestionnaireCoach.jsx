@@ -35,6 +35,22 @@ function prerempli(type) {
   return r;
 }
 
+// 01/11 Raci : un client qui revient ne repart JAMAIS d'un questionnaire vide.
+// On reprend ses reponses precedentes (fiche Firestore, sinon copie de
+// l'appareil) ; il verifie, modifie si besoin, puis envoie.
+export function reponsesPrecedentes(uid) {
+  let q = dossierCoach.value.questionnaire;
+  if (!q || !q.reponses) { try { const l = JSON.parse(localStorage.getItem('belfit_qc_dernier')); if (l && l.reponses && (!l.uid || l.uid === uid)) q = l; } catch (e) { /* rien */ } }
+  if (!q || !q.reponses) return null;
+  const r = {};
+  Object.entries(q.reponses).forEach(([id, v]) => {
+    if (!v || typeof v !== 'object') return;
+    const { texte, section, question, ...brut } = v;
+    if (Object.keys(brut).length) r[id] = brut;
+  });
+  return Object.keys(r).length ? r : null;
+}
+
 function lireBrouillon(type) {
   // Deux copies : l'appareil et Firestore. On garde la plus recente.
   let local = null;
@@ -264,12 +280,18 @@ function Question({ q, rep, toutes, maj, erreur }) {
 export function QuestionnaireCoach({ type, onFermer, onTermine }) {
   const sections = type === 'maj' ? MISE_A_JOUR : PREMIER_PLAN;
   const b = lireBrouillon(type);
-  const [rep, setRep] = useState(() => (b && b.rep) || prerempli(type));
-  const [i, setI] = useState(() => (b && Math.min(b.i || 0, sections.length)) || 0);
-  const [vue, setVue] = useState('accueil');            // accueil | recap
+  // Pas de brouillon en cours + reponses precedentes : on part du recapitulatif pre-rempli.
+  const [anciennes] = useState(() => (b ? null : reponsesPrecedentes((utilisateur.peek() || {}).uid)));
+  const [rep, setRep] = useState(() => {
+    if (b && b.rep) return b.rep;
+    const p = prerempli(type);
+    return anciennes ? { ...p, ...anciennes, ...(p.poids ? { poids: p.poids } : {}) } : p;
+  });
+  const [i, setI] = useState(() => anciennes ? sections.length : (b && Math.min(b.i || 0, sections.length)) || 0);
+  const [vue, setVue] = useState(() => anciennes ? 'recap' : 'accueil');            // accueil | recap
   // Liste des sections avec la section en cours deja ouverte dedans
   // (maquette validee 27/09) : plus d'ecran separe par section.
-  const [ouverte, setOuverte] = useState(() => { const d = (b && Math.min(b.i || 0, sections.length)) || 0; return d >= sections.length ? -1 : d; });
+  const [ouverte, setOuverte] = useState(() => { if (anciennes) return -1; const d = (b && Math.min(b.i || 0, sections.length)) || 0; return d >= sections.length ? -1 : d; });
   const [consent, setConsent] = useState(() => (b && b.consent) || {});
   const [erreurs, setErreurs] = useState({});
   const [etatSauve, setEtatSauve] = useState('ok');     // ok | envoi | local
@@ -391,8 +413,8 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
         <div class="qc-haut"><span>Récapitulatif</span><Sauve /></div>
         <Segments jusque={sections.length} />
         <p class="qc-sur">DERNIÈRE ÉTAPE</p>
-        <h1 class="qc-titre">Tout est bon&nbsp;?</h1>
-        <p class="qc-sous">Vérifie, puis envoie à ton coach.</p>
+        <h1 class="qc-titre">{anciennes ? 'Tes réponses du mois dernier' : 'Tout est bon\u00A0?'}</h1>
+        <p class="qc-sous">{anciennes ? 'On a repris tes réponses précédentes. Vérifie, touche « Modifier » pour ce qui a changé (poids, objectif, horaires…), puis envoie à ton coach.' : 'Vérifie, puis envoie à ton coach.'}</p>
         {sections.map((s, k) => {
           const lignes = visibles(s).filter(q => rep[q.id] && lisible(q, rep[q.id]) !== '—');
           if (!lignes.length) return null;
