@@ -413,7 +413,9 @@ export function repasAffiches(liste, planRepas) {
   };
   const creneauVide = (r) => !r.duPlan && r.fixe && (r.ings || []).length === 0;
   const duPlan = liste.map((r, i) => ({ r, i })).filter(x => x.r.duPlan)
-    .sort((a, b) => rang(a.r) - rang(b.r) || a.i - b.i).map(x => x.r);
+    // 01/11 v652 : par heure prevue d'abord (une collation de 16:00 placee 2e
+    // dans le plan du coach passait avant le dejeuner de 12:30), puis ordre du plan.
+    .sort((a, b) => heurePrevue(a.r).localeCompare(heurePrevue(b.r)) || rang(a.r) - rang(b.r) || a.i - b.i).map(x => x.r);
   const autres = liste.filter(r => !r.duPlan && !creneauVide(r));
   return [...duPlan, ...autres];
 }

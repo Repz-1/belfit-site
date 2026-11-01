@@ -3662,22 +3662,29 @@ button.tl-heure {
 .pg-journal .tl .mc-titre { font-family: 'Satoshi', system-ui, sans-serif; font-weight: 700; }
 .pg-journal .tl .mc.mc--saute { opacity: .7; }
 
-/* Pastilles : cible tactile 44 px, pastille visible 30 px (::before). */
-.pg-journal .tl .mc-plan { gap: 3px; padding: 0 8px 4px; align-items: center; }
+/* Pastilles (01/11 v652, Raci « trop petit ») : 44 px visibles, texte 15 px.
+   Une ligne : Mangé plus large, Sauté, Autre chose, Idée en icône ronde. */
+.pg-journal .tl .mc-plan { display: flex; gap: 6px; padding: 2px 12px 12px; align-items: center; }
 .pg-journal .tl .mc-plan-btn, .pg-journal .tl .mc-idee-btn--pastille {
-  flex: 0 0 auto; position: relative; isolation: isolate; min-height: 44px; min-width: 44px;
-  padding: 0 9px; background: none; border: none; border-radius: 0; box-shadow: none;
-  font-family: 'Satoshi', system-ui, sans-serif; font-size: 12px; font-weight: 600; color: #33463A;
+  position: relative; min-height: 44px; min-width: 44px; padding: 0 10px; border-radius: 99px;
+  background: #fff; border: 1px solid #E1E8E3; box-shadow: none; white-space: nowrap;
+  font-family: 'Satoshi', system-ui, sans-serif; font-size: 15px; font-weight: 600; color: #33463A;
+  display: inline-flex; align-items: center; justify-content: center;
 }
-.pg-journal .tl .mc-plan-btn::before {
-  content: ''; position: absolute; inset: 7px 0; z-index: -1; border-radius: 99px;
-  background: #fff; border: 1px solid #E1E8E3;
+.pg-journal .tl .mc-plan-btn { flex: 1 1 auto; }
+.pg-journal .tl .mc-plan-btn--mange { flex-grow: 1.6; color: #123322; font-weight: 700; background: linear-gradient(90deg, #A7E3B9, #6CC98E); border: none; }
+.pg-journal .tl .mc-idee-btn--pastille { flex: 0 0 44px; width: 44px; padding: 0; gap: 0; }
+.pg-journal .tl .mc-idee-btn--pastille span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.pg-journal .tl .mc-idee-btn--pastille .mc-idee-ic { width: 18px; height: 18px; stroke: #6B7A70; }
+.pg-journal .tl .mc-plan-btn:active, .pg-journal .tl .mc-idee-btn--pastille:active { filter: brightness(.96); }
+/* Les quatre sur une ligne a 15 px : serre a 390, deborde a 360 -> deux
+   lignes : Mangé large + Idée (icône), puis Sauté | Autre chose a parts egales. */
+@media (max-width: 480px) {
+  .pg-journal .tl .mc-plan { flex-wrap: wrap; gap: 6px; padding: 2px 10px 10px; }
+  .pg-journal .tl .mc-plan-btn--mange { order: 1; flex: 1 1 calc(100% - 50px); }
+  .pg-journal .tl .mc-idee-btn--pastille { order: 2; }
+  .pg-journal .tl .mc-plan-btn:not(.mc-plan-btn--mange) { order: 3; flex: 1 1 calc(50% - 3px); }
 }
-.pg-journal .tl .mc-plan-btn--mange { color: #123322; font-weight: 700; }
-.pg-journal .tl .mc-plan-btn--mange::before { background: linear-gradient(90deg, #A7E3B9, #6CC98E); border: none; }
-.pg-journal .tl .mc-idee-btn--pastille { margin-left: auto; padding: 0 4px; gap: 4px; color: #33463A; }
-.pg-journal .tl .mc-idee-btn--pastille .mc-idee-ic { width: 14px; height: 14px; stroke: #6B7A70; }
-.pg-journal .tl .mc-plan-btn:active::before { filter: brightness(.96); }
 
 /* Selecteur d'heure */
 .pg-journal .tl-pick {
