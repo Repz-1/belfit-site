@@ -167,19 +167,14 @@ for (const [v, attendu] of [['jamais', true], ['expire', true], ['ouvert', false
   ok((await lire(page)).ro === attendu, `banc ?verrou=${v} -> lecture seule = ${attendu}`);
   await ctx.close();
 }
-// ---- 9. Offre unique inchangee ----
+// ---- 9. Offre unique : 80 € tout le temps (01/11 Raci) ----
 {
-  const { execSync } = await import('child_process');
-  const modifies = execSync('git status --porcelain app-v2/src functions mollie* 2>/dev/null; git diff --name-only origin/main -- app-v2/src', { encoding: 'utf8' });
-  // 31/10 (v643) : CoachPage.jsx recoit le masquage de l'app Android (TWA). Les prix
-  // eux-memes ne doivent pas bouger : memes montants « NN € » qu'origin/main.
-  ok(!/PremiumPage|store\/coach\.js|ListeOffres|cgv/.test(modifies), 'offre unique (80 € / 60 €) : fichiers de l’offre non modifiés');
-  const prix = t => (t.match(/\d+ €/g) || []).sort().join(',');
-  let avant = ''; try { avant = execSync('git show origin/main:app-v2/src/components/CoachPage.jsx', { encoding: 'utf8' }); } catch (e) { avant = ''; }
-  const apres = (await import('fs')).readFileSync('app-v2/src/components/CoachPage.jsx', 'utf8');
-  ok(!avant || prix(avant) === prix(apres), 'offre unique : montants de CoachPage.jsx identiques à origin/main');
   const src = readFileSync(new URL('../app-v2/src/components/CoachPage.jsx', import.meta.url), 'utf8');
-  ok(/Premier mois<\/span>/.test(src) && /<span class="cp-prix">80 €<\/span>/.test(src) && /Mois suivant · 60 €/.test(src), 'page d’offre : un seul plan, 80 € (1er mois) et 60 € (mois suivant), inchangé');
+  const suivi = readFileSync(new URL('../app-v2/src/components/SuiviClient.jsx', import.meta.url), 'utf8');
+  const srv = readFileSync(new URL('../functions/mollie.js', import.meta.url), 'utf8');
+  ok(/Premier mois<\/span>/.test(src) && /<span class="cp-prix">80 €<\/span>/.test(src) && !/60 €/.test(src), 'page d’offre : 80 € chaque mois, plus aucun 60 €');
+  ok(/Reprendre mon programme/.test(suivi) && !/Continuer un mois|Reprendre · 80|60 €/.test(suivi), 'Mon suivi : bouton « Reprendre mon programme » sans prix');
+  ok(/montant: "80\.00"/.test(srv) && !/"60\.00"/.test(srv), 'serveur : un seul produit à 80.00');
 }
 await nav.close(); try { process.kill(-srv.pid); } catch (e) {}
 process.exit(code);

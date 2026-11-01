@@ -3,7 +3,7 @@
 //
 // REGLES (decidees par Raci) :
 //  - le code vaut « pour le mois en question » : sur les 80 EUR d'un plan, premier
-//    mois OU mois rachete plus tard ; jamais sur la mise a jour a 60 EUR ;
+//    mois OU mois rachete plus tard (01/11 : plus de mois a 60 EUR, tout est a 80 EUR) ;
 //  - chaque CODE ne sert qu'UNE fois au total ; une personne peut en utiliser un
 //    autre plus tard, pour un autre mois (28/10, reponse de Raci : pas de limite a vie) ;
 //  - le montant paye est calcule ICI, cote serveur, a partir du code valide :
@@ -42,14 +42,13 @@ const MESSAGES = {
   desactive: "Ce code n'est plus actif.",
   expire: "Ce code a expiré.",
   reserve: "Ce code est en cours d'utilisation sur un autre paiement. Réessaie dans une heure.",
-  maj: "Les codes de réduction ne s'appliquent pas à la mise à jour à 60 €.",
   minimum: "Ce code ne peut pas être utilisé en ligne. Écris à contact@belfit.be.",
   essais: "Trop d'essais. Réessaie dans quelques minutes.",
   auth: "Connecte-toi pour utiliser un code.",
   test: "Le paiement n'est pas encore ouvert pour ce compte.",
   serveur: "Le code n'a pas pu être vérifié. Réessaie dans un instant.",
 };
-const STATUT_HTTP = {vide: 400, inconnu: 404, utilise: 409, desactive: 409, expire: 409, reserve: 409, maj: 403, minimum: 422, essais: 429, auth: 401, test: 403, serveur: 500};
+const STATUT_HTTP = {vide: 400, inconnu: 404, utilise: 409, desactive: 409, expire: 409, reserve: 409, minimum: 422, essais: 429, auth: 401, test: 403, serveur: 500};
 // Motifs qui comptent comme « essai rate » (devinette possible) pour le freinage.
 const MOTIFS_ESSAI_RATE = new Set(["inconnu", "utilise", "desactive", "expire", "reserve"]);
 
@@ -126,7 +125,6 @@ async function noterEchec(cles, maintenant = Date.now()) {
 
 /** Lecture seule : le code est-il utilisable, et a quel prix ? Aucune ecriture. */
 async function verifier({uid, code, type, maintenant = Date.now()}) {
-  if (type === "maj") return {ok: false, motif: "maj"};
   if (!codeBienForme(code)) return {ok: false, motif: code ? "inconnu" : "vide"};
   const s = await cCodes().doc(code).get();
   const d = s.exists ? s.data() : null;
