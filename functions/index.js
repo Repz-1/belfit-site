@@ -1705,7 +1705,9 @@ exports.espaceCoach = onRequest(
           const rep = q.reponses || {};
           const livreLe = (d.programme && d.programme.livreLe) || null;
           const resume = (p) => p && ({livreLe: p.livreLe || null, kcal: p.kcal, prot: p.prot, carbs: p.carbs, lip: p.lip,
-            note: p.note || "", repas: Array.isArray(p.repas) ? p.repas : []});
+            note: p.note || "", repas: Array.isArray(p.repas) ? p.repas : [],
+            // 01/11 v657 : versions a dates, pour que le coach reprenne le plan envoye tel quel.
+            versions: Array.isArray(p.versions) ? p.versions.map((v) => ({libelle: v.libelle || "", debut: v.debut || "", repas: Array.isArray(v.repas) ? v.repas : []})) : []});
           const histo = (Array.isArray(d.programmesHistorique) ? d.programmesHistorique : []).map(resume);
           return {
             uid,

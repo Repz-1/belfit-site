@@ -79,7 +79,7 @@ const kAvant = await p.locator('#total .total-k').innerText();
 await p.reload(); await p.waitForTimeout(2500);
 await fiche(1).tap(); await p.waitForTimeout(200); await p.locator('.detail .second').first().tap(); await p.waitForTimeout(300);
 ok((await p.locator('#total .total-k').innerText()).startsWith('0'), 'autre client : plan vide (v652 conserve)');
-ok(/Pas de cible|pas rempli de questionnaire/.test(await p.locator('#cible').innerText()), 'autre client sans poids/taille/age : « Pas de cible » affiche');
+ok(/Pas de cible|Pas de questionnaire/.test(await p.locator('#cible').innerText()), 'autre client sans poids/taille/age : « Pas de cible » affiche');
 await fiche(1).tap(); await p.waitForTimeout(200);
 await fiche(0).tap(); await p.waitForTimeout(300);
 ok(/Brouillon non envoyé/.test(await p.locator('.detail').first().innerText()), 'fiche du client : « Brouillon non envoyé » visible');
@@ -89,7 +89,7 @@ ok(await p.locator('#brouillonBarre').isVisible(), 'barre « Brouillon repris »
 if (SHOTS) { await p.locator('#choisi').scrollIntoViewIfNeeded(); await p.evaluate(() => window.scrollBy(0, -80)); await p.screenshot({ path: SHOTS + '/3-brouillon-repris.png' }); }
 // Envoi -> brouillon efface
 await p.locator('#btnEnvoi').click(); await p.waitForTimeout(600);
-ok(envoye && envoye.repas && envoye.repas.length === 3, 'envoi du brouillon : 3 repas deposes');
+ok(envoye && ((envoye.repas || (envoye.versions && envoye.versions[0].repas) || []).length === 3), 'envoi du brouillon : 3 repas deposes');
 ok(await p.evaluate(() => !localStorage.getItem('belfit_coach_brouillon_u1')), 'apres envoi : brouillon supprime');
 // Jeter
 await p.locator('.ing-qte input').first().fill('100'); await p.waitForTimeout(200);
