@@ -436,16 +436,6 @@
   stroke-linecap: round; stroke-linejoin: round;
 }
 
-/* Zone d'action de la carte : la pilule « Repas intelligent » y est
-   centree, avec la meme respiration que l'ancienne action secondaire. */
-.pg-journal .cal-action { display: flex; justify-content: center; margin: 12px 0 0; }
-/* Dans la carte, la largeur utile tombe a ~320px : sans resserrage le
-   libelle passait sur deux lignes. Une pilule ne se casse jamais. */
-.pg-journal .cal-action .eat-toggle {
-  width: 100%; max-width: 100%; gap: 6px; padding: 11px 13px; white-space: nowrap;
-}
-.pg-journal .cal-action .eat-toggle > span { white-space: nowrap; }
-.pg-journal .cal-action .eat-etat { font-size: 11px; }
 
 /* ---------- Chargement ---------- */
 .pg-journal .cal--chargement .cal-num,
@@ -3021,7 +3011,12 @@
 .pg-journal .cal .cal-cote-val,
 .pg-journal .cal .cal-num { color: var(--gr-tx); }
 .pg-journal .cal .cal-date-ic { color: var(--gr-tx3); opacity: .9; }
-.pg-journal .cal .cal-trait { background: var(--gr-filet); border-color: var(--gr-filet); }
+/* Filet droit 1px, degrade vert pastel qui s'estompe vers les bords. */
+.pg-journal .cal .cal-trait {
+  height: 1px; border: none;
+  background: linear-gradient(90deg, transparent 0%, #A7E3B9 22%, #6CC98E 78%, transparent 100%);
+  opacity: .75;
+}
 
 /* L'anneau : piste sourde, trace vive, halo tenu court. Un halo
    large deviendrait un fond colore — ce qu'on veut est une source
