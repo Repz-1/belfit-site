@@ -1713,7 +1713,7 @@ exports.espaceCoach = onRequest(
 
       // ----- Invitations par lien (02/10) : paiement gere hors app -----
       if (action === "creerInvitation") {
-        const type = corps.type === "maj" ? "maj" : "plan";
+        const type = "plan";   // 01/11 Raci : 80 EUR tout le temps
         const note = String(corps.note || "").trim().slice(0, 80);
         const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         let code = "";
@@ -1801,17 +1801,17 @@ exports.utiliserInvitation = onRequest(
           if (!s2.exists) return {ok: false, motif: "inconnue"};
           const inv = s2.data();
           if (inv.utilisePar && inv.utilisePar !== uid) return {ok: false, motif: "utilisee"};
-          if (inv.utilisePar === uid) return {ok: true, type: inv.type, deja: true};
+          if (inv.utilisePar === uid) return {ok: true, type: "plan", deja: true};
           const le = new Date().toISOString();
           tx.set(ref, {utilisePar: uid, utiliseLe: le, email}, {merge: true});
           // Virement (02/10) : le questionnaire s'ouvre tout de suite, le
           // coach marque « Virement recu » depuis l'espace coach.
-          const montant = inv.type === "maj" ? 60 : 80;
+          const montant = 80;   // 01/11 : plus de mois a 60 EUR
           tx.set(db.collection("users").doc(uid), {
-            commandeCoach: {type: inv.type || "plan", payeLe: le, source: "invitation", commande: code,
+            commandeCoach: {type: "plan", payeLe: le, source: "invitation", commande: code,
               virement: {statut: "attente", montant, communication: code}},
           }, {merge: true});
-          return {ok: true, type: inv.type || "plan"};
+          return {ok: true, type: "plan"};
         });
         // IA illimitee : a la reception du virement, pas a l'ouverture du lien.
         res.status(resultat.ok ? 200 : 409).json(resultat);

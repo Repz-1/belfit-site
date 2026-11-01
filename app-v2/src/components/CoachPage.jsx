@@ -1,6 +1,6 @@
 // Onglet Coach (26/09, maquette validee par Raci).
 // L'app est entierement gratuite ; ce qui se vend, c'est le plan ecrit
-// par le coach : 80 EUR le premier, 60 EUR la mise a jour. Paiement
+// par le coach : 80 EUR chaque mois (01/11 Raci : plus de mois a 60 EUR). Paiement
 // unique, sans abonnement ni prelevement.
 import { useState, useEffect } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
@@ -47,7 +47,7 @@ function TesSeances() {
 // Liens LemonSqueezy des deux produits a paiement unique.
 // A REMPLIR par Raci une fois les produits crees. Vides : le bouton
 // ouvre un e-mail au coach, rien n'est casse.
-export const LIENS_COACH = { plan: '', maj: '' };
+export const LIENS_COACH = { plan: '' };
 const MAIL = 'contact@belfit.be';
 // Interrupteur (26/09, demande de Raci) : questionnaire en relecture,
 // masque en ligne tant qu'il n'est pas valide. true = commandes ouvertes.
@@ -77,7 +77,7 @@ function lireRetour() {
   try {
     const u = new URLSearchParams(location.search);
     if (u.get('coach') !== 'questionnaire') return null;
-    const type = u.get('type') === 'maj' ? 'maj' : 'plan';
+    const type = 'plan';   // 01/11 : un seul produit (80 €)
     history.replaceState(null, '', location.pathname);
     return type;
   } catch (e) { return null; }
@@ -201,14 +201,14 @@ export function CoachPage() {
   const viaInv = !!achat && achat.startsWith('invitation:');
   const typeAchat = viaInv ? achat.slice(11) : achat;
   const bloque = typeAchat === 'plan' && (adulte === 'non' || tca === 'oui');
-  const eligible = typeAchat === 'maj' || (adulte === 'oui' && tca === 'non');
+  const eligible = (adulte === 'oui' && tca === 'non');
   const accepterInv = () => {
     const a = { code: cmdInv.commande, le: new Date().toISOString(), adulte: typeAchat === 'plan' ? true : null,
       tcaSuivi: typeAchat === 'plan' ? false : null, demarrageImmediat: true, cgv: true };
     try { localStorage.setItem('belfit_accord_inv', JSON.stringify(a)); } catch (e) { /* rien */ }
     setAccordInv(a); setAchat(null); setRemplir(typeAchat);
   };
-  // Code de reduction (28/10) : premier plan seulement, jamais pour les 60 €. Le prix affiche
+  // Code de reduction (28/10) : sur les 80 € (premier mois ou mois suivant). Le prix affiche
   // vient du serveur, qui recalcule tout au paiement.
   const red = reduction.value;
   const appliquerCode = () => {
@@ -245,7 +245,7 @@ export function CoachPage() {
         alert('Le paiement n\'a pas pu démarrer. Réessaie ou écris à ' + MAIL + '.');
       });
     } else if (!lien) {
-      const sujet = achat === 'maj' ? 'Continuer mon coaching (mois suivant)' : 'Mon premier mois de coaching';
+      const sujet = pr ? 'Continuer mon coaching (nouveau mois)' : 'Mon premier mois de coaching';
       window.location.href = `mailto:${MAIL}?subject=${encodeURIComponent(sujet)}`;
     } else {
       window.location.href = urlPaiement(lien, achat);
@@ -279,7 +279,7 @@ export function CoachPage() {
           {VUES.map(([k, l]) => <button type="button" role="tab" aria-selected={vue === k} class={vue === k ? 'actif' : ''} onClick={() => choisirVue(k)}>{l}</button>)}
         </div>
       ) : (APP_ANDROID ? null : <p class="cp-sous">L'app est gratuite. Le plan sur mesure, c'est moi.</p>)}
-      {vue === 'suivi' && <SuiviClient onContinuer={() => ouvrirAchat('maj')} onNouveau={() => ouvrirAchat('plan')} />}
+      {vue === 'suivi' && <SuiviClient onContinuer={() => ouvrirAchat('plan')} onNouveau={() => ouvrirAchat('plan')} />}
       {vue === 'seances' && <TesSeances />}
       {vue === 'programme' && APP_ANDROID && !pr && !occupe && (
         <div class="cp-carte cp-android-inactif" data-android-inactif>
@@ -338,7 +338,7 @@ export function CoachPage() {
         </>
       )}
 
-      {/* 21/10 Raci : plus de tarifs dans Ton programme pour un client qui a deja un plan. Le 60 € n'apparait que dans Mon suivi. */}
+      {/* 21/10 Raci : plus de tarifs dans Ton programme pour un client qui a deja un plan. Le mois suivant (80 €) se propose dans Mon suivi. */}
       {!occupe && !pr && <p class="cp-sec">TARIFS</p>}
       {!occupe && !pr && (
         <div class="cp-carte cp-carte--or cp-offre">
@@ -361,7 +361,7 @@ export function CoachPage() {
         <div class="pg-coach cp-portail"><div class="cp-voile" onClick={(e) => { if (e.target === e.currentTarget) setAchat(null); }}>
           <div class="cp-modale" role="dialog" aria-modal="true">
             {paiementOuvert.value && modeTest.value && !viaInv && <p class="qc-alerte">Mode test&nbsp;: paiement fictif, aucun argent n'est débité.</p>}
-            {APP_ANDROID ? <p class="cp-nom">Invitation de ton coach</p> : <p class="cp-nom">{typeAchat === 'maj' ? 'Mois suivant · 60 €' : ((pr ? 'Nouveau mois' : 'Premier mois') + ' · ' + (red && !viaInv ? `${prixCourt(red.montant)} € (au lieu de 80 €)` : '80 €'))}</p>}
+            {APP_ANDROID ? <p class="cp-nom">Invitation de ton coach</p> : <p class="cp-nom">{(pr ? 'Nouveau mois' : 'Premier mois') + ' · ' + (red && !viaInv ? `${prixCourt(red.montant)} € (au lieu de 80 €)` : '80 €')}</p>}
             {!APP_ANDROID && <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>}
             {/* 02/10 : avantage IA annonce explicitement avant le paiement. */}
             {!APP_ANDROID && <p class="cp-txt cp-inclus">Inclus&nbsp;: analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>}

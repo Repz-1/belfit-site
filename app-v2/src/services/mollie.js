@@ -43,7 +43,7 @@ export function verifierAcces() {
   }).catch(() => { paiementOuvert.value = false; dejaDemande = null; });
 }
 
-// Le code de reduction ne concerne que le premier plan (type 'plan') : jamais envoye pour 'maj'.
+// Code de reduction : sur les 80 € (type 'plan', le seul produit depuis le 01/11).
 // Le montant n'est JAMAIS envoye : le serveur le recalcule depuis le code.
 export async function payerMollie(type, code) {
   const corps = { type };
