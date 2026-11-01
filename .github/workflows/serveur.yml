@@ -64,8 +64,13 @@ jobs:
       # MOLLIE_API_KEY -> secret Firebase du meme nom, seulement si change).
       - name: Cle Mollie
         env:
-          CLE_MOLLIE: ${{ secrets.MOLLIE_API_KEY }}
+          CLE_LIVE: ${{ secrets.MOLLIE_LIVE_KEY }}
+          CLE_TEST: ${{ secrets.MOLLIE_API_KEY }}
         run: |
+          # 01/11 : la cle live (secret MOLLIE_LIVE_KEY) prime ; la cle test
+          # reste dans MOLLIE_API_KEY (retour arriere : supprimer MOLLIE_LIVE_KEY).
+          CLE_MOLLIE="${CLE_LIVE:-$CLE_TEST}"
+          case "$CLE_MOLLIE" in live_*) echo "Cle Mollie : live";; test_*) echo "Cle Mollie : test";; esac
           if [ -z "$CLE_MOLLIE" ]; then echo "Secret MOLLIE_API_KEY absent."; exit 1; fi
           ACTUEL=$(npx --yes firebase-tools@latest functions:secrets:access MOLLIE_API_KEY --project repz-baf60 2>/dev/null || true)
           if [ "$ACTUEL" != "$CLE_MOLLIE" ]; then
