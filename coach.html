@@ -124,6 +124,7 @@ header a.quitter{margin-left:auto;font-size:12px;color:var(--tx3);text-decoratio
 .tag{flex:none;font-size:11.5px;font-weight:600;border-radius:999px;padding:4px 9px;background:#F1EFE8;color:#5F5E5A}
 .tag.rouge{background:#FCEBEB;color:#A32D2D}.tag.ambre{background:#FAEEDA;color:#854F0B}.tag.vert{background:#E9F5EE;color:#1C5334}
 .nouveau{display:inline-block;margin-left:8px;vertical-align:middle;font-size:10.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;border-radius:999px;padding:2px 7px;background:#1C5334;color:#fff}.nouveau.compteur{margin-left:0;font-size:12px;padding:3px 9px}
+.outils{margin:28px 0 10px}.outils>summary{cursor:pointer;display:inline-flex;align-items:center;min-height:42px;padding:0 16px;border:1px solid #e6e2da;border-radius:999px;font-size:14px;font-weight:600;list-style:none}.outils>summary::-webkit-details-marker{display:none}
 .avance{margin:6px 0 10px}.avance>summary{cursor:pointer;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid #e6e2da;border-radius:999px;font-size:14px;font-weight:600;list-style:none}.avance>summary::-webkit-details-marker{display:none}.avance[open]>summary{margin-bottom:8px}
 .prog-h{margin:6px 0;padding:8px 10px;border:1px solid #e6e2da;border-radius:10px}.prog-h summary{cursor:pointer;font-weight:700;font-size:13px}
 .detail{padding:4px 0 14px;border-bottom:1px solid var(--filet)}
@@ -234,6 +235,57 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
       <button class="second" id="btnPlusClients" style="display:none;margin-top:10px">Voir plus de clients</button>
     </div>
 
+    <p class="lb" id="ancreComposer">Programme</p>
+    <div class="carte">
+      <label for="client">Destinataire</label>
+      <div id="choisi" class="chip" style="display:none"><b id="choisiNom"></b><button id="btnDeselect" aria-label="Changer de destinataire">×</button></div>
+      <div id="brouillonBarre" class="brouillon" style="display:none"><span id="brouillonTxt"></span><button id="btnReprendreEnvoye" class="mini">Reprendre le plan envoyé</button><button id="btnJeterBrouillon" class="mini">Jeter le brouillon</button></div>
+      <input id="client" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" spellcheck="false">
+    </div>
+    <!-- 01/11 v657b Raci : plus de versions ni de dates a l'ecran ; envoi = plan unique, demain 00 h 00. -->
+    <div hidden>
+    <p class="aide" id="debutAuto">Le plan commence demain, dès 00 h 00.</p>
+    <details id="avance" class="avance">
+    <div class="carte" id="versionsCarte">
+      <div id="listeVersions"></div>
+      <div class="ver-champs">
+        <div><label for="vLib">Nom de la version</label><input id="vLib" type="text" maxlength="60" placeholder="ex. Semaine 1" spellcheck="false"></div>
+        <div><label for="vDebut">Commence le</label><input id="vDebut" type="date"></div>
+      </div>
+      <div class="ver-ligne">
+        <button id="btnVerCopie">+ Nouvelle version (copie)</button>
+        <button id="btnVerSuppr" class="danger">Supprimer</button>
+      </div>
+      <div class="ver-esp">
+        <div><label for="vPremier">1re version le</label><input id="vPremier" type="date"></div>
+        <button id="btnEspacer">Espacer d'une semaine</button>
+      </div>
+      <p class="aide">Une seule version sans date = un plan unique, comme avant. Avec plusieurs versions, chacune s'applique à partir de son jour de début (jour belge, 00 h 00) ; la dernière reste valable sans fin. Une version sans date n'est pas appliquée. Avant la première date, le client garde son plan actuel, ou rien s'il n'en avait pas. « Espacer » met la 2e version 7 jours après la 1re, la 3e 14 jours après, etc.</p>
+    </div>
+    </details>
+    </div>
+    <div id="cible" class="cible" style="display:none"></div>
+    <div id="iaEtat" class="msg"></div>
+
+
+    <div class="ia">
+      <label for="demande">Demande à l'IA</label>
+      <textarea id="demande" maxlength="600" placeholder="Ex. : vise 2 000 kcal, plus de protéines le matin…"></textarea>
+      <button id="btnAjuster">Ajuster avec l'IA</button>
+      <div id="msgIa" class="msg"></div>
+    </div>
+    <p class="lb" id="titreRepas">Les repas</p>
+    <div id="repas"></div>
+    <button class="plus" id="btnRepas">+ Ajouter un repas</button>
+    <div class="total" id="total"></div>
+    <div class="carte">
+      <label for="note">Note pour le client</label>
+      <textarea id="note" maxlength="600" placeholder="Facultatif"></textarea>
+    </div>
+    <button class="principal" id="btnEnvoi">Envoyer le programme</button>
+    <div id="msg" class="msg"></div>
+
+    <details class="outils"><summary>Outils (invitations, accès)</summary>
     <p class="lb">Inviter un client</p>
     <div class="carte">
       <label for="invNote">Pour qui (note pour toi)</label>
@@ -266,53 +318,7 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
     </div>
     <div class="carte" id="listeAcces" style="padding:6px 15px"></div>
 
-    <p class="lb" id="ancreComposer">Envoyer un programme</p>
-    <div class="carte">
-      <label for="client">Destinataire</label>
-      <div id="choisi" class="chip" style="display:none"><b id="choisiNom"></b><button id="btnDeselect" aria-label="Changer de destinataire">×</button></div>
-      <div id="brouillonBarre" class="brouillon" style="display:none"><span id="brouillonTxt"></span><button id="btnReprendreEnvoye" class="mini">Reprendre le plan envoyé</button><button id="btnJeterBrouillon" class="mini">Jeter le brouillon</button></div>
-      <input id="client" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" spellcheck="false">
-      <p class="aide">Touche un questionnaire plus haut pour le remplir tout seul.</p>
-    </div>
-
-    <p class="aide" id="debutAuto">Le plan commence demain, dès 00 h 00.</p>
-    <details id="avance" class="avance"><summary>Avancé (plusieurs versions)</summary>
-    <div class="carte" id="versionsCarte">
-      <div id="listeVersions"></div>
-      <div class="ver-champs">
-        <div><label for="vLib">Nom de la version</label><input id="vLib" type="text" maxlength="60" placeholder="ex. Semaine 1" spellcheck="false"></div>
-        <div><label for="vDebut">Commence le</label><input id="vDebut" type="date"></div>
-      </div>
-      <div class="ver-ligne">
-        <button id="btnVerCopie">+ Nouvelle version (copie)</button>
-        <button id="btnVerSuppr" class="danger">Supprimer</button>
-      </div>
-      <div class="ver-esp">
-        <div><label for="vPremier">1re version le</label><input id="vPremier" type="date"></div>
-        <button id="btnEspacer">Espacer d'une semaine</button>
-      </div>
-      <p class="aide">Une seule version sans date = un plan unique, comme avant. Avec plusieurs versions, chacune s'applique à partir de son jour de début (jour belge, 00 h 00) ; la dernière reste valable sans fin. Une version sans date n'est pas appliquée. Avant la première date, le client garde son plan actuel, ou rien s'il n'en avait pas. « Espacer » met la 2e version 7 jours après la 1re, la 3e 14 jours après, etc.</p>
-    </div>
     </details>
-
-    <p class="lb" id="titreRepas">Les repas</p>
-    <div id="iaEtat" class="msg"></div>
-    <div id="cible" class="cible" style="display:none"></div>
-    <div id="repas"></div>
-    <button class="plus" id="btnRepas">+ Ajouter un repas</button>
-    <div class="total" id="total"></div>
-    <div class="ia">
-      <label for="demande">Demande à l'IA</label>
-      <textarea id="demande" maxlength="600" placeholder="Ex. : plus de protéines le matin, remplace le riz par des pâtes, vise 2 200 kcal…"></textarea>
-      <button id="btnAjuster">Ajuster avec l'IA</button>
-      <div id="msgIa" class="msg"></div>
-    </div>
-    <div class="carte">
-      <label for="note">Note pour le client</label>
-      <textarea id="note" maxlength="600" placeholder="Facultatif — durée du plan, contexte, prochaine étape…"></textarea>
-    </div>
-    <button class="principal" id="btnEnvoi">Envoyer · app + e-mail</button>
-    <div id="msg" class="msg"></div>
   </section>
 
 </div>
@@ -331,7 +337,7 @@ let choisi = null;   // dossier selectionne (destinataire)
 let tousDossiers = [];   // 01/11 v656 : pour retrouver un client tape a la main
 // 01/11 v656 Raci : un client livre sans questionnaire (ex. plan envoye a la main).
 const aQuestionnaire = (d) => !!(d && d.reponses && Object.keys(d.reponses).length);
-const MSG_SANS_Q = 'Ce client n\'a pas rempli de questionnaire : écris la cible dans la demande à l\'IA (ex. « vise 2 000 kcal, 4 repas »), puis touche « Ajuster avec l\'IA ».';
+const MSG_SANS_Q = 'Pas de questionnaire : écris la cible à l\'IA (ex. « vise 2 000 kcal »).';
 
 // 26/10 Plans par date : un plan = une ou plusieurs VERSIONS, chacune avec
 // un jour de debut. `plan` pointe toujours sur les repas de la version
@@ -874,7 +880,10 @@ function planEnvoye(d) {
   const p = d && d.programme; if (!p) return null;
   const copie = (repas) => (repas || []).map((r) => ({ nom: r.nom || 'Repas', ings: (r.ings || []).map((i) => ({ name: i.name, portion: i.portion })) }));
   const vs = (p.versions || []).filter((v) => (v.repas || []).length).map((v) => ({ libelle: v.libelle || '', debut: v.debut || '', repas: copie(v.repas) }));
-  if (vs.length) return { versions: vs, note: p.note || '', livreLe: p.livreLe };
+  // Plus de versions a l'ecran : on reprend celle en cours aujourd'hui (sinon la 1re).
+  const auj = dateBruxelles();
+  const enCours = vs.filter((v) => v.debut && v.debut <= auj).pop() || vs[0];
+  if (enCours) return { versions: [{ libelle: '', debut: '', repas: enCours.repas }], note: p.note || '', livreLe: p.livreLe };
   return (p.repas || []).length ? { versions: [{ libelle: '', debut: '', repas: copie(p.repas) }], note: p.note || '', livreLe: p.livreLe } : null;
 }
 const jourCourt = (x) => x ? new Date(x).toLocaleDateString('fr-BE', { day: 'numeric', month: 'short' }) : '';
@@ -882,7 +891,7 @@ function chargerEnvoye(d) {
   const e = planEnvoye(d); if (!e) return false;
   versions = e.versions; $('note').value = e.note; ouvrirVersion(0);
   jeterBrouillon(d.uid);   // identique a l'envoi : pas de « brouillon » tant que rien n'est modifie
-  afficher($('iaEtat'), 'Plan envoyé le ' + jourCourt(e.livreLe) + ' chargé : modifie-le, puis renvoie-le.', true);
+  $('iaEtat').className = 'msg';   // une seule ligne : le nom du client dit deja « plan du … »
   return true;
 }
 function choisir(d) {
@@ -897,15 +906,16 @@ function choisir(d) {
     const env = planEnvoye(d);
     // Brouillon plus recent que le dernier envoi : on le garde. Sinon : le plan envoye.
     if (brouillonNonVide(b) && !(env && env.livreLe && new Date(b.le) < new Date(env.livreLe))) {
-      versions = b.versions; $('note').value = b.note || '';
+      const vb = b.versions[Math.min(b.cur || 0, b.versions.length - 1)];   // un seul plan a l'ecran
+      versions = [{ libelle: '', debut: '', repas: vb.repas }]; $('note').value = b.note || '';
       if (b.cible && b.cible.source === 'coach') cibleCourante = b.cible;
-      ouvrirVersion(Math.min(b.cur || 0, versions.length - 1));
+      ouvrirVersion(0);
     } else chargerEnvoye(d);
     majBrouillonBarre();
   }
   choisi = d;
   afficherCible();
-  $('choisiNom').textContent = nomDe(d) + (d.email && d.email !== nomDe(d) ? ' · ' + d.email : '');
+  $('choisiNom').textContent = nomDe(d) + (d.email && d.email !== nomDe(d) ? ' · ' + d.email : '') + (planEnvoye(d) ? ' · plan du ' + jourCourt(d.programme.livreLe) : '');
   $('choisi').style.display = 'flex';
   $('client').style.display = 'none';
   $('ancreComposer').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1160,7 +1170,7 @@ $('btnEnvoi').addEventListener('click', () => {
   }));
   // Plan unique sans date = depot d'avant, a l'identique. Sinon : versions.
   // 01/11 v657 Raci : sans « Avancé », le plan commence demain (jour belge, 00 h 00).
-  const simple = !$('avance').open && versions.length === 1;
+  const simple = true;   // toujours un plan unique
   if (simple) versions[0].debut = ajouterJours(dateBruxelles(), 1);
   const parVersions = versions.length > 1 || !!jourValide(versions[0].debut);
   let extra;
@@ -1202,7 +1212,7 @@ $('btnEnvoi').addEventListener('click', () => {
         'L\'envoi a échoué. Réessaie.', false);
     }
   }).catch((e) => { if (e.message !== 'code') afficher(msg, 'Réseau indisponible.', false); })
-    .finally(() => { b.disabled = false; b.textContent = 'Envoyer · app + e-mail'; });
+    .finally(() => { b.disabled = false; b.textContent = 'Envoyer le programme'; });
 });
 
 if (code) ouvrir(); else ecran('code');
