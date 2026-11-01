@@ -1355,9 +1355,19 @@ async function deposerChez(corps, parCoach) {
 
   // 5. Ecriture. C'est le seul chemin : la regle Firestore
   //    interdit au client de toucher ce champ lui-meme.
-  await db.collection("users").doc(client.uid).set(
-    {programme: prog}, {merge: true},
-  );
+  // 01/11 Raci : historique. Avant chaque nouvelle livraison, l'ancien
+  // programme est copie dans programmesHistorique (12 derniers, du plus recent).
+  const ecrit = {programme: prog};
+  const avantH = await db.collection("users").doc(client.uid).get();
+  const ancienP = avantH.exists ? avantH.data().programme : null;
+  if (ancienP && Array.isArray(ancienP.repas) && ancienP.repas.length) {
+    const copie = {kcal: ancienP.kcal ?? null, prot: ancienP.prot ?? null, carbs: ancienP.carbs ?? null, lip: ancienP.lip ?? null,
+      repas: ancienP.repas, note: ancienP.note || "", livreLe: ancienP.livreLe || null, parCoach: ancienP.parCoach ?? null,
+      archiveLe: new Date().toISOString()};
+    const deja = Array.isArray(avantH.data().programmesHistorique) ? avantH.data().programmesHistorique : [];
+    ecrit.programmesHistorique = [copie, ...deja.filter((h) => h && h.livreLe !== copie.livreLe)].slice(0, 12);
+  }
+  await db.collection("users").doc(client.uid).set(ecrit, {merge: true});
 
   // 6. Courriel. Un echec d'envoi ne doit PAS annuler le depot :
   //    le plan est deja dans l'app, c'est le canal qui fait foi.
@@ -1611,9 +1621,16 @@ exports.espaceCoach = onRequest(
       if (action === "verifier") { res.json({ok: true}); return; }
 
       if (action === "dossiers") {
-        const snap = await db.collection("users")
-          .orderBy("questionnaireCoach.envoyeLe", "desc").limit(60).get();
-        const docs = snap.docs.map((d) => ({uid: d.id, d: d.data()}));
+        // 01/11 Raci : TOUS les clients qui ont paye, recu un programme ou
+        // envoye un questionnaire (avant : questionnaire seulement, 60 max).
+        // orderBy exclut les comptes sans le champ : 3 requetes, union par uid.
+        const limite = Math.max(50, Math.min(1000, parseInt(corps.limite, 10) || 300));
+        const champs = ["questionnaireCoach.envoyeLe", "commandeCoach.payeLe", "programme.livreLe"];
+        const snaps = await Promise.all(champs.map((c) => db.collection("users").orderBy(c, "desc").limit(limite).get()));
+        const parUid = new Map();
+        snaps.forEach((sn) => sn.docs.forEach((d) => { if (!parUid.has(d.id)) parUid.set(d.id, d.data()); }));
+        const docs = [...parUid].map(([uid, d]) => ({uid, d}));
+        const complet = snaps.every((sn) => sn.size < limite);
         const emails = {};
         for (let k = 0; k < docs.length; k += 100) {
           const lot = docs.slice(k, k + 100).map((x) => ({uid: x.uid}));
@@ -1625,6 +1642,9 @@ exports.espaceCoach = onRequest(
           const q = d.questionnaireCoach || {};
           const rep = q.reponses || {};
           const livreLe = (d.programme && d.programme.livreLe) || null;
+          const resume = (p) => p && ({livreLe: p.livreLe || null, kcal: p.kcal, prot: p.prot, carbs: p.carbs, lip: p.lip,
+            note: p.note || "", repas: Array.isArray(p.repas) ? p.repas : []});
+          const histo = (Array.isArray(d.programmesHistorique) ? d.programmesHistorique : []).map(resume);
           return {
             uid,
             email: emails[uid] || null,
@@ -1636,13 +1656,18 @@ exports.espaceCoach = onRequest(
             payeLe: (d.commandeCoach && d.commandeCoach.payeLe) || null,
             virement: (d.commandeCoach && d.commandeCoach.virement) || null,
             livreLe,
-            aTraiter: !livreLe || (q.envoyeLe && new Date(livreLe) < new Date(q.envoyeLe)),
+            // A traiter : un questionnaire recu et pas encore de programme livre apres lui.
+            aTraiter: !!q.envoyeLe && (!livreLe || new Date(livreLe) < new Date(q.envoyeLe)),
+            programme: resume(d.programme),
+            programmesHistorique: histo,
             alerteSante: !!q.alerteSante,
             allergieGrave: !!q.allergieGrave,
             reponses: rep,
           };
         });
-        res.json({ok: true, dossiers});
+        const recent = (x) => Math.max(0, ...[x.envoyeLe, x.payeLe, x.livreLe].map((v) => Date.parse(v) || 0));
+        dossiers.sort((x, y) => recent(y) - recent(x));
+        res.json({ok: true, dossiers, complet, limite});
         return;
       }
 
