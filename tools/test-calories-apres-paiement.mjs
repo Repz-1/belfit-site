@@ -24,5 +24,17 @@ await bandeau(SUF + ' · juste après paiement, plan coach pas encore livré');
 await p.screenshot({ path: `${SORTIE}${SUF}-2-apres-paiement.png` });
 const calc = await p.evaluate(() => !!document.querySelector('[class^="bs-"]'));
 console.log((calc ? '✗ ' : '✓ ') + 'apres paiement sans plan coach : pas d ecran de calcul des calories');
+// 01/11 : pas d'objectif par defaut (4300) -> « Plan en préparation ».
+const carte = await p.evaluate(() => (document.querySelector('.cal') || {}).innerText || '');
+const page = await p.evaluate(() => document.body.innerText);
+const prep = /Plan en préparation/.test(carte) && !/4300|4 300/.test(carte) && !/Recommandé 8/.test(page);
+console.log((prep ? '✓ ' : '✗ ') + 'apres paiement sans plan coach : « Plan en préparation », pas de 4300 kcal');
+await p.screenshot({ path: `${SORTIE}plan-en-preparation.png` });
+// Plan coach livre -> objectif du coach affiche normalement.
+await p.evaluate(() => { const b = window.__banc; b.programme.value = { kcal: 2450, prot: 160, carbs: 280, lip: 75 }; b.jrn.objectifs.value = { kcal: 2450, prot: 160, carbs: 280, lip: 75 }; });
+await p.waitForTimeout(800);
+const carte2 = await p.evaluate(() => (document.querySelector('.cal') || {}).innerText || '');
+const livre = /2450|2 450/.test(carte2) && !/Plan en préparation/.test(carte2);
+console.log((livre ? '✓ ' : '✗ ') + 'plan coach livre : objectif du coach affiche');
 await nav.close(); try { process.kill(-srv.pid); } catch (e) {}
-process.exit(calc ? 1 : 0);
+process.exit(calc || !prep || !livre ? 1 : 0);

@@ -105,7 +105,7 @@ function Macro({ nom, valeur, cible, teinte }) {
       <div class="cal-macro-nom">{nom}</div>
       <div class="cal-macro-val">
         <b style={{ color: depasse ? 'var(--alerte)' : teinte }}>{affiche}g</b>
-        <span> / {Math.round(cible)}g</span>
+        {cible != null && <span> / {Math.round(cible)}g</span>}
       </div>
       <div class="cal-macro-piste">
         <div class="cal-macro-jauge" style={{ width: (ratio * 100) + '%', background: depasse ? 'var(--alerte)' : teinte }} />
@@ -128,7 +128,10 @@ export function DayDashboard() {
   const vide = tot.kcal === 0;
   const chiffre = useNombreAnime(Math.abs(Math.round(restant)));
   const consommees = useNombreAnime(Math.round(tot.kcal));
-  const ratio = obj.kcal > 0 ? tot.kcal / obj.kcal : 0;
+  // 01/11 (Raci) : client paye, plan coach pas encore livre -> pas d'objectif par
+  // defaut (4300 kcal) affiche ; « Plan en préparation » a la place.
+  const enPreparation = !ro && calculReserveCoach.value && !planCoachActif.value;  // = objectifEnPreparation
+  const ratio = !enPreparation && obj.kcal > 0 ? tot.kcal / obj.kcal : 0;
   const d = new Date();
   const jours = t('days_long').split('|');
   const moisCourt = t('months_min').split('|');
@@ -156,7 +159,7 @@ export function DayDashboard() {
   return (
     <>
     <section class={'carte carte--relief cal' + (pret ? '' : ' cal--chargement')}
-             data-palier={palier || 'ok'}>
+             data-palier={(!enPreparation && palier) || 'ok'}>
       <span class="cal-capte" aria-hidden="true" />
       <span class="cal-eclats" aria-hidden="true" />
       <div class="cal-date">
@@ -171,24 +174,29 @@ export function DayDashboard() {
           <div class="cal-cote-lb">{t('consumed')}</div>
           <div class="cal-cote-val">{consommees}</div>
         </div>
-        <Anneau ratio={ratio} palier={palier} enfant={
+        <Anneau ratio={ratio} palier={enPreparation ? null : palier} enfant={
           <>
+            {enPreparation ? <>
+              <div class="cal-num">{consommees}</div>
+              <div class="cal-num-lb cal-prep">kcal · Plan en préparation</div>
+            </> : <>
             <div class={'cal-num' + (palier ? ' cal-num--' + palier : '')}>{chiffre}</div>
             <div class="cal-num-lb">
               {vide ? t('kcal_left') : depasse ? t('kcal_over') : atteint ? t('kcal_reached') : t('kcal_left')}
             </div>
+            </>}
           </>
         } />
         <div class="cal-cote">
           <div class="cal-cote-lb">{t('goal')}</div>
-          <div class="cal-cote-val">{Math.round(obj.kcal)}</div>
+          <div class="cal-cote-val">{enPreparation ? '—' : Math.round(obj.kcal)}</div>
         </div>
       </div>
       <div class="cal-trait" />
       <div class="cal-macros">
-        <Macro nom={t('proteins')} valeur={tot.prot}  cible={obj.prot}  teinte="var(--mac-prot)" />
-        <Macro nom={t('carbs')}    valeur={tot.carbs} cible={obj.carbs} teinte="var(--mac-carbs)" />
-        <Macro nom={t('fats')}     valeur={tot.lip}   cible={obj.lip}   teinte="var(--mac-lip)" />
+        <Macro nom={t('proteins')} valeur={tot.prot}  cible={enPreparation ? null : obj.prot}  teinte="var(--mac-prot)" />
+        <Macro nom={t('carbs')}    valeur={tot.carbs} cible={enPreparation ? null : obj.carbs} teinte="var(--mac-carbs)" />
+        <Macro nom={t('fats')}     valeur={tot.lip}   cible={enPreparation ? null : obj.lip}   teinte="var(--mac-lip)" />
       </div>
       {!ro && <RappelRecalcul />}
       {!ro && <div class="cal-action">
