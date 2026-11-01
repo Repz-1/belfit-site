@@ -84,7 +84,7 @@ const PAYE = (id, uid, v) => ({id, status: "paid", mode: "test", paidAt: new Dat
   ok(red.normaliserCode("  marc 10 ") === "MARC10" && red.normaliserCode("Marc-10") === "MARC10" && red.normaliserCode("été 15") === "ETE15" && red.normaliserCode(null) === "", "saisie normalisée : trim, majuscules, sans espace ni accent ni tiret");
   const p15 = red.calculerPrix(8000, 15); ok(p15.ok && p15.montant === "68.00" && p15.reduction === "12.00" && p15.base === "80.00", "-15 % sur 80 € : 68,00 € (réduction 12,00 €)");
   ok(red.calculerPrix(8000, 10).montant === "72.00" && red.calculerPrix(8000, 33).montant === "53.60" && red.calculerPrix(8000, 90).montant === "8.00", "-10 % : 72,00 € ; -33 % : 53,60 € ; -90 % : 8,00 € (centimes entiers)");
-  for (const bad of [0, 91, 100, 1.5, -5, NaN, "10"]) ok(red.calculerPrix(8000, bad).ok === false, "pourcentage " + JSON.stringify(bad) + " refusé (reste payable en ligne)");
+  for (const bad of [0, 100, 101, 1.5, -5, NaN, "10"]) ok(red.calculerPrix(8000, bad).ok === false, "pourcentage " + JSON.stringify(bad) + " refusé (reste payable en ligne)");
   ok(red.calculerPrix(150, 90).motif === "minimum", "prix final sous 1,00 € : motif « minimum »");
   ok(red.texteVersCents("80.00") === 8000 && red.texteVersCents("68.5") === 6850 && Number.isNaN(red.texteVersCents("abc")), "montants texte ↔ centimes");
   const now = Date.now(); const futur = new Date(now + 1e6).toISOString(); const passe = new Date(now - 1e6).toISOString();
@@ -93,7 +93,7 @@ const PAYE = (id, uid, v) => ({id, status: "paid", mode: "test", paidAt: new Dat
   const cl = red.clesEssais("u1", "1.2.3.4"); ok(!JSON.stringify(cl).includes("1.2.3.4"), "freinage : l'adresse IP n'est jamais stockée en clair");
 
   console.log("— vérification d'un code (lecture seule)");
-  poser("MARC10", {pourcent: 10}); poser("TEST15", {pourcent: 15}); poser("ANCIEN", {statut: "utilise", utilisePar: "u3"}); poser("ARRET", {actif: false}); poser("PERIME", {expire: passe}); poser("BASS", {pourcent: 95});
+  poser("MARC10", {pourcent: 10}); poser("TEST15", {pourcent: 15}); poser("ANCIEN", {statut: "utilise", utilisePar: "u3"}); poser("ARRET", {actif: false}); poser("PERIME", {expire: passe}); poser("BASS", {pourcent: 100}); poser("NOMI99", {pourcent: 99, pourUid: "u9"});
   let r = await verif("t1", " marc 10 "); ok(r.code === 200 && r.body.ok && r.body.pourcent === 10 && r.body.montant === "72.00" && r.body.base === "80.00", "« marc 10 » (minuscules, espace) → MARC10 : -10 %, 72,00 €");
   ok(store["codesReduction/MARC10"].reservePar === null, "la vérification ne réserve et ne consomme rien");
   r = await verif("t1", "TEST15"); ok(r.body.montant === "68.00", "TEST15 : -15 % → 68,00 €");
@@ -112,6 +112,8 @@ const PAYE = (id, uid, v) => ({id, status: "paid", mode: "test", paidAt: new Dat
   r = await verif("t1", "TEST15"); ok(r.code === 200 && r.body.ok && r.body.montant === "68.00", "client existant (a déjà payé, a déjà utilisé un code) : un autre code est accepté pour un nouveau mois à 80 €");
   delete store["users/u1"]; delete store["reductionsPersonne/tr_old"];
   r = await verif("t1", "BASS"); ok(r.code === 422 && r.body.motif === "minimum" && /contact@belfit.be/.test(r.body.message), "pourcentage hors limites (donnée corrompue) : refus propre, pas de paiement à 0 €");
+  r = await verif("t1", "NOMI99"); ok(r.code === 404, "code nominatif : refusé pour un autre compte");
+  ok(red.calculerPrix(8000, 99).ok && red.calculerPrix(8000, 99).montantCents === 80, "99 % : 0,80 EUR accepté");
 
   console.log("— anti-devinette");
   vider(); poser("TEST15", {pourcent: 15});

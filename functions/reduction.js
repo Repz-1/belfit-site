@@ -25,11 +25,12 @@
 const crypto = require("crypto");
 
 const PRIX_BASE_CENTS = {plan: 8000};   // 80,00 EUR : meme valeur que PRODUITS dans mollie.js
-const POURCENT_MAX = 90;                // au-dela : le prix tomberait trop bas pour Mollie (voir MIN_CENTS)
+const POURCENT_MAX = 99;                // 01/11 : 99 % possible pour un code reserve a UN compte (premier achat live)
+const POURCENT_MAX_ADMIN = 90;          // plafond des codes crees depuis la page coach / l'outil
 // Minimum accepte pour un paiement reduit. Mollie accepte des 0,01-0,02 EUR (Bancontact : 0,02),
 // mais un code qui rend le plan quasi gratuit est un autre cas (voir « invitation » du coach) :
 // refuse proprement plutot que deviner. 90 % de 80 EUR = 8,00 EUR : toujours au-dessus.
-const MIN_CENTS = 100;
+const MIN_CENTS = 50;   // 01/11 : 0,80 EUR (99 %) ; carte 0,00, Bancontact 0,02, Belfius 0,01 (Klarna 1,00 : masque par Mollie)
 const RESERVATION_MS = 70 * 60 * 1000;
 const ESSAIS_MAX = 8;                   // mauvais codes tolerés ...
 const FENETRE_MS = 15 * 60 * 1000;      // ... par fenetre de 15 min, par compte ET par adresse IP
@@ -87,6 +88,7 @@ const statutEffectif = (d, maintenant) => {
 function evaluerCode(d, uid, maintenant) {
   if (!d) return {ok: false, motif: "inconnu"};
   if (d.actif === false) return {ok: false, motif: "desactive"};
+  if (d.pourUid && d.pourUid !== uid) return {ok: false, motif: "inconnu"};   // code nominatif
   if (d.expire && maintenant > Date.parse(d.expire)) return {ok: false, motif: "expire"};
   const s = statutEffectif(d, maintenant);
   if (s === "utilise") return {ok: false, motif: "utilise"};
@@ -181,7 +183,7 @@ function nouveauDocument({pourcent, note, expire}) {
 }
 
 module.exports = {
-  PRIX_BASE_CENTS, POURCENT_MAX, MIN_CENTS, RESERVATION_MS, ESSAIS_MAX, FENETRE_MS, MESSAGES, STATUT_HTTP, MOTIFS_ESSAI_RATE,
+  PRIX_BASE_CENTS, POURCENT_MAX, POURCENT_MAX_ADMIN, MIN_CENTS, RESERVATION_MS, ESSAIS_MAX, FENETRE_MS, MESSAGES, STATUT_HTTP, MOTIFS_ESSAI_RATE,
   normaliserCode, codeBienForme, centsVersTexte, texteVersCents, calculerPrix, statutEffectif, evaluerCode,
   clesEssais, tropDEssais, noterEchec, verifier, reserver, attacherCommande, liberer, montantAttendu,
   codeAleatoire, nouveauDocument, vide,
