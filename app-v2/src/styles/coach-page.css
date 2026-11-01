@@ -420,7 +420,7 @@
 .pg-coach .sv-entete .sv-note { margin-top: 6px; }
 .pg-coach .sv-lien { display: block; width: 100%; margin-top: 10px; padding: 6px 0; background: none; border: 0; text-align: left; font: inherit; font-size: 13px; color: #3E5046; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
-/* 01/11 : bouton « Continuer un mois · 80 € » dans Mon suivi. */
+/* 01/11 : bouton « Reprendre mon programme » dans Mon suivi. */
 .pg-coach .sv-continuer { margin-top: 12px; }
 .pg-coach .sv-lien--off { text-decoration: none; cursor: default; opacity: .8; }
 .pg-coach .sv-neutre { margin: 4px 2px 12px; }

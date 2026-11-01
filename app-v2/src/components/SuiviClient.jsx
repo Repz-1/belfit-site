@@ -132,7 +132,7 @@ export function SuiviClient({ onContinuer, onNouveau }) {
             <p class="cp-txt sv-acces">Accès nutrition jusqu'au {dateCourte(lim)}.</p>
             {/* 01/11 Raci : 80 € tout le temps ; le mois suivant se rachete a 80 €, nouveau questionnaire. */}
             {!APP_ANDROID && (commandesOuvertes()
-              ? <button type="button" class="cp-bt cp-bt--or sv-continuer" onClick={onContinuer}>Continuer un mois · 80 €</button>
+              ? <button type="button" class="cp-bt cp-bt--or sv-continuer" onClick={onContinuer}>Reprendre mon programme</button>
               : <p class="sv-lien sv-lien--off" aria-disabled="true">Envie de continuer&nbsp;? Le mois suivant (80 €) sera bientôt disponible.</p>
             )}
           </>
@@ -144,7 +144,7 @@ export function SuiviClient({ onContinuer, onNouveau }) {
             {/* 22/10 Raci : acces ferme (payeLe reel + 44 j), date discrete. */}
             {lim && Date.now() >= lim.getTime() && <p class="cp-txt sv-acces">Accès nutrition terminé le {dateCourte(lim)}.</p>}
             {APP_ANDROID ? null : commandesOuvertes()
-              ? <button class="cp-bt cp-bt--or" onClick={onNouveau}>Reprendre · 80 €</button>
+              ? <button class="cp-bt cp-bt--or" onClick={onNouveau}>Reprendre mon programme</button>
               : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
           </>
         ) : (

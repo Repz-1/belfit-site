@@ -148,9 +148,9 @@ try {
     await ctx.route('https://mollie.test/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Page Mollie (simulee)</h1>' }));
     await p.goto(APP + '?onglet=premium'); await p.waitForTimeout(2200);
     await p.getByText('Mon suivi', { exact: true }).first().click(); await p.waitForTimeout(700);
-    await p.locator('.cp-bt--or', { hasText: 'Reprendre · 80 €' }).tap(); await p.waitForTimeout(400);
+    await p.locator('.cp-bt--or', { hasText: 'Reprendre mon programme' }).tap(); await p.waitForTimeout(400);
     const mr = p.locator('.cp-modale');
-    ok(/Nouveau mois · 80 €/.test(await mr.innerText()) && await mr.locator('#cp-code-champ-modale').count() === 1, 'client existant, « Reprendre · 80 € » : la fenêtre propose le champ « Code de réduction »');
+    ok(/Nouveau mois · 80 €/.test(await mr.innerText()) && await mr.locator('#cp-code-champ-modale').count() === 1, 'client existant, « Reprendre mon programme » : la fenêtre propose le champ « Code de réduction »');
     await mr.locator('#cp-code-champ-modale').fill('test15'); await mr.locator('.cp-code-bt').tap(); await p.waitForTimeout(500);
     ok(/Nouveau mois · 68 € \(au lieu de 80 €\)/.test(await mr.innerText()) && /−15\s%\sappliqué/.test(await mr.innerText()), 'code appliqué : « Nouveau mois · 68 € (au lieu de 80 €) »');
     ok(p.appels.some(a => a.nom === 'verifierCodeReduction' && a.corps.type === 'plan'), 'vérification côté serveur : type « plan »');
@@ -163,7 +163,7 @@ try {
     ok(cr && cr.corps.type === 'plan' && cr.corps.code === 'TEST15' && !('montant' in cr.corps), 'rachat : le code part avec le paiement à 80 € (type plan), jamais de montant');
     await ctx.close();
   }
-  // Mise a jour a 60 € : jamais de champ de code
+  // 01/11 : plus de mise a jour a 60 € ; acces encore ouvert (jour 26) -> 80 € avec code
   {
     const jours = (n) => new Date(Date.now() - n * 86400000).toISOString();
     const PLAN = { kcal: 2100, prot: 150, carbs: 220, lip: 70, livreLe: jours(26), version: 1, repas: [{ nom: 'Déjeuner', ings: [{ name: 'Riz', portion: 150 }] }] };
@@ -178,11 +178,10 @@ try {
     });
     await p.goto(APP + '?onglet=premium'); await p.waitForTimeout(2200);
     await p.getByText('Mon suivi', { exact: true }).first().click(); await p.waitForTimeout(700);
-    const lien = p.locator('.sv-lien', { hasText: '60 €' });
-    ok(await lien.count() === 1, 'fenêtre des 60 € : le lien « Le mois suivant est à 60 € » est là');
-    await lien.first().tap(); await p.waitForTimeout(400);
-    const m60 = p.locator('.cp-modale');
-    ok(/Mois suivant · 60 €/.test(await m60.innerText()) && await m60.locator('input[id^="cp-code-champ"]').count() === 0, 'mise à jour à 60 € : aucun champ « Code de réduction »');
+    ok(await p.locator('.sv-lien', { hasText: '60 €' }).count() === 0, 'jour 26 (01/11) : plus de lien « 60 € »');
+    await p.locator('.cp-bt--or', { hasText: 'Reprendre mon programme' }).tap(); await p.waitForTimeout(400);
+    const m80 = p.locator('.cp-modale');
+    ok(/80 €/.test(await m80.innerText()) && !/60 €/.test(await m80.innerText()) && await m80.locator('#cp-code-champ-modale').count() === 1, 'jour 26 : « Reprendre mon programme » ouvre 80 € avec champ « Code de réduction »');
     await ctx.close();
   }
   // Compte non autorise : pas de champ du tout
