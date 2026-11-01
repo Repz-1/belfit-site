@@ -21,7 +21,7 @@ const SHOTS = process.env.SHOTS;
 let code = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); if (!c) code = 1; };
 const nav = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 const PRIX = /\d\s?(€|euros?)\b|€\s?\d/i;
-const ACHAT = /Demander mon plan|S'ABONNER|Reprendre ·|Voir l'offre|Code de réduction|Continuer vers le paiement|Paiement sécurisé|Mollie|virement|IBAN|TARIFS|Bientôt disponible/i;
+const ACHAT = /Demander mon plan|S'ABONNER|Reprendre ·|Voir l'offre|Code de réduction|Continuer vers le paiement|Paiement sécurisé|Mollie|virement|IBAN|TARIFS|Bientôt disponible|Débloquer mon programme|Reprendre mon programme/i;
 async function ouvrir(query, { plan = null, referrer = null } = {}) {
   const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: 'fr-BE', deviceScaleFactor: 2 });
   if (referrer) await ctx.addInitScript(r => { Object.defineProperty(Document.prototype, 'referrer', { get: () => r }); }, referrer);
@@ -84,7 +84,7 @@ try {
 
   // 5. Alimentation verrouillee (pas d'acces) : carte neutre, sans « Voir l'offre ».
   p = await ouvrir('?verrou=jamais&cmd=1');
-  ok(/Voir l'offre/.test(await p.locator('#app').innerText()), 'web : alimentation verrouillee propose « Voir l\'offre »');
+  ok(/Débloquer mon programme/.test(await p.locator('#app').innerText()), 'web : alimentation verrouillee propose « Débloquer mon programme »');
   await p.context().close();
   p = await ouvrir('?source=twa&verrou=jamais&cmd=1');
   t = await p.locator('#app').innerText();

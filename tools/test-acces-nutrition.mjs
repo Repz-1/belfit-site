@@ -76,14 +76,14 @@ const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.wait
   await pause(page);
   const s = await lire(page);
   ok(s.ro && s.offre && s.cause === 'jamais', 'jamais payé : lecture seule + offre');
-  ok(s.carte && /Alimentation.*payante/.test(s.texte) && /Entraînement offert/.test(s.texte), 'jamais payé : bulle « Alimentation : formule payante » + entraînement offert');
-  ok(/Bientôt disponible/.test(s.texte) && !/Voir l'offre/.test(s.texte), 'achat fermé : « Bientôt disponible » (rien ne s’ouvre)');
+  ok(s.carte && /Plan écrit pour toi sous 48 h/.test(s.texte) && /Entraînement offert/.test(s.texte) && !/payante/i.test(s.texte), 'jamais payé : carte sans titre (3 puces) + entraînement offert');
+  ok(/Débloquer mon programme/.test(s.texte) && !/Bientôt disponible/.test(s.texte), 'carte : toujours « Débloquer mon programme », jamais « Bientôt disponible »');
   ok(!/€/.test(s.texte) && !/gratuit/i.test(s.texte), 'carte : aucun prix, jamais « gratuit »');
   ok((s.texte.match(/coach/gi) || []).length <= 1, 'carte : le mot « coach » pas répété');
   ok(!s.ajoutRepas, 'jamais payé : pas de « ajouter un repas »');
   ok(await tenter(page) === true, 'jamais payé : AUCUNE écriture alimentaire ne passe (17 actions + favoris/plats)');
   await simuler(page, () => window.__banc.accesNut.commandesSimulees.value = true); await pause(page);
-  ok(/Voir l'offre/.test((await lire(page)).texte), 'achat ouvert (simulé) : bouton « Voir l’offre »');
+  ok(/Débloquer mon programme/.test((await lire(page)).texte), 'achat ouvert (simulé) : bouton « Débloquer mon programme »');
   // Eau libre
   const eau = await page.evaluate(() => { const j = window.__banc.jrn; j.eau.value = 0; j.ajouterEau(0.5); return j.eau.value; });
   ok(eau === 0.5, 'eau : reste libre (par défaut, à confirmer par Raci)');
