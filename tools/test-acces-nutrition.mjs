@@ -76,7 +76,7 @@ const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.wait
   await pause(page);
   const s = await lire(page);
   ok(s.ro && s.offre && s.cause === 'jamais', 'jamais payé : lecture seule + offre');
-  ok(s.carte && /Plan écrit pour toi sous 48 h/.test(s.texte) && /Entraînement offert/.test(s.texte) && !/payante/i.test(s.texte), 'jamais payé : carte sans titre (3 puces) + entraînement offert');
+  ok(s.carte && /Tu remplis un questionnaire personnalisé/.test(s.texte) && /Ton plan repas sur mesure, livré sous 48 h/.test(s.texte) && /Entraînement offert/.test(s.texte) && !/Journal et analyses IA/.test(s.texte) && !/payante/i.test(s.texte), 'jamais payé : 3 étapes numérotées (questionnaire, plan 48 h, entraînement offert)');
   ok(/Débloquer mon programme/.test(s.texte) && !/Bientôt disponible/.test(s.texte), 'carte : toujours « Débloquer mon programme », jamais « Bientôt disponible »');
   ok(!/€/.test(s.texte) && !/gratuit/i.test(s.texte), 'carte : aucun prix, jamais « gratuit »');
   ok((s.texte.match(/coach/gi) || []).length <= 1, 'carte : le mot « coach » pas répété');

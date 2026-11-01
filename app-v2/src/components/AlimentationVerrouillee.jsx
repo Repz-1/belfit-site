@@ -24,10 +24,10 @@ export function AlimentationVerrouillee({ cause = 'jamais', fin = null, commande
   // il mene a l'onglet de l'offre (parcours Mollie existant).
   const puces = expire
     ? [fin ? `Accès terminé le ${fin}` : 'Accès terminé', 'Tes anciens repas restent consultables', 'Entraînement offert']
-    : ['Plan écrit pour toi sous 48 h', 'Journal et analyses IA', 'Entraînement offert'];
+    : ['Tu remplis un questionnaire personnalisé', 'Ton plan repas sur mesure, livré sous 48 h', 'Entraînement offert'];
   return (
     <div class="vr-carte vr-bulle" role="region" aria-label="Alimentation">
-      <ul class="vr-puces">{puces.map(t => <li key={t}>{t}</li>)}</ul>
+      <ol class="vr-puces">{puces.map(t => <li key={t}>{t}</li>)}</ol>
       <button class="vr-btn" onClick={() => allerOnglet('premium')}>{expire ? 'Reprendre mon programme' : 'Débloquer mon programme'}</button>
     </div>
   );
