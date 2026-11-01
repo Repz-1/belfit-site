@@ -8,6 +8,7 @@
 //   firebase functions:secrets:set MOLLIE_API_KEY   (test_... puis live_...)
 // Appels directs a l'API REST Mollie (fetch natif de Node 22), sans
 // dependance supplementaire.
+const ORIGINES = require("./origines");
 const {onRequest} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
@@ -76,7 +77,7 @@ async function lireJeton(req) {
   } catch (e) { return null; }
 }
 function entetes(req, res) {
-  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Origin", ORIGINES.includes(req.headers.origin) ? req.headers.origin : ORIGINES[0]); res.set("Vary", "Origin");
   res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (req.method === "OPTIONS") { res.status(204).send(""); return true; }
@@ -165,7 +166,7 @@ const attenteEchec = () => new Promise((r) => setTimeout(r, Number(process.env.R
 //    LECTURE SEULE (rien n'est reserve ni consomme ici). Memes garde-fous que le paiement :
 //    jeton Firebase, compte autorise a payer, freinage des essais (8 / 15 min, par compte et par IP).
 exports.verifierCodeReduction = onRequest(
-    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS, alertes.RESEND_API_KEY]},
+    {region: REGION, cors: ORIGINES, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS, alertes.RESEND_API_KEY]},
     async (req, res) => {
       if (entetes(req, res)) return;
       const refus = (motif, extra = {}) => res.status(reduction.STATUT_HTTP[motif] || 403)
@@ -195,7 +196,7 @@ exports.verifierCodeReduction = onRequest(
 // 1) Le client clique « Payer » : on cree le paiement et on renvoie
 //    l'adresse de la page Mollie (Bancontact, cartes...).
 exports.creerPaiementMollie = onRequest(
-    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS, alertes.RESEND_API_KEY]},
+    {region: REGION, cors: ORIGINES, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS, alertes.RESEND_API_KEY]},
     async (req, res) => {
       if (entetes(req, res)) return;
       try {
@@ -282,7 +283,7 @@ exports.mollieWebhook = onRequest(
 //      (le client revient de la page Mollie, payee, annulee ou echouee). Le
 //      client n'ouvre le questionnaire que si activee:true.
 exports.mollieEtat = onRequest(
-    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS, alertes.RESEND_API_KEY]},
+    {region: REGION, cors: ORIGINES, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS, alertes.RESEND_API_KEY]},
     async (req, res) => {
       if (entetes(req, res)) return;
       try {

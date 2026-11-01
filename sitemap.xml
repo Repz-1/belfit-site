@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Plan du site pour les moteurs de recherche (oct. 2026).
      Seules les pages indexables y figurent :
-     - cgv.html est en noindex jusqu'a la relecture par l'avocat ;
-       la rajouter ici le jour ou son noindex est retire.
+     - cgv.html est indexable depuis la v658 (version 1.3).
      L'app (/v2/) n'est pas une page de contenu : elle n'y figure pas. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
@@ -20,5 +19,9 @@
   <url>
     <loc>https://www.belfit.be/suppression-compte.html</loc>
     <lastmod>2026-10-31</lastmod>
+  </url>
+  <url>
+    <loc>https://www.belfit.be/cgv.html</loc>
+    <lastmod>2026-11-01</lastmod>
   </url>
 </urlset>

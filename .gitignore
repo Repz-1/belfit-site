@@ -16,3 +16,4 @@ android/build/
 
 # Pages de connexion Firebase, telechargees au build (tools/auth-helper.mjs)
 /__/
+_site/

@@ -2430,7 +2430,7 @@ const DECALAGE_SW_V2 = 232;
 
 // ------------------------------------------------------------
 // R72 — Un code Premium se verifie au serveur, jamais dans la page.
-// La V1 portait JETAIME et BELFIT1 en clair dans le JS public de
+// La V1 portait ses codes premium en clair dans le JS public de
 // plans.html : n'importe qui lisant la source s'offrait l'abonnement.
 // Le code part maintenant vers utiliserCode, qui ouvre une transaction
 // sur codesPremium/{CODE} et n'ecrit premium qu'en admin — meme

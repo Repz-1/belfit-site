@@ -6,6 +6,7 @@
  * L'ecriture Firestore du journal reste cote client (meme store V2).
  * Cette function ne fait que comprendre et proposer.
  */
+const ORIGINES = require("./origines");
 const {onRequest} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
@@ -18,7 +19,7 @@ const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 const MODELES = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash"];
 
 function cors(req, res) {
-  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Origin", ORIGINES.includes(req.headers.origin) ? req.headers.origin : ORIGINES[0]); res.set("Vary", "Origin");
   res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (req.method === "OPTIONS") {
@@ -70,7 +71,7 @@ async function geminiJson(apiKey, prompt) {
 }
 
 exports.coachAgent = onRequest(
-  {secrets: [GEMINI_API_KEY], region: "europe-west1", cors: true, timeoutSeconds: 60},
+  {secrets: [GEMINI_API_KEY], region: "europe-west1", cors: ORIGINES, timeoutSeconds: 60},
   async (req, res) => {
     if (cors(req, res)) return;
     if (req.method !== "POST") {

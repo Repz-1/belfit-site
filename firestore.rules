@@ -3,9 +3,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Chaque utilisateur ne lit/écrit que son propre document.
-    // Phase 1 (test) : le client peut poser premium via le code promo.
-    // Phase 2 (lancement) : durcir en interdisant l'écriture de "premium"
-    //   côté client (seule la Cloud Function, en admin, l'écrira).
+    // Audit 01/11 (v658) : les champs d'acces payant (premium, PRO,
+    // abonnement, credits, codes) ne sont ecrits QUE par le serveur (admin).
+    // Un client ne peut plus s'offrir le PRO depuis son navigateur.
     //
     // BLOCAGE ALIMENTATION : sans acces nutrition actif, le client ne peut plus
     // ecrire les cles « nutrition » de v2Data. Les autres cles (seances, poids,
@@ -18,6 +18,11 @@ service cloud.firestore {
     function blocageActif() {
       return exists(/databases/$(database)/documents/config/acces)
              && get(/databases/$(database)/documents/config/acces).data.get('blocage', false) == true;
+    }
+    function champsServeur() {
+      return ['pseudo', 'programme', 'ajustements', 'commandeCoach', 'accesNutritionJusqu',
+              'premium', 'premiumJusqu', 'accesPro', 'source', 'codeUtilise',
+              'lsStatus', 'lsEvent', 'formule', 'abonnement', 'credits', 'creditsIA'];
     }
     function nutriCles() {
       return ['repas', 'objectifs', 'calculBaseFait', 'poidsCalcul', 'profilBesoins',
@@ -44,28 +49,16 @@ service cloud.firestore {
       // Le pseudo n'est modifiable que par la Cloud Function (accès admin),
       // afin que l'unicité reste garantie et qu'un pseudo ne soit pas volé.
       // À la création, le document ne peut pas contenir de pseudo.
+      // A la creation, aucun champ serveur (pseudo, programme, premium...).
       allow create: if request.auth != null && request.auth.uid == uid
-                    && !("pseudo" in request.resource.data.keys())
-                    && !("programme" in request.resource.data.keys())
-                    && !("ajustements" in request.resource.data.keys())
-                    && !("commandeCoach" in request.resource.data.keys())
-                    && !("accesNutritionJusqu" in request.resource.data.keys())
+                    && !request.resource.data.keys().hasAny(champsServeur())
                     && nutriAutoriseeCreation();
-      // À la mise à jour, pseudo, programme et ajustements doivent rester
-      // inchangés. Sans la protection du compteur, le quota ne vaudrait rien :
-      // il suffirait de le remettre à zéro depuis le navigateur.
-      // Le programme est déposé par le coach via deposerProgramme, qui
-      // écrit en admin : sans cette règle, n'importe qui pourrait
-      // s'attribuer un plan, et surtout en écrire un chez un autre.
+      // A la mise a jour, les champs serveur restent inchanges : pseudo
+      // (unicite), programme / ajustements (deposes par le coach),
+      // commandeCoach (webhook de paiement), accesNutritionJusqu,
+      // et l'acces payant (premium, PRO, abonnement, credits).
       allow update: if request.auth != null && request.auth.uid == uid
-                    && !("pseudo" in request.resource.data.diff(resource.data).affectedKeys())
-                    && !("programme" in request.resource.data.diff(resource.data).affectedKeys())
-                    && !("ajustements" in request.resource.data.diff(resource.data).affectedKeys())
-                    // 26/09 : la commande coaching n'est ecrite que par le
-                    // webhook de paiement ; sinon on s'offrirait un plan.
-                    && !("commandeCoach" in request.resource.data.diff(resource.data).affectedKeys())
-                    // Blocage alimentation : champ serveur + cles nutrition.
-                    && !("accesNutritionJusqu" in request.resource.data.diff(resource.data).affectedKeys())
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(champsServeur())
                     && nutriAutoriseeMaj();
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
@@ -122,6 +115,10 @@ service cloud.firestore {
       allow read, write: if false;
     }
     match /essaisCodes/{cle} {
+      allow read, write: if false;
+    }
+    // Essais du code coach (audit 01/11) : serveur seulement.
+    match /essaisCoach/{cle} {
       allow read, write: if false;
     }
   }

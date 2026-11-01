@@ -40,9 +40,13 @@ jobs:
         working-directory: app-v2
         run: npm run build
 
+      # Liste blanche de publication (audit v658) : seul _site/ part en ligne
+      - name: Preparer le site publie
+        run: bash tools/preparer-site.sh
+
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
       - id: deployment
         uses: actions/deploy-pages@v4
