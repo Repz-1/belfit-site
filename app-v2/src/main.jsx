@@ -53,7 +53,10 @@ import { MealPage } from './components/MealPage.jsx';
 import { repasOuvertId } from './components/MealCard.jsx';
 import { MesPlats } from './components/MesPlats.jsx';
 import { absenceLongue, decider } from './services/accueil-frequence.js';
-import { commandesSimulees, lectureSeule, offreVisible, causeFermeture, finAccesMs } from './store/acces-nutrition.js';
+import { objectifEnPreparation } from './store/journal.js';
+import { effect as effetObjectif } from '@preact/signals';
+effetObjectif(() => { objectifEnPreparation.value = !lectureSeule.value && calculReserveCoach.value && !planCoachActif.value; });
+import { commandesSimulees, lectureSeule, calculReserveCoach, offreVisible, causeFermeture, finAccesMs } from './store/acces-nutrition.js';
 import { AlimentationVerrouillee } from './components/AlimentationVerrouillee.jsx';
 import { commandesOuvertes } from './components/CoachPage.jsx';
 
@@ -383,7 +386,7 @@ export function App() {
     ouvrirCalcDemande.value = false;
     // Plan coach actif : les objectifs viennent du plan (27/09), le
     // calcul n'est plus ouvert.
-    if (!planCoachActif.value && !lectureSeule.value) {
+    if (!planCoachActif.value && !lectureSeule.value && !calculReserveCoach.value) {
       if (estPremium.value || !calculBaseFait.value) besoinsOuverts.value = true;
       else ongletActif.value = 'premium';
     }
@@ -690,7 +693,7 @@ export function App() {
                   : <span />}
                 <span>Poids <b>{kg != null ? String(kg).replace('.', ',') + ' kg' : '—'}</b></span>
               </div>
-              {!planCoachActif.value && (
+              {!planCoachActif.value && !calculReserveCoach.value && (
                 <button class="pv-bt" onClick={() => {
                   voletProfil.value = false;
                   if (vueReglages.value) { vueReglages.value = null; ongletActif.value = 'journal'; }

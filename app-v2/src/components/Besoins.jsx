@@ -8,7 +8,7 @@ import { deconnexion } from '../services/firebase.js';
 import { signal } from '@preact/signals';
 import { allerOnglet } from './BottomNav.jsx';
 import { origineCalc } from './BelfitPlus.jsx';
-import { ecritureBloquee, lectureSeule } from '../store/acces-nutrition.js';
+import { ecritureBloquee, lectureSeule, calculReserveCoach } from '../store/acces-nutrition.js';
 
 export const besoinsOuverts = signal(false);
 
@@ -436,6 +436,7 @@ export function besoinsRequis() {
   if (SANS_COMPTE) return false;
   if (calculBaseFait.value) return false;
   if (lectureSeule.value) return false;   // alimentation fermee : pas de calcul force
+  if (calculReserveCoach.value) return false;   // 01/11 : calories fixees par le coach, meme apres paiement
   const o = objectifs.value || {};
   return o.kcal === DEFAUT_KCAL && o.prot === 217 && o.carbs === 538 && o.lip === 96;
 }
