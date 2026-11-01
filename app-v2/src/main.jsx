@@ -21,7 +21,7 @@ import { CoachBar } from './components/CoachBar.jsx';
 // (code garde ; true pour la remettre, en bas de page).
 const BARRE_REPAS_VISIBLE = false;
 import { WaterTracker } from './components/WaterTracker.jsx';
-import { MealCard, ouvrirMesPlats } from './components/MealCard.jsx';
+import { RepasTimeline, ouvrirMesPlats } from './components/MealCard.jsx';
 import { AddMealModal } from './components/AddMealModal.jsx';
 import { RestTimer } from './components/RestTimer.jsx';
 import { Questionnaire } from './components/Questionnaire.jsx';
@@ -106,11 +106,11 @@ export function OngletJournal() {
           const pr = programme.value;
           const liste = repasAffiches(repas.value, pr && pr.repas);
           const aSuivre = liste.find(r => r.ings.length === 0);
-          return liste.map(r => (
-            <MealCard key={r.id} r={r}
+          return <div class="tl">{liste.map(r => (
+            <RepasTimeline key={r.id} r={r}
               aSuivre={aSuivre && r.id === aSuivre.id}
               fait={r.ings.length > 0 && !r.prevu && !r.saute} />
-          ));
+          ))}</div>;
         })()}
         {/* L'ajout d'un repas vit desormais dans le flux, sous le
             dernier repas — plus de bouton flottant jaune (Raci). */}

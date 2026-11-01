@@ -244,7 +244,7 @@ await o.ctx.close();
   const r1 = () => p.evaluate(() => { const r = window.__banc.repas.value[1]; return { prevu: !!r.prevu, saute: !!r.saute, remplace: !!r.remplace, duPlan: !!r.duPlan, ings: r.ings.map(i => i.name).join('+'), plan: (r.ingsPlan || []).map(i => i.name).join('+') }; });
   let e0; const vers = async () => { await dej().scrollIntoViewIfNeeded(); await p.waitForTimeout(500); };
   ok(await p.locator('.mc-plan').count() === 3 && await p.locator('.mc-plan-btn').count() === 9, 'choix : 3 boutons visibles (Mangé / Sauté / Mangé autre chose) sur chaque repas prévu du plan, sans menu caché');
-  const libs = await dej().locator('.mc-plan-btn').allInnerTexts(); ok(JSON.stringify(libs) === JSON.stringify(['✓ Mangé', 'Sauté', 'Mangé autre chose']), 'choix : libellés ' + JSON.stringify(libs));
+  const libs = await dej().locator('.mc-plan-btn').allInnerTexts(); ok(JSON.stringify(libs) === JSON.stringify(['✓ Mangé', 'Sauté', 'Autre chose']), 'choix : libellés ' + JSON.stringify(libs));
   ok(await p.locator('.mc-crayon').count() === 0 && await p.locator('.mc-renommer').count() === 3, 'renommer : crayon discret sur chaque repas du plan (.mc-renommer) ; Collations (créneau vide) masqué tant que le plan est actif (27/10)');
   const crayonOk = async (etat) => { const c = dej().locator('.mc-renommer'); const hb = await c.boundingBox(); const ch = await dej().locator('.mc-chevron').boundingBox();
     ok(hb && hb.width >= 40 && hb.height >= 40 && hb.x + hb.width <= ch.x + 1, 'renommer (' + etat + ') : visible, cible ≥ 40 px (' + Math.round(hb.width) + '×' + Math.round(hb.height) + '), à gauche du chevron');

@@ -331,7 +331,25 @@ export function validerRepas(repasId) {
   // Idee affichee mais pas encore choisie : « Mangé » vaut choix (le total reste juste).
   const x = repas.value.find(r => r.id === repasId);
   if (x && x.idee && !x.idee.confirme) choisirIdee(repasId);
-  repas.value = repas.value.map(r => r.id === repasId && r.prevu ? { ...r, prevu: false } : r);
+  // 01/11 Raci (timeline) : l'heure reelle est notee au clic sur « Mangé ».
+  const d = new Date(), hh = String(d.getHours()).padStart(2, '0'), mm = String(d.getMinutes()).padStart(2, '0');
+  repas.value = repas.value.map(r => r.id === repasId && r.prevu ? { ...r, prevu: false, heure: hh + ':' + mm } : r);
+}
+
+/** 01/11 Raci : heure par defaut d'un repas, selon son type (timeline du Journal). */
+const HEURE_TYPE = { pdej: '08:00', dej: '12:30', snack: '16:00', diner: '19:30' };
+export function heurePrevue(r) {
+  const c = (r && (r.cle || cleDuNom(r.nom))) || null;
+  const n = String((r && r.nom) || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (c === 'snack' && /matin|10h/.test(n)) return '10:30';
+  return HEURE_TYPE[c] || (r && r.type === 'collation' ? '16:00' : '12:30');
+}
+
+/** 01/11 Raci : corrige l'heure reelle d'un repas mange (selecteur de la timeline). */
+export function setHeureRepas(repasId, heure) {
+  if (ecritureBloquee()) return;
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(heure)) return;
+  repas.value = repas.value.map(r => r.id === repasId ? { ...r, heure } : r);
 }
 
 /**
@@ -435,7 +453,7 @@ export function remettrePrevu(repasId) {
   repas.value = repas.value.map(r => {
     if (r.id !== repasId || !r.duPlan) return r;
     const n = { ...r, prevu: true };
-    delete n.saute;
+    delete n.saute; delete n.heure;
     if (r.remplace) { n.ings = r.ingsPlan || []; delete n.remplace; delete n.ingsPlan; }
     return n;
   });

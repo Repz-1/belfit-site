@@ -96,7 +96,7 @@ const bandeau = (p) => p.evaluate(() => {
 });
 
 let [ctx, p] = await ouvrir({ regime: { valeur: 'Tout' }, allergie: { valeur: 'Non, aucune' } });
-const bouton = carte(p, 'Déjeuner').locator('.mc-idee-btn', { hasText: 'Autre idée' });
+const bouton = carte(p, 'Déjeuner').locator('.mc-idee-btn[aria-label="Autre idée"]');
 const bb = await bouton.boundingBox();
 ok(bb.height >= 44 && bb.width >= 120, `bouton « Autre idée » : zone tactile ${Math.round(bb.width)} × ${Math.round(bb.height)} px (≥ 44 px de haut)`);
 await carte(p, 'Déjeuner').scrollIntoViewIfNeeded(); await p.evaluate(() => window.scrollBy(0, -140)); await p.waitForTimeout(300);
@@ -139,7 +139,7 @@ await ctx.close();
 [ctx, p] = await ouvrir({ regime: { valeur: 'Végétarien' }, allergie: { valeur: 'Non, aucune' } });
 let trouve = false;
 for (let k = 0; k < 10 && !trouve; k++) {
-  await carte(p, 'Déjeuner').locator('.mc-idee-btn', { hasText: 'Autre idée' }).click(); await p.waitForTimeout(450);
+  await carte(p, 'Déjeuner').locator('.mc-idee-btn[aria-label="Autre idée"]').click(); await p.waitForTimeout(450);
   const q = await carte(p, 'Déjeuner').locator('.mc-idee-ing').allInnerTexts();
   trouve = q.some(x => /œuf/.test(x));
 }
@@ -150,7 +150,7 @@ await carte(p, 'Déjeuner').scrollIntoViewIfNeeded(); await p.evaluate(() => win
 await bandeau(p);
 await p.screenshot({ path: SHOTS + '/autre-idee-v2-apres-oeufs-390.png' });
 // état pressé (visible pendant l'appui)
-const btn = carte(p, 'Déjeuner').locator('.mc-idee-btn', { hasText: 'Autre idée' });
+const btn = carte(p, 'Déjeuner').locator('.mc-idee-btn[aria-label="Autre idée"]');
 const box = await btn.boundingBox();
 await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await p.mouse.down(); await p.waitForTimeout(250);
 const t = await btn.evaluate(e => getComputedStyle(e).transform);
