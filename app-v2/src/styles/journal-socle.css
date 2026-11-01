@@ -3011,7 +3011,12 @@
 .pg-journal .cal .cal-cote-val,
 .pg-journal .cal .cal-num { color: var(--gr-tx); }
 .pg-journal .cal .cal-date-ic { color: var(--gr-tx3); opacity: .9; }
-.pg-journal .cal .cal-trait { background: var(--gr-filet); border-color: var(--gr-filet); }
+/* Filet droit 1px, degrade vert pastel qui s'estompe vers les bords. */
+.pg-journal .cal .cal-trait {
+  height: 1px; border: none;
+  background: linear-gradient(90deg, transparent 0%, #A7E3B9 22%, #6CC98E 78%, transparent 100%);
+  opacity: .75;
+}
 
 /* L'anneau : piste sourde, trace vive, halo tenu court. Un halo
    large deviendrait un fond colore — ce qu'on veut est une source
