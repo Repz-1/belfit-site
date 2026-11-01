@@ -62,6 +62,8 @@ if (ACCUEIL) { const sp = document.createElement('div'); sp.id = 'splash'; docum
 const VERROU = new URLSearchParams(location.search).get('verrou');
 if (VERROU) etatSimule.value = VERROU === 'jamais' ? 'ferme' : VERROU;
 { const c = new URLSearchParams(location.search).get('cmd'); if (c !== null) commandesSimulees.value = c !== '0'; }
+// ?nouveau : client qui n'a jamais fait le calcul (test calories apres paiement, 01/11).
+const NOUVEAU = new URLSearchParams(location.search).has('nouveau');
 const GRATUIT = new URLSearchParams(location.search).has('gratuit');
 if (GRATUIT) estPremium.value = false;
 const faux = utilisateur.value;
@@ -69,7 +71,7 @@ setInterval(() => {
   if (!utilisateur.value) utilisateur.value = faux;
   authPrete.value = true;
   donneesPretes.value = true;
-  calculBaseFait.value = true;
+  if (!NOUVEAU) calculBaseFait.value = true;
   if (ACCUEIL) programmeCharge.value = true;
   if (!GRATUIT) estPremium.value = true;   // l'effet Firestore le remettait a false
 }, 100);

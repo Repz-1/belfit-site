@@ -302,18 +302,26 @@ export function CoachPage() {
       )}
 
       {aRemplir && (
-        <div class="cp-carte cp-carte--or">
+        <div class="cp-carte cp-etapes-paye" data-apres-paiement>
           <p class="cp-nom">{invite ? 'Invitation de ton coach' : (APP_ANDROID ? 'Programme activé' : 'Paiement reçu')}</p>
-          <p class="cp-txt">Remplis ton questionnaire pour que je prépare ton plan. {tardif
-            ? 'Ton délai de 7 jours est passé\u00A0: ta demande rejoint la file.'
-            : `Livraison sous 48\u00A0h si tu le remplis dans les ${DELAI_QUESTIONNAIRE} jours suivant ton paiement.`}</p>
-          <button class="cp-bt cp-bt--or" onClick={() => ouvrirQuestionnaire(typePaye)}>Remplir mon questionnaire</button>
+          <ol class="cp-etapes">
+            <li class="fait"><span class="cp-pastille">✓</span>Paiement reçu</li>
+            <li class="actif"><span class="cp-pastille">2</span>Tu complètes ton questionnaire</li>
+            <li><span class="cp-pastille">3</span>Ton plan sur mesure, livré sous 48&nbsp;h</li>
+          </ol>
+          {tardif && <p class="cp-txt">Ton délai de 7 jours est passé&nbsp;: ta demande rejoint la file.</p>}
+          <button class="cp-bt cp-bt--vert" onClick={() => ouvrirQuestionnaire(typePaye)}>Compléter mon questionnaire</button>
         </div>
       )}
       {enPrep && (
         <div class="cp-carte cp-attente">
           <p class="cp-nom">Plan en préparation</p>
-          <p class="cp-txt">Questionnaire reçu. Ton coach prépare ton plan, livré dans l'app sous 48&nbsp;h.</p>
+          <p class="cp-txt">Questionnaire reçu, ton plan arrive sous 48&nbsp;h.</p>
+          <ol class="cp-etapes">
+            <li class="fait"><span class="cp-pastille">✓</span>Paiement reçu</li>
+            <li class="fait"><span class="cp-pastille">✓</span>Questionnaire complété</li>
+            <li class="actif"><span class="cp-pastille">3</span>Ton plan sur mesure, livré sous 48&nbsp;h</li>
+          </ol>
         </div>
       )}
 

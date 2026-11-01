@@ -3627,3 +3627,4 @@ html.avec-avis .pg-besoins { padding-top: var(--haut-avis, 0px); }
 .pg-journal .mc.mc--saute .mc-titre { color: #8A8A8A; text-decoration: line-through; }
 .pg-journal .mc.mc--saute .mc-sous { color: #8A8A8A; }
 .pg-journal .mc.mc--autre:not(.mc--prevu) .mc-sous { color: #2F6F9F; }
+.pg-journal .cal .cal-num-lb.cal-prep { font-weight: 600; letter-spacing: .01em; }

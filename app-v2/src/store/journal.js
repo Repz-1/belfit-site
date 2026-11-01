@@ -608,7 +608,11 @@ const PART_REPAS = {
 };
 
 /** Fourchette recommandee d'un repas, ou null si le repas est libre. */
+// 01/11 (Raci) : vrai tant que le client a paye sans plan coach livre -> pas de
+// reperes derives de l'objectif par defaut (renseigne par main.jsx).
+export const objectifEnPreparation = signal(false);
 export function fourchetteRepas(cle) {
+  if (objectifEnPreparation.value) return null;
   const part = PART_REPAS[cle];
   if (!part) return null;
   const g = objectifs.value.kcal || 0;

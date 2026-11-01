@@ -451,3 +451,12 @@
 .pg-coach .cp-code-ok { margin: 0; font-size: 14px; line-height: 1.5; color: #1F6B42; background: #DDF3E4; border: 1px solid #2E7D52; border-radius: 12px; padding: 10px 12px; }
 .pg-coach .cp-code-lien { display: inline; padding: 6px 2px; margin-left: 4px; font: inherit; font-weight: 700; color: var(--prim-t); text-decoration: underline; background: none; border: 0; cursor: pointer; min-height: 32px; }
 .cp-code-modale{margin:0 0 12px}
+/* feat/apres-paiement : etapes 1-2-3 apres paiement */
+.cp-etapes{list-style:none;margin:10px 0 14px;padding:0;display:flex;flex-direction:column;gap:10px}
+.cp-etapes li{display:flex;align-items:center;gap:10px;color:#6b6b6b;font-size:15px}
+.cp-etapes li.actif{color:#111;font-weight:600}
+.cp-etapes li.fait{color:#1f7a45}
+.cp-pastille{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid #cfcfcf;font-size:13px;font-weight:700;flex:none}
+.cp-etapes li.fait .cp-pastille{background:#6CC98E;border-color:#6CC98E;color:#fff}
+.cp-etapes li.actif .cp-pastille{border-color:#6CC98E;color:#1f7a45}
+.cp-bt--vert{background:linear-gradient(135deg,#A7E3B9,#6CC98E);color:#000;border:none}
