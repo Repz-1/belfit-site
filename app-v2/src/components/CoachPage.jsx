@@ -316,6 +316,11 @@ export function CoachPage() {
         <div class="cp-carte cp-attente">
           <p class="cp-nom">Plan en préparation</p>
           <p class="cp-txt">Questionnaire reçu, ton plan arrive sous 48&nbsp;h.</p>
+          <ol class="cp-etapes">
+            <li class="fait"><span class="cp-pastille">✓</span>Paiement reçu</li>
+            <li class="fait"><span class="cp-pastille">✓</span>Questionnaire complété</li>
+            <li class="actif"><span class="cp-pastille">3</span>Ton plan sur mesure, livré sous 48&nbsp;h</li>
+          </ol>
         </div>
       )}
 
