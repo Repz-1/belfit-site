@@ -200,7 +200,7 @@ try {
   await p.locator('.qc-cta', { hasText: 'Envoyer' }).tap(); await p.waitForTimeout(500);
   const att = await p.locator('.pg-coach').innerText();
   ok(/Ton plan arrive/.test(att) && /Livraison au plus tard/.test(att), 'envoye : ecran « Ton plan arrive »');
-  ok(await p.locator('.pp-et').count() === 5 && /≈ 4[78] h restantes/.test(att), 'suivi en 5 etapes, ≈ 48 h restantes');
+  ok(await p.locator('.pp-et').count() === 4 && /≈ 4[78] h restantes/.test(att) && !/Ton coach écrit|J'étudie tes réponses/.test(att), 'suivi en 4 etapes (sans doublon ni carte Coach BelFit), ≈ 48 h restantes');
   ok(await p.locator('.pp-et.c', { hasText: "en cours d'élaboration" }).count() === 1, 'etape elaboration en cours');
   await p.locator('.pp-lien', { hasText: 'Revoir mes réponses' }).tap(); await p.waitForTimeout(300);
   ok(/Levothyrox/.test(await p.locator('.pp-reponses').innerText()), 'revoir mes reponses : lecture seule');

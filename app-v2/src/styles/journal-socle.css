@@ -3623,3 +3623,74 @@ html.avec-avis .pg-besoins { padding-top: var(--haut-avis, 0px); }
 .pg-journal .mc.mc--saute .mc-sous { color: #8A8A8A; }
 .pg-journal .mc.mc--autre:not(.mc--prevu) .mc-sous { color: #2F6F9F; }
 .pg-journal .cal .cal-num-lb.cal-prep { font-weight: 600; letter-spacing: .01em; }
+
+/* ---------- 01/11 Raci : timeline des repas + pastilles compactes ----------
+   Fil vertical, heure a gauche, point plein (vert) quand le repas est mange.
+   Cartes blanches, fine bordure, pas de pointilles ; vert reserve au point
+   mange et a la pastille « Mangé ». */
+.pg-journal .tl { position: relative; padding-left: 50px; display: flex; flex-direction: column; gap: 8px; }
+.pg-journal .tl::before { content: ''; position: absolute; left: 41px; top: 18px; bottom: 18px; width: 2px; border-radius: 2px; background: #E4E8E5; }
+.pg-journal .tl-it { position: relative; }
+.pg-journal .tl-heure {
+  position: absolute; left: -62px; top: 15px; width: 40px; text-align: right;
+  font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2;
+}
+.pg-journal .tl-heure--prevue { color: #B4BBB6; font-weight: 600; }
+.pg-journal .tl-heure--reelle { color: #1B2A22; }
+button.tl-heure {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  background: none; border: 1px solid transparent; border-radius: 6px;
+  padding: 4px 8px; margin: 0; width: auto;
+  font: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.pg-journal button.tl-heure { left: auto; right: calc(100% + 13px); top: 10px; }
+.pg-journal .tl-heure--edition { border-color: #C9CDD2; }
+.pg-journal .tl-crayon { width: 10px; height: 10px; fill: none; stroke: #9AA39D; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.pg-journal .tl-point {
+  position: absolute; left: -15px; top: 17px; width: 12px; height: 12px; border-radius: 50%;
+  background: #fff; border: 2px solid #CFE9D8; box-sizing: border-box; z-index: 1;
+}
+.pg-journal .tl-it--mange .tl-point { background: #6CC98E; border-color: #6CC98E; }
+.pg-journal .tl-it--saute .tl-point { border-color: #D5D9D6; border-style: dashed; }
+
+.pg-journal .tl .mc, .pg-journal .tl .mc.mc--prevu {
+  background: #fff; border: 1px solid #E6ECE7; border-radius: 16px;
+  box-shadow: 0 10px 24px -20px rgba(27, 42, 34, .45); margin: 0;
+}
+.pg-journal .tl .mc.mc--prevu .mc-vignette { opacity: 1; }
+.pg-journal .tl .mc.mc--prevu .mc-sous { color: #6B7A70; }
+.pg-journal .tl .mc-titre { font-family: 'Satoshi', system-ui, sans-serif; font-weight: 700; }
+.pg-journal .tl .mc.mc--saute { opacity: .7; }
+
+/* Pastilles : cible tactile 44 px, pastille visible 30 px (::before). */
+.pg-journal .tl .mc-plan { gap: 3px; padding: 0 8px 4px; align-items: center; }
+.pg-journal .tl .mc-plan-btn, .pg-journal .tl .mc-idee-btn--pastille {
+  flex: 0 0 auto; position: relative; isolation: isolate; min-height: 44px; min-width: 44px;
+  padding: 0 9px; background: none; border: none; border-radius: 0; box-shadow: none;
+  font-family: 'Satoshi', system-ui, sans-serif; font-size: 12px; font-weight: 600; color: #33463A;
+}
+.pg-journal .tl .mc-plan-btn::before {
+  content: ''; position: absolute; inset: 7px 0; z-index: -1; border-radius: 99px;
+  background: #fff; border: 1px solid #E1E8E3;
+}
+.pg-journal .tl .mc-plan-btn--mange { color: #123322; font-weight: 700; }
+.pg-journal .tl .mc-plan-btn--mange::before { background: linear-gradient(90deg, #A7E3B9, #6CC98E); border: none; }
+.pg-journal .tl .mc-idee-btn--pastille { margin-left: auto; padding: 0 4px; gap: 4px; color: #33463A; }
+.pg-journal .tl .mc-idee-btn--pastille .mc-idee-ic { width: 14px; height: 14px; stroke: #6B7A70; }
+.pg-journal .tl .mc-plan-btn:active::before { filter: brightness(.96); }
+
+/* Selecteur d'heure */
+.pg-journal .tl-pick {
+  position: absolute; left: -50px; top: 44px; z-index: 30; width: 214px;
+  background: #fff; border: 1px solid #E6ECE7; border-radius: 16px; padding: 12px;
+  box-shadow: 0 20px 40px -14px rgba(27, 42, 34, .4);
+}
+.pg-journal .tl-pick-titre { margin: 0 0 6px; font-size: 12px; font-weight: 700; color: #6B7A70; }
+.pg-journal .tl-pick-roues { display: flex; align-items: center; justify-content: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.pg-journal .tl-pick-col { display: flex; flex-direction: column; align-items: center; width: 54px; }
+.pg-journal .tl-pick-voisin { background: none; border: none; font: inherit; font-size: 15px; color: #B4BBB6; min-height: 30px; width: 100%; cursor: pointer; }
+.pg-journal .tl-pick-val { font-size: 20px; color: #1B2A22; background: #F2F4F3; border-radius: 9px; width: 54px; text-align: center; line-height: 36px; }
+.pg-journal .tl-pick-dp { font-size: 20px; font-weight: 800; color: #1B2A22; }
+.pg-journal .tl-pick-bts { display: flex; gap: 8px; margin-top: 10px; }
+.pg-journal .tl-pick-bt { flex: 1; min-height: 40px; border-radius: 99px; border: 1px solid #E1E8E3; background: #fff; font: inherit; font-size: 13px; font-weight: 700; color: #33463A; cursor: pointer; }
+.pg-journal .tl-pick-bt--ok { background: linear-gradient(90deg, #A7E3B9, #6CC98E); border: none; color: #123322; }

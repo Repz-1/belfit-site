@@ -90,7 +90,6 @@ export function PlanEnPreparation({ payeLe, questionnaire, commande }) {
   const ecoule = envoye ? Date.now() - new Date(envoye).getTime() : 0;
   const part = Math.min(0.97, Math.max(0.03, ecoule / H48));
   const restant = limite ? Math.round((limite - Date.now()) / 3600000) : null;
-  const ecrit = !dansLaFile && ecoule >= H48 / 2;
 
   return (
     <>
@@ -126,18 +125,12 @@ export function PlanEnPreparation({ payeLe, questionnaire, commande }) {
           ? <div class="pp-et c"><span class="pp-pt"><Icone nom="clock" taille={15} /></span><div><b>{APP_ANDROID ? 'Activation en attente' : 'Virement en attente'}</b>{!APP_ANDROID && <span>{vir.montant} € · communication {vir.communication}</span>}</div></div>
           : <div class="pp-et f"><span class="pp-pt"><Icone nom="check" taille={15} /></span><div><b>{APP_ANDROID ? 'Programme activé' : 'Paiement reçu'}</b><span>{quand((vir && vir.recuLe) || payeLe)}</span></div></div>}
         <div class="pp-et f"><span class="pp-pt"><Icone nom="check" taille={15} /></span><div><b>Questionnaire envoyé</b><span>{quand(envoye)}</span></div></div>
-        {/* Etape ajoutee le 27/09 (Raci). Pas de signal du coach : la
-            premiere moitie du delai = elaboration, la seconde = ecriture. */}
+        {/* 01/11 Raci : 4 etapes. « Ton coach écrit ton plan » (doublon de
+            l'elaboration) et la carte « Coach BelFit » sont retirees. */}
         {virAttente
           ? <div class="pp-et o"><span class="pp-pt"><Icone nom="list-check" taille={15} /></span><div><b>Programme en cours d'élaboration</b><span>{APP_ANDROID ? "Dès l'activation" : 'Dès réception du virement'}</span></div></div>
-          : <div class={'pp-et ' + (ecrit ? 'f' : 'c')}><span class="pp-pt"><Icone nom={ecrit ? 'check' : 'list-check'} taille={15} /></span><div><b>Programme en cours d'élaboration</b><span>{ecrit ? 'Tes besoins sont calculés' : 'En cours'}</span></div></div>}
-        <div class={'pp-et ' + (ecrit && !virAttente ? 'c' : 'o')}><span class="pp-pt"><Icone nom="pencil" taille={15} /></span><div><b>Ton coach écrit ton plan</b><span>{ecrit && !virAttente ? 'En cours' : 'À venir'}</span></div></div>
+          : <div class="pp-et c"><span class="pp-pt"><Icone nom="list-check" taille={15} /></span><div><b>Programme en cours d'élaboration</b><span>En cours</span></div></div>}
         <div class="pp-et o"><span class="pp-pt"><Icone nom="package" taille={15} /></span><div><b>Plan livré</b><span>Dans l'app et par e-mail</span></div></div>
-      </div>
-
-      <div class="cp-carte pp-coach">
-        <span class="pp-av"><Icone nom="user" taille={20} /></span>
-        <p><b>Coach BelFit</b><br />J'étudie tes réponses une par une. Si j'ai une question, je t'écris.</p>
       </div>
 
       <p class="cp-sec">EN ATTENDANT</p>

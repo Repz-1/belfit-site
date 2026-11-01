@@ -45,7 +45,7 @@ import {
   repas, totauxRepas, setPortion, ajouterIngredient, ajouterPlat,
   supprimerIngredient, supprimerRepas, renommerRepas, basculerCuisson,
   fourchetteRepas, remplacerAliment, validerRepas, annulerValidation, sauterRepas, mangeAutreChose, remettrePrevu,
-  appliquerIdee, annulerIdee, choisirIdee, repas as repasJour } from '../store/journal.js';
+  appliquerIdee, annulerIdee, choisirIdee, repas as repasJour, heurePrevue, setHeureRepas } from '../store/journal.js';
 import { totalPlanJour, totalJourPrevu } from '../services/recalage-jour.js';
 import { dossierCoach } from './BelfitPlus.jsx';
 import { preferencesDe, prochaineIdee, kcalIngs, lignesIdee } from '../services/autre-idee.js';
@@ -637,14 +637,21 @@ export function MealCard({ r, aSuivre, fait }) {
         <div class="mc-plan" role="group" aria-label={`Que s'est-il passé pour ${r.nom} ?`} onClick={e => e.stopPropagation()}>
           <button class="mc-plan-btn mc-plan-btn--mange" onClick={e => { e.stopPropagation(); validerRepas(r.id); }}>✓ Mangé</button>
           <button class="mc-plan-btn mc-plan-btn--saute" onClick={e => { e.stopPropagation(); sauterRepas(r.id); }}>Sauté</button>
-          <button class="mc-plan-btn mc-plan-btn--autre" onClick={e => { e.stopPropagation(); mangeAutreChose(r.id); repasOuvertId.value = r.id; }}>Mangé autre chose</button>
+          <button class="mc-plan-btn mc-plan-btn--autre" aria-label="Mangé autre chose" onClick={e => { e.stopPropagation(); mangeAutreChose(r.id); repasOuvertId.value = r.id; }}>Autre chose</button>
+          {/* 01/11 Raci (timeline) : « Autre idée » devient une pastille discrete sur la meme ligne. */}
+          <button class="mc-idee-btn mc-idee-btn--pastille" aria-label="Autre idée" onClick={e => { e.stopPropagation(); setTour(n => n + 1); autreIdee(); }}>
+            <svg key={tour} class={'mc-idee-ic' + (tour ? ' mc-idee-ic--tour' : '')} viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 11a8 8 0 00-14.3-4.4M4 4v4h4" /><path d="M4 13a8 8 0 0014.3 4.4M20 20v-4h-4" />
+            </svg>
+            <span>Idée</span>
+          </button>
         </div>
       )}
 
       {/* 25/10 « Autre idee » : un autre repas aux calories proches, pour aujourd'hui
           seulement. Le plan d'origine reste de cote (ingsPlan) : « Revenir au plan ».
           28/10 (Raci) : bouton plus soigne + liste des ingredients EN GRAMMES. */}
-      {r.duPlan && !r.remplace && !r.saute && (r.idee || (r.prevu && !vide)) && (
+      {r.duPlan && !r.remplace && !r.saute && (r.idee || (msgIdee && r.prevu && !vide)) && (
         <div class="mc-idee" onClick={e => e.stopPropagation()}>
           {r.idee && (
             <div class="mc-idee-fiche" key={r.idee.nom}>
@@ -674,19 +681,67 @@ export function MealCard({ r, aSuivre, fait }) {
           {r.prevu && r.idee && !r.idee.confirme && !ro && (
             <button class="mc-idee-choisir" onClick={e => { e.stopPropagation(); choisir(); }}>Je choisis ce repas</button>
           )}
-          {r.prevu && (
+          {r.prevu && r.idee && (
             <div class="mc-idee-actions">
-              <button class="mc-idee-btn" onClick={e => { e.stopPropagation(); setTour(n => n + 1); autreIdee(); }}>
-                <svg key={tour} class={'mc-idee-ic' + (tour ? ' mc-idee-ic--tour' : '')} viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M20 11a8 8 0 00-14.3-4.4M4 4v4h4" /><path d="M4 13a8 8 0 0014.3 4.4M20 20v-4h-4" />
-                </svg>
-                <span>Autre idée</span>
-              </button>
               {r.idee && <button class="mc-idee-btn mc-idee-btn--retour" onClick={e => { e.stopPropagation(); annulerIdee(r.id); setMsgIdee(null); }}>Revenir au plan</button>}
             </div>
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+
+// ============================================================
+// 01/11 Raci : TIMELINE du Journal. Heure a gauche d'un fil vertical,
+// point plein quand le repas est mange. Heure prevue (grise) selon le
+// type de repas ; heure reelle notee au clic sur « Mangé », modifiable.
+// ============================================================
+function SelecteurHeure({ heure, titre, fermer, valider }) {
+  const [h0, m0] = heure.split(':').map(Number);
+  const [h, setH] = useState(h0), [m, setM] = useState(m0);
+  const d2 = (n) => String(n).padStart(2, '0');
+  const col = (v, set, max, pas, nom) => (
+    <div class="tl-pick-col" role="group" aria-label={nom}>
+      <button class="tl-pick-voisin" aria-label={nom + ' moins'} onClick={() => set((v - pas + max) % max)}>{d2((v - pas + max) % max)}</button>
+      <b class="tl-pick-val">{d2(v)}</b>
+      <button class="tl-pick-voisin" aria-label={nom + ' plus'} onClick={() => set((v + pas) % max)}>{d2((v + pas) % max)}</button>
+    </div>
+  );
+  return (
+    <div class="tl-pick" role="dialog" aria-label={titre} onClick={e => e.stopPropagation()}>
+      <p class="tl-pick-titre">{titre}</p>
+      <div class="tl-pick-roues">{col(h, setH, 24, 1, 'Heures')}<span class="tl-pick-dp">:</span>{col(m, setM, 60, 1, 'Minutes')}</div>
+      <div class="tl-pick-bts">
+        <button class="tl-pick-bt" onClick={fermer}>Annuler</button>
+        <button class="tl-pick-bt tl-pick-bt--ok" onClick={() => valider(d2(h) + ':' + d2(m))}>OK</button>
+      </div>
+    </div>
+  );
+}
+
+export function RepasTimeline({ r, aSuivre, fait }) {
+  const [choix, setChoix] = useState(false);
+  const mange = !r.prevu && !r.saute && r.ings.length > 0;
+  const reelle = mange && r.heure;
+  const heure = reelle ? r.heure : heurePrevue(r);
+  const ro = lectureSeule.value;
+  return (
+    <div class={'tl-it' + (mange ? ' tl-it--mange' : '') + (r.saute ? ' tl-it--saute' : '')}>
+      {reelle && !ro ? (
+        <button class={'tl-heure tl-heure--reelle' + (choix ? ' tl-heure--edition' : '')}
+          aria-label={`Heure du repas ${r.nom} : ${heure}. Modifier`} onClick={() => setChoix(!choix)}>
+          <span>{heure}</span>
+          <svg class="tl-crayon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
+        </button>
+      ) : (
+        <span class={'tl-heure' + (reelle ? ' tl-heure--reelle' : ' tl-heure--prevue')}>{heure}</span>
+      )}
+      <span class="tl-point" aria-hidden="true" />
+      {choix && <SelecteurHeure heure={heure} titre={'Heure du ' + String(r.nom).toLowerCase()}
+        fermer={() => setChoix(false)} valider={(v) => { setHeureRepas(r.id, v); setChoix(false); }} />}
+      <MealCard r={r} aSuivre={aSuivre} fait={fait} />
     </div>
   );
 }

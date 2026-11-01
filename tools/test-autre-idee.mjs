@@ -170,13 +170,13 @@ const etat = (p) => p.evaluate(() => JSON.parse(JSON.stringify(window.__banc.rep
 // 1) Sans restriction
 let [ctx, p] = await ouvrir({ regime: { valeur: 'Tout' }, allergie: { valeur: 'Non, aucune' } });
 ok(await p.locator('.mc-plan').count() === 3, 'plan semé : 3 repas prévus');
-ok(await p.locator('.mc-idee-btn', { hasText: 'Autre idée' }).count() === 3, 'un bouton « Autre idée » discret sous chacun des 3 repas');
+ok(await p.locator('.mc-idee-btn[aria-label="Autre idée"]').count() === 3, 'un bouton « Autre idée » discret sous chacun des 3 repas');
 const avant = await etat(p);
 const dej = avant.find(r => r.cle === 'dej');
 const kcalPlan = await p.evaluate(() => { const r = window.__banc.repas.value.find(x => x.cle === 'dej'); return r.ings.reduce((s, i) => s + (i.kcal || 0), 0); });
 await carte(p, 'Déjeuner').scrollIntoViewIfNeeded(); await p.evaluate(() => window.scrollBy(0, -120)); await p.waitForTimeout(300);
 await p.screenshot({ path: SHOTS + '/autre-idee-1-boutons-390.png' });
-await carte(p, 'Déjeuner').locator('.mc-idee-btn', { hasText: 'Autre idée' }).click(); await p.waitForTimeout(600);
+await carte(p, 'Déjeuner').locator('.mc-idee-btn[aria-label="Autre idée"]').click(); await p.waitForTimeout(600);
 let apres = await etat(p); let d2 = apres.find(r => r.cle === 'dej');
 ok(!!d2.idee && JSON.stringify(d2.ingsPlan) === JSON.stringify(dej.ings), 'clic : l\'idée remplace le déjeuner, le plan est gardé dans ingsPlan');
 ok(JSON.stringify(apres.find(r => r.cle === 'diner').ings) === JSON.stringify(avant.find(r => r.cle === 'diner').ings) && JSON.stringify(apres.find(r => r.cle === 'pdej').ings) === JSON.stringify(avant.find(r => r.cle === 'pdej').ings), 'les autres repas du jour ne bougent pas');
@@ -190,7 +190,7 @@ const sous = await carte(p, 'Déjeuner').locator('.mc-sous').innerText();
 ok(new RegExp('Prévu · ' + kcalIdeeAff + ' kcal').test(sous), 'la carte annonce « ' + sous + ' » (kcal de l\'idée)');
 await p.screenshot({ path: SHOTS + '/autre-idee-2-propose-390.png' });
 const nom1 = d2.idee.nom;
-await carte(p, 'Déjeuner').locator('.mc-idee-btn', { hasText: 'Autre idée' }).click(); await p.waitForTimeout(500);
+await carte(p, 'Déjeuner').locator('.mc-idee-btn[aria-label="Autre idée"]').click(); await p.waitForTimeout(500);
 d2 = (await etat(p)).find(r => r.cle === 'dej');
 ok(d2.idee.nom !== nom1 && JSON.stringify(d2.ingsPlan) === JSON.stringify(dej.ings), 'deuxième clic : autre idée (' + d2.idee.nom + '), plan toujours intact');
 await carte(p, 'Déjeuner').locator('.mc-idee-btn--retour').click(); await p.waitForTimeout(500);
@@ -199,7 +199,7 @@ ok(!d2.idee && !d2.ingsPlan && JSON.stringify(d2.ings) === JSON.stringify(dej.in
 ok(JSON.stringify(apres) === JSON.stringify(avant), 'tout le journal est revenu à l\'identique');
 ok(await carte(p, 'Déjeuner').locator('.mc-idee-txt').count() === 0, 'plus de bandeau d\'idée après annulation');
 // Idée puis « Mangé » : les kcal de l'idée comptent
-await carte(p, 'Déjeuner').locator('.mc-idee-btn', { hasText: 'Autre idée' }).click(); await p.waitForTimeout(500);
+await carte(p, 'Déjeuner').locator('.mc-idee-btn[aria-label="Autre idée"]').click(); await p.waitForTimeout(500);
 const kcalIdee = (await etat(p)).find(r => r.cle === 'dej').idee.kcal;
 await carte(p, 'Déjeuner').locator('.mc-plan-btn--mange').click(); await p.waitForTimeout(500);
 const tot = await p.evaluate(() => { const r = window.__banc.repas.value.find(x => x.cle === 'dej'); return { prevu: r.prevu, n: r.ings.length }; });
@@ -213,7 +213,7 @@ await ctx.close();
 [ctx, p] = await ouvrir({ regime: { valeur: 'Tout' }, allergie: { valeur: 'Oui' }, allergies: { valeurs: ['Œuf'] }, refuses: { valeur: 'poulet' } });
 const vusNoms = [];
 for (let k = 0; k < 5; k++) {
-  await carte(p, 'Dîner').locator('.mc-idee-btn', { hasText: 'Autre idée' }).click(); await p.waitForTimeout(350);
+  await carte(p, 'Dîner').locator('.mc-idee-btn[aria-label="Autre idée"]').click(); await p.waitForTimeout(350);
   const r = (await etat(p)).find(x => x.cle === 'diner');
   vusNoms.push(r.idee ? r.idee.nom + ' ‖ ' + r.ings.map(i => i.name).join(', ') : '(aucune)');
 }
@@ -226,7 +226,7 @@ await ctx.close();
 [ctx, p] = await ouvrir({ regime: { valeur: 'Végétarien' }, allergie: { valeur: 'Non, aucune' } });
 const noms3 = [];
 for (let k = 0; k < 4; k++) {
-  await carte(p, 'Déjeuner').locator('.mc-idee-btn', { hasText: 'Autre idée' }).click(); await p.waitForTimeout(350);
+  await carte(p, 'Déjeuner').locator('.mc-idee-btn[aria-label="Autre idée"]').click(); await p.waitForTimeout(350);
   const r = (await etat(p)).find(x => x.cle === 'dej'); noms3.push(r.idee ? r.idee.nom : '(aucune)');
 }
 const catDe = (n) => (tout.find(i => i.nom === n) || {}).cat;
@@ -236,7 +236,7 @@ await ctx.close();
 
 // 4) Rien de proche : message clair, plan intact
 [ctx, p] = await ouvrir({ regime: { valeur: 'Végan' }, allergie: { valeur: 'Oui' }, allergies: { valeurs: ['Soja', 'Gluten / blé', 'Arachide', 'Fruits à coque'] }, refuses: { valeur: 'riz, pomme de terre, quinoa, lentilles, pois chiches, haricots, banane, avoine, tomate' } });
-await carte(p, 'Dîner').locator('.mc-idee-btn', { hasText: 'Autre idée' }).click(); await p.waitForTimeout(500);
+await carte(p, 'Dîner').locator('.mc-idee-btn[aria-label="Autre idée"]').click(); await p.waitForTimeout(500);
 const msg = await carte(p, 'Dîner').innerText();
 const rd = (await etat(p)).find(x => x.cle === 'diner');
 ok(/Pas d'autre idée proche/.test(msg) && !rd.idee, 'aucune idée compatible : message « Pas d\'autre idée proche… », plan intact (' + (msg.match(/Pas d'autre idée[^\n]*/) || [''])[0] + ')');
@@ -249,7 +249,7 @@ const nomsPdej = new Set(A.toutesLesIdees('pdej').map(i => i.nom));
 const vusPdej = [];
 for (let k = 0; k < 12; k++) {
   const avantNom = ((await etat(p)).find(x => x.cle === 'pdej').idee || {}).nom || null;
-  await carte(p, 'Petit-déjeuner').locator('.mc-idee-btn', { hasText: 'Autre idée' }).click();
+  await carte(p, 'Petit-déjeuner').locator('.mc-idee-btn[aria-label="Autre idée"]').click();
   // Attend que l'idee change (le 1er clic apres chargement est parfois lent).
   await p.waitForFunction((a) => { const r = window.__banc.repas.value.find(x => x.cle === 'pdej'); return r.idee && r.idee.nom !== a; }, avantNom, { timeout: 3000 }).catch(() => {});
   await p.waitForTimeout(200);
