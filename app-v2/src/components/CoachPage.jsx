@@ -357,6 +357,7 @@ export function CoachPage() {
           <div class="cp-recu-l"><span>Plan sur mesure, livré sous 48&nbsp;h</span><span>inclus</span></div>
           <div class="cp-recu-l"><span>Ajustements pendant le mois</span><span>inclus</span></div>
           <div class="cp-recu-l"><span>Accès nutrition</span><span>44 jours</span></div>
+          <div class="cp-recu-l"><span>Entraînement</span><span>offert</span></div>
           <div class="cp-recu-tot"><span>Total</span>
             {red && paiementOuvert.value
               ? <span class="cp-prix-bloc"><s class="cp-prix-barre" aria-label="Prix normal 80 euros">80 €</s><span class="cp-prix cp-prix--promo">{prixCourt(red.montant)} €</span></span>
