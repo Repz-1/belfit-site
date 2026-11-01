@@ -1659,8 +1659,10 @@ exports.espaceCoach = onRequest(
             // A traiter : un questionnaire recu et pas encore de programme livre apres lui.
             aTraiter: !!q.envoyeLe && (!livreLe || new Date(livreLe) < new Date(q.envoyeLe)),
             // 01/11 Raci : badge « Nouveau » = paye OU questionnaire recu, sans programme livre depuis.
+            // 01/11 (bis) : plus « Nouveau » des que le coach a ouvert la fiche (coachVuLe).
             nouveau: [q.envoyeLe, d.commandeCoach && d.commandeCoach.payeLe].some((x) => !!x &&
-              (!livreLe || new Date(livreLe) < new Date(x))),
+              (!livreLe || new Date(livreLe) < new Date(x)) &&
+              (!d.coachVuLe || new Date(d.coachVuLe) < new Date(x))),
             programme: resume(d.programme),
             programmesHistorique: histo,
             alerteSante: !!q.alerteSante,
@@ -1753,6 +1755,17 @@ exports.espaceCoach = onRequest(
             .map((d) => ({code: d.id, type: d.data().type, note: d.data().note || "",
               cree: d.data().cree, utiliseLe: d.data().utiliseLe || null, email: d.data().email || null}));
         res.json({ok: true, invitations: liste});
+        return;
+      }
+
+      // 01/11 Raci : la fiche ouverte par le coach n'est plus « Nouveau ».
+      if (action === "marquerVu") {
+        const uid = String(corps.uid || "");
+        if (!uid || uid.length > 128 || uid.includes("/")) { res.status(400).json({ok: false, motif: "uid"}); return; }
+        const ref = db.collection("users").doc(uid);
+        if (!(await ref.get()).exists) { res.status(404).json({ok: false, motif: "uid"}); return; }
+        await ref.update({coachVuLe: new Date().toISOString()});
+        res.json({ok: true});
         return;
       }
 

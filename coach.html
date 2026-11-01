@@ -544,8 +544,8 @@ $('btnEspacer').addEventListener('click', () => {
   dessiner();
 });
 $('btnModele').addEventListener('click', () => {
-  const vide = versions.length === 1 && versions[0].repas.every((r) => !r.ings.length);
-  if (!vide && !confirm('Remplacer les versions actuelles par le modèle « rebond après sèche » ? Ce que tu as saisi sera perdu.')) return;
+  // 01/11 Raci : jamais sans confirmation (8 semaines apparues sans le vouloir).
+  if (!confirm('Pré-remplir 8 versions « rebond après sèche » (3 300 à 4 300 kcal) ? Ce que tu as saisi sera remplacé.')) return;
   versions = modeleRebond();
   $('vPremier').value = '';
   ouvrirVersion(0);
@@ -588,9 +588,9 @@ function afficher(el, texte, ok) {
   el.className = 'msg ' + (ok ? 'ok' : 'ko');
 }
 
-function appel(action, extra) {
+function appel(action, extra, signal) {
   return fetch(URL_COACH, {
-    method: 'POST',
+    method: 'POST', signal,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code, action, ...(extra || {}) }),
   }).then((r) => r.json().catch(() => ({ ok: false })).then((d) => {
@@ -679,10 +679,12 @@ function detail(d) {
     });
   });
   const ia = el('button', 'ia-go', 'Proposer un plan avec l\'IA');
-  ia.addEventListener('click', () => { choisir(d); proposer({ uid: d.uid }); });
+  // 01/11 : l'etat de l'IA s'affiche aussi sous le bouton (avant : seulement plus bas, hors de vue).
+  const etat = el('div', 'msg ia-etat-fiche');
+  ia.addEventListener('click', () => { if (!choisir(d)) return; proposer({ uid: d.uid }, etat); });
   const b = el('button', 'second', 'Composer moi-même');
   b.addEventListener('click', () => choisir(d));
-  box.append(ia, b);
+  box.append(ia, etat, b);
   return box;
 }
 
@@ -702,6 +704,13 @@ function ligne(d, aTraiter) {
   b.addEventListener('click', () => {
     if (ouvert) { ouvert.remove(); ouvert = null; return; }
     ouvert = detail(d); bloc.append(ouvert);
+    // 01/11 Raci : fiche ouverte = vue ; le badge « Nouveau » disparait (Firestore : coachVuLe).
+    if (d.nouveau) {
+      d.nouveau = false;
+      const badge = txt.querySelector('.nouveau'); if (badge) badge.remove();
+      majCompteurNouveaux(-1);
+      appel('marquerVu', { uid: d.uid }).catch(() => {});
+    }
   });
   bloc.append(b);
   // Virement (02/10) : clients invites par lien.
@@ -725,6 +734,15 @@ function ligne(d, aTraiter) {
   return bloc;
 }
 
+let nbNouveaux = 0;
+function majCompteurNouveaux(delta) {
+  nbNouveaux = Math.max(0, nbNouveaux + delta);
+  const c = document.querySelector('#resume .nouveau.compteur');
+  if (!c) return;
+  c.textContent = nbNouveaux + ' nouveau' + (nbNouveaux > 1 ? 'x' : '');
+  c.style.display = nbNouveaux ? '' : 'none';
+}
+
 function chargerDossiers() {
   return appel('dossiers').then((r) => {
     if (!r || !r.ok) { $('resume').textContent = 'Impossible de charger les questionnaires.'; return; }
@@ -734,7 +752,9 @@ function chargerDossiers() {
     const n = r.dossiers.filter((d) => d.nouveau).length;
     l.sort((x, y) => (y.nouveau ? 1 : 0) - (x.nouveau ? 1 : 0));
     const res = $('resume'); res.innerHTML = '';
-    if (n) res.append(el('span', 'nouveau compteur', n + ' nouveau' + (n > 1 ? 'x' : '')), document.createTextNode(' '));
+    nbNouveaux = n;
+    res.append(el('span', 'nouveau compteur', ''), document.createTextNode(' '));
+    majCompteurNouveaux(0);
     res.append(document.createTextNode(a.length ? a.length + ' questionnaire' + (a.length > 1 ? 's' : '') + ' à traiter' : 'Aucun questionnaire à traiter'));
     const hA = $('aTraiter'); hA.innerHTML = '';
     if (!a.length) hA.append(el('p', 'vide', 'Rien pour le moment.'));
@@ -748,12 +768,24 @@ function chargerDossiers() {
   }).catch(() => {});
 }
 
+// 01/11 Raci : etat propre pour chaque client (plus de 8 semaines d'un autre essai).
+const planVide = () => versions.every((v) => v.repas.every((r) => !r.ings.length));
+function etatPropre() {
+  versions = [{ libelle: '', debut: '', repas: [{ nom: 'Repas 1', ings: [] }, { nom: 'Repas 2', ings: [] }] }];
+  $('vPremier').value = ''; $('cible').style.display = 'none'; $('iaEtat').className = 'msg';
+  ouvrirVersion(0);
+}
 function choisir(d) {
+  if (!choisi || choisi.uid !== d.uid) {
+    if (!planVide() && !confirm('Repartir d\'un plan vide pour ' + nomDe(d) + ' ? Le plan en cours de saisie sera effacé.')) return false;
+    etatPropre();
+  }
   choisi = d;
   $('choisiNom').textContent = nomDe(d) + (d.email ? ' · ' + d.email : '');
   $('choisi').style.display = 'flex';
   $('client').style.display = 'none';
   $('ancreComposer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  return true;
 }
 $('btnDeselect').addEventListener('click', () => {
   choisi = null;
@@ -770,18 +802,24 @@ const LISTE = NOMS_ALIMENTS.map((n) => {
 
 // Etat de l'IA affiche EN HAUT des repas (27/09) : c'est la que la page
 // defile ; en bas, Raci ne voyait ni l'attente ni l'erreur.
-function proposer(extra) {
-  const msg = $('iaEtat'), b = $('btnAjuster');
+function proposer(extra, msgFiche) {
+  const msgHaut = $('iaEtat'), b = $('btnAjuster');
+  const msg = { set textContent(t) { [msgHaut, msgFiche].forEach((m) => { if (m) m.textContent = t; }); },
+    set className(c) { [msgHaut, msgFiche].forEach((m) => { if (m) m.className = c + (m === msgFiche ? ' ia-etat-fiche' : ''); }); } };
   b.disabled = true; b.textContent = 'L\'IA prépare le plan…';
   document.querySelectorAll('.ia-go').forEach((x) => { x.disabled = true; x.textContent = 'L\'IA prépare le plan…'; });
   $('msgIa').className = 'msg';
   afficher(msg, 'L\'IA prépare le plan… (15 à 30 secondes)', true);
-  $('ancreComposer').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  return appel('proposer', { aliments: LISTE, ...extra }).then((d) => {
+  // 01/11 : on reste sur le message (avant : defilement vers le destinataire, l'etat etait hors de vue).
+  if (!msgFiche) msgHaut.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const ctl = new AbortController(); const minuterie = setTimeout(() => ctl.abort(), 110000);
+  return appel('proposer', { aliments: LISTE, ...extra }, ctl.signal).then((d) => {
     if (d && d.ok) {
       plan = d.repas.map((r) => ({ nom: r.nom, ings: r.ings.map((i) => ({ name: i.name, portion: i.portion })) }));
-      versions[cur].repas = plan;
+      // Premier plan depuis une fiche : une seule version, rien d'autre (pas de semaines fantomes).
+      if (msgFiche) { versions = [{ libelle: '', debut: '', repas: plan }]; cur = 0; } else versions[cur].repas = plan;
       dessiner();
+      if (msgFiche) $('titreRepas').scrollIntoView({ behavior: 'smooth', block: 'start' });
       if (d.cible) {
         $('cible').innerHTML = 'Cible calculée : <b>' + d.cible.kcal + ' kcal</b> · P ' + d.cible.prot + ' g · G ' + d.cible.carbs + ' g · L ' + d.cible.lip + ' g';
         $('cible').style.display = 'block';
@@ -792,8 +830,9 @@ function proposer(extra) {
         : d && d.motif === 'vide' ? 'Choisis un questionnaire ou compose d\'abord un plan.'
         : 'L\'IA n\'a pas pu répondre. Réessaie.' + (d && (d.detail || d.motif) ? ' (' + (d.detail || d.motif) + ')' : ''), false);
     }
-  }).catch((e) => { if (e.message !== 'code') afficher(msg, 'Réseau indisponible ou délai dépassé. Réessaie.', false); })
+  }).catch((e) => { if (e.message !== 'code') afficher(msg, e.name === 'AbortError' ? 'L\'IA n\'a pas répondu à temps (près de 2 minutes). Réessaie.' : 'Réseau indisponible ou délai dépassé. Réessaie.', false); })
     .finally(() => {
+      clearTimeout(minuterie);
       b.disabled = false; b.textContent = 'Ajuster avec l\'IA';
       document.querySelectorAll('.ia-go').forEach((x) => { x.disabled = false; x.textContent = 'Proposer un plan avec l\'IA'; });
     });
