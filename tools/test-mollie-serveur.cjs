@@ -33,11 +33,12 @@ const post = (type, tok = "tok") => ({method: "POST", body: {type}, get: (h) => 
   ok(r.code === 200 && r.body.url === "https://mollie.test/pay", "plan, e-mail autorisé (casse/espaces ignorés) : URL de paiement");
   const b = appels[0].body; ok(b.amount.value === "80.00" && b.amount.currency === "EUR" && b.redirectUrl.startsWith("https://www.belfit.be/v2/") && b.webhookUrl === "https://europe-west1-repz-baf60.cloudfunctions.net/mollieWebhook" && b.metadata.uid === "u1", "montant 80.00 EUR fixé serveur, redirect www, webhook europe-west1");
   ok(store["commandes/tr_abc123"].statut === "open", "commande notée « open »");
-  r = await run(mol.creerPaiementMollie, post("maj")); ok(r.code === 403 && r.body.motif === "maj", "60 € refusé sans paiement antérieur");
+  // 01/11 Raci : « 80 EUR tout le temps » : un ancien type « maj » est traité comme un mois à 80 €.
+  appels = []; r = await run(mol.creerPaiementMollie, post("maj")); ok(r.code === 200 && appels[0].body.amount.value === "80.00" && store["commandes/" + "tr_abc123"].type === "plan", "« maj » (ancien 60 €) : 80.00, type plan");
   store["users/u1"] = {commandeCoach: {payeLe: new Date(Date.now() - 50 * 864e5).toISOString()}};
-  r = await run(mol.creerPaiementMollie, post("maj")); ok(r.code === 403 && r.body.motif === "maj", "60 € refusé à 50 jours (accès fermé)");
+  appels = []; r = await run(mol.creerPaiementMollie, post("plan")); ok(r.code === 200 && appels[0].body.amount.value === "80.00", "client à 50 jours (accès fermé) : 80.00");
   store["users/u1"] = {commandeCoach: {payeLe: new Date(Date.now() - 20 * 864e5).toISOString()}};
-  appels = []; r = await run(mol.creerPaiementMollie, post("maj")); ok(r.code === 200 && appels[0].body.amount.value === "60.00", "60 € accepté à 20 jours");
+  appels = []; r = await run(mol.creerPaiementMollie, post("plan")); ok(r.code === 200 && appels[0].body.amount.value === "80.00", "client à 20 jours (accès ouvert) : 80.00 aussi, plus de 60 €");
   r = await run(mol.creerPaiementMollie, post("montant80")); ok(appels.at(-1).body.amount.value === "80.00", "type inconnu → 80 (jamais un montant venu du client)");
   // webhook
   const paye = (uid) => ({id: "tr_abc123", status: "paid", mode: "test", paidAt: new Date().toISOString(), amount: {value: "80.00"}, metadata: {uid, type: "plan"}});

@@ -35,7 +35,7 @@ export function SuiviClient({ onContinuer, onNouveau }) {
   const pr = programme.value;
   const dos = dossierCoach.value;
   const mois = moisCoaching(dos, pr);
-  // 21/10 : le 60 € et les dates du mois ne partent que d'un paiement reel.
+  // 21/10 : les dates du mois ne partent que d'un paiement reel.
   const lim = limite60(dos);
   const majOk = !!pr && !!mois && !!lim && Date.now() < lim.getTime();
 
@@ -130,10 +130,10 @@ export function SuiviClient({ onContinuer, onNouveau }) {
             <p class="cp-txt">{mois.fini ? 'Ton mois de coaching est terminé.' : 'Ton plan et tes ajustements continuent jusqu\'à la fin du mois.'}</p>
             {/* 22/10 Raci : vraie date de fin, d'apres payeLe + 44 jours. */}
             <p class="cp-txt sv-acces">Accès nutrition jusqu'au {dateCourte(lim)}.</p>
-            {/* 21/10 Raci : 60 € discret, seulement dans les 7 derniers jours du mois ou apres sa fin. */}
-            {!APP_ANDROID && (mois.fini || mois.restants <= 7) && (commandesOuvertes()
-              ? <button type="button" class="sv-lien" onClick={onContinuer}>Envie de continuer&nbsp;? Le mois suivant est à 60 €, jusqu'au {dateCourte(lim)}.</button>
-              : <p class="sv-lien sv-lien--off" aria-disabled="true">Envie de continuer&nbsp;? Le mois suivant à 60 € sera bientôt disponible.</p>
+            {/* 01/11 Raci : 80 € tout le temps ; le mois suivant se rachete a 80 €, nouveau questionnaire. */}
+            {!APP_ANDROID && (commandesOuvertes()
+              ? <button type="button" class="cp-bt cp-bt--or sv-continuer" onClick={onContinuer}>Continuer un mois · 80 €</button>
+              : <p class="sv-lien sv-lien--off" aria-disabled="true">Envie de continuer&nbsp;? Le mois suivant (80 €) sera bientôt disponible.</p>
             )}
           </>
         ) : pr ? (
@@ -141,7 +141,7 @@ export function SuiviClient({ onContinuer, onNouveau }) {
             {!APP_ANDROID && <p class="cp-nom">Un nouveau mois de coaching</p>}
             {!APP_ANDROID && <p class="cp-txt">On repart d'un bilan complet, ajustements inclus pendant le mois.</p>}
             {APP_ANDROID && !(lim && Date.now() >= lim.getTime()) && <p class="cp-txt">Ton plan reste consultable dans l'app.</p>}
-            {/* 22/10 Raci : acces ferme (payeLe reel + 44 j), date discrete, sans 60 €. */}
+            {/* 22/10 Raci : acces ferme (payeLe reel + 44 j), date discrete. */}
             {lim && Date.now() >= lim.getTime() && <p class="cp-txt sv-acces">Accès nutrition terminé le {dateCourte(lim)}.</p>}
             {APP_ANDROID ? null : commandesOuvertes()
               ? <button class="cp-bt cp-bt--or" onClick={onNouveau}>Reprendre · 80 €</button>

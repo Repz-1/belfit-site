@@ -1,9 +1,9 @@
 // MOLLIE (24/10) : le bouton « Payer » n'apparait dans l'application que si
 // mollieEtat repond autorise:true pour le compte connecte.
 // Remplace Lemon Squeezy : Bancontact obligatoire (Raci).
-// Paiements UNIQUES, pas d'abonnement : 1er mois 80 EUR ; mois suivant
-// 60 EUR seulement pour un client deja paye, tant que son acces
-// nutrition est ouvert (44 jours apres le dernier paiement).
+// Paiements UNIQUES, pas d'abonnement : chaque mois de coaching 80 EUR
+// (01/11 Raci : « 80 EUR tout le temps »), nouveau client ou client qui revient.
+// Chaque paiement ouvre la nutrition 44 jours.
 // La cle Mollie ne quitte jamais le serveur :
 //   firebase functions:secrets:set MOLLIE_API_KEY   (test_... puis live_...)
 // Appels directs a l'API REST Mollie (fetch natif de Node 22), sans
@@ -19,13 +19,12 @@ const MOLLIE_TEST_EMAILS = defineSecret("MOLLIE_TEST_EMAILS");
 const API = "https://api.mollie.com/v2";
 const REGION = "europe-west1";
 // 22/10 Raci : acces nutrition = mois paye + 2 semaines = 44 jours apres
-// le dernier paiement. Le 60 EUR n'est accepte que pendant cet acces.
+// le dernier paiement. 01/11 Raci : « 80 EUR tout le temps », plus de mois a 60 EUR.
 // Identique a app-v2/src/store/coach.js et functions/index.js (JOURS_ACCES).
 const JOURS_ACCES = 44;
 // Montants fixes COTE SERVEUR : le navigateur n'envoie que le produit.
 const PRODUITS = {
-  plan: {montant: "80.00", description: "BelFit - 1er mois de coaching alimentaire"},
-  maj: {montant: "60.00", description: "BelFit - Mois suivant de coaching alimentaire"},
+  plan: {montant: "80.00", description: "BelFit - Mois de coaching alimentaire"},
 };
 const RETOUR = "https://www.belfit.be/v2/?onglet=premium&coach=questionnaire&type=";
 const WEBHOOK = "https://" + REGION + "-repz-baf60.cloudfunctions.net/mollieWebhook";
@@ -173,7 +172,7 @@ exports.verifierCodeReduction = onRequest(
         if (!j) { refus("auth"); return; }
         if (!paiementPermis(j.email, j.verifie)) { refus("test"); return; }
         const corps = req.body || {};
-        const type = corps.type === "maj" ? "maj" : "plan";
+        const type = "plan";   // 01/11 : un seul produit, 80 EUR
         const code = reduction.normaliserCode(corps.code);
         const cles = reduction.clesEssais(j.uid, ipDe(req));
         if (await reduction.tropDEssais(cles)) { refus("essais"); return; }
@@ -201,7 +200,7 @@ exports.creerPaiementMollie = onRequest(
         if (!j) { res.status(401).json({ok: false, motif: "auth"}); return; }
         const uid = j.uid; const email = j.email;
         if (!paiementPermis(j.email, j.verifie)) { res.status(403).json({ok: false, motif: "test"}); return; }
-        const type = (req.body || {}).type === "maj" ? "maj" : "plan";
+        const type = "plan";   // 01/11 : un seul produit (80 EUR), meme pour un client qui revient
         const p = PRODUITS[type];
         let montant = p.montant;
         let leCode = null; let prixCode = null;
@@ -210,7 +209,6 @@ exports.creerPaiementMollie = onRequest(
         const saisi = (req.body || {}).code;
         if (saisi != null && String(saisi).trim() !== "") {
           const refus = (motif) => { res.status(reduction.STATUT_HTTP[motif] || 403).json({ok: false, motif, message: reduction.MESSAGES[motif]}); };
-          if (type === "maj") { refus("maj"); return; }
           leCode = reduction.normaliserCode(saisi);
           const cles = reduction.clesEssais(uid, ipDe(req));
           if (await reduction.tropDEssais(cles)) { refus("essais"); return; }
@@ -220,13 +218,6 @@ exports.creerPaiementMollie = onRequest(
             refus(rr.motif); return;
           }
           prixCode = rr; montant = rr.montant;
-        }
-        if (type === "maj") {
-          // 60 EUR : refuse sans paiement anterieur ou acces nutrition ferme.
-          const u = await db().collection("users").doc(uid).get();
-          const paye = u.exists && u.data().commandeCoach && u.data().commandeCoach.payeLe;
-          const fin = paye ? Date.parse(paye) + JOURS_ACCES * 864e5 : NaN;
-          if (!(fin > Date.now())) { res.status(403).json({ok: false, motif: "maj"}); return; }
         }
         let paiement;
         try {
