@@ -1497,7 +1497,10 @@ function besoinsDe(rep) {
   const facteur = Math.min(1.9, base + Math.min(14, Math.max(0, n("seances") || 0)) * 0.04);
   const maintien = bmr * facteur;
   const pct = { "Perdre du gras": -0.15, "Prendre du muscle": 0.10, "Recomposition": -0.05 }[v("objectif")] || 0;
-  const kcal = Math.round(Math.max(bmr * 1.2, maintien * (1 + pct)) / 10) * 10;
+  // 01/11 v655 Raci : perte de gras sans echeance (« Pas de date » ou vide) -> deficit doux -7 %.
+  const sansDate = !v("echeance") || v("echeance") === "Pas de date";
+  const pctFinal = v("objectif") === "Perdre du gras" && sansDate ? -0.07 : pct;
+  const kcal = Math.round(Math.max(bmr * 1.2, maintien * (1 + pctFinal)) / 10) * 10;
   const prot = Math.round(poids * (v("objectif") === "Perdre du gras" ? 2.2 : 2.0));
   const lip = Math.max(Math.round(kcal * 0.27 / 9), Math.round(poids * 0.8));
   const deficit = Math.round((1 - kcal / maintien) * 1000) / 10;
