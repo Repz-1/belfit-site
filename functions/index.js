@@ -1549,7 +1549,8 @@ async function proposerPlan(corps) {
   }
   const actuel = Array.isArray(corps.planActuel) ? corps.planActuel.slice(0, 10) : [];
   const demande = String(corps.demande || "").slice(0, 600).trim();
-  if (!reponses && !actuel.length) return [400, {ok: false, motif: "vide"}];
+  // 01/11 v656 : sans questionnaire, une cible tapee (« vise 2 000 kcal ») suffit.
+  if (!reponses && !actuel.length && !/\d\s*kcal/i.test(demande)) return [400, {ok: false, motif: "vide"}];
 
   let cible = reponses ? besoinsDe(reponses) : null;
   // Le coach peut imposer un chiffre (« vise 2 200 kcal ») : il prime.

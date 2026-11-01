@@ -79,7 +79,7 @@ const kAvant = await p.locator('#total .total-k').innerText();
 await p.reload(); await p.waitForTimeout(2500);
 await fiche(1).tap(); await p.waitForTimeout(200); await p.locator('.detail .second').first().tap(); await p.waitForTimeout(300);
 ok((await p.locator('#total .total-k').innerText()).startsWith('0'), 'autre client : plan vide (v652 conserve)');
-ok(/Pas de cible/.test(await p.locator('#cible').innerText()), 'autre client sans poids/taille/age : « Pas de cible » affiche');
+ok(/Pas de cible|pas rempli de questionnaire/.test(await p.locator('#cible').innerText()), 'autre client sans poids/taille/age : « Pas de cible » affiche');
 await fiche(1).tap(); await p.waitForTimeout(200);
 await fiche(0).tap(); await p.waitForTimeout(300);
 ok(/Brouillon non envoyé/.test(await p.locator('.detail').first().innerText()), 'fiche du client : « Brouillon non envoyé » visible');

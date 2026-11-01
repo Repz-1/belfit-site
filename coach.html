@@ -325,6 +325,10 @@ const $ = (id) => document.getElementById(id);
 let code = '';
 try { code = localStorage.getItem(CLE) || ''; } catch (e) { /* rien */ }
 let choisi = null;   // dossier selectionne (destinataire)
+let tousDossiers = [];   // 01/11 v656 : pour retrouver un client tape a la main
+// 01/11 v656 Raci : un client livre sans questionnaire (ex. plan envoye a la main).
+const aQuestionnaire = (d) => !!(d && d.reponses && Object.keys(d.reponses).length);
+const MSG_SANS_Q = 'Ce client n\'a pas rempli de questionnaire : écris la cible dans la demande à l\'IA (ex. « vise 2 000 kcal, 4 repas »), puis touche « Ajuster avec l\'IA ».';
 
 // 26/10 Plans par date : un plan = une ou plusieurs VERSIONS, chacune avec
 // un jour de debut. `plan` pointe toujours sur les repas de la version
@@ -364,7 +368,7 @@ function besoinsDe(rep) {
 function afficherCible() {
   const c = $('cible');
   if (!c) return;
-  if (!cibleCourante) { c.style.display = choisi ? 'block' : 'none'; c.innerHTML = choisi ? 'Pas de cible : questionnaire incomplet (poids, taille ou âge).' : ''; return; }
+  if (!cibleCourante) { c.style.display = choisi ? 'block' : 'none'; c.innerHTML = !choisi ? '' : aQuestionnaire(choisi) ? 'Pas de cible : questionnaire incomplet (poids, taille ou âge).' : MSG_SANS_Q; return; }
   const T = totalPlan(), k = cibleCourante.kcal;
   const ec = T.kcal ? Math.round((T.kcal - k) / k * 1000) / 10 : null;
   const ok = ec !== null && Math.abs(ec) <= 5;
@@ -757,7 +761,10 @@ function detail(d) {
   const etat = el('div', 'msg ia-etat-fiche');
   ia.addEventListener('click', () => {
     if (brouillonNonVide(lireBrouillon(d.uid)) && !confirm('Un brouillon existe pour ' + nomDe(d) + '. Le remplacer par un plan de l\'IA ?')) return;
-    if (!choisir(d)) return; proposer({ uid: d.uid }, etat);
+    if (!choisir(d)) return;
+    // 01/11 v656 : sans questionnaire, l'IA n'a rien pour calculer : on le dit clairement.
+    if (!aQuestionnaire(d)) { $('cible').scrollIntoView({ block: 'center' }); $('demande').focus({ preventScroll: true }); return; }
+    proposer({ uid: d.uid }, etat);
   });
   const br = lireBrouillon(d.uid);
   if (brouillonNonVide(br)) box.append(el('p', 'dos-sous brouillon-note', 'Brouillon non envoyé · ' + new Date(br.le).toLocaleString('fr-BE', { dateStyle: 'short', timeStyle: 'short' })));
@@ -825,6 +832,7 @@ function majCompteurNouveaux(delta) {
 function chargerDossiers() {
   return appel('dossiers').then((r) => {
     if (!r || !r.ok) { $('resume').textContent = 'Impossible de charger les questionnaires.'; return; }
+    tousDossiers = r.dossiers;
     const a = r.dossiers.filter((d) => d.aTraiter);
     const l = r.dossiers.filter((d) => !d.aTraiter);   // 01/11 : plus de coupe a 10, affichage par 20
     // 01/11 : compteur des nouveaux clients (payes ou questionnaire recu, non traites), en premier.
@@ -873,7 +881,7 @@ function choisir(d) {
   }
   choisi = d;
   afficherCible();
-  $('choisiNom').textContent = nomDe(d) + (d.email ? ' · ' + d.email : '');
+  $('choisiNom').textContent = nomDe(d) + (d.email && d.email !== nomDe(d) ? ' · ' + d.email : '');
   $('choisi').style.display = 'flex';
   $('client').style.display = 'none';
   $('ancreComposer').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -890,6 +898,15 @@ $('btnJeterBrouillon').addEventListener('click', () => {
   majBrouillonBarre(); dessiner();
 });
 $('note').addEventListener('input', () => sauverBrouillon());
+// 01/11 v656 Raci : e-mail ou pseudo tape = client connu -> on le selectionne (questionnaire compris).
+function clientTape() {
+  const t = $('client').value.trim().toLowerCase();
+  if (!t || choisi) return choisi;
+  const d = tousDossiers.find((x) => (x.email || '').toLowerCase() === t || ((x.prenom + ' ' + x.nom).trim().toLowerCase() === t));
+  if (d && choisir(d)) { $('client').value = ''; return d; }
+  return null;
+}
+$('client').addEventListener('change', clientTape);
 $('btnDeselect').addEventListener('click', () => {
   sauverBrouillon();
   $('brouillonBarre').style.display = 'none';
@@ -933,7 +950,7 @@ function proposer(extra, msgFiche) {
       afficher(msg, ajuste + sans + (d.remarque ? d.remarque + ' ' : '') + 'Relis tout avant d\'envoyer, surtout les allergies.', true);
     } else {
       afficher(msg, d && d.motif === 'credit' ? 'Le crédit Gemini est épuisé : recharge-le sur ai.studio/projects (Facturation), puis réessaie.'
-        : d && d.motif === 'vide' ? 'Choisis un questionnaire ou compose d\'abord un plan.'
+        : d && d.motif === 'vide' ? (choisi && !aQuestionnaire(choisi) ? MSG_SANS_Q : 'Choisis un client ou compose d\'abord un plan, ou écris la cible (ex. « vise 2 000 kcal »).')
         : 'L\'IA n\'a pas pu répondre. Réessaie.' + (d && (d.detail || d.motif) ? ' (' + (d.detail || d.motif) + ')' : ''), false);
     }
   }).catch((e) => { if (e.message !== 'code') afficher(msg, e.name === 'AbortError' ? 'L\'IA n\'a pas répondu à temps (près de 2 minutes). Réessaie.' : 'Réseau indisponible ou délai dépassé. Réessaie.', false); })
@@ -986,6 +1003,8 @@ function autreIdee(ri, btn) {
 $('btnAjuster').addEventListener('click', () => {
   const demande = $('demande').value.trim();
   const planActuel = plan.filter((r) => r.ings.length).map((r) => ({ nom: r.nom, ings: r.ings }));
+  clientTape();
+  if (choisi && !aQuestionnaire(choisi) && !planActuel.length && !/\d\s*kcal/i.test(demande)) { afficher($('msgIa'), MSG_SANS_Q, false); return; }
   if (!demande && !choisi && !planActuel.length) {
     afficher($('msgIa'), 'Écris une demande, ou choisis un questionnaire plus haut.', false); return;
   }
