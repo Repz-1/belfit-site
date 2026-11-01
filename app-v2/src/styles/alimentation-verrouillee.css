@@ -23,12 +23,13 @@
 .vr-puces { list-style: none; margin: 0 0 14px; padding: 0; counter-reset: vr; }
 .vr-puces li { position: relative; counter-increment: vr; padding-left: 32px; margin-bottom: 8px; min-height: 22px; font-size: 14px; line-height: 22px; color: #5C564E; }
 .vr-puces li::before { content: counter(vr); position: absolute; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%; background: #16130F; color: #fff; font-size: 12px; font-weight: 800; line-height: 22px; text-align: center; }
-.vr-btn { position: relative; overflow: hidden; isolation: isolate; display: block; width: 100%; box-sizing: border-box; border: 1.5px solid transparent; border-radius: 999px; color: #fff; font: 700 15px 'Satoshi', system-ui, sans-serif; letter-spacing: .01em; padding: 12px 16px; text-align: center; cursor: pointer;
-  background: linear-gradient(135deg, #0E0C0A 0%, #2B2622 55%, #3A332C 100%) padding-box, linear-gradient(90deg, #B34700, #F7B500, #E0331B) border-box;
-  box-shadow: 0 6px 18px rgba(22,19,15,.28), inset 0 1px 0 rgba(255,255,255,.12); }
+.vr-btn { position: relative; overflow: hidden; isolation: isolate; display: block; width: 100%; box-sizing: border-box; border: 0; border-radius: 999px; color: #fff; font: 700 15px 'Satoshi', system-ui, sans-serif; letter-spacing: .01em; padding: 12px 16px; text-align: center; cursor: pointer;
+  background: linear-gradient(100deg, #22C55E 0%, #16A34A 50%, #15803D 100%);
+  text-shadow: 0 1px 2px rgba(10,60,25,.45);
+  box-shadow: 0 6px 16px rgba(22,163,74,.35), inset 0 1px 0 rgba(255,255,255,.25); }
 .vr-btn::after { content: ""; position: absolute; top: -20%; bottom: -20%; left: 0; width: 45%; z-index: -1; pointer-events: none;
-  background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0) 20%, rgba(255,215,120,.45) 50%, rgba(255,255,255,0) 80%, transparent 100%);
+  background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0) 20%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 80%, transparent 100%);
   transform: translateX(-120%) skewX(-20deg); animation: vr-reflet 4s ease-in-out infinite; }
 @keyframes vr-reflet { 0%, 55% { transform: translateX(-120%) skewX(-20deg); } 85%, 100% { transform: translateX(330%) skewX(-20deg); } }
 @media (prefers-reduced-motion: reduce) { .vr-btn::after { animation: none; display: none; } }
-.vr-btn:active { background: linear-gradient(135deg, #000 0%, #1E1A17 100%) padding-box, linear-gradient(90deg, #B34700, #F7B500, #E0331B) border-box; }
+.vr-btn:active { background: linear-gradient(100deg, #16A34A 0%, #15803D 50%, #166534 100%); }
