@@ -34,9 +34,11 @@ ok(await p.locator('#listeVersions .ver').count() === 1, 'etat propre : une seul
 await p.locator('.dos').first().tap(); await p.waitForTimeout(500);
 ok(appels.includes('marquerVu'), 'fiche ouverte : marquerVu envoye au serveur');
 ok(await p.locator('.dos .nouveau').count() === 0 && !(await p.locator('#resume .nouveau.compteur').isVisible()), 'badge et compteur « Nouveau » retires');
-// Faux plan de 8 semaines deja la (ancien bug) : choisir un client repart a zero.
-await p.evaluate(() => document.getElementById('btnModele').click()); await p.waitForTimeout(200);
-ok(await p.locator('#listeVersions .ver').count() === 8, 'modele 8 versions seulement sur demande (confirmation)');
+// 01/11 Raci : le modele « rebond » 8 versions n'existe plus.
+ok(await p.locator('#btnModele').count() === 0 && !/rebond|Pré-remplir/i.test(await p.locator('body').innerText()), 'plus de modele « rebond » 8 versions sur la page');
+// Plan saisi pour un autre essai (2 versions) : choisir un client repart a zero.
+await p.locator('#btnVerCopie').click(); await p.waitForTimeout(150);
+ok(await p.locator('#listeVersions .ver').count() === 2, 'deux versions avant de choisir le client');
 modeIa = 'ko';
 await p.locator('.ia-go').tap(); await p.waitForTimeout(1500);
 ok(await p.locator('#listeVersions .ver').count() === 1, 'choisir le client : plus de semaines fantomes');

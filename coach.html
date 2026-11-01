@@ -284,8 +284,7 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
         <div><label for="vPremier">1re version le</label><input id="vPremier" type="date"></div>
         <button id="btnEspacer">Espacer d'une semaine</button>
       </div>
-      <button class="second" id="btnModele">Pré-remplir : rebond après sèche (8 versions)</button>
-      <p class="aide">Une seule version sans date = un plan unique, comme avant. Avec plusieurs versions, chacune s'applique à partir de son jour de début (jour belge, 00 h 00) ; la dernière reste valable sans fin. Une version sans date n'est pas appliquée. Avant la première date, le client garde son plan actuel, ou rien s'il n'en avait pas. « Espacer » met la 2e version 7 jours après la 1re, la 3e 14 jours après, etc. Le modèle est pré-rempli sans dates : c'est à toi de les donner.</p>
+      <p class="aide">Une seule version sans date = un plan unique, comme avant. Avec plusieurs versions, chacune s'applique à partir de son jour de début (jour belge, 00 h 00) ; la dernière reste valable sans fin. Une version sans date n'est pas appliquée. Avant la première date, le client garde son plan actuel, ou rien s'il n'en avait pas. « Espacer » met la 2e version 7 jours après la 1re, la 3e 14 jours après, etc.</p>
     </div>
 
     <p class="lb" id="titreRepas">Les repas</p>
@@ -313,7 +312,6 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
 <script type="module">
 // Base d'aliments de l'app (meme fichier) : memes calories chez le client.
 import { DB, NOMS_ALIMENTS, macrosOf } from '/app-v2/src/data/aliments.js';
-import { modeleRebond } from '/app-v2/src/data/modele-rebond.js';
 import { jourValide, ajouterJours, dateBruxelles } from '/app-v2/src/store/plans-par-date.js';
 
 const URL_COACH = 'https://europe-west1-repz-baf60.cloudfunctions.net/espaceCoach';
@@ -542,13 +540,6 @@ $('btnEspacer').addEventListener('click', () => {
   if (!prem) return;
   versions.forEach((v, i) => { v.debut = ajouterJours(prem, 7 * i); });
   dessiner();
-});
-$('btnModele').addEventListener('click', () => {
-  // 01/11 Raci : jamais sans confirmation (8 semaines apparues sans le vouloir).
-  if (!confirm('Pré-remplir 8 versions « rebond après sèche » (3 300 à 4 300 kcal) ? Ce que tu as saisi sera remplacé.')) return;
-  versions = modeleRebond();
-  $('vPremier').value = '';
-  ouvrirVersion(0);
 });
 
 /** Totaux sans redessiner : le champ en cours garde le focus. */
