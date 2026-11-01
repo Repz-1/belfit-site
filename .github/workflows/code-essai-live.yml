@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       code: {description: "Nom du code", required: true, default: "RACI99LIVE"}
-      action: {description: "creer, desactiver ou relier", required: true, default: "creer"}
+      action: {description: "creer, desactiver, relier ou delier", required: true, default: "creer"}
       email: {description: "relier : e-mail du compte BelFit a qui lier le code", required: false, default: ""}
 permissions:
   contents: read
@@ -33,6 +33,14 @@ jobs:
             const ref = a.firestore().collection("codesReduction").doc(nom);
             (async () => {
               if (process.env.ACTION === "desactiver") { await ref.update({actif: false}); console.log("Code desactive :", nom); return; }
+              if (process.env.ACTION === "delier") {
+                const d = (await ref.get()).data();
+                if (!d || d.statut === "utilise") { console.log("Code absent ou deja utilise :", nom); process.exit(1); }
+                await ref.update({pourUid: a.firestore.FieldValue.delete()});
+                const f = (await ref.get()).data();
+                console.log("Code delie :", nom, "| lie:", !!f.pourUid, "| statut:", f.statut, "| actif:", f.actif, "| pourcent:", f.pourcent, "| expire:", f.expire);
+                return;
+              }
               if (process.env.ACTION === "relier") {
                 const v = await a.auth().getUserByEmail(String(process.env.EMAIL).trim());
                 const d = (await ref.get()).data();
