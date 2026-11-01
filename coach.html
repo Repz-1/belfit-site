@@ -124,6 +124,7 @@ header a.quitter{margin-left:auto;font-size:12px;color:var(--tx3);text-decoratio
 .tag{flex:none;font-size:11.5px;font-weight:600;border-radius:999px;padding:4px 9px;background:#F1EFE8;color:#5F5E5A}
 .tag.rouge{background:#FCEBEB;color:#A32D2D}.tag.ambre{background:#FAEEDA;color:#854F0B}.tag.vert{background:#E9F5EE;color:#1C5334}
 .nouveau{display:inline-block;margin-left:8px;vertical-align:middle;font-size:10.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;border-radius:999px;padding:2px 7px;background:#1C5334;color:#fff}.nouveau.compteur{margin-left:0;font-size:12px;padding:3px 9px}
+.avance{margin:6px 0 10px}.avance>summary{cursor:pointer;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid #e6e2da;border-radius:999px;font-size:14px;font-weight:600;list-style:none}.avance>summary::-webkit-details-marker{display:none}.avance[open]>summary{margin-bottom:8px}
 .prog-h{margin:6px 0;padding:8px 10px;border:1px solid #e6e2da;border-radius:10px}.prog-h summary{cursor:pointer;font-weight:700;font-size:13px}
 .detail{padding:4px 0 14px;border-bottom:1px solid var(--filet)}
 .detail .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
@@ -269,12 +270,13 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
     <div class="carte">
       <label for="client">Destinataire</label>
       <div id="choisi" class="chip" style="display:none"><b id="choisiNom"></b><button id="btnDeselect" aria-label="Changer de destinataire">×</button></div>
-      <div id="brouillonBarre" class="brouillon" style="display:none"><span id="brouillonTxt"></span><button id="btnJeterBrouillon" class="mini">Jeter le brouillon</button></div>
+      <div id="brouillonBarre" class="brouillon" style="display:none"><span id="brouillonTxt"></span><button id="btnReprendreEnvoye" class="mini">Reprendre le plan envoyé</button><button id="btnJeterBrouillon" class="mini">Jeter le brouillon</button></div>
       <input id="client" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" spellcheck="false">
       <p class="aide">Touche un questionnaire plus haut pour le remplir tout seul.</p>
     </div>
 
-    <p class="lb">Versions du plan</p>
+    <p class="aide" id="debutAuto">Le plan commence demain, dès 00 h 00.</p>
+    <details id="avance" class="avance"><summary>Avancé (plusieurs versions)</summary>
     <div class="carte" id="versionsCarte">
       <div id="listeVersions"></div>
       <div class="ver-champs">
@@ -291,6 +293,7 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
       </div>
       <p class="aide">Une seule version sans date = un plan unique, comme avant. Avec plusieurs versions, chacune s'applique à partir de son jour de début (jour belge, 00 h 00) ; la dernière reste valable sans fin. Une version sans date n'est pas appliquée. Avant la première date, le client garde son plan actuel, ou rien s'il n'en avait pas. « Espacer » met la 2e version 7 jours après la 1re, la 3e 14 jours après, etc.</p>
     </div>
+    </details>
 
     <p class="lb" id="titreRepas">Les repas</p>
     <div id="iaEtat" class="msg"></div>
@@ -593,6 +596,8 @@ function dessinerVersions() {
 
 function ouvrirVersion(i) {
   cur = i; plan = versions[cur].repas;
+  if (versions.length > 1) $('avance').open = true;
+  $('debutAuto').style.display = $('avance').open ? 'none' : '';
   dessiner();
 }
 
@@ -859,9 +864,26 @@ function chargerDossiers() {
 const planVide = () => versions.every((v) => v.repas.every((r) => !r.ings.length));
 function etatPropre() {
   versions = [{ libelle: '', debut: '', repas: [{ nom: 'Repas 1', ings: [] }, { nom: 'Repas 2', ings: [] }] }];
+  $('avance').open = false;
   $('vPremier').value = ''; $('cible').style.display = 'none'; $('iaEtat').className = 'msg';
   $('note').value = ''; cibleCourante = null;
   ouvrirVersion(0);
+}
+// 01/11 v657 Raci : le dernier plan envoye, pret a modifier (toutes ses versions).
+function planEnvoye(d) {
+  const p = d && d.programme; if (!p) return null;
+  const copie = (repas) => (repas || []).map((r) => ({ nom: r.nom || 'Repas', ings: (r.ings || []).map((i) => ({ name: i.name, portion: i.portion })) }));
+  const vs = (p.versions || []).filter((v) => (v.repas || []).length).map((v) => ({ libelle: v.libelle || '', debut: v.debut || '', repas: copie(v.repas) }));
+  if (vs.length) return { versions: vs, note: p.note || '', livreLe: p.livreLe };
+  return (p.repas || []).length ? { versions: [{ libelle: '', debut: '', repas: copie(p.repas) }], note: p.note || '', livreLe: p.livreLe } : null;
+}
+const jourCourt = (x) => x ? new Date(x).toLocaleDateString('fr-BE', { day: 'numeric', month: 'short' }) : '';
+function chargerEnvoye(d) {
+  const e = planEnvoye(d); if (!e) return false;
+  versions = e.versions; $('note').value = e.note; ouvrirVersion(0);
+  jeterBrouillon(d.uid);   // identique a l'envoi : pas de « brouillon » tant que rien n'est modifie
+  afficher($('iaEtat'), 'Plan envoyé le ' + jourCourt(e.livreLe) + ' chargé : modifie-le, puis renvoie-le.', true);
+  return true;
 }
 function choisir(d) {
   if (!choisi || choisi.uid !== d.uid) {
@@ -872,11 +894,13 @@ function choisir(d) {
     const b = lireBrouillon(d.uid);   // AVANT etatPropre : le plan vide ne doit pas l'ecraser
     choisi = null; etatPropre(); choisi = d;
     cibleCourante = besoinsDe(d.reponses);
-    if (brouillonNonVide(b)) {
+    const env = planEnvoye(d);
+    // Brouillon plus recent que le dernier envoi : on le garde. Sinon : le plan envoye.
+    if (brouillonNonVide(b) && !(env && env.livreLe && new Date(b.le) < new Date(env.livreLe))) {
       versions = b.versions; $('note').value = b.note || '';
       if (b.cible && b.cible.source === 'coach') cibleCourante = b.cible;
       ouvrirVersion(Math.min(b.cur || 0, versions.length - 1));
-    }
+    } else chargerEnvoye(d);
     majBrouillonBarre();
   }
   choisi = d;
@@ -890,14 +914,20 @@ function choisir(d) {
 function majBrouillonBarre() {
   const b = choisi && lireBrouillon(choisi.uid);
   $('brouillonBarre').style.display = brouillonNonVide(b) ? 'flex' : 'none';
+  $('btnReprendreEnvoye').style.display = planEnvoye(choisi) ? '' : 'none';
   if (b) $('brouillonTxt').textContent = 'Brouillon enregistré · ' + new Date(b.le).toLocaleString('fr-BE', { dateStyle: 'short', timeStyle: 'short' });
 }
 $('btnJeterBrouillon').addEventListener('click', () => {
-  if (!choisi || !confirm('Jeter le brouillon de ' + nomDe(choisi) + ' ? Le plan repart à vide.')) return;
+  if (!choisi || !confirm('Jeter le brouillon de ' + nomDe(choisi) + ' ?')) return;
   const d = choisi; jeterBrouillon(d.uid); choisi = null; etatPropre(); choisi = d; cibleCourante = besoinsDe(d.reponses); choisi = d;
-  majBrouillonBarre(); dessiner();
+  chargerEnvoye(d); majBrouillonBarre(); dessiner();
+});
+$('btnReprendreEnvoye').addEventListener('click', () => {
+  if (!choisi || !confirm('Remplacer le brouillon par le plan envoyé à ' + nomDe(choisi) + ' ?')) return;
+  const d = choisi; jeterBrouillon(d.uid); chargerEnvoye(d); majBrouillonBarre();
 });
 $('note').addEventListener('input', () => sauverBrouillon());
+$('avance').addEventListener('toggle', () => { $('debutAuto').style.display = $('avance').open ? 'none' : ''; });
 // 01/11 v656 Raci : e-mail ou pseudo tape = client connu -> on le selectionne (questionnaire compris).
 function clientTape() {
   const t = $('client').value.trim().toLowerCase();
@@ -1129,6 +1159,9 @@ $('btnEnvoi').addEventListener('click', () => {
     ings: r.ings.map((i) => ({ name: i.name, portion: +i.portion || 0 })),
   }));
   // Plan unique sans date = depot d'avant, a l'identique. Sinon : versions.
+  // 01/11 v657 Raci : sans « Avancé », le plan commence demain (jour belge, 00 h 00).
+  const simple = !$('avance').open && versions.length === 1;
+  if (simple) versions[0].debut = ajouterJours(dateBruxelles(), 1);
   const parVersions = versions.length > 1 || !!jourValide(versions[0].debut);
   let extra;
   if (!parVersions) {
@@ -1149,7 +1182,7 @@ $('btnEnvoi').addEventListener('click', () => {
     const txt = sansDate
       ? sansDate + ' version' + (sansDate > 1 ? 's' : '') + ' sans date ne ser' + (sansDate > 1 ? 'ont' : 'a') + ' pas appliquée' + (sansDate > 1 ? 's' : '') + '. Envoyer quand même ?'
       : 'Envoyer ' + liste.length + ' versions à ce client ? Chacune s\'appliquera à sa date.';
-    if (!confirm(txt)) return;
+    if (!simple && !confirm(txt)) return;
     extra = { versions: liste };
   }
   b.disabled = true; b.textContent = 'Envoi…';
