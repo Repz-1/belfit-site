@@ -17,6 +17,12 @@ async function ouvrir() {
     if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } });
     const c = JSON.parse(r.request().postData() || '{}');
     if (c.action === 'deposer') envois.push(c);
+    // 01/11 : plus de modele 8 versions ; le banc compose le plan via l'IA simulee (6 repas).
+    if (c.action === 'proposer') {
+      const n = c.aliments.slice(0, 12).map((l) => l.split(';')[0]);
+      return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' },
+        body: JSON.stringify({ ok: true, repas: [0, 1, 2, 3, 4, 5].map((k) => ({ nom: 'Repas ' + (k + 1), ings: [{ name: n[2 * k], portion: 100 }, { name: n[2 * k + 1], portion: 50 }] })) }) });
+    }
     const corps = c.action === 'dossiers' ? { ok: true, dossiers: [] } : c.action === 'deposer' ? { ok: true, mailEnvoye: true } : { ok: true, acces: [], invitations: [] };
     return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(corps) });
   });
@@ -26,6 +32,13 @@ async function ouvrir() {
   await p.goto(`http://localhost:${PORT}/coach.html`); await p.waitForTimeout(1500);
   return p;
 }
+// 8 versions sans date, composees a la main (le modele pre-rempli n'existe plus).
+async function huitVersions(p) {
+  await p.fill('#demande', 'plan de test'); await p.locator('#btnAjuster').click(); await p.waitForTimeout(600);
+  for (let i = 0; i < 7; i++) { await p.locator('#btnVerCopie').click(); await p.waitForTimeout(80); }
+  for (let i = 0; i < 8; i++) { await p.locator('#listeVersions .ver').nth(i).click(); await p.fill('#vLib', 'Version ' + (i + 1)); }
+  await p.waitForTimeout(200);
+}
 const banniere = (p, t) => p.evaluate((t) => { const b = document.createElement('div'); b.id = 'banc'; b.textContent = t; b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#c00;color:#fff;font:700 11px sans-serif;text-align:center;padding:3px'; document.body.appendChild(b); }, t);
 const lignes = (p) => p.locator('#listeVersions .ver').allInnerTexts();
 
@@ -33,13 +46,14 @@ const lignes = (p) => p.locator('#listeVersions .ver').allInnerTexts();
 let p = await ouvrir();
 ok(await p.locator('#listeVersions .ver').count() === 1, 'au depart : une seule version');
 ok((await lignes(p))[0].includes('plan unique'), 'une seule version sans date = « plan unique, envoye tout de suite »');
-await p.locator('#btnModele').click(); await p.waitForTimeout(400);
-ok(await p.locator('#listeVersions .ver').count() === 8, 'modele : 8 versions');
+await huitVersions(p); await p.waitForTimeout(400);
+ok(await p.locator('#btnModele').count() === 0 && !/rebond|Pré-remplir/i.test(await p.locator('body').innerText()), 'plus aucun modele « rebond » sur la page');
+ok(await p.locator('#listeVersions .ver').count() === 8, '8 versions composees');
 const l0 = await lignes(p);
-ok(l0.every((t) => t.includes('sans date : non appliquée')), 'modele : chaque version porte « sans date : non appliquée » (aucune date inventee)');
-ok(l0[0].includes('Semaine 1') && l0[7].includes('Semaine 8'), 'modele : libelles Semaine 1 … Semaine 8');
+ok(l0.every((t) => t.includes('sans date : non appliquée')), 'chaque version sans date porte « sans date : non appliquée »');
+ok(l0[0].includes('Version 1') && l0[7].includes('Version 8'), 'libelles Version 1 … Version 8');
 ok(await p.locator('#btnEspacer').isDisabled(), '« Espacer » inactif tant que le coach n\'a pas tape la 1re date');
-await banniere(p, 'EXEMPLE · modèle pré-rempli, SANS dates · serveur simulé');
+await banniere(p, 'EXEMPLE · 8 versions SANS dates · serveur simulé');
 await p.locator('#versionsCarte').scrollIntoViewIfNeeded(); await p.evaluate(() => window.scrollBy(0, -50)); await p.waitForTimeout(300);
 await p.screenshot({ path: SHOTS + '/plans-coach-sans-date.png' });
 await p.evaluate(() => document.getElementById('banc').remove());
@@ -61,7 +75,7 @@ await p.screenshot({ path: SHOTS + '/plans-coach-versions.png' });
 await p.locator('#total').scrollIntoViewIfNeeded(); await p.waitForTimeout(200);
 // ouvrir la version 8
 await p.locator('#listeVersions .ver').nth(7).click(); await p.waitForTimeout(300);
-ok(/semaine 8/i.test(await p.locator('#titreRepas').innerText()), 'ouvrir la version 8 : le titre des repas la nomme');
+ok(/version 8/i.test(await p.locator('#titreRepas').innerText()), 'ouvrir la version 8 : le titre des repas la nomme');
 await p.locator('#titreRepas').scrollIntoViewIfNeeded(); await p.evaluate(() => window.scrollBy(0, -60)); await p.waitForTimeout(300);
 await p.screenshot({ path: SHOTS + '/plans-coach-version5.png', fullPage: false });
 await p.evaluate(() => document.getElementById('banc').remove());
@@ -72,14 +86,14 @@ ok(/Envoyer 8 versions/.test(confirmation || ''), 'envoi : confirmation « Envoy
 const e = envois[0];
 ok(e && Array.isArray(e.versions) && e.versions.length === 8 && !('repas' in e), 'envoi : payload « versions » (8), pas de plan unique');
 ok(e.versions.map((v) => v.debut).join() === '2026-11-02,2026-11-09,2026-11-16,2026-11-23,2026-11-30,2026-12-07,2026-12-14,2026-12-21', 'envoi : les 8 dates du coach, telles quelles');
-ok(e.versions.every((v) => v.kcal > 3000 && v.repas.length === 6 && v.libelle), 'envoi : chaque version a ses calories, 6 repas et son libelle');
-ok(e.versions[0].kcal < e.versions[7].kcal, 'envoi : calories croissantes (' + e.versions.map((v) => v.kcal).join(' → ') + ')');
+ok(e.versions.every((v) => v.kcal > 0 && v.repas.length === 6 && v.libelle), 'envoi : chaque version a ses calories, 6 repas et son libelle');
+
 ok(/Programme envoyé/.test(await p.locator('#msg').innerText()), 'retour du serveur simule affiche');
 await p.context().close();
 
 // (2) Une version qui n'a pas de date au milieu : avertie, et envoyee sans date (null)
 envois = []; p = await ouvrir();
-await p.locator('#btnModele').click(); await p.fill('#client', 'client-test@exemple.test');
+await huitVersions(p); await p.fill('#client', 'client-test@exemple.test');
 await p.fill('#vPremier', '2026-11-02'); await p.locator('#btnEspacer').click();
 await p.locator('#listeVersions .ver').nth(2).click(); await p.fill('#vDebut', ''); await p.locator('#vDebut').dispatchEvent('change'); await p.waitForTimeout(200);
 const l2 = await lignes(p);
@@ -92,7 +106,7 @@ await p.context().close();
 
 // (3) On retombe sur une seule version sans date : depot « d'avant », a l'identique
 envois = []; p = await ouvrir();
-await p.locator('#btnModele').click(); await p.fill('#client', 'client-test@exemple.test');
+await huitVersions(p); await p.fill('#client', 'client-test@exemple.test');
 for (let i = 0; i < 7; i++) { await p.locator('#btnVerSuppr').click(); await p.waitForTimeout(150); }
 ok(await p.locator('#listeVersions .ver').count() === 1 && await p.locator('#btnVerSuppr').isDisabled(), 'suppression : il reste une version, on ne peut pas supprimer la derniere');
 confirmation = null; p.removeAllListeners('dialog'); p.on('dialog', (d) => { confirmation = d.message(); d.accept(); });
@@ -104,7 +118,7 @@ await p.context().close();
 
 // (4) Copier une version
 p = await ouvrir();
-await p.locator('#btnModele').click(); await p.locator('#listeVersions .ver').nth(1).click(); await p.locator('#btnVerCopie').click(); await p.waitForTimeout(300);
+await huitVersions(p); await p.locator('#listeVersions .ver').nth(1).click(); await p.locator('#btnVerCopie').click(); await p.waitForTimeout(300);
 const l4 = await lignes(p);
 ok(l4.length === 9 && l4[2].includes('sans date'), 'copie : une 9e version apparait apres la version 2, sans date');
 await p.context().close();

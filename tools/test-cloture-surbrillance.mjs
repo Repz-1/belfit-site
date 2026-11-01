@@ -7,7 +7,7 @@ import { createRequire } from 'module';
 import { existsSync } from 'fs';
 import { spawn } from 'child_process';
 import { ajouterJours } from '../app-v2/src/store/plans-par-date.js';
-import { modeleRebond } from '../app-v2/src/data/modele-rebond.js';
+import { versionsDeTest } from './banc-versions-8.mjs';
 import { macrosOf } from '../app-v2/src/data/aliments.js';
 const exiger = createRequire(import.meta.url);
 let code = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); if (!c) code = 1; };
@@ -20,8 +20,8 @@ const nav = await chromium.launch({ executablePath: process.env.CHROME || '/usr/
 const SHOTS = process.env.SHOTS || '/workspace/shots';
 
 const tot = (v) => v.repas.reduce((t, rp) => { for (const i of rp.ings) { const m = macrosOf(i); t.k += m.kcal; t.p += m.prot; t.c += m.carbs || 0; t.l += m.lip || 0; } return t; }, { k: 0, p: 0, c: 0, l: 0 });
-const REBOND_EX = modeleRebond().map((v, i) => ({ ...v, debut: ajouterJours('2026-11-03', 7 * i), kcal: Math.round(tot(v).k), prot: Math.round(tot(v).p), carbs: Math.round(tot(v).c), lip: Math.round(tot(v).l) }));
-const PROG = { kcal: REBOND_EX[0].kcal, prot: REBOND_EX[0].prot, carbs: REBOND_EX[0].carbs, lip: REBOND_EX[0].lip, repas: REBOND_EX[0].repas, livreLe: '2026-10-27T09:00:00.000Z', version: 1, note: 'Exemple (banc de test)', versions: REBOND_EX };
+const VERSIONS_EX = versionsDeTest().map((v, i) => ({ ...v, debut: ajouterJours('2026-11-03', 7 * i), kcal: Math.round(tot(v).k), prot: Math.round(tot(v).p), carbs: Math.round(tot(v).c), lip: Math.round(tot(v).l) }));
+const PROG = { kcal: VERSIONS_EX[0].kcal, prot: VERSIONS_EX[0].prot, carbs: VERSIONS_EX[0].carbs, lip: VERSIONS_EX[0].lip, repas: VERSIONS_EX[0].repas, livreLe: '2026-10-27T09:00:00.000Z', version: 1, note: 'Exemple (banc de test)', versions: VERSIONS_EX };
 const DEFAUTS = () => [
   { id: 1, nom: 'Petit déjeuner', type: 'repas', cle: 'pdej', fixe: true, ings: [], ouvert: false },
   { id: 2, nom: 'Déjeuner', type: 'repas', cle: 'dej', fixe: true, ings: [], ouvert: false },

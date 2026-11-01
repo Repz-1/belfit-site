@@ -10,7 +10,7 @@ import { spawn } from 'child_process';
 import {
   dateBruxelles, jourValide, ajouterJours, aDesVersions, choisirVersion, prochaineVersion, resoudreProgramme,
 } from '../app-v2/src/store/plans-par-date.js';
-import { modeleRebond } from '../app-v2/src/data/modele-rebond.js';
+import { versionsDeTest } from './banc-versions-8.mjs';
 import { DB, macrosOf } from '../app-v2/src/data/aliments.js';
 const exiger = createRequire(import.meta.url);
 const PV = exiger('../functions/plans-versions.js');
@@ -109,19 +109,8 @@ ok(ex && ex.kcal === 1800 && ex.livreLe === 'L', 'serveur : l\'ancien plan uniqu
 ok(PV.ancienPlan({ kcal: 1, versions: [bonne], precedent: { kcal: 1700, repas: repasDe('R', 5), livreLe: 'P' } }).livreLe === 'P', 'serveur : un nouveau depot garde l\'ancien « precedent » (pas la version 1 d\'avant)');
 ok(PV.ancienPlan(null) === null && PV.ancienPlan({ kcal: 0, repas: [] }) === null, 'serveur : pas d\'ancien plan -> null');
 
-// ---- 9. Modele « rebond apres seche » ----
-const M = modeleRebond();
-ok(M.length === 8 && M.every((v) => v.debut === '' && v.repas.length === 6), 'modele : 8 versions, 6 repas chacune, AUCUNE date');
+// ---- 9. (01/11) Modele « rebond » retire de la page coach : plus de test ----
 const tot = (v) => v.repas.reduce((t, rp) => { for (const i of rp.ings) { const m = macrosOf(i); t.k += m.kcal; t.p += m.prot; t.c += m.carbs || 0; t.l += m.lip || 0; } return t; }, { k: 0, p: 0, c: 0, l: 0 });
-ok(M.every((v) => v.repas.every((rp) => rp.ings.every((i) => DB[i.name]))), 'modele : tous les aliments existent dans la base de l\'app');
-const T = M.map(tot);
-ok(T.every((t, i) => i === 0 || t.k > T[i - 1].k), 'modele : les calories montent a chaque version (' + T.map((t) => Math.round(t.k)).join(' → ') + ')');
-ok(Math.abs(T[0].k - 3230) < 120 && Math.abs(T[7].k - 4255) < 120, 'modele : ~3 230 kcal en S1 et ~4 255 en S8 (estimation du partenaire, a +-120 pres)');
-ok(M.every((v) => v.repas.every((rp) => rp.ings.reduce((s, i) => s + DB[i.name].carbs * i.portion / 100, 0) >= 40)), 'modele : des glucides dans CHAQUE repas, a chaque version (au moins 40 g)');
-ok(M.every((v) => v.repas.every((rp) => rp.ings.every((i) => !/Riz soufflé|Skyr|Riz thai|olive/i.test(i.name)))) && M.every((v) => v.repas.every((rp) => rp.ings.every((i) => i.name !== 'Riz basmati cru' || i.portion <= 150))), 'modele : riz basmati (jamais plus de 150 g par repas), creme de riz, pas de riz souffle ni de skyr ni d\'huile d\'olive');
-ok(T.every((t) => t.p > 235 && t.p < 280), 'modele : proteines autour de 240-270 g, bien sous les 329 g du plan actuel (' + T.map((t) => Math.round(t.p)).join(' / ') + ' g)');
-ok(M[1].repas[1].ings[1].portion === 110 && M[1].repas[2].ings[1].portion === 110 && M[5].repas[5].ings.find((i) => i.name === 'Noix').portion === 25 && M[7].repas[1].ings[1].portion === 150 && M[7].repas[4].ings[1].portion === 500 && M[5].repas[3].ings[0].portion === 110, 'modele : les ajouts cumules (riz 110 g en S2, noix 25 g et creme de riz 110 g en S6, pommes de terre 500 g et riz 150 g en S8)');
-ok(M[0] !== modeleRebond()[0] && (M[0].repas[0].ings[0].portion = 1, modeleRebond()[0].repas[0].ings[0].portion === 30), 'modele : chaque appel rend une copie neuve');
 
 // ---- 10. L'appli, a deux dates simulees ----
 const dossierApercu = 'app-v2/apercu/construit';
@@ -130,8 +119,8 @@ const { chromium } = exiger('../app-v2/node_modules/playwright');
 const srv = spawn('python3', ['-m', 'http.server', '8093', '--directory', dossierApercu], { stdio: 'ignore', detached: true });
 await new Promise((res) => setTimeout(res, 1500));
 const nav = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
-const REBOND_EX = modeleRebond().map((v, i) => ({ ...v, debut: ajouterJours('2026-11-02', 7 * i), kcal: Math.round(tot(v).k), prot: Math.round(tot(v).p), carbs: Math.round(tot(v).c), lip: Math.round(tot(v).l) }));
-const PROG = { kcal: REBOND_EX[0].kcal, prot: REBOND_EX[0].prot, carbs: REBOND_EX[0].carbs, lip: REBOND_EX[0].lip, repas: REBOND_EX[0].repas, livreLe: '2026-10-26T09:00:00.000Z', version: 1, note: 'Exemple (banc de test)', versions: REBOND_EX };
+const VERSIONS_EX = versionsDeTest().map((v, i) => ({ ...v, debut: ajouterJours('2026-11-02', 7 * i), kcal: Math.round(tot(v).k), prot: Math.round(tot(v).p), carbs: Math.round(tot(v).c), lip: Math.round(tot(v).l) }));
+const PROG = { kcal: VERSIONS_EX[0].kcal, prot: VERSIONS_EX[0].prot, carbs: VERSIONS_EX[0].carbs, lip: VERSIONS_EX[0].lip, repas: VERSIONS_EX[0].repas, livreLe: '2026-10-26T09:00:00.000Z', version: 1, note: 'Exemple (banc de test)', versions: VERSIONS_EX };
 const VIDE = [{ id: 1, nom: 'Repas 1', type: 'repas', fixe: true, ouvert: false, ings: [] }];
 const SHOTS = process.env.SHOTS || '/workspace/shots';
 async function ouvrir(quand, prog, repasBanc, nom, ecran) {

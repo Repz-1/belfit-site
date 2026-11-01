@@ -2,7 +2,7 @@
 // PLANS PAR DATE (26/10, Raci) — logique pure, sans signaux.
 //
 // Un plan alimentaire peut porter plusieurs VERSIONS, chacune avec une
-// date de debut (ex. rebond de prise de masse : semaines 1, 2, 3, 4,
+// date de debut (ex. progression : semaines 1, 2, 3, 4,
 // puis une version 5 valable jusqu'a la semaine 8).
 //
 // FORME stockee par le serveur (users/{uid}.programme) :
