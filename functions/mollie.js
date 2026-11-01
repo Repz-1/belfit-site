@@ -43,7 +43,7 @@ function db() { return admin.firestore(); }
 // ouvre le paiement a tous les comptes ; sans lui, la liste reste la seule
 // a pouvoir payer. Ouvrir a tous = decision separee de Raci : passer
 // OUVERT_A_TOUS a true, dans un commit a part.
-const OUVERT_A_TOUS = false;
+const OUVERT_A_TOUS = true;
 function cleDeTest() { return MOLLIE_API_KEY.value().startsWith("test_"); }
 function emailListe(email, verifie) {
   if (!email || verifie !== true) return false;

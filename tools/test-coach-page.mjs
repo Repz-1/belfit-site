@@ -16,7 +16,7 @@ async function ouvrir(plan) {
   if (plan) await p.evaluate(pl => localStorage.setItem('belfit_v2_apercu_programme', JSON.stringify(pl)), plan);
   await p.reload(); await p.waitForTimeout(1800);
   await p.locator('.bn-item').last().tap(); await p.waitForTimeout(900);
-  // 28/10 : les commandes sont fermees en ligne (COMMANDES_OUVERTES = false) ; le serveur ouvre le paiement a un compte autorise. On simule ce compte.
+  // 28/10 : (historique) commandes fermees jusqu au 01/11 ; COMMANDES_OUVERTES = true depuis ; le serveur ouvre le paiement a un compte autorise. On simule ce compte.
   await p.evaluate(() => { window.__banc.paiementOuvert.value = true; }); await p.waitForTimeout(300);
   return p;
 }
