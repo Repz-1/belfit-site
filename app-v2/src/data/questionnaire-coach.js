@@ -1,7 +1,7 @@
 // Questionnaire du plan coach — v2 (26/09) : suit la banque de
 // questions de Raci (Banque_Questions_Programme_Alimentaire), dans son
 // ordre et avec ses libelles. Sections A a J, puis bonus L (facultatif),
-// puis K (consentements) sur le recapitulatif. M = mise a jour 60 EUR.
+// puis K (consentements) sur le recapitulatif. M = ancien bilan « mois suivant » (plus propose depuis le 01/11 : tout est a 80 EUR).
 // Retires sur demande de Raci : B7 D10 D11 F4 F6 F7 F8 G1 G6 I5 I6 I8 K5 L4,
 // puis le 26/09 : A8 tutoiement, B6 pourquoi, C3 C4 C5 poids passes,
 // E6 jours d'entrainement, E7 blessure, F11 plats livres, H4 style, H5 pesee.

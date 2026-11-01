@@ -14,6 +14,10 @@ async function page(prepa, arg) {
   const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: 'fr-BE' });
   const p = await ctx.newPage(); p.setDefaultTimeout(8000);
   p.on('pageerror', e => ok(false, 'erreur JS ' + e.message));
+  // Depuis Mollie (v646), le retour de paiement est confirme par le serveur
+  // (mollieEtat) avant d'ouvrir le questionnaire : reponse simulee « payé ».
+  await p.route('**/mollieEtat', r => r.fulfill({ status: 200, contentType: 'application/json',
+    body: JSON.stringify({ paiement: { statut: 'paid', activee: true } }) }));
   await p.goto(`http://localhost:${PORT}/app.html`);
   await p.evaluate(prepa || (() => localStorage.clear()), arg);
   return p;
@@ -101,7 +105,7 @@ try {
   ok(await p.locator('.qc-label', { hasText: /^Poids que tu vises/ }).count() === 1 && !(/sens pour toi/.test(await p.locator('.pg-qc').innerText())), 'poids vise sans parenthese');
   await p.locator('.qc-ouvert .qc-carte:has-text("Motivation") .qc-echelle button').nth(7).tap();
   ok(await p.locator('.qc-ouvert .qc-carte:has-text("Motivation") .qc-echelle .on').innerText() === '8', 'echelle 1 a 10');
-  ok(await p.locator('.qc-ouvert .qc-carte:has-text("Motivation") .qc-echelle .on').evaluate(e => getComputedStyle(e).backgroundColor) === 'rgb(248, 207, 1)', 'echelle : chiffre choisi colore en jaune');
+  ok(await p.locator('.qc-ouvert .qc-carte:has-text("Motivation") .qc-echelle .on').evaluate(e => { const d = document.createElement('i'); d.style.background = 'var(--pastel)'; e.appendChild(d); const v = getComputedStyle(d).backgroundColor; d.remove(); return v !== 'rgba(0, 0, 0, 0)' && getComputedStyle(e).backgroundColor === v; }), 'echelle : chiffre choisi en vert pastel (charte claire)');
   await remplir(p); await continuer(p);
   // Mesures : compteur
   const poids = p.locator('.qc-ouvert .qc-carte:has-text("Poids actuel")');
@@ -233,10 +237,10 @@ try {
   ok(/^Ton rythme/.test(await haut(p)), 'autre appareil : reprise a la section 4, ouverte');
   await p.context().close();
 
-  // 5) Mise a jour
+  // 5) Ancien lien « maj » (60 €, supprime le 01/11) : questionnaire complet a 80 €
   p = await page();
   await p.goto(RETOUR + 'maj'); await p.waitForTimeout(1800);
-  ok(await p.locator('.qc-ligne').count() === 2, 'mise a jour : 2 sections');
+  ok(await p.locator('.qc-ligne').count() === 12, 'ancien lien maj : questionnaire complet (plus de 60 €)');
   await p.context().close();
 } catch (e) { ok(false, e.message.split('\n')[0]); }
 await nav.close(); try { process.kill(-srv.pid); } catch {}
