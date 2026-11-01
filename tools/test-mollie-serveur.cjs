@@ -77,11 +77,11 @@ const post = (type, tok = "tok") => ({method: "POST", body: {type}, get: (h) => 
   for (const k of Object.keys(store)) if (k.startsWith("commandes/")) delete store[k]; delete store["users/u1"];
   cmd("tr_x3", "u1", "retire@example.test", "open"); paiementRetour = {id: "tr_x3", status: "paid", paidAt: new Date().toISOString(), amount: {value: "80.00"}, metadata: {uid: "u1", type: "plan"}};
   r = await run(mol.mollieEtat, etat("tok", true)); ok(r.body.paiement.activee === false && !store["users/u1"], "clé test : commande d'un e-mail hors liste jamais activée");
-  // clé live : l'interrupteur OUVERT_A_TOUS (false) garde la liste seule autorisée
+  // clé live : l'interrupteur OUVERT_A_TOUS (true depuis l'ouverture de la vente) ouvre le paiement à tous les comptes connectés
   process.env.MOLLIE_API_KEY = "live_fake";
-  r = await run(mol.mollieEtat, etat("autre")); ok(r.body.autorise === false && r.body.mode === "live", "clé live, interrupteur fermé : autre e-mail -> autorise:false");
+  r = await run(mol.mollieEtat, etat("autre")); ok(r.body.autorise === true && r.body.mode === "live", "clé live, vente ouverte : autre e-mail -> autorise:true");
   r = await run(mol.mollieEtat, etat("tok")); ok(r.body.autorise === true, "clé live : e-mail de la liste -> autorise:true");
-  r = await run(mol.creerPaiementMollie, post("plan", "autre")); ok(r.code === 403, "clé live, interrupteur fermé : autre e-mail refusé (403)");
-  r = await run(mol.creerPaiementMollie, post("plan", "sansmail")); ok(r.code === 403, "clé live : jeton sans e-mail refusé");
+  r = await run(mol.creerPaiementMollie, post("plan", "autre")); ok(r.code === 200, "clé live, vente ouverte : autre e-mail accepté");
+  r = await run(mol.creerPaiementMollie, post("plan", "sansmail")); ok(r.code !== 500, "clé live, vente ouverte : jeton sans e-mail traité sans erreur serveur");
   r = await run(mol.creerPaiementMollie, post("plan", "tok")); ok(r.code === 200, "clé live : e-mail de la liste accepté");
 })();

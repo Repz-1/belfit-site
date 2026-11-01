@@ -1094,3 +1094,9 @@ button{cursor:pointer}
 .pvg-ligne{font-size:15px}
 .pvg-ligne svg{width:17px;height:17px}
 .profil-volet.pv .pv-bt{font-size:16px}
+
+/* Raci, 31/10 : bouton secondaire « S'inscrire », pleine largeur. */
+.login-inscr{margin-top:18px;text-align:center;align-self:stretch;width:100%}
+.login-inscr-q{margin:0 0 8px;font-size:13px;color:var(--txt-3, #6b6259)}
+.login-btn-sec{display:block;width:100%;box-sizing:border-box;padding:12px;border-radius:999px;border:2px solid #B34700;background:rgba(250,196,8,.14);color:#B34700;font-weight:800;font-size:15px;cursor:pointer;transition:background .15s}
+.login-btn-sec:active,.login-btn-sec:hover{background:rgba(250,196,8,.28)}

@@ -5,7 +5,7 @@ import { estPremium } from './PremiumPage.jsx';
 import { ongletActif } from './BottomNav.jsx';
 import {
   progParId, adopterProgramme, abandonnerProgramme, programmeActif,
-  SEANCES_LIBRES, quotaAtteint,
+
   normaliserJours,
 } from '../store/programme.js';
 import { t } from '../i18n/index.js';
@@ -80,7 +80,6 @@ export function PlanifierProgramme({ progId }) {
     if (v === jourFait) return;
     if (aff[v] !== undefined) { setJourOuvert(jourOuvert === v ? null : v); return; }
     // Le quota gratuit mord ICI, au moment du 5e jour affecte.
-    if (quotaAtteint(choisis.length, premium)) { setBloque(true); return; }
     setBloque(false);
     setJourOuvert(jourOuvert === v ? null : v);
   };
@@ -169,7 +168,7 @@ export function PlanifierProgramme({ progId }) {
   // eprouvant le verrou. On accepte donc un plan partiel, en le
   // disant : les seances au-dela ne sont pas planifiees, elles
   // restent accessibles a la main depuis la fiche du programme.
-  const plafond = premium ? total : Math.min(total, SEANCES_LIBRES);
+  const plafond = total; // Raci 31/10 : plus de quota gratuit.
   // On enregistre des qu'UN jour est coche. Exiger le compte complet
   // etait une regle de ma part, pas une demande : Raci, en Premium sur
   // un programme 5 jours, restait a « 4 / 5 » devant un bouton eteint
@@ -262,15 +261,6 @@ export function PlanifierProgramme({ progId }) {
         })}
       </div>
 
-      {bloque && (
-        <div class="pl-verrou">
-          <b>{t('pl_verrou_titre', { n: SEANCES_LIBRES })}</b>
-          <p>{t('pl_verrou_txt', { n: SEANCES_LIBRES })}</p>
-          <button class="pl-verrou-b" onClick={() => { ongletActif.value = 'premium'; }}>
-            {t('pl_verrou_cta')}
-          </button>
-        </div>
-      )}
 
       {partiel && (
         <p class="pl-compte">{t('pl_partiel', { n: total - choisis.length })}</p>

@@ -6,3 +6,5 @@ exports.coachAgent = require("./coach").coachAgent;
 Object.assign(exports, require("./mollie"));
 // Codes de reduction (28/10) : creation / desactivation par l'outil local (secret COACH_CODE).
 Object.assign(exports, require("./reduction-admin"));
+// Formulaire de contact de la vitrine (31/10, OK Raci).
+exports.envoyerContact = require("./contact").envoyerContact;

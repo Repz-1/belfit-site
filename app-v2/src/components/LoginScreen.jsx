@@ -32,7 +32,6 @@ function manquesMdp(pw) {
 // Un message d'accueil tire au sort a l'ouverture, comme une salutation
 // qui ne se repete pas mot pour mot chaque jour. Fige au montage : il ne
 // doit pas changer sous les yeux pendant que la personne tape.
-const ACCUEILS = ['hello_1', 'hello_2', 'hello_3', 'hello_4', 'hello_5', 'hello_6'];
 
 // Ecran de connexion / inscription — sobre, palette BelFit.
 
@@ -87,7 +86,7 @@ export function LoginScreen() {
   const [mode, setMode] = useState(() => {
     try { return localStorage.getItem(CLE_EMAIL) ? 'connexion' : 'accueil'; } catch (e) { return 'accueil'; }
   });
-  const [accueil] = useState(() => ACCUEILS[Math.floor(Math.random() * ACCUEILS.length)]);
+  
   const [email, setEmail] = useState(() => {
     try { return localStorage.getItem(CLE_EMAIL) || ''; } catch (e) { return ''; }
   });
@@ -224,10 +223,12 @@ export function LoginScreen() {
   return (
     <div class="login-fond login-fond--accueil"><Aurore /><div class="login-ecran login-ecran--aurore">
       <img src="/belfit-logo-bf.png" alt="BelFit" class="login-logo" />
-      <h1 class="login-titre">
-        {mode === 'connexion' ? t(accueil)
-          : (prenom ? `Garde ton programme, ${prenom}` : t('hello_new'))}
-      </h1>
+      {/* Raci, 31/10 : plus de titre d'accueil sur l'ecran de connexion. */}
+      {mode !== 'connexion' && (
+        <h1 class="login-titre">
+          {prenom ? `Garde ton programme, ${prenom}` : t('hello_new')}
+        </h1>
+      )}
 
       <button
         class="login-google"
@@ -308,15 +309,26 @@ export function LoginScreen() {
         </button>
       </form>
 
-      <button
-        class="login-bascule"
-        onClick={() => {
-          setMode(mode === 'connexion' ? 'inscription' : 'connexion');
-          setErreur(''); setMdp2(''); setConsent(false);
-        }}
-      >
-        {mode === 'connexion' ? t('pas_compte') : t('deja_compte')}
-      </button>
+      {/* Raci, 31/10 : « S'inscrire » devient un vrai bouton secondaire. */}
+      {mode === 'connexion' ? (
+        <div class="login-inscr">
+          <p class="login-inscr-q">{t('pas_compte_q')}</p>
+          <button
+            type="button"
+            class="login-btn-sec"
+            onClick={() => { setMode('inscription'); setErreur(''); setMdp2(''); setConsent(false); }}
+          >
+            {t('sinscrire')}
+          </button>
+        </div>
+      ) : (
+        <button
+          class="login-bascule"
+          onClick={() => { setMode('connexion'); setErreur(''); setMdp2(''); setConsent(false); }}
+        >
+          {t('deja_compte')}
+        </button>
+      )}
 
       {/* « Mot de passe oublie » reste volontairement en retrait (v1). */}
       {mode === 'connexion' && (

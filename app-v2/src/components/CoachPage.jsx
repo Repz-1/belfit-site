@@ -51,7 +51,7 @@ export const LIENS_COACH = { plan: '', maj: '' };
 const MAIL = 'contact@belfit.be';
 // Interrupteur (26/09, demande de Raci) : questionnaire en relecture,
 // masque en ligne tant qu'il n'est pas valide. true = commandes ouvertes.
-export const COMMANDES_OUVERTES = false;
+export const COMMANDES_OUVERTES = true;
 // 68.00 -> « 68 », 53.60 -> « 53,60 » (affichage du prix donne par le serveur)
 const prixCourt = (m) => { const t = String(m); return (/\.00$/.test(t) ? t.slice(0, -3) : t).replace('.', ','); };
 // 24/10 : le serveur (mollieEtat) peut ouvrir le paiement a UN compte autorise

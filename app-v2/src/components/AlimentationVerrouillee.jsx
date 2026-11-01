@@ -19,25 +19,16 @@ export function AlimentationVerrouillee({ cause = 'jamais', fin = null, commande
       </div>
     );
   }
+  // Raci, 31/10 : carte compacte au style de la carte d'offre de la vitrine,
+  // sans titre, toujours avec le bouton d'achat (jamais « Bientot disponible ») :
+  // il mene a l'onglet de l'offre (parcours Mollie existant).
+  const puces = expire
+    ? [fin ? `Accès terminé le ${fin}` : 'Accès terminé', 'Tes anciens repas restent consultables', 'Entraînement offert']
+    : ['Tu remplis un questionnaire personnalisé', 'Ton plan repas sur mesure, livré sous 48 h', 'Entraînement offert'];
   return (
-    <div class="vr-carte" role="region" aria-label="Alimentation">
-      <span class="vr-trait" aria-hidden="true" />
-      <p class="vr-kicker">ALIMENTATION</p>
-      <h2 class="vr-titre">{expire ? 'Ton accès alimentation est terminé' : "L'alimentation s'ouvre avec ton 1er mois"}</h2>
-      <p class="vr-txt">
-        {expire
-          ? `${fin ? `Il s'est terminé le ${fin}.` : 'Il est terminé.'} Tes anciens repas restent consultables ci-dessous, sans modification possible.`
-          : 'Journal des repas, plan prévu, ajout d\u2019aliments et analyses IA.'}
-      </p>
-      <ul class="vr-liste">
-        <li>Plan alimentaire écrit pour toi, livré sous 48&nbsp;h</li>
-        <li>Journal et analyses IA pendant 44&nbsp;jours</li>
-        <li>L'entraînement reste inclus</li>
-      </ul>
-      {commandesOuvertes
-        ? <button class="vr-bt" onClick={() => allerOnglet('premium')}>Voir l'offre</button>
-        : <button class="vr-bt vr-bt--gris" disabled>Bientôt disponible</button>}
-      <p class="vr-pied">Sans abonnement, sans prélèvement.</p>
+    <div class="vr-carte vr-bulle" role="region" aria-label="Alimentation">
+      <ol class="vr-puces">{puces.map(t => <li key={t}>{t}</li>)}</ol>
+      <button class="vr-btn" onClick={() => allerOnglet('premium')}>{expire ? 'Reprendre mon programme' : 'Débloquer mon programme'}</button>
     </div>
   );
 }
