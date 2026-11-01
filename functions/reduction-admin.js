@@ -52,8 +52,8 @@ exports.adminCodesReduction = onRequest(
           const pourcent = Number(corps.pourcent);
           const expire = corps.expire ? String(corps.expire) : null;
           if (!reduction.codeBienForme(code)) { res.status(400).json({ok: false, motif: "code", detail: "4 à 32 lettres ou chiffres"}); return; }
-          if (!Number.isInteger(pourcent) || pourcent < 1 || pourcent > reduction.POURCENT_MAX) {
-            res.status(400).json({ok: false, motif: "pourcent", detail: "entier de 1 à " + reduction.POURCENT_MAX}); return;
+          if (!Number.isInteger(pourcent) || pourcent < 1 || pourcent > reduction.POURCENT_MAX_ADMIN) {
+            res.status(400).json({ok: false, motif: "pourcent", detail: "entier de 1 à " + reduction.POURCENT_MAX_ADMIN}); return;
           }
           // Le prix reduit doit rester payable en ligne (sinon : pas de code, voir « minimum »).
           if (!reduction.calculerPrix(reduction.PRIX_BASE_CENTS.plan, pourcent).ok) { res.status(400).json({ok: false, motif: "minimum"}); return; }

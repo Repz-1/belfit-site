@@ -1,0 +1,43 @@
+name: Code essai live (99 %, nominatif)
+# 01/11 : cree UN code de reduction 99 % pour le premier vrai achat de Raci.
+# Lie au compte du 1er e-mail de MOLLIE_TEST_EMAILS, usage unique, expire dans 7 jours.
+# Retrait : action=desactiver.
+on:
+  workflow_dispatch:
+    inputs:
+      code: {description: "Nom du code", required: true, default: "RACI99LIVE"}
+      action: {description: "creer ou desactiver", required: true, default: "creer"}
+permissions:
+  contents: read
+jobs:
+  code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Code
+        env:
+          CLE: ${{ secrets.FIREBASE_SA_KEY }}
+          EMAILS: ${{ secrets.MOLLIE_TEST_EMAILS }}
+          CODE: ${{ inputs.code }}
+          ACTION: ${{ inputs.action }}
+        run: |
+          printf '%s' "$CLE" > "$RUNNER_TEMP/cle.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/cle.json"
+          npm i --silent firebase-admin@12 >/dev/null
+          node -e '
+            const a = require("firebase-admin"); a.initializeApp({projectId: "repz-baf60"});
+            const nom = String(process.env.CODE).toUpperCase().replace(/[^A-Z0-9]/g, "");
+            const ref = a.firestore().collection("codesReduction").doc(nom);
+            (async () => {
+              if (process.env.ACTION === "desactiver") { await ref.update({actif: false}); console.log("Code desactive :", nom); return; }
+              const email = String(process.env.EMAILS).split(/[,;\s]+/).filter(Boolean)[0];
+              const u = await a.auth().getUserByEmail(email);
+              if ((await ref.get()).exists) { console.log("Code deja existant :", nom); process.exit(1); }
+              const expire = new Date(Date.now() + 7 * 864e5).toISOString();
+              await ref.set({pourcent: 99, actif: true, statut: "libre", cree: new Date().toISOString(),
+                note: "Premier achat live Raci (01/11)", expire, pourUid: u.uid,
+                reservePar: null, reserveJusqu: null, reserveCommande: null, utilisePar: null, utiliseLe: null, commande: null});
+              console.log("Code cree :", nom, "99 %, expire", expire, "(lie a un compte)");
+            })().catch((e) => { console.error("Erreur :", e.message); process.exit(1); });'
+          rm -f "$RUNNER_TEMP/cle.json"
