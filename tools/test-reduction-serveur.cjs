@@ -101,7 +101,7 @@ const PAYE = (id, uid, v) => ({id, status: "paid", mode: "test", paidAt: new Dat
   r = await verif("t1", "ANCIEN"); ok(r.body.motif === "utilise" && /déjà été utilisé/.test(r.body.message), "code déjà utilisé : message clair");
   r = await verif("t1", "ARRET"); ok(r.body.motif === "desactive" && /plus actif/.test(r.body.message), "code désactivé : message clair");
   r = await verif("t1", "PERIME"); ok(r.body.motif === "expire", "code expiré : message clair");
-  r = await verif("t1", "TEST15", "maj"); ok(r.code === 403 && r.body.motif === "maj" && /60 €/.test(r.body.message), "mise à jour à 60 € : code refusé avec message");
+  r = await verif("t1", "TEST15", "maj"); ok(r.code === 200 && r.body.ok && r.body.montant === "68.00", "ancien type « maj » : traité comme un mois à 80 €, code accepté (68.00)");
   r = await verif("t1", ""); ok(r.body.motif === "vide", "champ vide : « Saisis ton code »");
   r = await verif("mauvais", "TEST15"); ok(r.code === 401, "sans jeton valide : 401");
   r = await verif("hors", "TEST15"); ok(r.code === 403 && r.body.motif === "test", "compte hors liste de test : refusé (pas d'énumération par n'importe quel compte)");
@@ -135,7 +135,7 @@ const PAYE = (id, uid, v) => ({id, status: "paid", mode: "test", paidAt: new Dat
   r = await payer("t2", {type: "plan", code: "MARC10"}); ok(r.code === 409 && r.body.motif === "reserve" && appels.length === 1, "deuxième personne, même code pendant la réservation : refusée, aucun 2e paiement Mollie");
   r = await payer("t1", {type: "plan"}); ok(r.code === 200 && appels.at(-1).body.amount.value === "80.00" && !("code" in store["commandes/tr_t2"]), "sans code : 80.00 comme avant");
   appels = [];
-  r = await payer("t1", {type: "maj", code: "TEST15"}); ok(r.code === 403 && r.body.motif === "maj" && appels.length === 0 && store["codesReduction/TEST15"].reservePar === null, "60 € + code : refusé côté serveur, aucun appel Mollie, code non réservé");
+  r = await verif("t1", "TEST15", "maj"); ok(r.code === 200 && r.body.montant === "68.00" && appels.length === 0 && store["codesReduction/TEST15"].reservePar === null, "ancien type « maj » + code : vérifié à 80 € − 15 %, rien réservé par la simple vérification");
   store["users/u3"] = {commandeCoach: {payeLe: new Date().toISOString()}};
   r = await payer("t3", {type: "plan", code: "TEST15"}); ok(r.code === 200 && appels.at(-1).body.amount.value === "68.00" && store["codesReduction/TEST15"].reservePar === "u3", "client déjà payant : peut réserver un code pour un nouveau mois à 80 € (68.00)");
   store["codesReduction/TEST15"].reservePar = null; store["codesReduction/TEST15"].reserveJusqu = null; store["codesReduction/TEST15"].reserveCommande = null;
@@ -163,7 +163,7 @@ const PAYE = (id, uid, v) => ({id, status: "paid", mode: "test", paidAt: new Dat
   ok(store["codesReduction/TEST15"].statut === "utilise" && store["codesReduction/TEST15"].utilisePar === "u1" && store["users/u1"].commandeCoach.montant === "68.00 EUR", "rachat : 2e code consommé, accès prolongé, montant 68.00 EUR");
   ok(Object.keys(store).filter((k) => k.startsWith("reductionsPersonne/") && store[k].uid === "u1").length === 2, "historique : 2 lignes pour la même personne (MARC10 puis TEST15), aucun blocage");
   poser("TROIS", {pourcent: 5}); r = await verif("t1", "TROIS"); ok(r.code === 200 && r.body.ok, "et un 3e code reste possible : aucune limite à vie");
-  r = await payer("t1", {type: "maj", code: "TROIS"}); ok(r.code === 403 && r.body.motif === "maj", "la mise à jour à 60 € reste sans code, même pour un client existant");
+  r = await payer("t1", {type: "maj", code: "TROIS"}); ok(r.code === 200 && appels.at(-1).body.amount.value === "76.00", "client existant, ancien type « maj » : mois à 80 € avec code (76.00), plus de 60 €");
 
   console.log("— paiement qui échoue : le code est rendu");
   for (const st of ["canceled", "failed", "expired"]) {

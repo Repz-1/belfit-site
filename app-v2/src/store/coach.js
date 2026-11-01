@@ -63,8 +63,8 @@ export function etatCoach(dossier, pr) {
 
 // Acces nutrition (Raci, 22/10) : chaque paiement ouvre la partie
 // nutrition pendant son mois de coaching + 2 semaines, soit 44 jours
-// apres le DERNIER paiement. Le 60 EUR n'est possible que tant que cet
-// acces est ouvert ; au-dela, c'est de nouveau 80 EUR.
+// apres le DERNIER paiement (01/11 : chaque mois est a 80 EUR ; cet
+// acces n'influence plus le prix).
 // Meme valeur cote serveur : functions/index.js (JOURS_ACCES).
 export const JOURS_ACCES = 44;
 const plusJours = (base, n) => new Date(new Date(base).getTime() + n * 864e5);
@@ -93,7 +93,7 @@ export function finAcces(dossier, pr) {
   return { fin: new Date(Math.max(...dates.map((d) => d.getTime()))), illimite: false };
 }
 
-// 21/10 Raci : Mon suivi n'affiche des dates (mois, 60 €) que pour un
+// 21/10 Raci : Mon suivi n'affiche des dates (mois, acces) que pour un
 // paiement REEL enregistre par le serveur (commandeCoach.payeLe). Ni la
 // date de livraison du plan, ni un paiement note seulement sur ce
 // telephone ne suffisent.
@@ -102,7 +102,7 @@ export function payeLeReel(dossier) {
   const v = c && c.payeLe;
   return v && !isNaN(new Date(v).getTime()) ? v : null;
 }
-/** Fin de l'acces nutrition = limite du tarif 60 €, d'apres le seul
+/** Fin de l'acces nutrition = d'apres le seul
  *  paiement reel (payeLe + 44 jours). null sans paiement reel. */
 export function limite60(dossier) {
   const p = payeLeReel(dossier);

@@ -484,7 +484,7 @@ export function BelfitPlus() {
               class="prog-action"
               onClick={() => setOuvertProg(false)}
             >
-              {/* 21/10 Raci : aucun prix ici, le 60 € n'apparait que dans Mon suivi. */}
+              {/* 21/10 Raci : aucun prix ici, le mois suivant (80 €) se propose dans Mon suivi. */}
               <b>Fermer</b>
             </button>
           </div>
