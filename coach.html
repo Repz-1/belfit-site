@@ -943,9 +943,13 @@ function proposer(extra, msgFiche) {
       dessiner();
       if (msgFiche) $('titreRepas').scrollIntoView({ behavior: 'smooth', block: 'start' });
       if (d.cible) cibleCourante = d.cible;
+      // 01/11 v656 Raci : cible tapee (« … kcal ») ou du questionnaire : portions remises a ±2 % tout de suite.
+      const kAvant = totalPlan().kcal;
+      const horsCible = cibleCourante && kAvant > 0 && Math.abs(kAvant - cibleCourante.kcal) / cibleCourante.kcal > 0.02;
+      if (horsCible) mettreALaCible();
       afficherCible(); sauverBrouillon(); majBrouillonBarre();
-      const ajuste = d.cible && d.kcalIA && Math.abs(d.kcalIA - d.cible.kcal) / d.cible.kcal > 0.05
-        ? 'L\'IA avait prévu ' + d.kcalIA + ' kcal : portions remises à la cible. ' : '';
+      const ajuste = horsCible || (d.cible && d.kcalIA && Math.abs(d.kcalIA - d.cible.kcal) / d.cible.kcal > 0.05)
+        ? 'L\'IA avait prévu ' + (d.kcalIA || kAvant) + ' kcal : portions remises à la cible. ' : '';
       const sans = d.sansCible ? 'Pas de cible (' + d.sansCible + '). ' : '';
       afficher(msg, ajuste + sans + (d.remarque ? d.remarque + ' ' : '') + 'Relis tout avant d\'envoyer, surtout les allergies.', true);
     } else {
