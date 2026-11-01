@@ -8,3 +8,5 @@ Object.assign(exports, require("./mollie"));
 Object.assign(exports, require("./reduction-admin"));
 // Formulaire de contact de la vitrine (31/10, OK Raci).
 exports.envoyerContact = require("./contact").envoyerContact;
+// Alertes coach (01/11, OK Raci) : e-mail a contact@belfit.be au questionnaire envoye.
+exports.signalerQuestionnaire = require("./alertes-coach").signalerQuestionnaire;

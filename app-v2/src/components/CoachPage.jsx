@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { utilisateur, authPrete } from '../services/firebase.js';
-import { paiementOuvert, modeTest, retourPaiement, payerMollie, reduction, verifierCodeReduction, verifierAcces, demarrerRetour, verifierRetour, reverifierRetour, fermerRetour } from '../services/mollie.js';
+import { paiementOuvert, modeTest, retourPaiement, payerMollie, reduction, verifierCodeReduction, verifierAcces, demarrerRetour, verifierRetour, reverifierRetour, fermerRetour, signalerQuestionnaire } from '../services/mollie.js';
 import { getApps } from 'firebase/app';
 import { BelfitPlus, chargerProgramme, programme, programmeCharge, progOuvert, dossierCoach } from './BelfitPlus.jsx';
 import { QuestionnaireCoach, effacerBrouillon } from './QuestionnaireCoach.jsx';
@@ -111,6 +111,7 @@ function envoyerQuestionnaire(type, reponses, alerte, extra = {}) {
   // Le brouillon distant est efface avec l'envoi : plus rien a reprendre.
   return import('firebase/firestore').then(({ getFirestore, doc, setDoc, deleteField }) =>
     setDoc(doc(getFirestore(getApps()[0]), 'users', u.uid), { questionnaireCoach: q, brouillonCoach: deleteField() }, { merge: true }))
+    .then(() => { signalerQuestionnaire(); })   // 01/11 : e-mail au coach (serveur, une seule fois)
     .catch(e => console.warn('questionnaire non envoye', e));
 }
 
