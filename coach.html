@@ -143,6 +143,7 @@ header a.quitter{margin-left:auto;font-size:12px;color:var(--tx3);text-decoratio
 .cible{font-size:13px;color:var(--tx2);background:#FFF8E1;border-radius:12px;padding:10px 12px;margin-bottom:11px;line-height:1.5}
 .cible b{color:var(--tx)}
 .cible .ecart-ok{color:#1C5334}.cible .ecart-ko{color:#B3261E}
+.mini.idee{min-height:36px;padding:6px 12px;border-color:#C9CDD2;color:#3B3F45}
 .mini{font:inherit;font-size:12px;font-weight:700;border:1px solid #E1C26A;background:#fff;border-radius:99px;padding:4px 10px;margin-left:6px;cursor:pointer}
 .brouillon{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--tx2);background:#F4F6F4;border-radius:12px;padding:8px 10px;margin-top:8px}
 button.ia-go{display:block;width:100%;font:inherit;font-size:14px;font-weight:600;cursor:pointer;
@@ -346,13 +347,16 @@ function besoinsDe(rep) {
   const poids = n('poids'), taille = n('taille'), age = n('age');
   if (!(poids > 30) || !(taille > 120) || !(age > 10)) return null;
   const bmr = 10 * poids + 6.25 * taille - 5 * age + (v('sexe') !== 'Femme' ? 5 : -161);
-  const base = { 'Assis la plupart de la journée': 1.2, 'Debout ou marche au travail': 1.375, 'Métier physique': 1.55 }[v('activite')] || 1.3;
-  const facteur = Math.min(2.2, base + Math.min(14, Math.max(0, n('seances') || 0)) * 0.03);
-  const ajust = { 'Perdre du gras': -400, 'Prendre du muscle': 300, 'Recomposition': -150 }[v('objectif')] || 0;
-  const kcal = Math.round((bmr * facteur + ajust) / 10) * 10;
-  const prot = Math.round(poids * (v('objectif') === 'Prendre du muscle' ? 2.0 : 1.8));
-  const lip = Math.round(kcal * 0.27 / 9);
-  return { kcal, prot, lip, carbs: Math.max(0, Math.round((kcal - prot * 4 - lip * 9) / 4)) };
+  // 01/11 v654 (Partenaire sportif) : metier + 0,04/seance, plafond 1,9 ; objectif en % ; plancher 1,2 x BMR.
+  const base = { 'Assis la plupart de la journée': 1.2, 'Debout ou marche au travail': 1.3, 'Métier physique': 1.45 }[v('activite')] || 1.25;
+  const facteur = Math.min(1.9, base + Math.min(14, Math.max(0, n('seances') || 0)) * 0.04);
+  const maintien = bmr * facteur;
+  const pct = { 'Perdre du gras': -0.15, 'Prendre du muscle': 0.10, 'Recomposition': -0.05 }[v('objectif')] || 0;
+  const kcal = Math.round(Math.max(bmr * 1.2, maintien * (1 + pct)) / 10) * 10;
+  const prot = Math.round(poids * (v('objectif') === 'Perdre du gras' ? 2.2 : 2.0));
+  const lip = Math.max(Math.round(kcal * 0.27 / 9), Math.round(poids * 0.8));
+  const deficit = Math.round((1 - kcal / maintien) * 1000) / 10;
+  return { kcal, prot, lip, carbs: Math.max(0, Math.round((kcal - prot * 4 - lip * 9) / 4)), maintien: Math.round(maintien / 10) * 10, bmr: Math.round(bmr), deficit };
 }
 function afficherCible() {
   const c = $('cible');
@@ -361,8 +365,12 @@ function afficherCible() {
   const T = totalPlan(), k = cibleCourante.kcal;
   const ec = T.kcal ? Math.round((T.kcal - k) / k * 1000) / 10 : null;
   const ok = ec !== null && Math.abs(ec) <= 5;
+  // Alerte si la cible (ou une cible imposee « … kcal ») descend a plus de 20 % sous le maintien.
+  const ref = choisi && besoinsDe(choisi.reponses);
+  const def = ref && ref.maintien ? Math.round((1 - k / ref.maintien) * 1000) / 10 : 0;
   c.innerHTML = 'Cible' + (cibleCourante.source === 'coach' ? ' demandée' : ' du client') + ' : <b>' + k + ' kcal</b> · P ' + cibleCourante.prot + ' g · G ' + cibleCourante.carbs + ' g · L ' + cibleCourante.lip + ' g'
     + (ec === null ? '' : '<br>Plan : <b>' + Math.round(T.kcal) + ' kcal</b> · écart <b class="ecart ' + (ok ? 'ecart-ok' : 'ecart-ko') + '">' + (ec > 0 ? '+' : '') + String(ec).replace('.', ',') + ' %</b>')
+    + (def > 20 ? '<br><b class="ecart ecart-ko alerte-deficit">⚠ Déficit de ' + String(def).replace('.', ',') + ' % sous son maintien (' + ref.maintien + ' kcal) : trop fort, vérifie.</b>' : '')
     + (ec !== null && !ok ? ' <button id="btnEchelle" class="mini">Mettre à la cible</button>' : '');
   c.style.display = 'block';
   const b = $('btnEchelle'); if (b) b.onclick = mettreALaCible;
@@ -442,7 +450,13 @@ function dessiner() {
     jeterR.title = 'Retirer ce repas';
     jeterR.textContent = '\u00d7';
     jeterR.addEventListener('click', () => { plan.splice(ri, 1); dessiner(); });
-    tete.append(champNom, kc, jeterR);
+    const idee = document.createElement('button');
+    idee.className = 'mini idee'; idee.type = 'button';
+    idee.textContent = 'Autre idée';
+    idee.title = 'Demander à l\'IA un autre repas, mêmes calories';
+    idee.disabled = !r.ings.length;
+    idee.addEventListener('click', () => autreIdee(ri, idee));
+    tete.append(champNom, kc, idee, jeterR);
     bloc.appendChild(tete);
 
     r.ings.forEach((ing, ii) => {
@@ -925,6 +939,45 @@ function proposer(extra, msgFiche) {
       b.disabled = false; b.textContent = 'Ajuster avec l\'IA';
       document.querySelectorAll('.ia-go').forEach((x) => { x.disabled = false; x.textContent = 'Proposer un plan avec l\'IA'; });
     });
+}
+
+
+// 01/11 Raci : « Autre idée » sur un repas. L'IA propose un remplacant pour CE
+// repas seulement ; portions recalees sur les kcal du repas (±2 %), le reste du plan ne bouge pas.
+function recalerRepas(r, cible) {
+  for (let n = 0; n < 8; n++) {
+    const k = totalRepas(r).kcal;
+    if (!(k > 0) || Math.abs(k - cible) / cible <= 0.02) break;
+    const f = Math.min(3, Math.max(0.33, cible / k));
+    r.ings.forEach((i) => {
+      const d = DB[i.name] || {};
+      if (!d.unit && d.kcal < 40 && f > 1) return;
+      i.portion = d.unit ? Math.min(20, Math.max(1, Math.round(i.portion * f))) : Math.min(1500, Math.max(5, Math.round(i.portion * f / 5) * 5));
+    });
+  }
+}
+function autreIdee(ri, btn) {
+  const ancien = plan[ri]; if (!ancien || !ancien.ings.length) return;
+  const kcal = Math.round(totalRepas(ancien).kcal);
+  const planActuel = plan.map((r) => ({ nom: r.nom, ings: r.ings }));
+  const demande = 'Remplace UNIQUEMENT le repas « ' + ancien.nom + ' » (repas n° ' + (ri + 1) + ') par une autre idée différente, d\'environ ' + kcal
+    + ' kcal, en respectant le questionnaire (aliments aimés, refusés, allergies). Ne change aucun autre repas. Aliments actuels à ne pas reprendre tels quels : '
+    + ancien.ings.map((i) => i.name).join(', ') + '.';
+  const ttl = btn.textContent; btn.disabled = true; btn.textContent = 'L\'IA cherche…';
+  const msg = $('iaEtat');
+  const ctl = new AbortController(); const minuterie = setTimeout(() => ctl.abort(), 110000);
+  appel('proposer', { aliments: LISTE, uid: choisi ? choisi.uid : null, demande, planActuel }, ctl.signal).then((d) => {
+    const rs = d && d.ok && Array.isArray(d.repas) ? d.repas : null;
+    const nouv = rs && (rs.find((r, i) => i === ri && r.nom === ancien.nom) || rs.find((r) => r.nom === ancien.nom) || rs[ri]);
+    if (!nouv || !nouv.ings || !nouv.ings.length) { afficher(msg, 'L\'IA n\'a pas pu proposer d\'autre idée. Réessaie.', false); return; }
+    const r = { nom: ancien.nom, ings: nouv.ings.filter((i) => DB[i.name]).map((i) => ({ name: i.name, portion: i.portion })) };
+    if (!r.ings.length) { afficher(msg, 'L\'IA a proposé des aliments inconnus. Réessaie.', false); return; }
+    recalerRepas(r, kcal);
+    plan[ri] = r; versions[cur].repas = plan;
+    dessiner(); afficherCible(); sauverBrouillon();
+    afficher(msg, 'Nouvelle idée pour « ' + r.nom + ' » (' + Math.round(totalRepas(r).kcal) + ' kcal). Relis avant d\'envoyer.', true);
+  }).catch((e) => { if (e.message !== 'code') afficher(msg, 'Réseau indisponible ou délai dépassé. Réessaie.', false); })
+    .finally(() => { clearTimeout(minuterie); btn.disabled = false; btn.textContent = ttl; });
 }
 
 $('btnAjuster').addEventListener('click', () => {

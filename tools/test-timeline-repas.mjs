@@ -19,17 +19,21 @@ await ctx.addInitScript(([pl,d,rb])=>{localStorage.clear();localStorage.setItem(
 const p=await ctx.newPage(); p.on('pageerror',e=>console.log('ERR',e.message));
 await p.goto('http://localhost:8139/app.html?verrou=ouvert'); await p.waitForTimeout(2600);
 await p.locator('.tl-it').first().locator('.mc-plan-btn--mange').tap(); await p.waitForTimeout(400);
-//, await p.locator('.tl-heure').first().innerText());
+//, await p.locator('.tl-puce').first().innerText());
 await p.evaluate(()=>{const s=window.__banc.repas; s.value=s.value.map(r=>r.cle==='pdej'?{...r,heure:'08:12'}:r);}); await p.waitForTimeout(300);
 const tl=p.locator('.tl'); await tl.scrollIntoViewIfNeeded(); await p.evaluate(()=>window.scrollBy(0,-60));await p.waitForTimeout(300);
 if(D)await p.screenshot({path:`${D}/timeline-${W}.png`});
-await p.locator('button.tl-heure').first().tap(); await p.waitForTimeout(300);
+await p.locator('button.tl-puce').first().tap(); await p.waitForTimeout(300);
 if(D)await p.screenshot({path:`${D}/selecteur-${W}.png`});
 //, JSON.stringify(await p.locator('.tl-it').nth(1).evaluate(e=>{const c=e.querySelector('.mc').getBoundingClientRect(),pl=e.querySelector('.mc-plan');return [c.left,c.right,getComputedStyle(pl).padding,getComputedStyle(pl).width,[...pl.children].map(x=>Math.round(x.getBoundingClientRect().right))]})));
-const ordre=(await p.locator('.tl-it').evaluateAll(a=>a.map(e=>e.querySelector('.tl-heure').innerText+' '+e.querySelector('.mc-titre').innerText)));
+const ordre=(await p.locator('.tl-it').evaluateAll(a=>a.map(e=>e.querySelector('.tl-puce').innerText+' '+e.querySelector('.mc-titre').innerText)));
 ok(/Déjeuner/.test(ordre[1])&&/Collation/.test(ordre[2]),W+' collation 16:00 apres dejeuner 12:30 : '+ordre.join(' | '));
 const g=(await p.locator('.tl-it').nth(1).evaluate(e=>{const c=e.querySelector('.mc').getBoundingClientRect();return {carte:[c.left,c.right],b:[...e.querySelectorAll('.mc-plan > *')].map(x=>{const r=x.getBoundingClientRect();return [x.innerText,Math.round(r.left),Math.round(r.right),Math.round(r.height),getComputedStyle(x).fontSize, x.scrollWidth>x.clientWidth+1]})}}));
-for(const [t,l,r,h,fs,dep] of g.b) ok(h>=44&&parseFloat(fs)>=15&&!dep&&l>=g.carte[0]&&r<=g.carte[1],W+' pastille '+t+' '+h+'px '+fs);
+for(const [t,l,r,h,fs,dep] of g.b) ok(h>=42&&parseFloat(fs)>=13&&!dep&&l>=g.carte[0]&&r<=g.carte[1],W+' pastille '+t+' '+h+'px '+fs);
+ok(new Set(g.b.map(x=>x[1]>0)).size===1&&g.b.length===4, W+' maquette B : 4 pastilles');
+const hauts=await p.locator('.tl-it').nth(1).evaluate(e=>new Set([...e.querySelectorAll('.mc-plan > *')].map(x=>Math.round(x.getBoundingClientRect().top))).size);
+ok(hauts===1, W+' maquette B : boutons sur une seule ligne');
+ok(!(await p.locator('.tl-point').count()), W+' maquette B : plus de colonne/point de timeline');
 await ctx.close();
 }
-await b.close(); process.kill(-srv.pid); console.log(ko?ko+' echec(s)':'OK'); process.exit(ko?1:0);
+await b.close(); try{process.kill(-srv.pid)}catch(e){} console.log(ko?ko+' echec(s)':'OK'); process.exit(ko?1:0);
