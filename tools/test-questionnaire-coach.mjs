@@ -193,7 +193,7 @@ try {
   await p.reload(); await p.waitForTimeout(1800);
   await p.locator('.bn-item').last().tap(); await p.waitForTimeout(500);
   ok(/Paiement reçu/.test(await p.locator('.pg-coach').innerText()), 'paye sans envoi : carte « Paiement recu »');
-  await p.locator('.cp-bt', { hasText: 'Remplir mon questionnaire' }).tap(); await p.waitForTimeout(400);
+  await p.locator('.cp-bt', { hasText: 'Compléter mon questionnaire' }).tap(); await p.waitForTimeout(400);
   ok(await p.locator('.qc-ok').count() >= 9, 'accueil : sections faites cochees');
   await p.locator('.qc-cta', { hasText: 'récapitulatif' }).tap(); await p.waitForTimeout(300);
   for (let k = 0; k < 3; k++) await p.locator('.qc-consent input').nth(k).check();
