@@ -16,7 +16,7 @@
 // depuis le cache — celui d'AVANT la redirection vers /v2/.
 // Il fallait taper l'adresse complete a la main. Monter le nom
 // du cache force chaque navigateur a jeter l'ancienne copie.
-const CACHE = 'belfit-v652';
+const CACHE = 'belfit-v653';
 // main.html et app.html sont supprimes avec la v1. Les laisser ici
 // aurait fait echouer addAll() en entier : une seule URL absente
 // rejette la promesse, et le service worker ne s'installe pas du
@@ -49,7 +49,10 @@ self.addEventListener('fetch', e => {
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     e.respondWith((async () => {
       try {
-        const res = await fetch(req);
+        // v653 : no-cache = revalidation (ETag) a chaque ouverture. Sans ca, le
+        // cache HTTP de GitHub Pages (max-age=600) pouvait servir encore 10 min
+        // l'ancien coach.html (modele 8 semaines) apres une mise en ligne.
+        const res = await fetch(req, { cache: 'no-cache' });
         if (res && res.ok) {
           // On garde une copie fraiche pour le mode hors ligne.
           const copie = res.clone();

@@ -1550,7 +1550,15 @@ async function proposerPlan(corps) {
   const demande = String(corps.demande || "").slice(0, 600).trim();
   if (!reponses && !actuel.length) return [400, {ok: false, motif: "vide"}];
 
-  const cible = reponses ? besoinsDe(reponses) : null;
+  let cible = reponses ? besoinsDe(reponses) : null;
+  // Le coach peut imposer un chiffre (« vise 2 200 kcal ») : il prime.
+  const imposee = /(\d[\d .\u00a0]{2,6})\s*kcal/i.exec(demande);
+  const kImp = imposee ? parseInt(imposee[1].replace(/\D/g, ""), 10) : 0;
+  if (kImp >= 1000 && kImp <= 6000) {
+    const prot = cible ? cible.prot : Math.round(kImp * 0.25 / 4);
+    const lip = Math.round(kImp * 0.27 / 9);
+    cible = {kcal: kImp, prot, lip, carbs: Math.max(0, Math.round((kImp - prot * 4 - lip * 9) / 4)), source: "coach"};
+  }
   const nbRepas = reponses ? parseInt((reponses.repasVoulus || {}).valeur, 10) || 3 : null;
   const lignesRep = reponses ? Object.values(reponses)
     .filter((r) => r && r.question && r.texte && r.texte !== "—")
@@ -1594,7 +1602,59 @@ async function proposerPlan(corps) {
       }),
   })).filter((r) => r.ings.length);
   if (!repas.length) return [502, {ok: false, motif: "ia"}];
-  return [200, {ok: true, repas, cible, remarque: String(brut.remarque || "").slice(0, 400)}];
+  // 01/11 v653 Raci : l'IA rendait 1505 kcal pour une cible bien plus haute
+  // (rien ne verifiait ses portions). Les kcal sont recalculees ici avec la
+  // base de l'app (la LISTE envoyee par la page) et les portions remises a
+  // l'echelle jusqu'a la cible a 5 % pres.
+  const table = tableAliments(liste);
+  const avantIA = totauxPlan(repas, table);
+  const ajuste = cible ? ajusterALaCible(repas, table, cible.kcal) : repas;
+  const totaux = totauxPlan(ajuste, table);
+  const ecart = cible ? Math.round((totaux.kcal - cible.kcal) / cible.kcal * 1000) / 10 : null;
+  return [200, {ok: true, repas: ajuste, cible, totaux, ecart, kcalIA: Math.round(avantIA.kcal),
+    sansCible: cible ? null : (reponses ? "questionnaire incomplet (poids, taille ou age)" : "pas de questionnaire"),
+    remarque: String(brut.remarque || "").slice(0, 400)}];
+}
+
+/** "nom;kcal;prot;glu;lip[;pièce=Ng]" -> {nom: {kcal, prot, carbs, lip, piece}} (pour 100 g). */
+function tableAliments(liste) {
+  const t = new Map();
+  liste.forEach((l) => {
+    const c = String(l).split(";");
+    const m = /pièce=(\d+(?:\.\d+)?)g/.exec(l);
+    t.set(c[0], {kcal: +c[1] || 0, prot: +c[2] || 0, carbs: +c[3] || 0, lip: +c[4] || 0, piece: m ? +m[1] : 0});
+  });
+  return t;
+}
+
+/** Meme calcul que macrosOf de l'app : grammes, ou pieces x poids de la piece. */
+function totauxPlan(repas, table) {
+  const T = {kcal: 0, prot: 0, carbs: 0, lip: 0};
+  repas.forEach((r) => r.ings.forEach((i) => {
+    const d = table.get(i.name); if (!d) return;
+    const g = d.piece ? i.portion * d.piece : i.portion;
+    for (const k of Object.keys(T)) T[k] += d[k] * g / 100;
+  }));
+  return T;
+}
+
+/** Portions a l'echelle (arrondi 5 g, pieces entieres) jusqu'a la cible +-5 %. */
+function ajusterALaCible(repas, table, kcalCible) {
+  let r = repas.map((x) => ({nom: x.nom, ings: x.ings.map((i) => ({...i}))}));
+  for (let n = 0; n < 8; n++) {
+    const k = totauxPlan(r, table).kcal;
+    if (!(k > 0) || Math.abs(k - kcalCible) / kcalCible <= 0.02) break;
+    const f = Math.min(3, Math.max(0.33, kcalCible / k));
+    r = r.map((x) => ({nom: x.nom, ings: x.ings.map((i) => {
+      const d = table.get(i.name) || {};
+      // Legumes tres peu caloriques (< 40 kcal/100 g) : on ne les gonfle pas.
+      if (!d.piece && d.kcal < 40 && f > 1) return i;
+      const p = d.piece ? Math.min(20, Math.max(1, Math.round(i.portion * f))) :
+        Math.min(1500, Math.max(5, Math.round(i.portion * f / 5) * 5));
+      return {...i, portion: p};
+    })}));
+  }
+  return r;
 }
 
 exports.espaceCoach = onRequest(
