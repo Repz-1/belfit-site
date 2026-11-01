@@ -5,7 +5,6 @@ import { signal } from '@preact/signals';
 export const ouvrirCalcDemande = signal(false);
 import { repas, objectifs, totauxJourAff, kcalRestantes, donneesPretes, poidsCalcul, rappelIgnoreA, dateJour, nouvelleJournee, journalDUnJourPasse } from '../store/journal.js';
 import { weightLog, enregistrerJour } from '../store/stats.js';
-import { IdeesRepas } from './IdeesRepas.jsx';
 import { lectureSeule, calculReserveCoach } from '../store/acces-nutrition.js';
 import { t } from '../i18n/index.js';
 import { aujourdhuiBxl } from '../store/plans-par-date.js';
@@ -199,9 +198,6 @@ export function DayDashboard() {
         <Macro nom={t('fats')}     valeur={tot.lip}   cible={enPreparation ? null : obj.lip}   teinte="var(--mac-lip)" />
       </div>
       {!ro && <RappelRecalcul />}
-      {!ro && <div class="cal-action">
-        <IdeesRepas pilulSeule />
-      </div>}
       {retard && !ro && (
         <div class="cal-retard">{t('jour_non_cloture').replace('{j}', jourOuvert)}</div>
       )}

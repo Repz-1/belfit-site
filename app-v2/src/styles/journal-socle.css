@@ -436,16 +436,6 @@
   stroke-linecap: round; stroke-linejoin: round;
 }
 
-/* Zone d'action de la carte : la pilule « Repas intelligent » y est
-   centree, avec la meme respiration que l'ancienne action secondaire. */
-.pg-journal .cal-action { display: flex; justify-content: center; margin: 12px 0 0; }
-/* Dans la carte, la largeur utile tombe a ~320px : sans resserrage le
-   libelle passait sur deux lignes. Une pilule ne se casse jamais. */
-.pg-journal .cal-action .eat-toggle {
-  width: 100%; max-width: 100%; gap: 6px; padding: 11px 13px; white-space: nowrap;
-}
-.pg-journal .cal-action .eat-toggle > span { white-space: nowrap; }
-.pg-journal .cal-action .eat-etat { font-size: 11px; }
 
 /* ---------- Chargement ---------- */
 .pg-journal .cal--chargement .cal-num,
