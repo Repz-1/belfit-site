@@ -460,3 +460,20 @@
 .cp-etapes li.fait .cp-pastille{background:#6CC98E;border-color:#6CC98E;color:#fff}
 .cp-etapes li.actif .cp-pastille{border-color:#6CC98E;color:#1f7a45}
 .cp-bt--vert{background:linear-gradient(135deg,#A7E3B9,#6CC98E);color:#000;border:none}
+/* Tarifs v2 A « Recu » (01/11, choix Raci) */
+.pg-coach .cp-recu{background:#fff;border:1px solid #E4E6E3;border-radius:18px;padding:22px}
+.pg-coach .cp-recu-titre{margin:0;font-size:20px;font-weight:700;color:#111}
+.pg-coach .cp-recu-sous{margin:4px 0 14px;color:#6b6f6c;font-size:14px}
+.pg-coach .cp-recu-l{display:flex;justify-content:space-between;gap:12px;font-size:15px;padding:10px 0;border-bottom:1px dashed #E1E3E0;color:#111}
+.pg-coach .cp-recu-l span:last-child{color:#6b6f6c;white-space:nowrap}
+.pg-coach .cp-recu-tot{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 4px;font-weight:700;color:#111}
+.pg-coach .cp-recu-tot .cp-prix{font-size:30px;font-weight:900;color:#111}
+.pg-coach .cp-recu-tot .cp-prix-barre{color:#9a9d9b;font-size:16px;margin-right:8px}
+.pg-coach .cp-recu-m{font-size:13px;color:#6b6f6c;margin:0 0 16px}
+.pg-coach .cp-recu-code{text-align:center;margin:12px 0 0}
+.pg-coach .cp-recu-code .cp-code-lien{color:#444;font-weight:500}
+.pg-coach .cp-recu .cp-code{margin:14px 0 0}
+.pg-coach .cp-offre.cp-recu{background:#fff;border:1px solid #E4E6E3;box-shadow:none;padding:22px}
+.pg-coach .cp-offre.cp-recu::before{display:none}
+.pg-coach .cp-offre.cp-recu .cp-prix{font-size:32px;font-weight:900;color:#111}
+.pg-coach .cp-offre.cp-recu .cp-prix.cp-prix--promo{color:#1F6B42}

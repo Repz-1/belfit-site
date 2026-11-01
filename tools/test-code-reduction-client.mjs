@@ -61,9 +61,10 @@ const shot = async (p, nom, cible = '.cp-offre') => {
   await p.waitForTimeout(250);
   await p.screenshot({ path: `${SHOTS}/code-reduction-${nom}.png` });
 };
+const ouvrirCode = async (p) => { const l = p.locator('.cp-recu-code .cp-code-lien'); if (await l.count()) { await l.tap(); await p.waitForTimeout(200); } };
 const saisir = async (p, texte) => { const ch = p.locator('#cp-code-champ'); await ch.fill(texte); await p.locator('.cp-code-bt').tap(); await p.waitForTimeout(500); };
 try {
-  let p = await page(serveur());
+  let p = await page(serveur()); await ouvrirCode(p);
   ok(await p.locator('.cp-offre .cp-prix').innerText() === '80 €', 'champ vide : prix 80 €');
   ok(await p.locator('.cp-code-lib').innerText() === 'Code de réduction' && await p.locator('#cp-code-champ').count() === 1, 'le champ « Code de réduction » est sous le prix, dans la carte de l\'offre');
   ok(await p.locator('.cp-code-bt').isDisabled(), 'champ vide : « Appliquer » désactivé');
@@ -92,7 +93,7 @@ try {
   ok(/mollie\.test/.test(p.url()), 'envoyé vers la page de paiement (simulée)');
   await p.context().close();
 
-  p = await page(serveur());
+  p = await page(serveur()); await ouvrirCode(p);
   await saisir(p, 'TEST15');
   await p.locator('.cp-code-lien').tap(); await p.waitForTimeout(200);
   ok(await p.locator('.cp-offre .cp-prix').innerText() === '80 €' && await p.locator('#cp-code-champ').count() === 1, '« Retirer » : retour à 80 € et au champ vide');
@@ -118,7 +119,7 @@ try {
   await p.context().close();
 
   // Le serveur refuse au moment de payer (code pris entre-temps) : retour au champ, pas de redirection
-  p = await page(serveur({ refusePaiement: true }));
+  p = await page(serveur({ refusePaiement: true })); await ouvrirCode(p);
   await saisir(p, 'TEST10');
   await p.locator('.cp-bt', { hasText: 'Demander mon plan' }).tap(); await p.waitForTimeout(300);
   const m3 = p.locator('.cp-modale');
@@ -185,7 +186,7 @@ try {
     await ctx.close();
   }
   // Compte non autorise : pas de champ du tout
-  p = await page((nom) => nom === 'mollieEtat' ? { status: 200, body: { ok: true, autorise: false, mode: 'test' } } : { status: 404, body: {} });
+  p = await page((nom) => nom === 'mollieEtat' ? { status: 200, body: { ok: true, autorise: false, mode: 'test' } } : { status: 404, body: {} }); await ouvrirCode(p);
   ok(await p.locator('#cp-code-champ').count() === 0 && await p.locator('.cp-code').count() === 0, 'paiement fermé : pas de champ de code');
   await p.context().close();
 } catch (e) { console.error(e); code = 1; }

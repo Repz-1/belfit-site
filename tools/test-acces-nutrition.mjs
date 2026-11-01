@@ -172,7 +172,7 @@ for (const [v, attendu] of [['jamais', true], ['expire', true], ['ouvert', false
   const src = readFileSync(new URL('../app-v2/src/components/CoachPage.jsx', import.meta.url), 'utf8');
   const suivi = readFileSync(new URL('../app-v2/src/components/SuiviClient.jsx', import.meta.url), 'utf8');
   const srv = readFileSync(new URL('../functions/mollie.js', import.meta.url), 'utf8');
-  ok(/Premier mois<\/span>/.test(src) && /<span class="cp-prix">80 €<\/span>/.test(src) && !/60 €/.test(src), 'page d’offre : 80 € chaque mois, plus aucun 60 €');
+  ok(/cp-recu-titre">Coaching alimentaire</.test(src) && /<span class="cp-prix">80 €<\/span>/.test(src) && !/60 €/.test(src), 'page d’offre : 80 € chaque mois, plus aucun 60 €');
   ok(/Reprendre mon programme/.test(suivi) && !/Continuer un mois|Reprendre · 80|60 €/.test(suivi), 'Mon suivi : bouton « Reprendre mon programme » sans prix');
   ok(/montant: "80\.00"/.test(srv) && !/"60\.00"/.test(srv), 'serveur : un seul produit à 80.00');
 }

@@ -53,7 +53,7 @@ const MAIL = 'contact@belfit.be';
 // masque en ligne tant qu'il n'est pas valide. true = commandes ouvertes.
 export const COMMANDES_OUVERTES = true;
 // 68.00 -> « 68 », 53.60 -> « 53,60 » (affichage du prix donne par le serveur)
-const prixCourt = (m) => { const t = String(m); return (/\.00$/.test(t) ? t.slice(0, -3) : t).replace('.', ','); };
+const prixCourt = (m) => { const n = Number(m); return Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ','); };
 // 24/10 : le serveur (mollieEtat) peut ouvrir le paiement a UN compte autorise
 // (test Mollie sur le telephone de Raci) sans l'ouvrir aux autres clients.
 // Lire .value dans un composant le fait se mettre a jour tout seul.
@@ -217,6 +217,7 @@ export function CoachPage() {
     setVerifCode(true); setMsgCode('');
     verifierCodeReduction(saisieCode).then(r => { if (!r.ok) setMsgCode(r.message); }).finally(() => setVerifCode(false));
   };
+  const [codeOuvert, setCodeOuvert] = useState(false);
   const retirerCode = () => { reduction.value = null; setMsgCode(''); setSaisieCode(''); };
   // Champ « Code de réduction » : meme bloc sous le prix de l'offre (premier mois) et dans la fenetre « Reprendre · 80 € ».
   const blocCode = (idChamp) => (
@@ -350,20 +351,27 @@ export function CoachPage() {
       {/* 21/10 Raci : plus de tarifs dans Ton programme pour un client qui a deja un plan. Le mois suivant (80 €) se propose dans Mon suivi. */}
       {!occupe && !pr && <p class="cp-sec">TARIFS</p>}
       {!occupe && !pr && (
-        <div class="cp-carte cp-carte--or cp-offre">
-          <div class="cp-ligne"><span class="cp-nom">Premier mois</span>
+        <div class="cp-carte cp-recu cp-offre" data-tarifs="recu">
+          <p class="cp-recu-titre">Coaching alimentaire</p>
+          <p class="cp-recu-sous">1 mois · sans abonnement</p>
+          <div class="cp-recu-l"><span>Plan sur mesure, livré sous 48&nbsp;h</span><span>inclus</span></div>
+          <div class="cp-recu-l"><span>Ajustements pendant le mois</span><span>inclus</span></div>
+          <div class="cp-recu-l"><span>Accès nutrition</span><span>44 jours</span></div>
+          <div class="cp-recu-l"><span>Entraînement</span><span>offert</span></div>
+          <div class="cp-recu-tot"><span>Total</span>
             {red && paiementOuvert.value
               ? <span class="cp-prix-bloc"><s class="cp-prix-barre" aria-label="Prix normal 80 euros">80 €</s><span class="cp-prix cp-prix--promo">{prixCourt(red.montant)} €</span></span>
               : <span class="cp-prix">80 €</span>}
           </div>
-          <p class="cp-txt">{'Un mois de coaching\u00A0: bilan complet, plan alimentaire écrit pour toi, livré sous 48\u00A0h, ajustements inclus pendant le mois.'}</p>
-          {commandesOuvertes() && paiementOuvert.value && blocCode('cp-code-champ')}
+          <p class="cp-recu-m">Paiement unique. Aucun prélèvement automatique.</p>
           {commandesOuvertes()
-            ? <button class="cp-bt cp-bt--or" onClick={() => ouvrirAchat('plan')}>Demander mon plan</button>
+            ? <button class="cp-bt cp-bt--vert" onClick={() => ouvrirAchat('plan')}>Demander mon plan</button>
             : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
+          {commandesOuvertes() && paiementOuvert.value && (red || codeOuvert
+            ? blocCode('cp-code-champ')
+            : <p class="cp-recu-code"><button class="cp-code-lien" onClick={() => setCodeOuvert(true)}>J'ai un code de réduction</button></p>)}
         </div>
       )}
-      {!occupe && !pr && <p class="cp-pied">Paiement au mois. Sans abonnement, sans prélèvement&nbsp;: tu décides de continuer. Accès nutrition inclus pendant ton mois payé et les 2 semaines qui suivent.</p>}
       </>)}
 
       {achat && (!APP_ANDROID || viaInv) && createPortal(
