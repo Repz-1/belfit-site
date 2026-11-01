@@ -104,7 +104,7 @@ function urlPaiement(lien, type) {
 function envoyerQuestionnaire(type, reponses, alerte, extra = {}) {
   const q = { type, reponses, alerteSante: !!alerte, allergieGrave: !!extra.allergieGrave,
     consentements: extra.consentements || {}, envoyeLe: new Date().toISOString() };
-  try { localStorage.setItem('belfit_qc_dernier', JSON.stringify(q)); } catch (e) { /* rien */ }
+  try { localStorage.setItem('belfit_qc_dernier', JSON.stringify({ ...q, uid: (utilisateur.value || {}).uid || null })); } catch (e) { /* rien */ }
   dossierCoach.value = { ...dossierCoach.value, questionnaire: q, brouillon: null };
   const u = utilisateur.value;
   if (!u || !getApps().length) return Promise.resolve();
