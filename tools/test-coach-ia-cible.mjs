@@ -89,7 +89,7 @@ ok(await p.locator('#brouillonBarre').isVisible(), 'barre « Brouillon repris »
 if (SHOTS) { await p.locator('#choisi').scrollIntoViewIfNeeded(); await p.evaluate(() => window.scrollBy(0, -80)); await p.screenshot({ path: SHOTS + '/3-brouillon-repris.png' }); }
 // Envoi -> brouillon efface
 await p.locator('#btnEnvoi').click(); await p.waitForTimeout(600);
-ok(envoye && envoye.repas && envoye.repas.length === 3, 'envoi du brouillon : 3 repas deposes');
+ok(envoye && ((envoye.repas || (envoye.versions && envoye.versions[0].repas) || []).length === 3), 'envoi du brouillon : 3 repas deposes');
 ok(await p.evaluate(() => !localStorage.getItem('belfit_coach_brouillon_u1')), 'apres envoi : brouillon supprime');
 // Jeter
 await p.locator('.ing-qte input').first().fill('100'); await p.waitForTimeout(200);
