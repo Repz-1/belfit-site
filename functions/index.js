@@ -1658,6 +1658,9 @@ exports.espaceCoach = onRequest(
             livreLe,
             // A traiter : un questionnaire recu et pas encore de programme livre apres lui.
             aTraiter: !!q.envoyeLe && (!livreLe || new Date(livreLe) < new Date(q.envoyeLe)),
+            // 01/11 Raci : badge « Nouveau » = paye OU questionnaire recu, sans programme livre depuis.
+            nouveau: [q.envoyeLe, d.commandeCoach && d.commandeCoach.payeLe].some((x) => !!x &&
+              (!livreLe || new Date(livreLe) < new Date(x))),
             programme: resume(d.programme),
             programmesHistorique: histo,
             alerteSante: !!q.alerteSante,

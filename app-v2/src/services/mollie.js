@@ -31,6 +31,12 @@ async function appeler(nom, corps) {
   return { statut: r.status, d };
 }
 
+/** 01/11 (Raci) : previent le coach par e-mail qu'un questionnaire est arrive.
+ *  Le serveur relit le questionnaire et n'envoie qu'une fois par envoi. Jamais bloquant. */
+export function signalerQuestionnaire() {
+  return appeler('signalerQuestionnaire', {}).catch(() => null);
+}
+
 let dejaDemande = null;   // uid pour lequel on a deja demande
 export function verifierAcces() {
   const u = utilisateur.peek();

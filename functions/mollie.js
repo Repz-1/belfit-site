@@ -13,6 +13,7 @@ const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const reduction = require("./reduction");
 const accesNutrition = require("./acces-nutrition");
+const alertes = require("./alertes-coach");
 
 const MOLLIE_API_KEY = defineSecret("MOLLIE_API_KEY");
 const MOLLIE_TEST_EMAILS = defineSecret("MOLLIE_TEST_EMAILS");
@@ -149,6 +150,8 @@ async function traiterPaiement(p) {
   // Mollie rappelle le webhook si l'ecriture a echoue.
   if (uid && p.status === "paid" && (r.nouveau || r.deja)) {
     await accesNutrition.accorderAcces(db(), uid, {depuisMs: Date.parse(p.paidAt) || Date.now(), strict: true});
+    // 01/11 Raci : e-mail a contact@belfit.be, une seule fois par commande (ne jette jamais).
+    await alertes._interne.alertePaiement(p, {uid, email: cmd0.exists ? cmd0.data().email : null});
   }
   return {statut: p.status, activee: r.nouveau || r.deja};
 }
@@ -162,7 +165,7 @@ const attenteEchec = () => new Promise((r) => setTimeout(r, Number(process.env.R
 //    LECTURE SEULE (rien n'est reserve ni consomme ici). Memes garde-fous que le paiement :
 //    jeton Firebase, compte autorise a payer, freinage des essais (8 / 15 min, par compte et par IP).
 exports.verifierCodeReduction = onRequest(
-    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS]},
+    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS, alertes.RESEND_API_KEY]},
     async (req, res) => {
       if (entetes(req, res)) return;
       const refus = (motif, extra = {}) => res.status(reduction.STATUT_HTTP[motif] || 403)
@@ -192,7 +195,7 @@ exports.verifierCodeReduction = onRequest(
 // 1) Le client clique « Payer » : on cree le paiement et on renvoie
 //    l'adresse de la page Mollie (Bancontact, cartes...).
 exports.creerPaiementMollie = onRequest(
-    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS]},
+    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS, alertes.RESEND_API_KEY]},
     async (req, res) => {
       if (entetes(req, res)) return;
       try {
@@ -253,7 +256,7 @@ exports.creerPaiementMollie = onRequest(
 // 2) Mollie previent (corps : id=tr_xxx). On ne croit PAS le corps :
 //    on relit le paiement chez Mollie avec la cle secrete.
 exports.mollieWebhook = onRequest(
-    {region: REGION, cors: false, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS]},
+    {region: REGION, cors: false, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS, alertes.RESEND_API_KEY]},
     async (req, res) => {
       try {
         const id = String((req.body || {}).id || "");
@@ -279,7 +282,7 @@ exports.mollieWebhook = onRequest(
 //      (le client revient de la page Mollie, payee, annulee ou echouee). Le
 //      client n'ouvre le questionnaire que si activee:true.
 exports.mollieEtat = onRequest(
-    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS]},
+    {region: REGION, cors: true, secrets: [MOLLIE_API_KEY, MOLLIE_TEST_EMAILS, alertes.RESEND_API_KEY]},
     async (req, res) => {
       if (entetes(req, res)) return;
       try {
