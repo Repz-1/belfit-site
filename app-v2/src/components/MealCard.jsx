@@ -710,8 +710,11 @@ function SelecteurHeure({ heure, titre, fermer, valider }) {
       <button class="tl-pick-voisin" aria-label={nom + ' plus'} onClick={() => set((v + pas) % max)}>{d2((v + pas) % max)}</button>
     </div>
   );
-  return (
-    <div class="tl-pick" role="dialog" aria-label={titre} onClick={e => e.stopPropagation()}>
+  // v659 : rendu dans <body> (portail) en feuille plein ecran, sinon les
+  // boutons flottants recouvrent le selecteur et OK / minutes ne repondent pas.
+  return createPortal(
+    <div class="tl-pick-fond" onClick={e => { e.stopPropagation(); fermer(); }}>
+    <div class="tl-pick" role="dialog" aria-modal="true" aria-label={titre} onClick={e => e.stopPropagation()}>
       <p class="tl-pick-titre">{titre}</p>
       <div class="tl-pick-roues">{col(h, setH, 24, 1, 'Heures')}<span class="tl-pick-dp">:</span>{col(m, setM, 60, 1, 'Minutes')}</div>
       <div class="tl-pick-bts">
@@ -719,13 +722,16 @@ function SelecteurHeure({ heure, titre, fermer, valider }) {
         <button class="tl-pick-bt tl-pick-bt--ok" onClick={() => valider(d2(h) + ':' + d2(m))}>OK</button>
       </div>
     </div>
-  );
+    </div>, document.body);
 }
 
 export function RepasTimeline({ r, aSuivre, fait }) {
   const [choix, setChoix] = useState(false);
   const mange = !r.prevu && !r.saute && r.ings.length > 0;
   const reelle = mange && r.heure;
+  // v659 (Raci 02/11 « Modifier l'heure ne fonctionne pas ») : un repas mange SANS heure
+  // enregistree (mange avant v654, repas rempli a la main) affichait une pastille
+  // non cliquable. Tout repas mange est desormais modifiable (depart : heure prevue).
   const heure = reelle ? r.heure : heurePrevue(r);
   const ro = lectureSeule.value;
   return (
@@ -734,7 +740,7 @@ export function RepasTimeline({ r, aSuivre, fait }) {
           petite pastille grise en haut a droite de la carte, pleine largeur. */}
       {choix && <SelecteurHeure heure={heure} titre={'Heure du ' + String(r.nom).toLowerCase()}
         fermer={() => setChoix(false)} valider={(v) => { setHeureRepas(r.id, v); setChoix(false); }} />}
-      <MealCard r={r} aSuivre={aSuivre} fait={fait} puce={reelle && !ro ? (
+      <MealCard r={r} aSuivre={aSuivre} fait={fait} puce={mange && !ro ? (
         <button class={'tl-puce tl-puce--reelle' + (choix ? ' tl-puce--edition' : '')}
           aria-label={`Heure du repas ${r.nom} : ${heure}. Modifier`} onClick={e => { e.stopPropagation(); setChoix(!choix); }}>
           ✓ {heure.replace(':', 'h')}
