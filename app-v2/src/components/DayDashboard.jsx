@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { planCoachActif } from './BelfitPlus.jsx';
+import { planCoachActif, programme } from './BelfitPlus.jsx';
 import { signal } from '@preact/signals';
 
 export const ouvrirCalcDemande = signal(false);
@@ -7,7 +7,7 @@ import { repas, objectifs, totauxJourAff, kcalRestantes, donneesPretes, poidsCal
 import { weightLog, enregistrerJour } from '../store/stats.js';
 import { lectureSeule, calculReserveCoach } from '../store/acces-nutrition.js';
 import { t } from '../i18n/index.js';
-import { aujourdhuiBxl } from '../store/plans-par-date.js';
+import { aujourdhuiBxl, ajouterJours, jourValide } from '../store/plans-par-date.js';
 
 // 27/10 : horloge grossiere (30 s + retour sur l'app) pour que la mise en
 // avant de « Clôturer la journée » apparaisse seule apres minuit, sans
@@ -113,6 +113,18 @@ function Macro({ nom, valeur, cible, teinte }) {
   );
 }
 
+/** Texte du cadran quand aucun plan n'est actif (v660).
+ *  debut : null = aucun plan envoye ; 'bientot' = plan recu sans date ; sinon « AAAA-MM-JJ ». */
+export function libellePlanAttente(debut, auj) {
+  if (!debut) return 'Plan en préparation';
+  if (debut === 'bientot' || !jourValide(debut)) return 'Plan reçu · commence bientôt';
+  if (debut <= auj) return 'Plan reçu · commence aujourd’hui';
+  if (debut === ajouterJours(auj, 1)) return 'Plan reçu · commence demain';
+  const dt = new Date(debut + 'T12:00:00Z');
+  const txt = new Intl.DateTimeFormat('fr-BE', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' }).format(dt);
+  return 'Plan reçu · commence le ' + txt;
+}
+
 export function DayDashboard() {
   // Alimentation fermee : on consulte le dernier journal enregistre, sans action.
   const ro = lectureSeule.value;
@@ -132,6 +144,11 @@ export function DayDashboard() {
   const enPreparation = !ro && calculReserveCoach.value && !planCoachActif.value;  // = objectifEnPreparation
   const ratio = !enPreparation && obj.kcal > 0 ? tot.kcal / obj.kcal : 0;
   const d = new Date();
+  // 02/11 (Raci, v660) : plan deja envoye mais qui commence plus tard
+  // (lendemain de l'envoi, 00h Bruxelles) -> « Plan reçu · commence demain ».
+  const debutAttente = enPreparation && programme.value && programme.value.enAttente
+    ? jourValide(programme.value.enAttente.debut) : null;
+  const libellePrep = libellePlanAttente(programme.value && programme.value.enAttente ? (debutAttente || 'bientot') : null, aujourdhuiBxl());
   const jours = t('days_long').split('|');
   const moisCourt = t('months_min').split('|');
   const isoAuj = aujourdhuiBxl();
@@ -177,7 +194,7 @@ export function DayDashboard() {
           <>
             {enPreparation ? <>
               <div class="cal-num">{consommees}</div>
-              <div class="cal-num-lb cal-prep">kcal · Plan en préparation</div>
+              <div class="cal-num-lb cal-prep">kcal · {libellePrep}</div>
             </> : <>
             <div class={'cal-num' + (palier ? ' cal-num--' + palier : '')}>{chiffre}</div>
             <div class="cal-num-lb">
