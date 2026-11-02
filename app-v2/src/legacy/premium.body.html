@@ -363,37 +363,38 @@ function togglePromoField(){
 }
 
 // ===== CODE PROMO =====
-const CODES_VALIDES = ['JETAIME', 'BELFIT1'];
-
-function validerCode(){
+// Audit 01/11 (v658) : plus aucun code dans le code de la page. Le code
+// part vers le serveur (utiliserCode), qui le verifie et ecrit l'acces.
+async function validerCode(){
     const input = document.getElementById('promoInput');
     const msg = document.getElementById('promoMsg');
-    const code = (input.value || '').trim().toUpperCase();
+    const code = (input.value || '').trim();
 
     if(!code){
         msg.textContent = t('pl_promo_first');
         msg.className = 'promo-msg err';
         return;
     }
-
-    if(CODES_VALIDES.includes(code)){
-        localStorage.setItem('repz_premium', '1');
-        // Persister sur le compte (Firestore) pour que le Premium suive l'utilisateur
-        try{
-            const u = firebase.auth().currentUser;
-            if(u && firebase.firestore){
-                firebase.firestore().collection('users').doc(u.uid)
-                    .set({ premium:true, source:'promo', updatedAt: Date.now() }, { merge:true });
-            }
-        }catch(e){ console.warn('premium promo write', e); }
-        msg.textContent = t('pl_promo_ok');
-        msg.className = 'promo-msg ok';
-        input.value = '';
-        setTimeout(() => { window.location.href = 'app.html'; }, 1500);
-    } else {
-        msg.textContent = t('pl_promo_bad');
-        msg.className = 'promo-msg err';
-    }
+    try{
+        const u = firebase.auth().currentUser;
+        if(!u) throw new Error('connexion');
+        const jeton = await u.getIdToken();
+        const r = await fetch('https://europe-west1-repz-baf60.cloudfunctions.net/utiliserCode', {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + jeton },
+            body: JSON.stringify({ code })
+        });
+        const d = await r.json().catch(() => ({}));
+        if(d && d.ok){
+            msg.textContent = t('pl_promo_ok');
+            msg.className = 'promo-msg ok';
+            input.value = '';
+            setTimeout(() => { window.location.href = 'app.html'; }, 1500);
+            return;
+        }
+    }catch(e){ console.warn('code promo', e); }
+    msg.textContent = t('pl_promo_bad');
+    msg.className = 'promo-msg err';
 }
 
 // ===== FORMULE ANNUEL / MENSUEL =====

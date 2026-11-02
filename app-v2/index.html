@@ -45,17 +45,8 @@ var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('co
 <link rel="canonical" href="https://www.belfit.be/v2/">
 <meta name="twitter:title" content="BelFit — Coaching nutrition personnalisé">
 <meta name="twitter:image" content="https://www.belfit.be/og-belfit.png">
-<!-- Polices : chargees SANS bloquer la peinture. En feuille de style
-     ordinaire, le navigateur n'affichait rien tant que fontshare
-     n'avait pas repondu — deux resolutions DNS et un TLS avant le
-     premier pixel, et un ecran fige de plusieurs secondes quand le
-     reseau traine (Raci, 02/09). media="print" la sort du chemin
-     critique, onload la rebranche des qu'elle arrive. -->
-<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
-<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
-<link href="https://api.fontshare.com/v2/css?f%5B%5D=satoshi@300,400,500,700,800,900&display=swap"
-      rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://api.fontshare.com/v2/css?f%5B%5D=satoshi@300,400,500,700,800,900&display=swap" rel="stylesheet"></noscript>
+<!-- Polices : hebergees sur belfit.be (/fonts/, audit RGPD v658) : plus de fontshare. -->
+<link rel="stylesheet" href="/fonts/fonts.css">
 <style>
   html,body{margin:0;background:#F4F3F0;font-family:'Satoshi',system-ui,sans-serif;color:#181818}
   #splash{position:fixed;inset:0;z-index:9999;background:#F4F3F0;display:flex;align-items:center;justify-content:center;transition:opacity .25s ease}

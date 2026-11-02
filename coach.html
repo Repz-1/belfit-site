@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#F4F3F0">
 <title>Espace coach — BELFIT</title>
 <link rel="icon" href="/favicon-32-v9.png">
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/fonts/fonts.css">
 <style>
 /* ============================================================
    ESPACE COACH — composition d'un programme.
@@ -120,6 +120,8 @@ header a.quitter{margin-left:auto;font-size:12px;color:var(--tx3);text-decoratio
   display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
 .dos-txt{flex:1;min-width:0}
 .dos-nom{font-size:15px;font-weight:600}
+.cherche{margin:0 0 10px}
+.cherche input{min-height:48px;font-size:16px}
 .dos-sous{font-size:12px;color:var(--tx3);margin-top:2px}
 .tag{flex:none;font-size:11.5px;font-weight:600;border-radius:999px;padding:4px 9px;background:#F1EFE8;color:#5F5E5A}
 .tag.rouge{background:#FCEBEB;color:#A32D2D}.tag.ambre{background:#FAEEDA;color:#854F0B}.tag.vert{background:#E9F5EE;color:#1C5334}
@@ -231,8 +233,13 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
 
     <div id="blocLivres">
       <p class="lb">Tous les clients</p>
+      <div class="cherche">
+        <input id="chercheClient" type="search" placeholder="Chercher un client (nom, e-mail ou pseudo)" autocomplete="off" enterkeyhint="search">
+      </div>
+      <p class="msg" id="chercheMsg" style="display:none"></p>
       <div class="carte" id="livres" style="padding:0 15px"></div>
       <button class="second" id="btnPlusClients" style="display:none;margin-top:10px">Voir plus de clients</button>
+      <button class="second" id="btnAnciens" style="display:none;margin-top:10px">Charger les clients plus anciens</button>
     </div>
 
     <p class="lb" id="ancreComposer">Programme</p>
@@ -522,16 +529,23 @@ function dessiner() {
     liste.className = 'propositions';
 
     const proposer = () => {
-      const q = champ.value.trim().toLowerCase();
+      const q = sansAccent(champ.value.trim());
       liste.innerHTML = '';
       if (q.length < 2) { liste.className = 'propositions'; return; }
-      // Recherche par mots : « riz cru » trouve « Riz cru » comme
-      // « Riz basmati cru ». Meme logique que la recherche de l'app.
+      // Recherche par mots, sans accents (« fumee » trouve « fumée »).
+      // Familles (v658, Raci) : « poisson » ne trouvait que la sauce,
+      // l'huile et le poisson pané, car les poissons portent leur nom
+      // (Saumon, Cabillaud...). Le mot de famille ouvre toute la famille.
       const mots = q.split(/\s+/);
+      const famille = (n, mo) => (FAMILLES[mo] || null) && FAMILLES[mo].test(sansAccent(n));
       const trouves = NOMS_ALIMENTS.filter((n) => {
-        const b = n.toLowerCase();
-        return mots.every((mo) => b.includes(mo));
-      }).slice(0, 12);
+        const b = sansAccent(n);
+        return mots.every((mo) => b.includes(mo) || famille(n, mo));
+      }).sort((a, b2) => {
+        const ga = mots.some((mo) => FAMILLES[mo] && FAMILLES[mo].test(sansAccent(a)) && !/huile|sauce|pane|rillette|tarte|croquette|poke/.test(sansAccent(a))) ? 0 : 1;
+        const gb = mots.some((mo) => FAMILLES[mo] && FAMILLES[mo].test(sansAccent(b2)) && !/huile|sauce|pane|rillette|tarte|croquette|poke/.test(sansAccent(b2))) ? 0 : 1;
+        return ga - gb;
+      }).slice(0, mots.some((mo) => FAMILLES[mo]) ? 80 : 12);
       if (!trouves.length) { liste.className = 'propositions'; return; }
       trouves.forEach((n) => {
         const b = document.createElement('button');
@@ -840,8 +854,57 @@ function majCompteurNouveaux(delta) {
   c.style.display = nbNouveaux ? '' : 'none';
 }
 
+// Audit 01/11 (v658) : plus de limite cachee. La liste se charge par 300 ;
+// « Charger les clients plus anciens » en demande davantage, et la
+// recherche retrouve n'importe quel client (e-mail ou pseudo exact) au serveur.
+let limiteDossiers = 300;
+let listeLivres = [];
+function afficherLivres(liste) {
+  const hL = $('livres'); hL.innerHTML = '';
+  let vus = 0;
+  const plus = $('btnPlusClients');
+  const suite = () => { liste.slice(vus, vus + 20).forEach((d) => hL.append(ligne(d, false))); vus += 20; plus.style.display = vus < liste.length ? 'block' : 'none'; };
+  plus.onclick = suite; suite();
+  if (!liste.length) hL.append(el('p', 'vide', 'Aucun client trouvé.'));
+}
+const POISSONS_RE = /\b(poisson|saumon|thon|cabillaud|colin|lieu|merlu|sardines?|truite|maquereau|hareng|dorade|sole|tilapia|pangasius|bar|crevettes?|moules?|calamars?|anchois|eglefin|haddock|perche|limande|plie|raie|turbot|lotte|espadon|scampis?)\b/;
+const FAMILLES = { poisson: POISSONS_RE, poissons: POISSONS_RE, fish: POISSONS_RE };
+const sansAccent = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+function filtrerClients() {
+  const q = sansAccent($('chercheClient').value.trim());
+  const m = $('chercheMsg'); m.style.display = 'none';
+  if (!q) { afficherLivres(listeLivres); return; }
+  const tous = (tousDossiers || []);
+  const trouves = tous.filter((d) => sansAccent([d.prenom, d.nom, d.email, nomDe(d)].join(' ')).includes(q));
+  afficherLivres(trouves);
+}
+async function chercherAuServeur() {
+  const q = $('chercheClient').value.trim();
+  if (!q) return;
+  const m = $('chercheMsg');
+  const tous = (tousDossiers || []);
+  if (tous.some((d) => sansAccent([d.prenom, d.nom, d.email, nomDe(d)].join(' ')).includes(sansAccent(q)))) return;
+  m.textContent = 'Recherche…'; m.className = 'msg'; m.style.display = 'block';
+  try {
+    const r = await appel('chercher', { q });
+    const d = r && r.ok && r.dossiers && r.dossiers[0];
+    if (!d) { m.textContent = 'Aucun client avec cet e-mail ou ce pseudo.'; return; }
+    if (!tous.some((x) => x.uid === d.uid)) tous.push(d);
+    m.style.display = 'none';
+    afficherLivres([d]);
+  } catch (e) { m.textContent = 'Recherche impossible. Réessaie.'; }
+}
+let minuterieCherche = null;
+$('chercheClient').addEventListener('input', () => {
+  filtrerClients();
+  clearTimeout(minuterieCherche);
+  minuterieCherche = setTimeout(chercherAuServeur, 700);
+});
+$('chercheClient').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(minuterieCherche); chercherAuServeur(); } });
+$('btnAnciens').onclick = () => { limiteDossiers = Math.min(5000, limiteDossiers * 2); $('btnAnciens').disabled = true; chargerDossiers().finally(() => { $('btnAnciens').disabled = false; }); };
+
 function chargerDossiers() {
-  return appel('dossiers').then((r) => {
+  return appel('dossiers', { limite: limiteDossiers }).then((r) => {
     if (!r || !r.ok) { $('resume').textContent = 'Impossible de charger les questionnaires.'; return; }
     tousDossiers = r.dossiers;
     const a = r.dossiers.filter((d) => d.aTraiter);
@@ -857,12 +920,11 @@ function chargerDossiers() {
     const hA = $('aTraiter'); hA.innerHTML = '';
     if (!a.length) hA.append(el('p', 'vide', 'Rien pour le moment.'));
     a.sort((x, y) => new Date(x.envoyeLe) - new Date(y.envoyeLe)).forEach((d) => hA.append(ligne(d, true)));
-    const hL = $('livres'); hL.innerHTML = '';
     $('blocLivres').style.display = l.length ? 'block' : 'none';
-    let vus = 0;
-    const plus = $('btnPlusClients');
-    const suite = () => { l.slice(vus, vus + 20).forEach((d) => hL.append(ligne(d, false))); vus += 20; plus.style.display = vus < l.length ? 'block' : 'none'; };
-    plus.onclick = suite; suite();
+    listeLivres = l;
+    // Le serveur dit si tout est charge (complet) ; sinon on propose la suite.
+    $('btnAnciens').style.display = (r.complet === false && limiteDossiers < 5000) ? 'block' : 'none';
+    if ($('chercheClient').value.trim()) filtrerClients(); else afficherLivres(l);
   }).catch(() => {});
 }
 

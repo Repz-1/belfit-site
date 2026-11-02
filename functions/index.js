@@ -1,6 +1,7 @@
 // Deploiement : automatique via GitHub Actions (.github/workflows/serveur.yml)
 // a chaque changement de ce dossier, depuis le 27/09. Plus besoin du PC.
 // Espace coach : secret COACH_CODE pose depuis GitHub (27/09, change le meme jour).
+const ORIGINES = require("./origines");
 const {onRequest} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
@@ -240,10 +241,10 @@ async function rendreQuotaIA(uid, q) {
 }
 
 exports.transcrireVocal = onRequest(
-  {secrets: [GEMINI_API_KEY], region: "europe-west1", cors: true, timeoutSeconds: 60},
+  {secrets: [GEMINI_API_KEY], region: "europe-west1", cors: ORIGINES, timeoutSeconds: 60},
   async (req, res) => {
     // CORS
-    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Origin", ORIGINES.includes(req.headers.origin) ? req.headers.origin : ORIGINES[0]); res.set("Vary", "Origin");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     if (req.method === "OPTIONS") { res.status(204).send(""); return; }
@@ -381,9 +382,9 @@ Regles :
 const NOMS_ALIMENTS = require("./aliments-noms.json");
 
 exports.coachAgent = onRequest(
-    {secrets: [GEMINI_API_KEY], region: "europe-west1", cors: true, timeoutSeconds: 30},
+    {secrets: [GEMINI_API_KEY], region: "europe-west1", cors: ORIGINES, timeoutSeconds: 30},
     async (req, res) => {
-      res.set("Access-Control-Allow-Origin", "*");
+      res.set("Access-Control-Allow-Origin", ORIGINES.includes(req.headers.origin) ? req.headers.origin : ORIGINES[0]); res.set("Vary", "Origin");
       res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
       res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
       if (req.method === "OPTIONS") { res.status(204).send(""); return; }
@@ -466,10 +467,10 @@ Message : ${JSON.stringify(message)}`;
 );
 
 exports.analyserPhoto = onRequest(
-  {secrets: [GEMINI_API_KEY], region: "europe-west1", cors: true, timeoutSeconds: 60},
+  {secrets: [GEMINI_API_KEY], region: "europe-west1", cors: ORIGINES, timeoutSeconds: 60},
   async (req, res) => {
     // CORS
-    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Origin", ORIGINES.includes(req.headers.origin) ? req.headers.origin : ORIGINES[0]); res.set("Vary", "Origin");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     if (req.method === "OPTIONS") { res.status(204).send(""); return; }
@@ -629,11 +630,7 @@ function validerPseudo(pseudo) {
 
 /** Reponse CORS commune : seul le site BELFIT peut appeler ces fonctions. */
 function appliquerCors(req, res) {
-  const origines = [
-    "https://belfit.be",
-    "https://www.belfit.be",
-    "https://repz-1.github.io",
-  ];
+  const origines = ORIGINES;
   const origine = req.headers.origin;
   if (origines.includes(origine)) {
     res.set("Access-Control-Allow-Origin", origine);
@@ -938,9 +935,9 @@ function modeleMail(lien, langue, jeu) {
 // serait libre, et l'endpoint deviendrait un relais a courriels.
 // ---------------------------------------------------------------
 exports.mailVerification = onRequest(
-  {secrets: [RESEND_API_KEY], region: "europe-west1", cors: true},
+  {secrets: [RESEND_API_KEY], region: "europe-west1", cors: ORIGINES},
   async (req, res) => {
-    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Origin", ORIGINES.includes(req.headers.origin) ? req.headers.origin : ORIGINES[0]); res.set("Vary", "Origin");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     if (req.method === "OPTIONS") { res.status(204).send(""); return; }
@@ -1020,7 +1017,7 @@ exports.mailVerification = onRequest(
 );
 
 exports.mailReinitialisation = onRequest(
-  {secrets: [RESEND_API_KEY], region: "europe-west1", cors: true},
+  {secrets: [RESEND_API_KEY], region: "europe-west1", cors: ORIGINES},
   async (req, res) => {
     if (req.method === "OPTIONS") { res.status(204).send(""); return; }
     if (req.method !== "POST") { res.status(405).json({ok: false}); return; }
@@ -1409,9 +1406,9 @@ async function deposerChez(corps, parCoach) {
 }
 
 exports.deposerProgramme = onRequest(
-  {secrets: [RESEND_API_KEY], region: "europe-west1", cors: true},
+  {secrets: [RESEND_API_KEY], region: "europe-west1", cors: ORIGINES},
   async (req, res) => {
-    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Origin", ORIGINES.includes(req.headers.origin) ? req.headers.origin : ORIGINES[0]); res.set("Vary", "Origin");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     if (req.method === "OPTIONS") { res.status(204).send(""); return; }
@@ -1468,14 +1465,42 @@ function codeCoachValide(saisi) {
   return crypto.timingSafeEqual(h(saisi), h(attendu));
 }
 
-/** Freinage des essais : par adresse IP, sur l'instance en cours. */
-const essaisCoach = new Map();
-function tropDEssais(ip) {
-  const maintenant = Date.now();
-  const e = essaisCoach.get(ip) || {n: 0, depuis: maintenant};
-  if (maintenant - e.depuis > 15 * 60 * 1000) { e.n = 0; e.depuis = maintenant; }
-  essaisCoach.set(ip, e);
-  return e.n >= 8;
+/** Freinage des essais (audit 01/11) : compte dans Firestore, donc
+ *  partage par toutes les instances et conserve au redemarrage.
+ *  Par adresse IP hachee (aucune IP en clair) : 10 erreurs -> blocage
+ *  1 h, puis 2 h, 4 h... (max 24 h) a chaque nouvelle serie d'erreurs.
+ *  Collection essaisCoach : fermee au client (regles). */
+const ESSAIS_MAX = 10;
+function refEssaisCoach(ip) {
+  const cle = crypto.createHash("sha256").update("coach|" + ip).digest("hex").slice(0, 40);
+  return db.collection("essaisCoach").doc(cle);
+}
+async function tropDEssais(ip, maintenant = Date.now()) {
+  const s = await refEssaisCoach(ip).get();
+  const d = s.exists ? s.data() : {};
+  return Number(d.bloqueJusqu || 0) > maintenant;
+}
+async function noterEchecCoach(ip, maintenant = Date.now()) {
+  const ref = refEssaisCoach(ip);
+  await db.runTransaction(async (tx) => {
+    const s = await tx.get(ref);
+    const d = s.exists ? s.data() : {};
+    // Serie remise a zero apres 24 h sans erreur.
+    const recent = maintenant - Number(d.dernier || 0) < 864e5;
+    const n = (recent ? Number(d.n || 0) : 0) + 1;
+    const blocages = recent ? Number(d.blocages || 0) : 0;
+    const maj = {n, dernier: maintenant, blocages};
+    if (n >= ESSAIS_MAX) {
+      const duree = Math.min(24, Math.pow(2, blocages)) * 3600e3;
+      maj.bloqueJusqu = maintenant + duree;
+      maj.blocages = blocages + 1;
+      maj.n = 0;
+    }
+    tx.set(ref, maj, {merge: true});
+  });
+}
+async function oublierEchecsCoach(ip) {
+  try { await refEssaisCoach(ip).delete(); } catch (e) { /* sans gravite */ }
 }
 
 /** Texte lisible d'une reponse du questionnaire, ou "". */
@@ -1659,10 +1684,48 @@ function ajusterALaCible(repas, table, kcalCible) {
   return r;
 }
 
+/** Fiche client pour la page coach (liste et recherche). */
+function dossierDe(uid, d, email) {
+  const q = d.questionnaireCoach || {};
+  const rep = q.reponses || {};
+  const livreLe = (d.programme && d.programme.livreLe) || null;
+  const resume = (p) => p && ({livreLe: p.livreLe || null, kcal: p.kcal, prot: p.prot, carbs: p.carbs, lip: p.lip,
+    note: p.note || "", repas: Array.isArray(p.repas) ? p.repas : [],
+    // 01/11 v657 : versions a dates, pour que le coach reprenne le plan envoye tel quel.
+    versions: Array.isArray(p.versions) ? p.versions.map((v) => ({libelle: v.libelle || "", debut: v.debut || "", repas: Array.isArray(v.repas) ? v.repas : []})) : []});
+  const histo = (Array.isArray(d.programmesHistorique) ? d.programmesHistorique : []).map(resume);
+  return {
+    uid,
+    email: email || null,
+    prenom: reponseTexte(rep, "prenom"),
+    nom: reponseTexte(rep, "nom"),
+    objectif: reponseTexte(rep, "objectif"),
+    type: q.type || "plan",
+    envoyeLe: q.envoyeLe || null,
+    payeLe: (d.commandeCoach && d.commandeCoach.payeLe) || null,
+    virement: (d.commandeCoach && d.commandeCoach.virement) || null,
+    livreLe,
+    // A traiter : un questionnaire recu et pas encore de programme livre apres lui.
+    aTraiter: !!q.envoyeLe && (!livreLe || new Date(livreLe) < new Date(q.envoyeLe)),
+    // 01/11 Raci : badge « Nouveau » = paye OU questionnaire recu, sans programme livre depuis.
+    // 01/11 (bis) : plus « Nouveau » des que le coach a ouvert la fiche (coachVuLe).
+    nouveau: [q.envoyeLe, d.commandeCoach && d.commandeCoach.payeLe].some((x) => !!x &&
+      (!livreLe || new Date(livreLe) < new Date(x)) &&
+      (!d.coachVuLe || new Date(d.coachVuLe) < new Date(x))),
+    programme: resume(d.programme),
+    programmesHistorique: histo,
+    alerteSante: !!q.alerteSante,
+    allergieGrave: !!q.allergieGrave,
+    reponses: rep,
+  };
+}
+
 exports.espaceCoach = onRequest(
-  {secrets: [RESEND_API_KEY, COACH_CODE, GEMINI_API_KEY], region: "europe-west1", cors: true, timeoutSeconds: 120},
+  {secrets: [RESEND_API_KEY, COACH_CODE, GEMINI_API_KEY], region: "europe-west1", cors: ORIGINES, timeoutSeconds: 120},
   async (req, res) => {
-    res.set("Access-Control-Allow-Origin", "*");
+    // CORS : seulement belfit.be (et localhost en dev), plus « * ».
+    if (ORIGINES.includes(req.headers.origin)) res.set("Access-Control-Allow-Origin", req.headers.origin);
+    res.set("Vary", "Origin");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.set("Access-Control-Allow-Headers", "Content-Type");
     if (req.method === "OPTIONS") { res.status(204).send(""); return; }
@@ -1671,22 +1734,40 @@ exports.espaceCoach = onRequest(
     const ip = String(req.get("x-forwarded-for") || req.ip || "?").split(",")[0].trim();
     try {
       const corps = req.body || {};
-      if (tropDEssais(ip)) { res.status(429).json({ok: false, motif: "attente"}); return; }
+      if (await tropDEssais(ip)) { res.status(429).json({ok: false, motif: "attente"}); return; }
       if (!codeCoachValide(corps.code)) {
-        const e = essaisCoach.get(ip); e.n += 1;
+        await noterEchecCoach(ip);
         await new Promise((r) => setTimeout(r, 800));
         res.status(403).json({ok: false, motif: "code"}); return;
       }
-      essaisCoach.delete(ip);
+      await oublierEchecsCoach(ip);
 
       const action = String(corps.action || "");
       if (action === "verifier") { res.json({ok: true}); return; }
+
+      // Audit 01/11 (v658) : retrouver n'importe quel client, meme au-dela
+      // de la liste chargee, par e-mail exact ou par pseudo exact.
+      if (action === "chercher") {
+        const q = String(corps.q || "").trim().slice(0, 120);
+        let uid = null; let email = null;
+        if (q.includes("@")) {
+          try { const u = await admin.auth().getUserByEmail(q.toLowerCase()); uid = u.uid; email = u.email || null; } catch (e) { /* inconnu */ }
+        } else if (q) {
+          const sp = await db.collection("usernames").doc(normaliserPseudo(q)).get();
+          if (sp.exists) uid = (sp.data() || {}).uid || null;
+          if (uid) { try { email = (await admin.auth().getUser(uid)).email || null; } catch (e) { /* sans e-mail */ } }
+        }
+        if (!uid) { res.json({ok: true, dossiers: []}); return; }
+        const su = await db.collection("users").doc(uid).get();
+        res.json({ok: true, dossiers: [dossierDe(uid, su.exists ? su.data() : {}, email)]});
+        return;
+      }
 
       if (action === "dossiers") {
         // 01/11 Raci : TOUS les clients qui ont paye, recu un programme ou
         // envoye un questionnaire (avant : questionnaire seulement, 60 max).
         // orderBy exclut les comptes sans le champ : 3 requetes, union par uid.
-        const limite = Math.max(50, Math.min(1000, parseInt(corps.limite, 10) || 300));
+        const limite = Math.max(50, Math.min(5000, parseInt(corps.limite, 10) || 300));
         const champs = ["questionnaireCoach.envoyeLe", "commandeCoach.payeLe", "programme.livreLe"];
         const snaps = await Promise.all(champs.map((c) => db.collection("users").orderBy(c, "desc").limit(limite).get()));
         const parUid = new Map();
@@ -1700,40 +1781,7 @@ exports.espaceCoach = onRequest(
           const r = await admin.auth().getUsers(lot);
           r.users.forEach((u) => { emails[u.uid] = u.email || null; });
         }
-        const dossiers = docs.map(({uid, d}) => {
-          const q = d.questionnaireCoach || {};
-          const rep = q.reponses || {};
-          const livreLe = (d.programme && d.programme.livreLe) || null;
-          const resume = (p) => p && ({livreLe: p.livreLe || null, kcal: p.kcal, prot: p.prot, carbs: p.carbs, lip: p.lip,
-            note: p.note || "", repas: Array.isArray(p.repas) ? p.repas : [],
-            // 01/11 v657 : versions a dates, pour que le coach reprenne le plan envoye tel quel.
-            versions: Array.isArray(p.versions) ? p.versions.map((v) => ({libelle: v.libelle || "", debut: v.debut || "", repas: Array.isArray(v.repas) ? v.repas : []})) : []});
-          const histo = (Array.isArray(d.programmesHistorique) ? d.programmesHistorique : []).map(resume);
-          return {
-            uid,
-            email: emails[uid] || null,
-            prenom: reponseTexte(rep, "prenom"),
-            nom: reponseTexte(rep, "nom"),
-            objectif: reponseTexte(rep, "objectif"),
-            type: q.type || "plan",
-            envoyeLe: q.envoyeLe || null,
-            payeLe: (d.commandeCoach && d.commandeCoach.payeLe) || null,
-            virement: (d.commandeCoach && d.commandeCoach.virement) || null,
-            livreLe,
-            // A traiter : un questionnaire recu et pas encore de programme livre apres lui.
-            aTraiter: !!q.envoyeLe && (!livreLe || new Date(livreLe) < new Date(q.envoyeLe)),
-            // 01/11 Raci : badge « Nouveau » = paye OU questionnaire recu, sans programme livre depuis.
-            // 01/11 (bis) : plus « Nouveau » des que le coach a ouvert la fiche (coachVuLe).
-            nouveau: [q.envoyeLe, d.commandeCoach && d.commandeCoach.payeLe].some((x) => !!x &&
-              (!livreLe || new Date(livreLe) < new Date(x)) &&
-              (!d.coachVuLe || new Date(d.coachVuLe) < new Date(x))),
-            programme: resume(d.programme),
-            programmesHistorique: histo,
-            alerteSante: !!q.alerteSante,
-            allergieGrave: !!q.allergieGrave,
-            reponses: rep,
-          };
-        });
+        const dossiers = docs.map(({uid, d}) => dossierDe(uid, d, emails[uid]));
         const recent = (x) => Math.max(0, ...[x.envoyeLe, x.payeLe, x.livreLe].map((v) => Date.parse(v) || 0));
         dossiers.sort((x, y) => recent(y) - recent(x));
         res.json({ok: true, dossiers, complet, limite});
@@ -1861,9 +1909,9 @@ exports.espaceCoach = onRequest(
 // 44 jours. Un lien ne sert qu'a un seul compte.
 // ============================================================
 exports.utiliserInvitation = onRequest(
-    {region: "europe-west1", cors: true},
+    {region: "europe-west1", cors: ORIGINES},
     async (req, res) => {
-      res.set("Access-Control-Allow-Origin", "*");
+      res.set("Access-Control-Allow-Origin", ORIGINES.includes(req.headers.origin) ? req.headers.origin : ORIGINES[0]); res.set("Vary", "Origin");
       res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
       res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
       if (req.method === "OPTIONS") { res.status(204).send(""); return; }
@@ -1920,9 +1968,9 @@ function moisCourant() {
 }
 
 exports.demanderAjustement = onRequest(
-  {secrets: [RESEND_API_KEY], region: "europe-west1", cors: true},
+  {secrets: [RESEND_API_KEY], region: "europe-west1", cors: ORIGINES},
   async (req, res) => {
-    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Origin", ORIGINES.includes(req.headers.origin) ? req.headers.origin : ORIGINES[0]); res.set("Vary", "Origin");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     if (req.method === "OPTIONS") { res.status(204).send(""); return; }
@@ -2023,7 +2071,7 @@ exports.demanderAjustement = onRequest(
  *   - premium est ecrit en admin, comme pour les webhooks de paiement.
  *     La source de verite reste unique : users/{uid}.
  *
- * Codes en clair dans le JS de la page (V1 : JETAIME, BELFIT1) : c'est
+ * Codes en clair dans le JS de la page (ancienne V1) : c'est
  * exactement ce que ceci remplace.
  * ============================================================ */
 exports.utiliserCode = onRequest(

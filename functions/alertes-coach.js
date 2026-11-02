@@ -5,6 +5,7 @@
 // AVANT l'envoi ; s'il existe deja, rien ne part. Si Resend refuse, le
 // document est retire pour qu'un nouvel appel (webhook rejoue) puisse reessayer.
 // Une alerte ratee ne bloque JAMAIS le paiement ni le questionnaire.
+const ORIGINES = require("./origines");
 const {onRequest} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
@@ -83,7 +84,7 @@ async function alertePaiement(p, {uid, email} = {}, deps = {}) {
  *  alerte par envoi (cle = uid + envoyeLe). */
 function gestionnaireQuestionnaire(deps = {}) {
   return async (req, res) => {
-    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Origin", ORIGINES.includes(req.headers.origin) ? req.headers.origin : ORIGINES[0]); res.set("Vary", "Origin");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     if (req.method === "OPTIONS") { res.status(204).send(""); return; }
