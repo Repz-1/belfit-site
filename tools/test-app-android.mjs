@@ -21,7 +21,7 @@ const SHOTS = process.env.SHOTS;
 let code = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); if (!c) code = 1; };
 const nav = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 const PRIX = /\d\s?(€|euros?)\b|€\s?\d/i;
-const ACHAT = /Demander mon plan|S'ABONNER|Reprendre ·|Voir l'offre|Code de réduction|Continuer vers le paiement|Paiement sécurisé|Mollie|virement|IBAN|TARIFS|Bientôt disponible|Débloquer mon programme|Reprendre mon programme/i;
+const ACHAT = /Demander mon plan|S'ABONNER|Reprendre ·|Voir l'offre|Code de réduction|Continuer vers le paiement|Paiement sécurisé|Mollie|virement|IBAN|TARIFS|Bientôt disponible|Débloquer|Reprendre mon programme|J'ai un code|code de réduction|Premium|acheter|abonne/i;
 async function ouvrir(query, { plan = null, referrer = null } = {}) {
   const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: 'fr-BE', deviceScaleFactor: 2 });
   if (referrer) await ctx.addInitScript(r => { Object.defineProperty(Document.prototype, 'referrer', { get: () => r }); }, referrer);
@@ -50,7 +50,7 @@ try {
   t = await coach(p);
   ok(!PRIX.test(t), 'twa : aucun prix dans l\'onglet Coach');
   ok(!ACHAT.test(t), 'twa : aucun bouton ni mot d\'achat dans l\'onglet Coach');
-  ok(/Ton programme n'est pas encore actif\./.test(t), 'twa : message neutre affiche');
+  ok(/Ton plan apparaîtra ici dès que ton coach l'aura préparé\./.test(t), 'twa : message neutre affiche');
   ok((await liensPaiement(p)).length === 0, 'twa : aucun lien de paiement dans la page');
   ok(await p.locator('.cp-modale').count() === 0 && await p.locator('.cp-code').count() === 0, 'twa : ni fenetre d\'achat ni code de reduction');
   await shot(p, '1-twa-coach-sans-acces');
@@ -58,13 +58,13 @@ try {
   await p.goto(`http://localhost:${PORT}/app.html?cmd=1`); await p.waitForTimeout(1800);
   await p.evaluate(() => { window.__banc.paiementOuvert.value = true; });
   t = await coach(p);
-  ok(!PRIX.test(t) && /pas encore actif/.test(t), 'twa : mode garde apres navigation sans ?source=twa (sessionStorage)');
+  ok(!PRIX.test(t) && /dès que ton coach l'aura préparé/.test(t), 'twa : mode garde apres navigation sans ?source=twa (sessionStorage)');
   await p.context().close();
 
   // 3. TWA detectee par le referrer android-app://be.belfit.app.
   p = await ouvrir('?cmd=1', { referrer: 'android-app://be.belfit.app/' });
   t = await coach(p);
-  ok(!PRIX.test(t) && /pas encore actif/.test(t), 'twa (referrer) : message neutre, aucun prix');
+  ok(!PRIX.test(t) && /dès que ton coach l'aura préparé/.test(t), 'twa (referrer) : message neutre, aucun prix');
   await p.context().close();
 
   // 4. TWA, client avec un ancien plan (mois termine) : Mon suivi sans 60 € ni « Reprendre · 80 € ».
@@ -88,7 +88,7 @@ try {
   await p.context().close();
   p = await ouvrir('?source=twa&verrou=jamais&cmd=1');
   t = await p.locator('#app').innerText();
-  ok(/pas encore actif/.test(t) && !ACHAT.test(t) && !PRIX.test(t), 'twa : alimentation verrouillee neutre, sans offre ni prix');
+  ok(/dès que ton coach l'aura préparé/.test(t) && !ACHAT.test(t) && !PRIX.test(t), 'twa : alimentation verrouillee neutre, sans offre ni prix');
   await shot(p, '3-twa-alimentation-verrouillee');
   // Tous les onglets : aucun prix.
   const items = p.locator('.bn-item');

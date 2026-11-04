@@ -28,4 +28,4 @@ export const APP_ANDROID = typeof window !== 'undefined'
 if (APP_ANDROID && typeof document !== 'undefined') document.documentElement.classList.add('app-android');
 
 // Message neutre (aucun prix, aucun lien, aucune incitation a acheter ailleurs).
-export const MSG_INACTIF = "Ton programme n'est pas encore actif.";
+export const MSG_INACTIF = "Ton plan apparaîtra ici dès que ton coach l'aura préparé.";
