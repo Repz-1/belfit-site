@@ -2,6 +2,7 @@ import { detailTotal, CLES_DETAIL } from '../data/aliments.js';
 import { accesDecouverte, joursRestantsDecouverte, enDecouverte } from '../services/decouverte.js';
 import { ongletActif } from './BottomNav.jsx';
 import { repasOuvertId } from './MealCard.jsx';
+import { APP_ANDROID } from '../services/app-android.js';
 import { lectureSeule } from '../store/acces-nutrition.js';
 
 // ============================================================
@@ -63,7 +64,7 @@ export function DetailNutritionnel({ ings }) {
     <div class="dn">
       <div class="dn-tete">
         <span class="dn-titre">Détail nutritionnel</span>
-        {ouvert && enDecouverte.value && !lectureSeule.value && (
+        {!APP_ANDROID && ouvert && enDecouverte.value && !lectureSeule.value && (
           <span class={'dn-offert' + (joursRestantsDecouverte.value <= 2 ? ' dn-offert--fin' : '')}>
             Offert {joursRestantsDecouverte.value} j
           </span>
@@ -95,13 +96,13 @@ export function DetailNutritionnel({ ings }) {
 
       {/* Moment n°2 : la fin de la fenetre approche. Ligne de statut,
           pas banniere — la fleche seule signale que c'est cliquable. */}
-      {ouvert && enDecouverte.value && joursRestantsDecouverte.value <= 2 && (
+      {!APP_ANDROID && ouvert && enDecouverte.value && joursRestantsDecouverte.value <= 2 && (
         <button class="dn-rappel" onClick={() => { repasOuvertId.value = null; ongletActif.value = 'premium'; }}>
           Accès Premium : {joursRestantsDecouverte.value} jour{joursRestantsDecouverte.value > 1 ? 's' : ''} restant{joursRestantsDecouverte.value > 1 ? 's' : ''}
         </button>
       )}
 
-      {!ouvert && (
+      {!ouvert && !APP_ANDROID && (
         <button class="dn-cta" onClick={() => { repasOuvertId.value = null; ongletActif.value = 'premium'; }}>
           Débloquer le détail nutritionnel
         </button>
