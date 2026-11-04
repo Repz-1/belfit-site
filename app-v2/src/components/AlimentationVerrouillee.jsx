@@ -22,12 +22,14 @@ export function AlimentationVerrouillee({ cause = 'jamais', fin = null, commande
   // Raci, 31/10 : carte compacte au style de la carte d'offre de la vitrine,
   // sans titre, toujours avec le bouton d'achat (jamais « Bientot disponible ») :
   // il mene a l'onglet de l'offre (parcours Mollie existant).
+  // v661 (Raci 04/11 « tu retires les trois points ») : plus de liste 1-2-3
+  // pour un nouveau client, le bouton seul ; l'ancien client garde sa date de fin.
   const puces = expire
     ? [fin ? `Accès terminé le ${fin}` : 'Accès terminé', 'Tes anciens repas restent consultables', 'Entraînement offert']
-    : ['Tu remplis un questionnaire personnalisé', 'Ton plan repas sur mesure, livré sous 48 h', 'Entraînement offert'];
+    : [];
   return (
     <div class="vr-carte vr-bulle" role="region" aria-label="Alimentation">
-      <ol class="vr-puces">{puces.map(t => <li key={t}>{t}</li>)}</ol>
+      {puces.length > 0 && <ol class="vr-puces">{puces.map(t => <li key={t}>{t}</li>)}</ol>}
       <button class="vr-btn" onClick={() => allerOnglet('premium')}>{expire ? 'Reprendre mon programme' : 'Débloquer mon programme'}</button>
     </div>
   );
