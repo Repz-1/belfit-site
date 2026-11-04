@@ -1,0 +1,22 @@
+// v661 : cadran sans plan actif (lecture seule incluse). node tools/test-cadran-attente.mjs
+import { resoudreProgramme } from '../app-v2/src/store/plans-par-date.js';
+import { etatCadran } from '../app-v2/src/store/cadran-attente.js';
+let ko=0; const ok=(c,m)=>{console.log((c?'✓ ':'✗ ')+m); if(!c) ko++;};
+const brut={ versions:[{ debut:'2026-11-05', kcal:2091, prot:150, carbs:220, lip:70, repas:[{nom:'Déjeuner',ings:[]}] }] };
+const avant=resoudreProgramme(brut,'2026-11-04');
+ok(avant && avant.enAttente && avant.enAttente.debut==='2026-11-05' && +avant.kcal===0, 'resoudreProgramme : enAttente (debut 2026-11-05) la veille');
+const jourJ=resoudreProgramme(brut,'2026-11-05');
+ok(jourJ && !jourJ.enAttente && +jourJ.kcal===2091, 'resoudreProgramme : plan actif le 05/11');
+const e1=etatCadran({ ro:true, reserve:true, planActif:false, prog:avant, auj:'2026-11-04' });
+ok(e1.masquer && e1.libelle==='Plan reçu · commence demain', 'lecture seule + plan en attente -> « Plan reçu · commence demain »');
+const e2=etatCadran({ ro:true, reserve:true, planActif:false, prog:null, auj:'2026-11-04' });
+ok(e2.masquer && e2.libelle==='Aucun plan actif', 'lecture seule sans plan -> pas de 4300');
+const e3=etatCadran({ ro:false, reserve:true, planActif:false, prog:avant, auj:'2026-11-04' });
+ok(e3.masquer && e3.libelle==='Plan reçu · commence demain', 'client paye + plan en attente');
+const e4=etatCadran({ ro:false, reserve:true, planActif:false, prog:null, auj:'2026-11-04' });
+ok(e4.libelle==='Plan en préparation', 'client paye sans plan');
+const e5=etatCadran({ ro:true, reserve:true, planActif:true, prog:jourJ, auj:'2026-11-05' });
+ok(!e5.masquer, 'plan actif -> objectif normal');
+const e6=etatCadran({ ro:false, reserve:false, planActif:false, prog:null, auj:'2026-11-04' });
+ok(!e6.masquer, 'blocage non applique -> inchange');
+console.log(ko? ko+' echec(s)':'OK'); process.exit(ko?1:0);
