@@ -14,9 +14,16 @@ function firestore() {
     _fsPromesse = import('firebase/firestore').then((fs) => {
       const db = fs.getFirestore(getApps()[0]);
       // Cache hors-ligne natif ; echec silencieux possible (multi-onglets)
-      fs.enableIndexedDbPersistence(db).catch(() => {});
+      // Si un autre module (BelfitPlus, firebase.js...) a deja demarre
+      // Firestore, cet appel LEVE une erreur synchrone (failed-precondition)
+      // au lieu de rejeter : sans ce try, toute la promesse echouait et la
+      // session entiere tombait en « hors-ligne » (lecture locale vide,
+      // aucune ecriture cloud) — origine des repas effaces.
+      try { fs.enableIndexedDbPersistence(db).catch(() => {}); } catch (e) {}
       return { fs, db };
     });
+    // Un echec (chargement du module) ne doit pas rester en cache a vie
+    _fsPromesse.catch(() => { _fsPromesse = null; });
   }
   return _fsPromesse;
 }
@@ -40,6 +47,17 @@ let etatComplet = {};
 // faut repartir de zero : sans ca, les donnees du precedent seraient
 // reecrites dans le document du suivant.
 let uidEtat = null;
+// Lecture cloud partagee : tous les stores (journal, stats, seances...)
+// attendent LA MEME lecture au demarrage. Avant, chacun lisait de son
+// cote ; une sauvegarde precoce d'un store reecrivait le localStorage
+// avec un ts neuf mais des champs partiels, et la lecture suivante
+// preferait cette copie « plus recente » a la vraie copie cloud : les
+// repas/l'eau repartaient vides puis etaient renvoyes au cloud.
+let lecture = null; // { uid, promesse }
+// Vrai quand la copie cloud de uidEtat a ete lue avec succes : tant que
+// ce n'est pas le cas, rien n'est ecrit (ni local, ni cloud).
+let cloudLu = false;
+let envoiEnAttente = false;
 
 function cleLocale(uid) {
   return `belfit_v2_journal_${uid}`;
@@ -49,8 +67,40 @@ function cleLocale(uid) {
 const UID_INVITE = '__invite__';
 
 // ---- Lecture au demarrage : cloud d'abord, local en secours ----
-export async function chargerDonnees(uid) {
-  if (uid !== uidEtat) { etatComplet = {}; uidEtat = uid; }
+export function chargerDonnees(uid) {
+  if (uid !== uidEtat) { etatComplet = {}; uidEtat = uid; cloudLu = false; envoiEnAttente = false; lecture = null; }
+  if (!lecture || lecture.uid !== uid) {
+    const promesse = lireUneFois(uid);
+    lecture = { uid, promesse };
+  }
+  // Copie par appelant : un store ne doit pas modifier l'objet d'un autre
+  return lecture.promesse.then(d => (d ? structuredClone(d) : d));
+}
+
+// Un getDoc lance juste apres la connexion peut rester sans reponse
+// (jeton pas encore pret, cache IndexedDB en cours d'ouverture). Comme
+// tous les stores partagent cette lecture, on ne la laisse jamais pendre :
+// delai de 8 s puis nouvel essai direct au serveur, jusqu'a 5 fois.
+async function lireDocAvecRelance(fs, db, uid) {
+  let derniere;
+  for (let essai = 0; essai < 5; essai++) {
+    const ref = fs.doc(db, 'users', uid);
+    const lire = essai === 0 ? fs.getDoc(ref) : fs.getDocFromServer(ref);
+    try {
+      return await Promise.race([
+        lire,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('delai')), 8000)),
+      ]);
+    } catch (e) {
+      derniere = e;
+      if (e && e.code === 'permission-denied' && essai >= 2) break;
+      await new Promise(r => setTimeout(r, 1000 * (essai + 1)));
+    }
+  }
+  throw derniere;
+}
+
+async function lireUneFois(uid) {
   const localBrut = localStorage.getItem(cleLocale(uid));
   // Une entree localStorage corrompue (quota atteint en pleine
   // ecriture, extension navigateur) ne doit pas bloquer le demarrage :
@@ -60,10 +110,10 @@ export async function chargerDonnees(uid) {
     try { local = JSON.parse(localBrut); }
     catch { local = null; }
   }
-  if (uid === UID_INVITE) { etatComplet = { ...(local || {}), ...etatComplet }; return local; }
+  if (uid === UID_INVITE) { etatComplet = { ...(local || {}), ...etatComplet }; cloudLu = true; return local; }
   try {
     const { fs, db } = await firestore();
-    const snap = await fs.getDoc(fs.doc(db, 'users', uid));
+    const snap = await lireDocAvecRelance(fs, db, uid);
     const brut = snap.exists() ? snap.data() : null;
     const cloud = brut && brut.v2Data ? brut.v2Data : null;
     if (cloud && !cloud.prenom && brut.prenom) cloud.prenom = brut.prenom;
@@ -85,11 +135,16 @@ export async function chargerDonnees(uid) {
         fs.setDoc(fs.doc(db, 'users', uid), { v2Data: migre }, { merge: true }).catch(() => {});
       }
     }
+    if (uid !== uidEtat) return resultat; // changement de compte entre-temps
     etatComplet = { ...(resultat || {}), ...etatComplet };
+    cloudLu = true;
+    if (envoiEnAttente) { envoiEnAttente = false; sauvegarder(uid, {}); }
     return resultat;
   } catch (e) {
-    // Hors-ligne ou erreur reseau -> copie locale
-    etatComplet = { ...(local || {}), ...etatComplet };
+    // Hors-ligne ou erreur reseau -> copie locale. On ne marque PAS le
+    // cloud comme lu : aucune ecriture ne partira tant qu'une vraie
+    // lecture n'aura pas reussi (prochain chargerDonnees = nouvel essai).
+    if (uid === uidEtat) { etatComplet = { ...(local || {}), ...etatComplet }; lecture = null; }
     return local || null;
   }
 }
@@ -98,6 +153,10 @@ export async function chargerDonnees(uid) {
 export function sauvegarder(uid, champsPartiels) {
   // Fusion : chaque store n'ecrit que ses champs, sans toucher aux autres
   etatComplet = { ...etatComplet, ...champsPartiels };
+  // Pas encore de lecture cloud reussie pour ce compte : on garde le
+  // changement en memoire et on l'ecrira juste apres la lecture. Ecrire
+  // maintenant ecraserait la vraie copie par un etat incomplet.
+  if (uid !== uidEtat || !cloudLu) { if (uid === uidEtat) envoiEnAttente = true; return; }
   const instantane = { ...etatComplet, ts: Date.now() };
   try { localStorage.setItem(cleLocale(uid), JSON.stringify(instantane)); } catch (e) {}
   if (uid === UID_INVITE) return; // pas de cloud pour un invite
