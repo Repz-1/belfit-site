@@ -12,6 +12,9 @@ import { Entete } from './Entete.jsx';
 import { SILHOUETTE_FACE, SILHOUETTE_DOS, SILHOUETTE_FACE_F, SILHOUETTE_DOS_F } from '../data/silhouette.js';
 import { sexe } from '../store/perso.js';
 import { aujourdhuiBxl, ajouterJours } from '../store/plans-par-date.js';
+import { etatCadran } from '../store/cadran-attente.js';
+import { lectureSeule, calculReserveCoach } from '../store/acces-nutrition.js';
+import { planCoachActif, programme } from './BelfitPlus.jsx';
 import '../legacy/stats.scoped.css';
 
 // ==========================================================
@@ -410,7 +413,15 @@ export function Stats() {
     }
   }
   const valsK = colsK.map(c => c.v).filter(v => v != null);
-  const objKcalJ = +objectifs.value.kcal || 0;
+  // 05/11 Raci : pas de trait d'objectif 4300 (DEFAUTS) sans plan coach.
+  const cadranStats = etatCadran({
+    ro: lectureSeule.value,
+    reserve: calculReserveCoach.value,
+    planActif: planCoachActif.value,
+    prog: programme.value,
+    auj: aujourdhuiBxl(),
+  });
+  const objKcalJ = cadranStats.masquer ? 0 : (+objectifs.value.kcal || 0);
   const moyKcal = valsK.length ? Math.round(valsK.reduce((a, b) => a + b, 0) / valsK.length) : 0;
   // Un « 0 » ne distingue pas « rien mange » de « rien encode ». On garde
   // la valeur seulement si la journee a ete renseignee (Raci, 9/08).
