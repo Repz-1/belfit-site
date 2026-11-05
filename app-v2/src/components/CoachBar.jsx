@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { parserLocal, proposerRepas, composerSeance, SCHEMAS, portionJournal } from '../services/coach-local.js';
 import { demanderCoach } from '../services/coach.js';
 import { repas, objectifs, totauxJourAff, ajouterIngredient, ajouterEau, ajouterRepas } from '../store/journal.js';
+import { etatCadran } from '../store/cadran-attente.js';
+import { planCoachActif, programme } from './BelfitPlus.jsx';
+import { aujourdhuiBxl } from '../store/plans-par-date.js';
 import { seanceRefs, selectionExos, abandonnerSeance, portraitSeanceDuJour, ETAT, demandeVueEntrainer, poserBrouillon } from '../store/seance-active.js';
 import { ongletActif } from './BottomNav.jsx';
 import { planifierSeance } from '../store/programme.js';
@@ -11,7 +14,7 @@ import { courses, origineCourses } from './Courses.jsx';
 import { DB, macrosOf } from '../data/aliments.js';
 import { t } from '../i18n/index.js';
 import '../styles/coach-bar.css';
-import { ecritureBloquee } from '../store/acces-nutrition.js';
+import { ecritureBloquee, lectureSeule, calculReserveCoach } from '../store/acces-nutrition.js';
 
 function repasCible(cle) {
   const liste = repas.value;
@@ -413,7 +416,15 @@ export function CoachBar({ mode = 'repas', titre }) {
 
   const aConfirmer = lignes.length > 0 || eauLitres > 0;
   const kcalProp = lignes.reduce((s, l) => s + kcalDe(l), 0);
-  const reste = (objectifs.value.kcal || 0) - (totauxJourAff.value.kcal || 0) - kcalProp;
+  const cadranCoach = etatCadran({
+    ro: lectureSeule.value,
+    reserve: calculReserveCoach.value,
+    planActif: planCoachActif.value,
+    prog: programme.value,
+    auj: aujourdhuiBxl(),
+  });
+  const objKcalCoach = cadranCoach.masquer ? 0 : (objectifs.value.kcal || 0);
+  const reste = objKcalCoach - (totauxJourAff.value.kcal || 0) - kcalProp;
 
   return (
     <div class={'coach-bar' + (ouvert ? ' coach-bar--ouvert' : '')}>
@@ -451,7 +462,7 @@ export function CoachBar({ mode = 'repas', titre }) {
           {kcalProp > 0 && (
             <p class="coach-bar-ecart">
               {t('coach_kcal').replace('{n}', String(kcalProp))}
-              {objectifs.value.kcal
+              {objKcalCoach
                 ? ' · ' + (reste > 0
                   ? t('coach_reste').replace('{n}', String(Math.round(reste)))
                   : t('coach_depasse').replace('{n}', String(Math.round(-reste))))

@@ -4,6 +4,9 @@ import { t } from '../i18n/index.js';
 import { weightLog, histoJours } from '../store/stats.js';
 import { objectifs } from '../store/journal.js';
 import { aujourdhuiBxl, ajouterJours } from '../store/plans-par-date.js';
+import { etatCadran } from '../store/cadran-attente.js';
+import { lectureSeule, calculReserveCoach } from '../store/acces-nutrition.js';
+import { planCoachActif, programme } from './BelfitPlus.jsx';
 import { musclesParJour } from '../services/muscles-jour.js';
 import { Entete } from './Entete.jsx';
 import { useRetour } from '../services/retour.js';
@@ -116,7 +119,15 @@ export function StatsAvancees({ fermer }) {
   // periode, sinon le calcul repose sur du bruit.
   const tdeeReel = (nbJours >= 7 && pesees.length >= 5 && pente !== null && moyKcal)
     ? Math.round(moyKcal - (pente * 7700) / 7) : null;
-  const cibleKcalObj = obj && obj.kcal ? obj.kcal : null;
+  // 05/11 Raci : pas d'objectif DEFAUTS (4300) sans plan coach.
+  const cadranAv = etatCadran({
+    ro: lectureSeule.value,
+    reserve: calculReserveCoach.value,
+    planActif: planCoachActif.value,
+    prog: programme.value,
+    auj: aujourdhuiBxl(),
+  });
+  const cibleKcalObj = cadranAv.masquer ? null : (obj && obj.kcal ? obj.kcal : null);
 
   // --- Projection : ou serait le poids dans 30 jours a ce rythme.
   const dernierPoids = pesees.length ? pesees[pesees.length - 1].kg : null;
