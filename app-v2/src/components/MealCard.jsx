@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { DB, NOMS_ALIMENTS, macrosOf, scoreRecherche, facteurCuisson, PAIRES_CUISSON } from '../data/aliments.js';
 import { customFoods, Scanner } from './Scanner.jsx';
-import { lectureSeule, ecritureBloquee } from '../store/acces-nutrition.js';
+import { lectureSeule, ecritureBloquee, encodageFerme } from '../store/acces-nutrition.js';
 import { VocalModal } from './VocalModal.jsx';
 import { signal, effect } from '@preact/signals';
 
@@ -45,14 +45,15 @@ import {
   repas, totauxRepas, setPortion, ajouterIngredient, ajouterPlat,
   supprimerIngredient, supprimerRepas, renommerRepas, basculerCuisson,
   fourchetteRepas, remplacerAliment, validerRepas, annulerValidation, sauterRepas, mangeAutreChose, remettrePrevu,
-  appliquerIdee, annulerIdee, choisirIdee, repas as repasJour, heurePrevue, setHeureRepas } from '../store/journal.js';
+  appliquerIdee, annulerIdee, choisirIdee, repas as repasJour, heurePrevue, setHeureRepas, cleDuNom } from '../store/journal.js';
 import { totalPlanJour, totalJourPrevu } from '../services/recalage-jour.js';
 import { dossierCoach } from './BelfitPlus.jsx';
 import { preferencesDe, prochaineIdee, kcalIngs, lignesIdee } from '../services/autre-idee.js';
 
-/** Illustration d'un repas : la sienne s'il est fixe, sinon celle de son type. */
+/** Illustration d'un repas : cle posee, sinon deduite du nom (cleDuNom), sinon type. */
 export function illustration(r) {
-  if (r.cle && MEAL_SVG[r.cle]) return MEAL_SVG[r.cle];
+  const cle = r.cle || cleDuNom(r.nom);
+  if (cle && MEAL_SVG[cle]) return MEAL_SVG[cle];
   return TYPE_SVG[r.type] || MEAL_NEUTRAL_SVG;
 }
 
@@ -125,7 +126,7 @@ export function LigneIngredient({ repasId, ing }) {
   // quand meme, elle change d'entree au lieu de convertir.
   const paire = fc ? null : PAIRES_CUISSON[ing.name];
   // Alimentation fermee : historique en lecture seule (pas de champ, pas de croix).
-  const ro = lectureSeule.value;
+  const ro = lectureSeule.value || encodageFerme.value;
 
   // La valeur peut changer ailleurs (vocal, scan) : on resynchronise.
   useEffect(() => { setSaisie(String(ing.portion)); }, [ing.portion]);
@@ -546,7 +547,7 @@ export function MealCard({ r, aSuivre, fait, puce }) {
   const vide = r.ings.length === 0;
   const [edite, setEdite] = useState(false);
   // Alimentation fermee : on consulte, on ne modifie rien (ni cases, ni boutons).
-  const ro = lectureSeule.value;
+  const ro = lectureSeule.value || encodageFerme.value;
   // 22/10 : etat d'un repas du plan — prevu, mange, saute, autre (remplace).
   const choisi = r.duPlan && (r.saute || r.remplace);
   // Trois zones : vignette, contenu, actions.
@@ -733,7 +734,7 @@ export function RepasTimeline({ r, aSuivre, fait }) {
   // enregistree (mange avant v654, repas rempli a la main) affichait une pastille
   // non cliquable. Tout repas mange est desormais modifiable (depart : heure prevue).
   const heure = reelle ? r.heure : heurePrevue(r);
-  const ro = lectureSeule.value;
+  const ro = lectureSeule.value || encodageFerme.value;
   return (
     <div class={'tl-it' + (mange ? ' tl-it--mange' : '') + (r.saute ? ' tl-it--saute' : '')}>
       {/* 01/11 v654 Raci (maquette B) : plus de colonne d'heures ; l'heure est une

@@ -5,7 +5,7 @@ import { signal } from '@preact/signals';
 export const ouvrirCalcDemande = signal(false);
 import { repas, objectifs, totauxJourAff, kcalRestantes, donneesPretes, poidsCalcul, rappelIgnoreA, dateJour, nouvelleJournee, journalDUnJourPasse } from '../store/journal.js';
 import { weightLog, enregistrerJour } from '../store/stats.js';
-import { lectureSeule, calculReserveCoach } from '../store/acces-nutrition.js';
+import { lectureSeule, encodageFerme, calculReserveCoach } from '../store/acces-nutrition.js';
 import { t } from '../i18n/index.js';
 import { aujourdhuiBxl } from '../store/plans-par-date.js';
 import { etatCadran } from '../store/cadran-attente.js';
@@ -119,6 +119,9 @@ export { libellePlanAttente } from '../store/cadran-attente.js';
 export function DayDashboard() {
   // Alimentation fermee : on consulte le dernier journal enregistre, sans action.
   const ro = lectureSeule.value;
+  // Encodage coupe : pas de cloture / rappel (ecriture), mais le cadran
+  // « Plan en preparation » reste base sur lectureSeule seule.
+  const saisieFerme = ro || encodageFerme.value;
   const obj = objectifs.value;
   const tot = totauxJourAff.value;
   const restant = kcalRestantes.value;
@@ -205,11 +208,11 @@ export function DayDashboard() {
         <Macro nom={t('carbs')}    valeur={tot.carbs} cible={enPreparation ? null : obj.carbs} teinte="var(--mac-carbs)" />
         <Macro nom={t('fats')}     valeur={tot.lip}   cible={enPreparation ? null : obj.lip}   teinte="var(--mac-lip)" />
       </div>
-      {!ro && <RappelRecalcul />}
-      {retard && !ro && (
+      {!saisieFerme && <RappelRecalcul />}
+      {retard && !saisieFerme && (
         <div class="cal-retard">{t('jour_non_cloture').replace('{j}', jourOuvert)}</div>
       )}
-      {!ro && <button class={'cal-reset' + (aCloturer ? ' cal-reset--rappel' : '')} disabled={clotureBloquee}
+      {!saisieFerme && <button class={'cal-reset' + (aCloturer ? ' cal-reset--rappel' : '')} disabled={clotureBloquee}
         aria-disabled={clotureBloquee ? 'true' : undefined}
         onClick={() => {
         if (clotureBloquee) return;

@@ -12,7 +12,7 @@ import { ideesOuvertes, origineIdees } from './IdeesRepas.jsx';
 import { origineCourses } from './Courses.jsx';
 import { Entete } from './Entete.jsx';
 import { dateBruxelles, resoudreProgramme } from '../store/plans-par-date.js';
-import { lectureSeule, poserAcces, chargerAccesLocal, poserAccesInvite, poserBlocageDistant } from '../store/acces-nutrition.js';
+import { lectureSeule, encodageFerme, poserAcces, chargerAccesLocal, poserAccesInvite, poserBlocageDistant } from '../store/acces-nutrition.js';
 import '../styles/belfit-plus.css';
 
 const URL_AJUSTEMENT =
@@ -124,7 +124,7 @@ effect(() => {
   if (!pr || !(+pr.kcal > 0)) return;
   if (lectureSeule.value) return;   // alimentation fermee : reprend a l'ouverture de l'acces
   if (o.kcal === pr.kcal && o.prot === pr.prot && o.carbs === pr.carbs && o.lip === pr.lip) return;
-  setObjectifs({ kcal: pr.kcal, prot: pr.prot, carbs: pr.carbs, lip: pr.lip });
+  setObjectifs({ kcal: pr.kcal, prot: pr.prot, carbs: pr.carbs, lip: pr.lip }, { depuisPlan: true });
 });
 
 // 22/10 Raci : des que le plan est connu (charge a l'ouverture de l'app,
@@ -240,14 +240,18 @@ if (typeof document !== 'undefined') {
   window.addEventListener('pageshow', auRetour);
 }
 
-/** « il y a 3 jours », a partir d'une date ISO. */
-/** Icone d'un repas d'apres son nom. */
-function iconeRepas(nom) {
-  const n = String(nom || '').toLowerCase();
-  if (/petit/.test(n)) return 'sun';
-  if (/collation|goûter|gouter|snack/.test(n)) return 'apple';
-  if (/dîner|diner|souper|soir/.test(n)) return 'moon';
-  return 'tools-kitchen';
+/** Icone d'un repas : cleDuNom (deja riche) puis fallback par position
+ *  (1er = soleil, dernier = lune, milieu = couverts / pomme). 05/11 Raci. */
+function iconeRepas(nom, index = 0, total = 1) {
+  const cle = cleDuNom(nom);
+  if (cle === 'pdej') return 'sun';
+  if (cle === 'dej') return 'tools-kitchen';
+  if (cle === 'diner') return 'moon';
+  if (cle === 'snack') return 'apple';
+  if (total <= 1) return 'tools-kitchen';
+  if (index === 0) return 'sun';
+  if (index === total - 1) return 'moon';
+  return (index % 2 === 1) ? 'tools-kitchen' : 'apple';
 }
 
 function depuis(iso) {
@@ -337,7 +341,7 @@ export function BelfitPlus() {
    *  ils arrivent d'ailleurs seuls a l'ouverture, ce bouton re-seme). */
   const charger = () => {
     if (!pr) return;
-    setObjectifs({ kcal: pr.kcal, prot: pr.prot, carbs: pr.carbs, lip: pr.lip });
+    setObjectifs({ kcal: pr.kcal, prot: pr.prot, carbs: pr.carbs, lip: pr.lip }, { depuisPlan: true });
     // 22/10 : meme regle que l'arrivee automatique, sans ecraser la saisie.
     if (aRepas) semerPlan(pr.repas);
     marquerCharge(pr);
@@ -445,7 +449,7 @@ export function BelfitPlus() {
               {(pr.repas || []).map((r, i) => (
                 <section class="pc-repas" key={i}>
                   <header>
-                    <span class="pc-ic"><Icone nom={iconeRepas(r.nom)} taille={17} /></span>
+                    <span class="pc-ic"><Icone nom={iconeRepas(r.nom, i, (pr.repas || []).length)} taille={17} /></span>
                     <b>{r.nom}</b>
                     <em>{Math.round(kcalRepas(r))} kcal</em>
                   </header>
@@ -552,7 +556,7 @@ export function BelfitPlus() {
         </button>
 
         {/* 3. Recettes (fermees sans acces alimentation) */}
-        {!lectureSeule.value && <button class="bp-carte" onClick={() => { origineIdees.value = 'premium'; allerOnglet('journal'); ideesOuvertes.value = true; }}>
+        {!lectureSeule.value && !encodageFerme.value && <button class="bp-carte" onClick={() => { origineIdees.value = 'premium'; allerOnglet('journal'); ideesOuvertes.value = true; }}>
           <span class="bp-visuel bp-visuel--recettes" aria-hidden="true" />
           <span class="bp-corps">
             <span class="bp-nom">Recettes intelligentes</span>
@@ -562,7 +566,7 @@ export function BelfitPlus() {
         </button>}
 
         {/* 4. Courses */}
-        {!lectureSeule.value && <button class="bp-carte" onClick={() => { origineCourses.value = 'premium'; allerOnglet('courses'); }}>
+        {!lectureSeule.value && !encodageFerme.value && <button class="bp-carte" onClick={() => { origineCourses.value = 'premium'; allerOnglet('courses'); }}>
           <span class="bp-visuel bp-visuel--courses" aria-hidden="true" />
           <span class="bp-corps">
             <span class="bp-nom">Liste de courses intelligente</span>
