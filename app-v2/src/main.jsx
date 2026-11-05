@@ -57,6 +57,8 @@ import { objectifEnPreparation } from './store/journal.js';
 import { effect as effetObjectif } from '@preact/signals';
 effetObjectif(() => { objectifEnPreparation.value = !lectureSeule.value && calculReserveCoach.value && !planCoachActif.value; });
 import { commandesSimulees, lectureSeule, encodageFerme, calculReserveCoach, offreVisible, causeFermeture, finAccesMs } from './store/acces-nutrition.js';
+import { etatCadran } from './store/cadran-attente.js';
+import { aujourdhuiBxl } from './store/plans-par-date.js';
 import { AlimentationVerrouillee } from './components/AlimentationVerrouillee.jsx';
 import { commandesOuvertes } from './components/CoachPage.jsx';
 
@@ -648,8 +650,18 @@ export function App() {
           const acces = finAcces(dossierCoach.value, pr);
           const finPro = acces && acces.fin;
           const pro = !!finPro && Date.now() < finPro.getTime();
+          // 05/11 Raci : meme regle que DayDashboard — jamais les DEFAUTS
+          // (4300 kcal) sans plan coach. etatCadran.masquer -> libelle d'attente.
+          const cadran = etatCadran({
+            ro: lectureSeule.value,
+            reserve: calculReserveCoach.value,
+            planActif: planCoachActif.value,
+            prog: pr,
+            auj: aujourdhuiBxl(),
+          });
+          const enPreparation = cadran.masquer;
           const fr = (n) => Math.round(n || 0).toLocaleString('fr-BE');
-          const part = o.kcal > 0 ? Math.min(1, (c.kcal || 0) / o.kcal) : 0;
+          const part = !enPreparation && o.kcal > 0 ? Math.min(1, (c.kcal || 0) / o.kcal) : 0;
           // Demi-cercle : centre (110,115), rayon 85, de 180° a 0°.
           const ang = Math.PI * (1 - part);
           const fx = (110 + 85 * Math.cos(ang)).toFixed(1), fy = (115 - 85 * Math.sin(ang)).toFixed(1);
@@ -671,7 +683,9 @@ export function App() {
                     : <span>{t('compte_gratuit')}</span>}
                 </div>
               </div>
-              {o.kcal > 0 && (
+              {enPreparation ? (
+                <p class="pvg-attente">{cadran.libelle}</p>
+              ) : o.kcal > 0 && (
                 <>
                   <svg class="pvg-cadran" viewBox="0 0 220 130" aria-hidden="true">
                     <defs><linearGradient id="pvg-deg" gradientUnits="userSpaceOnUse" x1="25" y1="0" x2="195" y2="0"><stop offset="0" stop-color="#FFD84A" /><stop offset=".5" stop-color="#F86A0C" /><stop offset="1" stop-color="#E53B1E" /></linearGradient></defs>

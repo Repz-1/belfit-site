@@ -1006,6 +1006,7 @@ button{cursor:pointer}
 .pv-av span{background:#2B303C}
 .pv-id span{color:#A9AFBC}
 .pvg-cadran{display:block;width:100%;margin:6px 0 -6px;position:relative}
+.pvg-attente{position:relative;margin:14px 0 12px;font-size:14px;font-weight:600;color:#F2F3F5;text-align:center;line-height:1.35}
 .pvg-kc{fill:#F2F3F5;font:700 34px Satoshi,system-ui,sans-serif;letter-spacing:-1px}
 .pvg-sur{fill:#A9AFBC;font:500 12px Satoshi,system-ui,sans-serif}
 .pvg-macros{position:relative;display:flex;gap:12px;margin:10px 0 14px}
