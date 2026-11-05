@@ -349,10 +349,11 @@ const MSG_SANS_Q = 'Pas de questionnaire : écris la cible à l\'IA (ex. « vise
 // 26/10 Plans par date : un plan = une ou plusieurs VERSIONS, chacune avec
 // un jour de debut. `plan` pointe toujours sur les repas de la version
 // ouverte : tout le reste de la page (repas, totaux, IA) n'a pas change.
-let versions = [{ libelle: '', debut: '', repas: [
-  { nom: 'Repas 1', ings: [] },
-  { nom: 'Repas 2', ings: [] },
-] }];
+// 05/11 Raci : noms par defaut reconnus par cleDuNom / icones (plus de « Repas N »).
+const NOMS_REPAS_DEFAUT = ['Petit-déjeuner', 'Déjeuner', 'Collation', 'Dîner'];
+const repasVierges = (n) => NOMS_REPAS_DEFAUT.slice(0, n).map((nom) => ({ nom, ings: [] }));
+const nomRepasNouveau = (index) => NOMS_REPAS_DEFAUT[index] || ('Repas ' + (index + 1));
+let versions = [{ libelle: '', debut: '', repas: repasVierges(2) }];
 let cur = 0;
 let plan = versions[0].repas;
 
@@ -682,7 +683,7 @@ function rafraichirTotaux() {
 }
 
 $('btnRepas').addEventListener('click', () => {
-  plan.push({ nom: 'Repas ' + (plan.length + 1), ings: [] });
+  plan.push({ nom: nomRepasNouveau(plan.length), ings: [] });
   dessiner();
 });
 
@@ -931,7 +932,7 @@ function chargerDossiers() {
 // 01/11 Raci : etat propre pour chaque client (plus de 8 semaines d'un autre essai).
 const planVide = () => versions.every((v) => v.repas.every((r) => !r.ings.length));
 function etatPropre() {
-  versions = [{ libelle: '', debut: '', repas: [{ nom: 'Repas 1', ings: [] }, { nom: 'Repas 2', ings: [] }] }];
+  versions = [{ libelle: '', debut: '', repas: repasVierges(2) }];
   $('avance').open = false;
   $('vPremier').value = ''; $('cible').style.display = 'none'; $('iaEtat').className = 'msg';
   $('note').value = ''; cibleCourante = null;

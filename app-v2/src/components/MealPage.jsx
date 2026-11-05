@@ -5,7 +5,7 @@ import { enregistrerPlat } from '../store/perso.js';
 import { Recherche, LigneIngredient, repasOuvertId } from './MealCard.jsx';
 import { DetailNutritionnel } from './DetailNutritionnel.jsx';
 import { t } from '../i18n/index.js';
-import { lectureSeule } from '../store/acces-nutrition.js';
+import { lectureSeule, encodageFerme } from '../store/acces-nutrition.js';
 
 // ============================================================
 // PAGE REPAS — encodage plein ecran.
@@ -60,7 +60,7 @@ export function MealPage() {
 
   const [edite, setEdite] = useState(false);
   // Alimentation fermee : la fiche se consulte, sans recherche ni modification.
-  const ro = lectureSeule.value;
+  const ro = lectureSeule.value || encodageFerme.value;
   const [enrego, setEnrego] = useState(false);
   const [nomPlat, setNomPlat] = useState('');
   const [garde, setGarde] = useState(false);

@@ -4,7 +4,7 @@ import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { enregistrerJour } from './stats.js';
 import { aujourdhuiBxl } from './plans-par-date.js';
-import { ecritureBloquee, lectureSeule } from './acces-nutrition.js';
+import { ecritureBloquee, lectureSeule, encodageFerme } from './acces-nutrition.js';
 import { recalerJour, confirmerIdeeJour } from '../services/recalage-jour.js';
 import { calerParNom } from '../services/autre-idee.js';
 
@@ -365,13 +365,25 @@ export function setHeureRepas(repasId, heure) {
  * Les autres repas (libres, collations vides...) ne bougent pas.
  */
 export function semerPlan(planRepas) {
-  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
+  // lectureSeule seulement : le semis du plan coach doit passer meme si
+  // ENCODAGE_ACTIF est coupe (05/11 Raci). L'encodage client reste bloque
+  // via ecritureBloquee() sur les autres mutateurs.
+  if (lectureSeule.peek()) return;
   const liste = repas.value.map(r => ({ ...r }));
   const nomN = (n) => String(n || '').trim().toLowerCase();
   const cles = new Set();
   let id = Math.max(0, ...liste.map(r => r.id || 0));
+  const nPlan = planRepas.length;
   planRepas.forEach((p, k) => {
-    const cle = cleDuNom(p.nom);
+    // Nom d'abord (cleDuNom), sinon position : 1er=pdej, dernier=diner,
+    // milieu=dej/snack en alternance — evite les icones toutes identiques
+    // quand le coach laisse « Repas 1 », « Repas 2 »… (05/11 Raci).
+    let cle = cleDuNom(p.nom);
+    if (!cle && nPlan > 0) {
+      if (k === 0) cle = 'pdej';
+      else if (k === nPlan - 1) cle = 'diner';
+      else cle = (k % 2 === 1) ? 'dej' : 'snack';
+    }
     cles.add(cle || nomN(p.nom));
     const neuf = (rid) => ({
       id: rid, nom: p.nom, type: cle === 'snack' ? 'collation' : 'repas',
@@ -585,8 +597,11 @@ export function completerMacros(o, poids) {
   return { ...o, kcal, prot, carbs, lip };
 }
 
-export function setObjectifs(nouveaux) {
-  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
+export function setObjectifs(nouveaux, opts) {
+  // Acces ferme : rien. Encodage coupe : seul le semis du plan coach
+  // (opts.depuisPlan) peut poser les objectifs (05/11 Raci).
+  if (lectureSeule.peek()) return;
+  if (encodageFerme.peek() && !(opts && opts.depuisPlan)) return;
   const avant = objectifs.value;
   const macrosFournies = ['prot', 'carbs', 'lip'].some(k => nouveaux[k] != null);
   const kcal = +nouveaux.kcal || 0;

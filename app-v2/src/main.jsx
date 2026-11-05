@@ -56,7 +56,7 @@ import { absenceLongue, decider } from './services/accueil-frequence.js';
 import { objectifEnPreparation } from './store/journal.js';
 import { effect as effetObjectif } from '@preact/signals';
 effetObjectif(() => { objectifEnPreparation.value = !lectureSeule.value && calculReserveCoach.value && !planCoachActif.value; });
-import { commandesSimulees, lectureSeule, calculReserveCoach, offreVisible, causeFermeture, finAccesMs } from './store/acces-nutrition.js';
+import { commandesSimulees, lectureSeule, encodageFerme, calculReserveCoach, offreVisible, causeFermeture, finAccesMs } from './store/acces-nutrition.js';
 import { AlimentationVerrouillee } from './components/AlimentationVerrouillee.jsx';
 import { commandesOuvertes } from './components/CoachPage.jsx';
 
@@ -88,7 +88,7 @@ export function OngletJournal() {
         <DayDashboard />
         {/* La pilule vit dans la carte Calories ; ici, uniquement le
             panneau qui se deplie, juste sous elle. */}
-        {!lectureSeule.value && <IdeesRepas panneauSeul />}
+        {!lectureSeule.value && !encodageFerme.value && <IdeesRepas panneauSeul />}
         <div class="fente-goutte" aria-hidden="true" />
         <WeightNote />
         <div class="jr-repas-kicker">{t('tes_repas')}</div>
@@ -114,7 +114,7 @@ export function OngletJournal() {
         })()}
         {/* L'ajout d'un repas vit desormais dans le flux, sous le
             dernier repas — plus de bouton flottant jaune (Raci). */}
-        {!lectureSeule.value && <div class="ajout-repas-rang">
+        {!lectureSeule.value && !encodageFerme.value && <div class="ajout-repas-rang">
           <button class="ajout-repas" onClick={() => setModale(true)}>
             <svg viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13" /></svg>
             {t('add_meal_btn')}
@@ -134,13 +134,13 @@ export function OngletJournal() {
         <WaterTracker />
       </div>
 
-      {modale && !lectureSeule.value && <AddMealModal montre={true} fermer={() => setModale(false)} />}
+      {modale && !lectureSeule.value && !encodageFerme.value && <AddMealModal montre={true} fermer={() => setModale(false)} />}
       {/* Ouvert depuis Mon programme, le calculateur y ramene : sa
           fleche annonce la destination, et la fermeture rebascule sur
           l'onglet BelFit+ ou la page est restee ouverte. Sans ca, on
           atterrissait sur le Journal, trois ecrans plus loin que d'ou
           l'on venait. */}
-      {ouvrirMesPlats.value && !lectureSeule.value && <MesPlats fermer={() => { ouvrirMesPlats.value = false; }} />}
+      {ouvrirMesPlats.value && !lectureSeule.value && !encodageFerme.value && <MesPlats fermer={() => { ouvrirMesPlats.value = false; }} />}
     </div>
   );
 }
@@ -778,7 +778,7 @@ export function App() {
           );
         })}
       </div>
-      {onglet === 'courses' && !lectureSeule.value && (
+      {onglet === 'courses' && !lectureSeule.value && !encodageFerme.value && (
         <div class="app-scroll couche-courses">
           <div class="conteneur conteneur--nu"><Courses /></div>
         </div>

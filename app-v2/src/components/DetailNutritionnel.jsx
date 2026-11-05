@@ -3,7 +3,7 @@ import { accesDecouverte, joursRestantsDecouverte, enDecouverte } from '../servi
 import { ongletActif } from './BottomNav.jsx';
 import { repasOuvertId } from './MealCard.jsx';
 import { APP_ANDROID } from '../services/app-android.js';
-import { lectureSeule } from '../store/acces-nutrition.js';
+import { lectureSeule, encodageFerme } from '../store/acces-nutrition.js';
 
 // ============================================================
 // DETAIL NUTRITIONNEL D'UN REPAS
@@ -64,7 +64,7 @@ export function DetailNutritionnel({ ings }) {
     <div class="dn">
       <div class="dn-tete">
         <span class="dn-titre">Détail nutritionnel</span>
-        {!APP_ANDROID && ouvert && enDecouverte.value && !lectureSeule.value && (
+        {!APP_ANDROID && ouvert && enDecouverte.value && !lectureSeule.value && !encodageFerme.value && (
           <span class={'dn-offert' + (joursRestantsDecouverte.value <= 2 ? ' dn-offert--fin' : '')}>
             Offert {joursRestantsDecouverte.value} j
           </span>

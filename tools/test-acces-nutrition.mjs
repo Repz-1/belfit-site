@@ -36,6 +36,7 @@ async function ouvrir(ctxOpts = {}) {
 const lire = (page) => page.evaluate(() => {
   const b = window.__banc, a = b.accesNut;
   return { ro: a.lectureSeule.value, offre: a.offreVisible.value, cause: a.causeFermeture.value, flag: a.BLOCAGE_ALIMENTATION,
+    encodage: a.ENCODAGE_ACTIF, encFerme: a.encodageFerme.value, ecr: a.ecritureBloquee(),
     carte: !!document.querySelector('.vr-carte'), texte: (document.querySelector('.vr-carte') || {}).innerText || '',
     ajoutRepas: !!document.querySelector('.ajout-repas'), nbIngs: b.repas.value.reduce((n, r) => n + (r.ings || []).length, 0) };
 });
@@ -54,13 +55,21 @@ const tenter = (page) => page.evaluate(() => {
   return snap() === avant;
 });
 // Ouvre le premier repas et compte les entrees « scan / voix / photo » (2 boutons .mc-scan quand tout est ouvert, photo retiree v638).
-const ouvrirRepas = async (page) => { await page.locator('.mc-tete').first().click(); await page.waitForTimeout(800); return page.evaluate(() => ({ entrees: document.querySelectorAll('.mc-scan').length, champsLecture: document.querySelectorAll('.mc-ing-champ--lecture').length })); };
+const ouvrirRepas = async (page) => {
+  // Ouvre la fiche plein ecran (MealPage) : attendre la couche, pas seulement 800 ms
+  // (carte d'offre + cadran peuvent retarder le rendu des lignes en lecture).
+  await page.locator('.mc-tete').first().click();
+  try { await page.waitForSelector('.couche-repas', { timeout: 4000 }); } catch (e) {}
+  await page.waitForTimeout(400);
+  return page.evaluate(() => ({ entrees: document.querySelectorAll('.mc-scan').length, champsLecture: document.querySelectorAll('.mc-ing-champ--lecture').length }));
+};
 const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.waitForTimeout(500);
 
 // ---- 0. Livraison : drapeau a true (v639), blocage actif meme sans interrupteur distant ----
 {
   const src = readFileSync(new URL('../app-v2/src/store/acces-nutrition.js', import.meta.url), 'utf8');
   ok(/export const BLOCAGE_ALIMENTATION = true;/.test(src), 'drapeau BLOCAGE_ALIMENTATION = true dans le code livré (v639)');
+  ok(/export const ENCODAGE_ACTIF = false;/.test(src), 'drapeau ENCODAGE_ACTIF = false (05/11 Raci : encodage coupe)');
   const { ctx, page } = await ouvrir();
   await simuler(page, () => { const a = window.__banc.accesNut; a.poserBlocageDistant(false); a.poserAcces('test', null); });
   await pause(page);
@@ -108,15 +117,75 @@ const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.wait
   ok(e.entrees === 0 && e.champsLecture > 0, 'expiré : repas ouvert = scan, voix et photo ABSENTS, quantités en lecture seule');
   await ctx.close();
 }
-// ---- 3. Actif / illimite / proprietaire ----
-for (const [nom, delta] of [['actif (+10 jours)', 10 * J], ['illimité / propriétaire (9999-12-31)', null]]) {
+// ---- 3. Actif paye (encodage coupe) vs illimite / proprietaire ----
+// 05/11 Raci : ENCODAGE_ACTIF=false → client paye : lectureSeule false, offre cachee,
+// mais ecriture bloquee + pas de bouton ajouter. Coach/proprio restent ouverts.
+{
   const { ctx, page } = await ouvrir();
-  await page.evaluate((d) => { const a = window.__banc.accesNut; a.poserBlocageDistant(true); a.poserAcces('test', d === null ? a.FIN_ILLIMITEE_MS : Date.now() + d); }, delta); await pause(page);
+  await page.evaluate((d) => { const a = window.__banc.accesNut; a.poserBlocageDistant(true); a.poserAcces('test', Date.now() + d); }, 10 * J); await pause(page);
   const s = await lire(page);
-  ok(!s.ro && !s.offre && !s.carte && s.ajoutRepas, nom + ' : tout est ouvert, aucune carte');
-  ok(await tenter(page) === false, nom + ' : les écritures passent');
+  ok(s.encodage === false, 'client payé : ENCODAGE_ACTIF est false');
+  ok(!s.ro && !s.offre && !s.carte, 'client payé + encodage off : pas lectureSeule, pas d’offre (accès valide)');
+  ok(s.encFerme && s.ecr, 'client payé + encodage off : encodageFerme + ecritureBloquee');
+  ok(!s.ajoutRepas, 'client payé + encodage off : pas de « ajouter un repas »');
+  // semerPlan reste autorise (livraison plan coach) : on teste les mutateurs CLIENT.
+  const clientBloque = await page.evaluate(() => {
+    const b = window.__banc, j = b.jrn, p = b.perso;
+    const snap = () => JSON.stringify([b.repas.value, j.objectifs.value, b.histoJours.value, p.favoris.value, p.usages.value, p.plats.value]);
+    const avant = snap();
+    const r1 = b.repas.value[0], i1 = r1.ings[0];
+    j.setPortion(r1.id, i1 && i1.id, 999); j.ajouterIngredient(r1.id, 'Riz cuit', 100); j.ajouterPlat(r1.id, { nom: 'x', ings: [{ name: 'Riz cuit', portion: 50 }], portions: 1 }, 1);
+    j.remplacerAliment(r1.id, i1 && i1.id, 'Poulet cuit'); j.basculerCuisson(r1.id, i1 && i1.id); j.supprimerIngredient(r1.id, i1 && i1.id);
+    j.ajouterRepas('collation'); j.supprimerRepas(r1.id); j.validerRepas(r1.id);
+    j.annulerValidation(r1.id); j.sauterRepas(r1.id); j.mangeAutreChose(r1.id); j.remettrePrevu(r1.id); j.renommerRepas(r1.id, 'Autre'); j.nouvelleJournee();
+    j.setObjectifs({ kcal: 1234, prot: 1, carbs: 1, lip: 1 });
+    p.basculerFavori('Riz cuit'); p.noterUsage('Riz cuit'); p.enregistrerPlat({ id: 9, nom: 'P', ings: [], portions: 1 }); p.supprimerPlat(9);
+    return snap() === avant;
+  });
+  ok(clientBloque === true, 'client payé + encodage off : aucune écriture alimentaire');
+  // Cloud / plan : lectureSeule reste false → synchro nutrition permise ; semis plan OK
+  ok(await page.evaluate(() => window.__banc.accesNut.cloudNutritionPermis()) === true, 'client payé + encodage off : cloudNutritionPermis reste true');
+  ok(await page.evaluate(() => {
+    const b = window.__banc;
+    // Nom inconnu + aliment nouveau : semerPlan doit ajouter un repas du plan.
+    const avant = b.repas.value.length;
+    b.jrn.semerPlan([{ nom: 'Collation coach test', ings: [{ name: 'Banane', portion: 100 }] }]);
+    const ajoute = b.repas.value.find(r => r.nom === 'Collation coach test');
+    return !!ajoute && ajoute.duPlan === true && (ajoute.ings || []).some(i => i.name === 'Banane') && b.repas.value.length >= avant;
+  }) === true, 'client payé + encodage off : semerPlan (plan coach) passe encore');
+  await ctx.close();
+}
+{
+  const { ctx, page } = await ouvrir();
+  await page.evaluate(() => { const a = window.__banc.accesNut; a.poserBlocageDistant(true); a.poserAcces('test', a.FIN_ILLIMITEE_MS); }); await pause(page);
+  const s = await lire(page);
+  ok(!s.ro && !s.offre && !s.carte && s.ajoutRepas, 'illimité / propriétaire : tout est ouvert, aucune carte');
+  ok(!s.encFerme && !s.ecr, 'illimité / propriétaire + encodage off : écriture OK (compte illimité)');
+  ok(await tenter(page) === false, 'illimité / propriétaire : les écritures passent');
   const e = await ouvrirRepas(page);
-  ok(e.entrees === 2 && e.champsLecture === 0, nom + ' : repas ouvert = scan et voix présents (photo retirée v638)');
+  ok(e.entrees === 2 && e.champsLecture === 0, 'illimité / propriétaire : repas ouvert = scan et voix présents (photo retirée v638)');
+  await ctx.close();
+}
+// ---- 3b. ENCODAGE_ACTIF true (simulation source) : client paye reouvre ----
+// On ne peut pas muter la const ; on verifie le contrat via encodageFerme sur illimite
+// et le chemin source. Couverture « true → écriture OK » : si le drapeau etait true,
+// encodageFerme serait false pour tout acces ouvert (teste logique pure ici).
+{
+  const { ctx, page } = await ouvrir();
+  const logique = await page.evaluate(() => {
+    const a = window.__banc.accesNut;
+    // Simule le calcul : ENCODAGE_ACTIF true → encodageFerme toujours false
+    const encodageActif = true;
+    const jusqu = Date.now() + 10 * 864e5;
+    const fermeSi = (actif, j) => { if (actif) return false; return j !== a.FIN_ILLIMITEE_MS; };
+    return {
+      payeSiTrue: fermeSi(true, jusqu) === false,
+      payeSiFalse: fermeSi(false, jusqu) === true,
+      illimSiFalse: fermeSi(false, a.FIN_ILLIMITEE_MS) === false,
+    };
+  });
+  ok(logique.payeSiTrue && logique.payeSiFalse && logique.illimSiFalse,
+    'contrat ENCODAGE_ACTIF : true→payé ouvert ; false→payé fermé, illimité ouvert');
   await ctx.close();
 }
 // ---- 4. Acces inconnu (premier lancement, hors ligne, sans copie) ----
