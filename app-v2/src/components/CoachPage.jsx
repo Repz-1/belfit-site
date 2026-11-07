@@ -163,9 +163,11 @@ export function CoachPage() {
   // (18 ans, trouble alimentaire, retractation), avant le questionnaire.
   const cmdInv = dossierCoach.value.commande;
   const invite = !!(cmdInv && cmdInv.source === 'invitation');
+  const offert = !!(cmdInv && cmdInv.source === 'offert');
   const [accordInv, setAccordInv] = useState(() => { try { return JSON.parse(localStorage.getItem('belfit_accord_inv') || 'null'); } catch (e) { return null; } });
   const ouvrirQuestionnaire = (type) => {
-    if (invite && !(accordInv && accordInv.code === cmdInv.commande)) { setAdulte(null); setTca(null); setConsent(false); setConsent2(false); setAchat('invitation:' + type); return; }
+    const porte = offert ? 'offert:' : invite ? 'invitation:' : '';
+    if (porte && !(accordInv && accordInv.code === cmdInv.commande)) { setAdulte(null); setTca(null); setConsent(false); setConsent2(false); setAchat(porte + type); return; }
     setRemplir(type);
   };
   useEffect(() => { if (!programmeCharge.value) chargerProgramme(); }, []);
@@ -181,7 +183,7 @@ export function CoachPage() {
         onFermer={() => { fermerRetour(); setRemplir(null); }}
         onTermine={(reponses, alerte, extra) => {
           // Accords donnes par un client invite : joints au questionnaire.
-          const ex = invite && accordInv ? { ...extra, consentements: { ...((extra && extra.consentements) || {}), invitation: accordInv } } : extra;
+          const ex = (invite || offert) && accordInv ? { ...extra, consentements: { ...((extra && extra.consentements) || {}), invitation: accordInv } } : extra;
           envoyerQuestionnaire(remplir, reponses, alerte, ex);
           effacerBrouillon(remplir);
           fermerRetour();
@@ -200,7 +202,9 @@ export function CoachPage() {
   const aAchat = !!pr || !!payeLeEtat;
   const vue = aAchat ? (vueChoisie || (pr ? 'suivi' : 'programme')) : 'programme';
   const viaInv = !!achat && achat.startsWith('invitation:');
-  const typeAchat = viaInv ? achat.slice(11) : achat;
+  const viaOffert = !!achat && achat.startsWith('offert:');
+  const sansPaiement = viaInv || viaOffert;
+  const typeAchat = sansPaiement ? achat.slice(achat.indexOf(':') + 1) : achat;
   const bloque = typeAchat === 'plan' && (adulte === 'non' || tca === 'oui');
   const eligible = (adulte === 'oui' && tca === 'non');
   const accepterInv = () => {
@@ -303,10 +307,10 @@ export function CoachPage() {
       )}
 
       {aRemplir && (
-        <div class="cp-carte cp-etapes-paye" data-apres-paiement>
-          <p class="cp-nom">{invite ? 'Invitation de ton coach' : (APP_ANDROID ? 'Programme activé' : 'Paiement reçu')}</p>
+        <div class="cp-carte cp-etapes-paye" data-apres-paiement data-plan={offert ? 'offert' : invite ? 'virement' : 'paiement'}>
+          <p class="cp-nom">{offert ? 'Plan offert' : invite ? 'Invitation de ton coach' : (APP_ANDROID ? 'Programme activé' : 'Paiement reçu')}</p>
           <ol class="cp-etapes">
-            <li class="fait"><span class="cp-pastille">✓</span>Paiement reçu</li>
+            <li class="fait"><span class="cp-pastille">✓</span>{offert ? 'Plan offert par ton coach' : 'Paiement reçu'}</li>
             <li class="actif"><span class="cp-pastille">2</span>Tu complètes ton questionnaire</li>
             <li><span class="cp-pastille">3</span>Ton plan sur mesure, livré sous 48&nbsp;h</li>
           </ol>
@@ -374,15 +378,17 @@ export function CoachPage() {
       )}
       </>)}
 
-      {achat && (!APP_ANDROID || viaInv) && createPortal(
+      {achat && (!APP_ANDROID || sansPaiement) && createPortal(
         <div class="pg-coach cp-portail"><div class="cp-voile" onClick={(e) => { if (e.target === e.currentTarget) setAchat(null); }}>
           <div class="cp-modale" role="dialog" aria-modal="true">
-            {paiementOuvert.value && modeTest.value && !viaInv && <p class="qc-alerte">Mode test&nbsp;: paiement fictif, aucun argent n'est débité.</p>}
-            {APP_ANDROID ? <p class="cp-nom">Invitation de ton coach</p> : <p class="cp-nom">{(pr ? 'Nouveau mois' : 'Premier mois') + ' · ' + (red && !viaInv ? `${prixCourt(red.montant)} € (au lieu de 80 €)` : '80 €')}</p>}
-            {!APP_ANDROID && <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>}
-            {/* 02/10 : avantage IA annonce explicitement avant le paiement. */}
-            {!APP_ANDROID && <p class="cp-txt cp-inclus">Inclus&nbsp;: analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>}
-            {!APP_ANDROID && typeAchat === 'plan' && !viaInv && pr && paiementOuvert.value && <div class="cp-code-modale">{blocCode('cp-code-champ-modale')}</div>}
+            {paiementOuvert.value && modeTest.value && !sansPaiement && <p class="qc-alerte">Mode test&nbsp;: paiement fictif, aucun argent n'est débité.</p>}
+            {viaOffert ? <p class="cp-nom">Premier plan offert</p> : APP_ANDROID ? <p class="cp-nom">Invitation de ton coach</p> : <p class="cp-nom">{(pr ? 'Nouveau mois' : 'Premier mois') + ' · ' + (red && !viaInv ? `${prixCourt(red.montant)} € (au lieu de 80 €)` : '80 €')}</p>}
+            {viaOffert
+              ? <p class="cp-txt">Aucun paiement. Tu réponds au questionnaire, ton coach prépare ton plan.</p>
+              : !APP_ANDROID && <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>}
+            {/* 02/10 : avantage IA annonce explicitement avant le paiement. Pas pour un plan offert. */}
+            {!APP_ANDROID && !viaOffert && <p class="cp-txt cp-inclus">Inclus&nbsp;: analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>}
+            {!APP_ANDROID && typeAchat === 'plan' && !sansPaiement && pr && paiementOuvert.value && <div class="cp-code-modale">{blocCode('cp-code-champ-modale')}</div>}
             {typeAchat === 'plan' && (
               <div class="cp-elim">
                 <p class="cp-q">As-tu 18 ans ou plus&nbsp;?</p>
@@ -411,11 +417,13 @@ export function CoachPage() {
                   <input type="checkbox" checked={consent2} onChange={(e) => setConsent2(e.target.checked)} />
                   <span>J'accepte les <a href="https://www.belfit.be/cgv.html" target="_blank" rel="noopener">conditions et la FAQ</a>. Je comprends que ce plan n'est pas un avis médical.</span>
                 </label>
-                {APP_ANDROID ? null : viaInv
+                {APP_ANDROID ? null : viaOffert
+                  ? <p class="cp-txt cp-petit">Aucun paiement. Le questionnaire part à ton coach, le plan est livré sous 48&nbsp;h.</p>
+                  : viaInv
                   ? <p class="cp-txt cp-petit">Livraison sous 48&nbsp;h après la réception du virement. Détails dans les conditions générales.</p>
                   : <p class="cp-txt cp-petit">Questionnaire à remplir dans les {DELAI_QUESTIONNAIRE} jours suivant le paiement pour une livraison sous 48&nbsp;h. Détails dans les conditions générales.</p>}
-                <button class="cp-bt cp-bt--or" disabled={!consent || !consent2} onClick={viaInv ? accepterInv : payer}>{viaInv ? 'Continuer vers le questionnaire' : 'Continuer vers le paiement'}</button>
-                {!viaInv && paiementOuvert.value && <p class="cp-petit cp-secure">Paiement sécurisé par Mollie.</p>}
+                <button class="cp-bt cp-bt--or" disabled={!consent || !consent2} onClick={sansPaiement ? accepterInv : payer}>{sansPaiement ? 'Continuer vers le questionnaire' : 'Continuer vers le paiement'}</button>
+                {!sansPaiement && paiementOuvert.value && <p class="cp-petit cp-secure">Paiement sécurisé par Mollie.</p>}
               </>
             )}
             <button class="cp-bt cp-bt--gris" onClick={() => setAchat(null)}>{bloque ? 'Fermer' : 'Annuler'}</button>

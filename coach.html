@@ -299,6 +299,7 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
       <input id="invNote" type="text" placeholder="ex. Kevin, salle Uccle" spellcheck="false">
       <div class="durees" data-cible="inv"><button data-d="plan" class="on">Mois de coaching · 80 €</button></div>
       <button class="second" id="btnInviter">Créer le lien</button>
+      <p class="aide">Virement de 80 € après le questionnaire. Le lien n'est pas réservé à une adresse.</p>
       <div id="msgInviter" class="msg"></div>
       <div id="lienInv" style="display:none;margin-top:8px">
         <input id="lienInvTxt" type="text" readonly style="font-family:'DM Mono',monospace;font-size:13px">
@@ -306,6 +307,21 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
       </div>
     </div>
     <div class="carte" id="listeInv" style="padding:6px 15px"></div>
+
+    <p class="lb">Offrir un premier plan</p>
+    <div class="carte">
+      <label for="offertMail">Adresse du destinataire</label>
+      <input id="offertMail" type="email" placeholder="prenom@exemple.be" autocapitalize="off" spellcheck="false">
+      <label for="offertNote">Note pour toi</label>
+      <input id="offertNote" type="text" placeholder="ex. premier plan offert" spellcheck="false">
+      <button class="second" id="btnOffert">Créer le lien offert</button>
+      <p class="aide">Aucun paiement, aucun virement, aucun code PRO. Le lien ne marche qu'une fois, pour cette adresse confirmée.</p>
+      <div id="msgOffert" class="msg"></div>
+      <div id="lienOffert" style="display:none;margin-top:8px">
+        <input id="lienOffertTxt" type="text" readonly style="font-family:'DM Mono',monospace;font-size:13px">
+        <button class="second" id="btnCopierOffert">Copier le lien</button>
+      </div>
+    </div>
 
     <p class="lb">Accès</p>
     <div class="carte">
@@ -333,6 +349,7 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
 <script type="module">
 // Base d'aliments de l'app (meme fichier) : memes calories chez le client.
 import { DB, NOMS_ALIMENTS, macrosOf } from '/app-v2/src/data/aliments.js';
+import { estOffert, badgeHorsFile, prefixeAttente } from '/app-v2/src/services/statut-dossier.js';
 import { jourValide, ajouterJours, dateBruxelles } from '/app-v2/src/store/plans-par-date.js';
 
 const URL_COACH = 'https://europe-west1-repz-baf60.cloudfunctions.net/espaceCoach';
@@ -746,6 +763,7 @@ function detail(d) {
   const box = el('div', 'detail');
   const tags = el('div', 'tags');
   tags.append(el('span', 'tag', d.type === 'maj' ? 'Mise à jour' : 'Premier plan'));
+  if (estOffert(d)) tags.append(el('span', 'tag vert', 'Offert'));
   if (d.alerteSante) tags.append(el('span', 'tag rouge', 'Point de santé'));
   if (d.allergieGrave) tags.append(el('span', 'tag rouge', 'Allergie grave'));
   box.append(tags);
@@ -806,9 +824,10 @@ function ligne(d, aTraiter) {
   const txt = el('span', 'dos-txt');
   txt.append(el('div', 'dos-nom', nomDe(d)),
     el('div', 'dos-sous', (d.objectif ? d.objectif + ' · ' : '') + (aTraiter ? 'reçu ' + quand(d.envoyeLe)
-      : d.livreLe ? 'livré ' + quand(d.livreLe) : d.payeLe ? 'payé ' + quand(d.payeLe) + ' · questionnaire pas encore envoyé' : '')));
+      : d.livreLe ? 'livré ' + quand(d.livreLe) : d.payeLe ? prefixeAttente(d) + quand(d.payeLe) + ' · questionnaire pas encore envoyé' : '')));
   // 01/11 : aussi les clients payes sans questionnaire, ou avec un programme sans questionnaire.
-  const [t, c] = aTraiter ? echeance(d) : d.livreLe ? ['Livré', 'vert'] : ['Payé', 'ambre'];
+  // Plan offert : badge Offert, jamais Payé. Les autres dossiers ne changent pas.
+  const [t, c] = aTraiter ? echeance(d) : badgeHorsFile(d);
   // 01/11 Raci : badge « Nouveau » (paye ou questionnaire recu, programme pas encore livre).
   if (d.nouveau) txt.firstChild.append(el('span', 'nouveau', 'Nouveau'));
   b.append(el('span', 'av', initiales(d)), txt, el('span', 'tag ' + c, t));
@@ -1176,7 +1195,8 @@ function chargerInvitations() {
     if (!r.invitations.length) { h.append(el('p', 'vide', 'Aucune invitation pour le moment.')); return; }
     r.invitations.forEach((i) => {
       const l = el('div', 'rl');
-      l.append(el('span', '', (i.note || i.code) + ' · ' + (i.type === 'maj' ? 'mise à jour' : 'plan')),
+      const genre = i.mode === 'offert' ? 'offert' : (i.type === 'maj' ? 'mise à jour' : 'virement');
+      l.append(el('span', '', (i.note || i.code) + ' · ' + genre + (i.mode === 'offert' && i.email ? ' · ' + i.email : '')),
         el('b', '', i.utiliseLe ? 'utilisé · ' + (i.email || '') : 'en attente'));
       if (i.utiliseLe) l.lastChild.style.color = '#1C5334';
       h.append(l);
@@ -1193,6 +1213,24 @@ $('btnInviter').addEventListener('click', () => {
       $('invNote').value = ''; chargerInvitations();
     } else afficher(m, 'Échec. Réessaie.', false);
   }).catch((e) => { if (e.message !== 'code') afficher(m, 'Réseau indisponible.', false); }).finally(() => { b.disabled = false; });
+});
+$('btnOffert').addEventListener('click', () => {
+  const b = $('btnOffert'), m = $('msgOffert'), email = $('offertMail').value.trim();
+  if (!email) { afficher(m, 'Indique l\'adresse du destinataire.', false); return; }
+  b.disabled = true;
+  appel('creerInvitationOfferte', { email, note: $('offertNote').value.trim() }).then((d) => {
+    if (d && d.ok && d.lien && d.lien.indexOf('invitation=') !== -1 && d.lien.indexOf('coach=') === -1) {
+      afficher(m, 'Lien offert créé pour ' + (d.email || email) + '. Une seule utilisation, aucun paiement.', true);
+      $('lienOffertTxt').value = d.lien; $('lienOffert').style.display = '';
+      $('offertMail').value = ''; $('offertNote').value = ''; chargerInvitations();
+    } else afficher(m, d && d.motif === 'email' ? 'Adresse invalide.' : 'Échec. Réessaie.', false);
+  }).catch((e) => { if (e.message !== 'code') afficher(m, 'Réseau indisponible.', false); }).finally(() => { b.disabled = false; });
+});
+$('btnCopierOffert').addEventListener('click', () => {
+  const t = $('lienOffertTxt').value;
+  const ok = () => afficher($('msgOffert'), 'Lien copié. Envoie-le à cette adresse.', true);
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(ok).catch(() => { $('lienOffertTxt').select(); });
+  else { $('lienOffertTxt').select(); document.execCommand('copy'); ok(); }
 });
 $('btnCopierInv').addEventListener('click', () => {
   const t = $('lienInvTxt').value;

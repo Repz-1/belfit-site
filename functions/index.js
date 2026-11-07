@@ -8,6 +8,7 @@ const admin = require("firebase-admin");
 const crypto = require("crypto");
 const plansVersions = require("./plans-versions");
 const accesNutrition = require("./acces-nutrition");
+const invitationOfferte = require("./invitation-offerte");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -1706,7 +1707,9 @@ function dossierDe(uid, d, email) {
     virement: (d.commandeCoach && d.commandeCoach.virement) || null,
     livreLe,
     // A traiter : un questionnaire recu et pas encore de programme livre apres lui.
-    aTraiter: !!q.envoyeLe && (!livreLe || new Date(livreLe) < new Date(q.envoyeLe)),
+    aTraiter: invitationOfferte.entreFile({envoyeLe: q.envoyeLe || null, livreLe}),
+    source: (d.commandeCoach && d.commandeCoach.source) || null,
+    montant: (d.commandeCoach && d.commandeCoach.montant) || null,
     // 01/11 Raci : badge « Nouveau » = paye OU questionnaire recu, sans programme livre depuis.
     // 01/11 (bis) : plus « Nouveau » des que le coach a ouvert la fiche (coachVuLe).
     nouveau: [q.envoyeLe, d.commandeCoach && d.commandeCoach.payeLe].some((x) => !!x &&
@@ -1828,18 +1831,37 @@ exports.espaceCoach = onRequest(
         return;
       }
 
-      // ----- Invitations par lien (02/10) : paiement gere hors app -----
-      if (action === "creerInvitation") {
+      // ----- Invitations par lien (02/10) : virement, ou plan offert -----
+      // Les deux actions ne sont atteintes qu'apres codeCoachValide, plus haut.
+      if (action === "creerInvitation" || action === "creerInvitationOfferte") {
+        const offerte = action === "creerInvitationOfferte";
+        const prep = offerte ? invitationOfferte.preparerOfferte({email: corps.email, note: corps.note}) : null;
+        if (offerte && !prep.ok) { res.status(400).json({ok: false, motif: prep.motif}); return; }
         const type = "plan";   // 01/11 Raci : 80 EUR tout le temps
-        const note = String(corps.note || "").trim().slice(0, 80);
+        const note = offerte ? prep.note : String(corps.note || "").trim().slice(0, 80);
         const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         let code = "";
         for (let essai = 0; essai < 5; essai++) {
           code = Array.from(crypto.randomBytes(8)).map((b) => ALPHA[b % ALPHA.length]).join("");
           if (!(await db.collection("invitations").doc(code).get()).exists) break;
         }
-        await db.collection("invitations").doc(code).set({type, note, cree: new Date().toISOString(), utilisePar: null});
-        res.json({ok: true, code, type, lien: "https://belfit.be/?invitation=" + code});
+        const cree = new Date().toISOString();
+        if (offerte) {
+          await db.collection("invitations").doc(code).set({
+            mode: prep.mode, type, email: prep.email, note, montant: prep.montant,
+            cree, utilisePar: null,
+          });
+        } else {
+          // Nouveau virement : mode explicite. Les documents deja en base, sans mode, restent des virements.
+          await db.collection("invitations").doc(code).set({
+            type, note, mode: invitationOfferte.MODE_VIREMENT, cree, utilisePar: null,
+          });
+        }
+        res.json({
+          ok: true, code, type, mode: offerte ? prep.mode : invitationOfferte.MODE_VIREMENT,
+          email: offerte ? prep.email : null,
+          lien: invitationOfferte.lienInvitation(code),
+        });
         return;
       }
       if (action === "virementRecu") {
@@ -1864,7 +1886,8 @@ exports.espaceCoach = onRequest(
       }
       if (action === "invitations") {
         const liste = (await db.collection("invitations").orderBy("cree", "desc").limit(30).get()).docs
-            .map((d) => ({code: d.id, type: d.data().type, note: d.data().note || "",
+            .map((d) => ({code: d.id, type: d.data().type, mode: invitationOfferte.modeDe(d.data()),
+              note: d.data().note || "", montant: d.data().montant || null,
               cree: d.data().cree, utiliseLe: d.data().utiliseLe || null, email: d.data().email || null}));
         res.json({ok: true, invitations: liste});
         return;
@@ -1902,11 +1925,13 @@ exports.espaceCoach = onRequest(
 );
 
 // ============================================================
-// INVITATION PAR LIEN (02/10).
-// Le coach envoie belfit.be/?invitation=CODE ; la personne cree son
-// compte, l'app appelle cette fonction. Elle ecrit la commande coaching
-// (comme un paiement : le questionnaire s'ouvre) et l'IA illimitee
-// 44 jours. Un lien ne sert qu'a un seul compte.
+// INVITATION PAR LIEN (02/10, plan offert en plus).
+// Le coach envoie belfit.be/?invitation=CODE. Apres connexion, l'app
+// appelle cette fonction. Un lien ne sert qu'a un seul compte.
+//  - sans mode, ou mode virement : commande + virement 80 EUR en attente.
+//    L'acces nutrition s'ouvre au clic « Virement recu », pas ici.
+//  - mode offert : lie a l'adresse verifiee, montant 0, sans virement,
+//    sans Mollie, sans acces PRO ni nutrition.
 // ============================================================
 exports.utiliserInvitation = onRequest(
     {region: "europe-west1", cors: ORIGINES},
@@ -1919,30 +1944,15 @@ exports.utiliserInvitation = onRequest(
       try {
         const h = req.get("Authorization") || "";
         const token = h.startsWith("Bearer ") ? h.slice(7) : "";
-        let uid; let email = null;
-        try { const d = await admin.auth().verifyIdToken(token); uid = d.uid; email = d.email || null; } catch (e) { res.status(401).json({ok: false, motif: "auth"}); return; }
+        let uid; let email = null; let verifie = false;
+        try {
+          const d = await admin.auth().verifyIdToken(token);
+          uid = d.uid; email = d.email || null; verifie = d.email_verified === true;
+        } catch (e) { res.status(401).json({ok: false, motif: "auth"}); return; }
         const code = String((req.body || {}).code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
         if (code.length < 6) { res.status(400).json({ok: false, motif: "code"}); return; }
-        const ref = db.collection("invitations").doc(code);
-        const resultat = await db.runTransaction(async (tx) => {
-          const s2 = await tx.get(ref);
-          if (!s2.exists) return {ok: false, motif: "inconnue"};
-          const inv = s2.data();
-          if (inv.utilisePar && inv.utilisePar !== uid) return {ok: false, motif: "utilisee"};
-          if (inv.utilisePar === uid) return {ok: true, type: "plan", deja: true};
-          const le = new Date().toISOString();
-          tx.set(ref, {utilisePar: uid, utiliseLe: le, email}, {merge: true});
-          // Virement (02/10) : le questionnaire s'ouvre tout de suite, le
-          // coach marque « Virement recu » depuis l'espace coach.
-          const montant = 80;   // 01/11 : plus de mois a 60 EUR
-          tx.set(db.collection("users").doc(uid), {
-            commandeCoach: {type: "plan", payeLe: le, source: "invitation", commande: code,
-              virement: {statut: "attente", montant, communication: code}},
-          }, {merge: true});
-          return {ok: true, type: "plan"};
-        });
-        // IA illimitee : a la reception du virement, pas a l'ouverture du lien.
-        res.status(resultat.ok ? 200 : 409).json(resultat);
+        const resultat = await invitationOfferte.consommer(db, {code, uid, email, verifie});
+        res.status(invitationOfferte.statutHttp(resultat)).json(resultat);
       } catch (e) {
         console.error("utiliserInvitation :", e);
         res.status(500).json({ok: false, motif: "serveur"});
