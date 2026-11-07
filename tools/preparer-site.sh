@@ -16,9 +16,11 @@ cp *.png sw.js i18n.js i18n-strings.js manifest.json CNAME robots.txt sitemap.xm
 cp -r img fonts v2 .well-known _site/
 [ -d __ ] && cp -r __ _site/
 # coach.html importe ces deux modules a l'execution (sans dependances)
-mkdir -p _site/app-v2/src/data _site/app-v2/src/store
+mkdir -p _site/app-v2/src/data _site/app-v2/src/store _site/app-v2/src/services
 cp app-v2/src/data/aliments.js _site/app-v2/src/data/
 cp app-v2/src/store/plans-par-date.js _site/app-v2/src/store/
+# coach.html importe ce module (badge Offert). Sans lui, le script de la page echoue en 404.
+cp app-v2/src/services/statut-dossier.js _site/app-v2/src/services/
 # Anciennes adresses : redirigees vers l'app au lieu d'anciens builds
 redir() {
   mkdir -p "_site/$1"
