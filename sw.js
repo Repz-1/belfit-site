@@ -15,17 +15,24 @@
  * ni IndexedDB (session), ni Firestore : seul l'ancien cache
  * du worker (belfit-vNNN precedent) est retire.
  */
-const CACHE = 'belfit-v666';
+const CACHE = 'belfit-v667';
 const CORE = ['./index.html','./i18n.js','./i18n-strings.js','./manifest.json','./icon-192-v9.png','./icon-512-v9.png','./belfit-logo-bf.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
 });
 
+// Seulement les caches du worker racine (belfit-v665, belfit-v666...).
+// belfit-v2-* et les photos restent : un autre worker les gere.
+function cacheRacine(nom) {
+  return /^belfit-v\d+$/.test(nom);
+}
+
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
+    caches.keys().then(keys => Promise.all(
+      keys.filter(k => cacheRacine(k) && k !== CACHE).map(k => caches.delete(k))
+    )).then(() => self.clients.claim())
   );
 });
 

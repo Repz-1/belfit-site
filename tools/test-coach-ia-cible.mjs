@@ -97,6 +97,6 @@ ok(await p.evaluate(() => !!localStorage.getItem('belfit_coach_brouillon_u1')), 
 await p.locator('#btnJeterBrouillon').click(); await p.waitForTimeout(300);
 ok(await p.evaluate(() => !localStorage.getItem('belfit_coach_brouillon_u1')) && (await p.locator('#total .total-k').innerText()).startsWith('0'), '« Jeter le brouillon » : plan vide, brouillon supprime');
 // sw.js : HTML revalide
-ok(/fetch\(req, \{ cache: 'no-cache' \}\)/.test(readFileSync(new URL('../sw.js', import.meta.url), 'utf8')), 'sw.js : HTML en no-cache (plus de vieux coach.html 10 min)');
+ok(/fetch\(req\.url, \{ cache: 'no-cache'/.test(readFileSync(new URL('../sw.js', import.meta.url), 'utf8')), 'sw.js : HTML en no-cache (plus de vieux coach.html 10 min)');
 await nav.close(); process.kill(-srv.pid);
 console.log(ko ? ko + ' echec(s)' : 'OK'); process.exit(ko ? 1 : 0);

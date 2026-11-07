@@ -95,7 +95,12 @@ console.log('G. Champ mal forme (texte au lieu de Timestamp)');
 await preparer({ blocage: true, acces: '2099-01-01' });
 await cas('texte ISO dans le champ : ne vaut PAS un acces', 'fail', () => maj({ repas: [{ id: 2 }] }));
 
-console.log('H. Creation du document par le client');
+console.log('H. Horodatage du courriel de confirmation, reserve au serveur');
+await preparer({ blocage: false });
+await cas('ecrire dernierMailVerif : refuse', 'fail', () => moi().set({ dernierMailVerif: Ts.now() }, { merge: true }));
+await cas('ecrire dernierMailVerifId : refuse', 'fail', () => moi().set({ dernierMailVerifId: 'id-test' }, { merge: true }));
+
+console.log('I. Creation du document par le client');
 await preparer({ blocage: true });
 await env.withSecurityRulesDisabled(async (c) => { await c.firestore().doc('users/u3').delete(); });
 const neuf = () => env.authenticatedContext('u3').firestore().doc('users/u3');

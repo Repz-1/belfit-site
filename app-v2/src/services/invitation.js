@@ -3,8 +3,8 @@
 // retour de Google et au rechargement), puis consomme des que la
 // personne est connectee. Le parametre n'est pas celui du retour Mollie
 // (coach=questionnaire), qui est lu plus tard et ne doit pas l'effacer.
-import { effect } from '@preact/signals';
-import { utilisateur } from './firebase.js';
+import { effect, signal } from '@preact/signals';
+import { utilisateur, adresseConfirmee } from './firebase.js';
 import { ongletActif } from '../components/BottomNav.jsx';
 import { chargerProgramme } from '../components/BelfitPlus.jsx';
 import { lireInvitationUrl, suiteInvitation } from './invitation-reponse.js';
@@ -24,7 +24,10 @@ try {
 } catch (e) { /* stockage indisponible */ }
 
 let enCours = false;
+const reprise = signal(0);
 effect(() => {
+  reprise.value;
+  const confirmee = adresseConfirmee.value;
   const u = utilisateur.value;
   if (!u || u.isAnonymous || enCours) return;
   let code = null;
@@ -35,9 +38,10 @@ effect(() => {
   if (silence === u.uid) return;
   enCours = true;
   (async () => {
+    let retenter = false;
     try {
-      let forcer = false;
-      try { forcer = sessionStorage.getItem(CLE_VERIF) === '1'; } catch (e) {}
+      let forcer = confirmee;
+      try { if (sessionStorage.getItem(CLE_VERIF) === '1') forcer = true; } catch (e) {}
       const token = await u.getIdToken(forcer);
       const r = await fetch(URL_FN, {
         method: 'POST',
@@ -57,13 +61,18 @@ effect(() => {
         if (suite.silence) {
           try { localStorage.setItem(CLE_SILENCE, u.uid); } catch (e) {}
         }
+        let deja = false;
         try {
-          if (d.motif === 'verification') sessionStorage.setItem(CLE_VERIF, '1');
-          else sessionStorage.removeItem(CLE_VERIF);
+          if (d.motif === 'verification') {
+            deja = sessionStorage.getItem(CLE_VERIF) === '1';
+            sessionStorage.setItem(CLE_VERIF, '1');
+          } else sessionStorage.removeItem(CLE_VERIF);
         } catch (e) {}
-        if (suite.message) alert(suite.message);
+        if (suite.message && !deja) alert(suite.message);
+        retenter = d.motif === 'verification' && adresseConfirmee.value && !deja;
       }
     } catch (e) { /* reseau : nouvel essai plus tard */ }
     enCours = false;
+    if (retenter) reprise.value += 1;
   })();
 });
