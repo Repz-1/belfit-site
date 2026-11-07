@@ -97,6 +97,8 @@ await page.evaluate(async () => {
   await photos.put(new Request('/photo'), new Response('garder-photo'));
   const vieux = await caches.open('belfit-v665');
   await vieux.put(new Request('/vieux'), new Response('ancien'));
+  const courant = await caches.open('belfit-v666');
+  await courant.put(new Request('/v666'), new Response('ancien-666'));
 });
 swBody = SW_FIX;
 const bascule = page.evaluate(() => new Promise((resolve) => {
@@ -109,13 +111,13 @@ await page.evaluate(async () => {
 });
 const comment = await bascule;
 console.log('  (info) bascule worker :', comment);
-await page.waitForFunction(async () => (await caches.keys()).includes('belfit-v666'));
+await page.waitForFunction(async () => (await caches.keys()).includes('belfit-v667'));
 const apres = await visiter('/coach.html', false);
 ok(apres.ok && apres.status === 200 && /coach-frais/.test(apres.texte), 'apres update du worker : un rechargement ouvre coach');
 const session = await page.evaluate(() => localStorage.getItem('belfit_espace_coach'));
 ok(session === 'ne-pas-effacer', 'mise a jour du worker : localStorage intact');
 const cachesNoms = await page.evaluate(async () => await caches.keys());
-ok(cachesNoms.includes('belfit-v666') && !cachesNoms.includes('belfit-v665'), 'cache worker v666 actif, v665 retire (' + cachesNoms.join(',') + ')');
+ok(cachesNoms.includes('belfit-v667') && !cachesNoms.includes('belfit-v665') && !cachesNoms.includes('belfit-v666'), 'cache worker v667 actif, v665 et v666 retires (' + cachesNoms.join(',') + ')');
 ok(cachesNoms.includes('belfit-v2-433') && cachesNoms.includes('belfit-photos-exos-1'), 'caches v2 et photos conserves (' + cachesNoms.join(',') + ')');
 const gardes = await page.evaluate(async () => {
   const v2 = await caches.open('belfit-v2-433');
@@ -141,5 +143,5 @@ await nav.close();
 server.close();
 const prep = readFileSync(new URL('./preparer-site.sh', import.meta.url), 'utf8');
 ok(prep.includes('app-v2/src/services/statut-dossier.js'), 'publication : le module du badge coach est copie');
-ok(SW_FIX.includes("pathname.startsWith('/v2/')") && SW_FIX.includes('belfit-v666'), 'worker publie : v2 exclu, version 666');
+ok(SW_FIX.includes("pathname.startsWith('/v2/')") && /const CACHE = 'belfit-v667'/.test(SW_FIX), 'worker publie : v2 exclu, version 667');
 process.exit(code);
