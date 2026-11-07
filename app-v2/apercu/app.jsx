@@ -32,7 +32,7 @@ if (window.__lecteur) {
   });
 }
 
-utilisateur.value = { uid: 'test', email: 'coach@belfit.be', emailVerified: true, displayName: new URLSearchParams(location.search).has('sansprenom') ? '' : 'Raci', getIdToken: async () => 'jeton-de-test', metadata: { creationTime: new Date().toISOString() } };
+utilisateur.value = { uid: 'test', email: 'coach@belfit.be', displayName: new URLSearchParams(location.search).has('sansprenom') ? '' : 'Raci', getIdToken: async () => 'jeton-de-test', metadata: { creationTime: new Date().toISOString() } };
 objectifs.value = { kcal: 2712, prot: 165, carbs: 344, lip: 75 };
 let n = 0;
 const ing = (name, portion) => ({ id: ++n, name, portion });

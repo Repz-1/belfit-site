@@ -117,14 +117,12 @@ const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.wait
   ok(e.entrees === 0 && e.champsLecture > 0, 'expiré : repas ouvert = scan, voix et photo ABSENTS, quantités en lecture seule');
   await ctx.close();
 }
-// ---- 3. Actif paye (encodage coupe) vs illimite / proprietaire ----
-// 05/11 Raci : ENCODAGE_ACTIF=false → client paye : lectureSeule false, offre cachee,
-// mais ecriture bloquee + pas de bouton ajouter. Coach/proprio restent ouverts.
+// ---- 3. Actif paye, et tout role (encodage coupe pour tous) ----
+// 07/11 Raci : ENCODAGE_ACTIF=false ferme la saisie pour coach, proprietaire,
+// client et PRO sans fin. lectureSeule reste false si l'acces est valide.
 {
   const { ctx, page } = await ouvrir();
   await page.evaluate((d) => {
-    const u = window.__banc.utilisateur;
-    u.value = Object.assign({}, u.value, { email: 'client@example.test', emailVerified: true });
     const a = window.__banc.accesNut;
     a.poserBlocageDistant(true);
     a.poserAcces('test', Date.now() + d);
@@ -163,49 +161,45 @@ const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.wait
 }
 {
   const { ctx, page } = await ouvrir();
-  await page.evaluate(() => { const a = window.__banc.accesNut; a.poserBlocageDistant(true); a.poserAcces('test', a.FIN_ILLIMITEE_MS); }); await pause(page);
-  const s = await lire(page);
-  ok(!s.ro && !s.offre && !s.carte && s.ajoutRepas, 'personnel confirmé : tout est ouvert, aucune carte');
-  ok(!s.encFerme && !s.ecr, 'personnel confirmé + encodage off : écriture OK (rôle, pas la date)');
-  ok(await tenter(page) === false, 'personnel confirmé : les écritures passent');
-  const e = await ouvrirRepas(page);
-  ok(e.entrees === 2 && e.champsLecture === 0, 'illimité / propriétaire : repas ouvert = scan et voix présents (photo retirée v638)');
-  await ctx.close();
-}
-{
-  const { ctx, page } = await ouvrir();
-  await page.evaluate(() => {
+  const roles = await page.evaluate(() => {
     const u = window.__banc.utilisateur;
-    u.value = Object.assign({}, u.value, { email: 'client@example.test', emailVerified: true });
     const a = window.__banc.accesNut;
+    const base = u.value;
     a.poserBlocageDistant(true);
-    a.poserAcces('test', a.FIN_ILLIMITEE_MS);
+    const comptes = [
+      { email: 'coach@belfit.be', emailVerified: true },
+      { email: 'contact@belfit.be', emailVerified: true },
+      { email: 'client@example.test', emailVerified: true },
+    ];
+    return comptes.map((c) => {
+      u.value = Object.assign({}, base, c);
+      a.poserAcces('test', a.FIN_ILLIMITEE_MS);
+      return { email: c.email, ferme: a.encodageFerme.value, ro: a.lectureSeule.value, cloud: a.cloudNutritionPermis() };
+    });
   });
   await pause(page);
+  ok(roles.every(r => r.ferme === true && r.ro === false && r.cloud === true), 'coach, contact et client sans fin : saisie fermée, accès et synchro ouverts (' + roles.map(r => r.email + ':' + r.ferme).join(', ') + ')');
   const s = await lire(page);
-  ok(s.encFerme === true, 'client PRO sans fin : encodage fermé (la date ne rouvre pas)');
-  ok(await tenter(page) === true, 'client PRO sans fin : aucune écriture alimentaire');
+  ok(!s.ajoutRepas && s.encFerme && s.ecr, 'sans fin : pas de bouton ajouter, écritures du journal bloquées');
+  const e = await ouvrirRepas(page);
+  ok(e.entrees === 0 && e.champsLecture > 0, 'sans fin : repas ouvert en lecture, scan et voix absents');
+  ok(await page.evaluate(() => {
+    const b = window.__banc;
+    const avant = b.repas.value.length;
+    b.jrn.semerPlan([{ nom: 'Collation coach test', ings: [{ name: 'Banane', portion: 100 }] }]);
+    const ajoute = b.repas.value.find(r => r.nom === 'Collation coach test');
+    return !!ajoute && ajoute.duPlan === true && b.repas.value.length >= avant;
+  }) === true, 'sans fin : la livraison du plan coach passe encore');
   await ctx.close();
 }
-// ---- 3b. ENCODAGE_ACTIF true (simulation source) : client paye reouvre ----
-// On ne peut pas muter la const ; on verifie le contrat via encodageFerme sur illimite
-// et le chemin source. Couverture « true → écriture OK » : si le drapeau etait true,
-// encodageFerme serait false pour tout acces ouvert (teste logique pure ici).
+// ---- 3b. ENCODAGE_ACTIF true rouvrirait tout le monde, false n'ouvre personne ----
 {
   const { ctx, page } = await ouvrir();
   const logique = await page.evaluate(() => {
-    const a = window.__banc.accesNut;
-    // Simule le calcul : ENCODAGE_ACTIF true → encodageFerme toujours false
-    const fermeSi = (actif, personnel) => { if (actif) return false; if (personnel) return false; return true; };
-    return {
-      payeSiTrue: fermeSi(true, false) === false,
-      payeSiFalse: fermeSi(false, false) === true,
-      clientIllimite: fermeSi(false, false) === true,
-      personnel: fermeSi(false, true) === false,
-    };
+    const fermeSi = (actif) => actif !== true;
+    return fermeSi(true) === false && fermeSi(false) === true;
   });
-  ok(logique.payeSiTrue && logique.payeSiFalse && logique.clientIllimite && logique.personnel,
-    'contrat ENCODAGE_ACTIF : true→ouvert ; false→client fermé même sans fin ; personnel ouvert');
+  ok(logique, 'contrat ENCODAGE_ACTIF : true ouvre tout le monde, false ferme tout le monde');
   await ctx.close();
 }
 // ---- 4. Acces inconnu (premier lancement, hors ligne, sans copie) ----

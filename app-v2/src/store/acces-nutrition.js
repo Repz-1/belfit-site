@@ -10,17 +10,16 @@
 //   - config/acces { blocage: true } (Firestore) : l'interrupteur serveur.
 // Tant qu'aucun n'est vrai, l'application se comporte exactement comme avant.
 //
-// ENCODAGE_ACTIF (05/11 Raci) : coupe l'ENCODAGE alimentaire pour les clients,
-// pour une duree indeterminee, y compris un acces PRO sans fin. Seul un
-// compte personnel (adresse confirmee, meme liste que le serveur) reste ouvert.
-// lectureSeule / offreVisible / cloudNutritionPermis ne bougent PAS.
+// ENCODAGE_ACTIF (05/11, puis 07/11 Raci) : coupe la SAISIE alimentaire
+// pour tout le monde, sans exception de role ni de duree (coach, proprietaire,
+// client, PRO sans fin). La livraison d'un plan, la lecture et la synchro
+// ne passent pas par ce drapeau. lectureSeule / offreVisible /
+// cloudNutritionPermis ne bougent PAS.
 import { signal, computed } from '@preact/signals';
-import { utilisateur } from '../services/firebase.js';
-import { saisiePersonnel, encodageFermePour } from '../services/role-personnel.js';
 
 export const BLOCAGE_ALIMENTATION = true;
 
-/** false = encodage coupe pour les clients (05/11 Raci). true = rouvert. */
+/** false = saisie alimentaire coupee pour tous les comptes. true = rouverte. */
 export const ENCODAGE_ACTIF = false;
 
 const CLE_ACCES = 'belfit_v2_acces_nutrition_';
@@ -113,25 +112,21 @@ export const causeFermeture = computed(() => (etatEffectif().jusqu ? 'expire' : 
 /** Date de fin (ms) de l'acces expire, ou null. */
 export const finAccesMs = computed(() => etatEffectif().jusqu || null);
 
-/** Acces nutrition sans date de fin (31 dec. 9999). Ce n'est PAS un role :
- *  un client PRO illimite a la meme date et ne doit pas saisir. */
+/** Acces nutrition sans date de fin (31 dec. 9999). Ce n'est pas un droit de saisie. */
 export function estCompteIllimite(jusquMs = etatEffectif().jusqu) {
   return jusquMs === FIN_ILLIMITEE_MS;
 }
 
-/** Encodage alimentaire ferme pour ce compte ?
- *  Independant de lectureSeule. Le drapeau client prime sur la duree. */
-export const encodageFerme = computed(() => {
-  const u = utilisateur.value;
-  const personnel = saisiePersonnel({
-    email: u && u.email,
-    emailVerified: !!(u && u.emailVerified === true),
-  });
-  return encodageFermePour(ENCODAGE_ACTIF, personnel);
-});
+/** true = la saisie du journal est fermee. Aucun compte, aucune date ne rouvre. */
+export function encodageFermePour(encodageActif) {
+  return encodageActif !== true;
+}
+
+/** Saisie alimentaire fermee. Independant de lectureSeule et du role. */
+export const encodageFerme = computed(() => encodageFermePour(ENCODAGE_ACTIF));
 
 /** Non reactif : a appeler dans les actions (mutateurs) du store.
- *  Bloque aussi quand ENCODAGE_ACTIF est coupe (sauf personnel confirme). */
+ *  Bloque aussi quand ENCODAGE_ACTIF est coupe, pour tous les comptes. */
 export function ecritureBloquee() {
   return lectureSeule.peek() || encodageFerme.peek();
 }
