@@ -122,7 +122,13 @@ const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.wait
 // mais ecriture bloquee + pas de bouton ajouter. Coach/proprio restent ouverts.
 {
   const { ctx, page } = await ouvrir();
-  await page.evaluate((d) => { const a = window.__banc.accesNut; a.poserBlocageDistant(true); a.poserAcces('test', Date.now() + d); }, 10 * J); await pause(page);
+  await page.evaluate((d) => {
+    const u = window.__banc.utilisateur;
+    u.value = Object.assign({}, u.value, { email: 'client@example.test', emailVerified: true });
+    const a = window.__banc.accesNut;
+    a.poserBlocageDistant(true);
+    a.poserAcces('test', Date.now() + d);
+  }, 10 * J); await pause(page);
   const s = await lire(page);
   ok(s.encodage === false, 'client payé : ENCODAGE_ACTIF est false');
   ok(!s.ro && !s.offre && !s.carte, 'client payé + encodage off : pas lectureSeule, pas d’offre (accès valide)');
@@ -159,11 +165,26 @@ const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.wait
   const { ctx, page } = await ouvrir();
   await page.evaluate(() => { const a = window.__banc.accesNut; a.poserBlocageDistant(true); a.poserAcces('test', a.FIN_ILLIMITEE_MS); }); await pause(page);
   const s = await lire(page);
-  ok(!s.ro && !s.offre && !s.carte && s.ajoutRepas, 'illimité / propriétaire : tout est ouvert, aucune carte');
-  ok(!s.encFerme && !s.ecr, 'illimité / propriétaire + encodage off : écriture OK (compte illimité)');
-  ok(await tenter(page) === false, 'illimité / propriétaire : les écritures passent');
+  ok(!s.ro && !s.offre && !s.carte && s.ajoutRepas, 'personnel confirmé : tout est ouvert, aucune carte');
+  ok(!s.encFerme && !s.ecr, 'personnel confirmé + encodage off : écriture OK (rôle, pas la date)');
+  ok(await tenter(page) === false, 'personnel confirmé : les écritures passent');
   const e = await ouvrirRepas(page);
   ok(e.entrees === 2 && e.champsLecture === 0, 'illimité / propriétaire : repas ouvert = scan et voix présents (photo retirée v638)');
+  await ctx.close();
+}
+{
+  const { ctx, page } = await ouvrir();
+  await page.evaluate(() => {
+    const u = window.__banc.utilisateur;
+    u.value = Object.assign({}, u.value, { email: 'client@example.test', emailVerified: true });
+    const a = window.__banc.accesNut;
+    a.poserBlocageDistant(true);
+    a.poserAcces('test', a.FIN_ILLIMITEE_MS);
+  });
+  await pause(page);
+  const s = await lire(page);
+  ok(s.encFerme === true, 'client PRO sans fin : encodage fermé (la date ne rouvre pas)');
+  ok(await tenter(page) === true, 'client PRO sans fin : aucune écriture alimentaire');
   await ctx.close();
 }
 // ---- 3b. ENCODAGE_ACTIF true (simulation source) : client paye reouvre ----
@@ -175,17 +196,16 @@ const simuler = (page, f) => page.evaluate(f); const pause = (page) => page.wait
   const logique = await page.evaluate(() => {
     const a = window.__banc.accesNut;
     // Simule le calcul : ENCODAGE_ACTIF true → encodageFerme toujours false
-    const encodageActif = true;
-    const jusqu = Date.now() + 10 * 864e5;
-    const fermeSi = (actif, j) => { if (actif) return false; return j !== a.FIN_ILLIMITEE_MS; };
+    const fermeSi = (actif, personnel) => { if (actif) return false; if (personnel) return false; return true; };
     return {
-      payeSiTrue: fermeSi(true, jusqu) === false,
-      payeSiFalse: fermeSi(false, jusqu) === true,
-      illimSiFalse: fermeSi(false, a.FIN_ILLIMITEE_MS) === false,
+      payeSiTrue: fermeSi(true, false) === false,
+      payeSiFalse: fermeSi(false, false) === true,
+      clientIllimite: fermeSi(false, false) === true,
+      personnel: fermeSi(false, true) === false,
     };
   });
-  ok(logique.payeSiTrue && logique.payeSiFalse && logique.illimSiFalse,
-    'contrat ENCODAGE_ACTIF : true→payé ouvert ; false→payé fermé, illimité ouvert');
+  ok(logique.payeSiTrue && logique.payeSiFalse && logique.clientIllimite && logique.personnel,
+    'contrat ENCODAGE_ACTIF : true→ouvert ; false→client fermé même sans fin ; personnel ouvert');
   await ctx.close();
 }
 // ---- 4. Acces inconnu (premier lancement, hors ligne, sans copie) ----

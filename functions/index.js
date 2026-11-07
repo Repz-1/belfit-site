@@ -982,7 +982,7 @@ exports.mailVerification = onRequest(
             `&lang=${encodeURIComponent(langue)}`;
         }
       } catch (e) {
-        console.error("Lien Firebase illisible :", e);
+        console.error("Lien Firebase illisible");
       }
 
       const T = TEXTES_VERIF[langue] || TEXTES_VERIF.fr;
@@ -1000,18 +1000,26 @@ exports.mailVerification = onRequest(
           html: modeleMail(lien, langue, TEXTES_VERIF),
         }),
       });
-
+      const corps = await envoi.json().catch(() => ({}));
+      // Acceptation API seulement. Pas une livraison en boite. On ne journalise
+      // ni le lien, ni le jeton, ni l'adresse.
       if (!envoi.ok) {
-        console.error("Resend a refuse l'envoi :", await envoi.text());
-        res.status(502).json({ok: false});
+        const brut = String((corps && (corps.message || corps.name)) || "");
+        const msg = brut.replace(/[^\s@]+@[^\s@]+/g, "[email]").slice(0, 180);
+        console.error("mailVerification refuse", envoi.status, msg);
+        res.status(502).json({ok: false, motif: "envoi"});
         return;
       }
+      const id = corps && typeof corps.id === "string" ? corps.id.slice(0, 80) : null;
+      console.log("mailVerification accepte", id || "sans-id");
       await ref.set({
         dernierMailVerif: admin.firestore.FieldValue.serverTimestamp(),
+        dernierMailVerifId: id,
       }, {merge: true});
-      res.json({ok: true});
+      res.json({ok: true, accepte: true, id});
     } catch (e) {
-      console.error("mailVerification :", e);
+      const msg = String((e && e.message) || "").replace(/[^\s@]+@[^\s@]+/g, "[email]").slice(0, 180);
+      console.error("mailVerification :", msg);
       res.status(500).json({ok: false});
     }
   },

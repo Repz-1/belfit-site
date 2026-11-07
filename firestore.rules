@@ -22,7 +22,8 @@ service cloud.firestore {
     function champsServeur() {
       return ['pseudo', 'programme', 'ajustements', 'commandeCoach', 'accesNutritionJusqu',
               'premium', 'premiumJusqu', 'accesPro', 'source', 'codeUtilise',
-              'lsStatus', 'lsEvent', 'formule', 'abonnement', 'credits', 'creditsIA'];
+              'lsStatus', 'lsEvent', 'formule', 'abonnement', 'credits', 'creditsIA',
+              'dernierMailVerif', 'dernierMailVerifId'];
     }
     function nutriCles() {
       return ['repas', 'objectifs', 'calculBaseFait', 'poidsCalcul', 'profilBesoins',

@@ -308,6 +308,7 @@ export function adresseAConfirmer(u) {
 /** Demande l'envoi du courriel de confirmation. La Cloud Function
  *  exige le jeton de session : personne ne peut declencher un envoi
  *  vers une adresse qui n'est pas la sienne. */
+/** @returns {{etat:'deja'|'accepte', id:string|null}} Accepte = l'API d'envoi a pris le message, pas la boite. */
 export async function envoyerMailVerification(lang) {
   const u = auth.currentUser;
   if (!u) throw new Error('pas de session');
@@ -317,8 +318,11 @@ export async function envoyerMailVerification(lang) {
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jeton}` },
     body: JSON.stringify({ langue: lang || 'fr' }),
   });
-  if (r.status === 429) throw new Error('trop_tot');
-  if (!r.ok) throw new Error('envoi');
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 429) { const e = new Error('trop_tot'); e.etat = 'limite'; throw e; }
+  if (!r.ok) { const e = new Error('envoi'); e.etat = 'erreur'; throw e; }
+  if (d.deja) return { etat: 'deja', id: null };
+  return { etat: 'accepte', id: typeof d.id === 'string' ? d.id : null };
 }
 
 /** Confirmation constatee pendant la session. Le SDK garde en memoire

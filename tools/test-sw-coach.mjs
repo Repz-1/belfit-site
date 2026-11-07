@@ -90,6 +90,14 @@ ok(!horsCache.ok && /ERR_FAILED/.test(horsCache.erreur), 'worker v665, reseau co
 const v2bug = await visiter('/v2/', false);
 ok(v2bug.ok && /v2-direct/.test(v2bug.texte), 'worker v665 : /v2/ n est pas remplace');
 
+await page.evaluate(async () => {
+  const v2 = await caches.open('belfit-v2-433');
+  await v2.put(new Request('/v2/marque'), new Response('garder-v2'));
+  const photos = await caches.open('belfit-photos-exos-1');
+  await photos.put(new Request('/photo'), new Response('garder-photo'));
+  const vieux = await caches.open('belfit-v665');
+  await vieux.put(new Request('/vieux'), new Response('ancien'));
+});
 swBody = SW_FIX;
 const bascule = page.evaluate(() => new Promise((resolve) => {
   navigator.serviceWorker.addEventListener('controllerchange', () => resolve('change'), { once: true });
@@ -108,6 +116,15 @@ const session = await page.evaluate(() => localStorage.getItem('belfit_espace_co
 ok(session === 'ne-pas-effacer', 'mise a jour du worker : localStorage intact');
 const cachesNoms = await page.evaluate(async () => await caches.keys());
 ok(cachesNoms.includes('belfit-v666') && !cachesNoms.includes('belfit-v665'), 'cache worker v666 actif, v665 retire (' + cachesNoms.join(',') + ')');
+ok(cachesNoms.includes('belfit-v2-433') && cachesNoms.includes('belfit-photos-exos-1'), 'caches v2 et photos conserves (' + cachesNoms.join(',') + ')');
+const gardes = await page.evaluate(async () => {
+  const v2 = await caches.open('belfit-v2-433');
+  const photos = await caches.open('belfit-photos-exos-1');
+  const a = await v2.match('/v2/marque');
+  const b = await photos.match('/photo');
+  return { v2: a ? await a.text() : '', photo: b ? await b.text() : '' };
+});
+ok(gardes.v2 === 'garder-v2' && gardes.photo === 'garder-photo', 'contenu des caches non geres par le worker racine intact');
 
 const coupe = await visiter('/coach.html', true);
 if (!(coupe.ok && coupe.status === 503 && /Espace coach indisponible/.test(coupe.texte || '') && !/coach-frais/.test(coupe.texte || ''))) {

@@ -16,18 +16,27 @@ export function BandeauConfirmation() {
     try { return sessionStorage.getItem('belfit_conf_masque') === '1'; } catch (e) { return false; }
   });
   const [texte, setTexte] = useState('');
-  const [envoye, setEnvoye] = useState(false);
+  const [etat, setEtat] = useState('');
   const envoiFait = useRef(false);
 
   const visible = !masque && adresseAConfirmer(utilisateur.value);
 
+  const dire = (res) => {
+    const e = res && res.etat === 'deja' ? 'deja' : 'accepte';
+    setEtat(e);
+    setTexte(e === 'deja' ? t('conf_deja') : t('conf_accepte'));
+  };
+  const direEchec = (e) => {
+    setEtat('erreur');
+    setTexte(e && e.message === 'trop_tot' ? t('conf_trop_tot') : t('conf_erreur'));
+  };
+
   useEffect(() => {
     if (!visible) return undefined;
-    // Premier envoi : la personne vient de s'inscrire, le message doit
-    // partir sans qu'elle ait a le demander.
+    // Premier envoi : la personne vient de s'inscrire. Un echec reste visible.
     if (!envoiFait.current) {
       envoiFait.current = true;
-      envoyerMailVerification(langue.value).catch(() => {});
+      envoyerMailVerification(langue.value).then(dire).catch(direEchec);
     }
     // La confirmation se fait souvent sur un autre appareil : on relit
     // l'etat du compte plutot que d'attendre un retour ici.
@@ -38,12 +47,8 @@ export function BandeauConfirmation() {
   if (!visible) return null;
 
   const renvoyer = async () => {
-    try {
-      await envoyerMailVerification(langue.value);
-      setTexte(t('conf_renvoye')); setEnvoye(true);
-    } catch (e) {
-      setTexte(e.message === 'trop_tot' ? t('conf_trop_tot') : t('conf_erreur'));
-    }
+    try { dire(await envoyerMailVerification(langue.value)); }
+    catch (e) { direEchec(e); }
   };
 
   const fermer = () => {
@@ -54,7 +59,7 @@ export function BandeauConfirmation() {
   return (
     <div class="bandeau-conf">
       <span class="bc-txt">{texte || t('conf_bandeau')}</span>
-      {!envoye && <button class="bc-action" onClick={renvoyer}>{t('conf_renvoyer')}</button>}
+      {etat !== 'deja' && <button class="bc-action" onClick={renvoyer}>{t('conf_renvoyer')}</button>}
       <button class="bc-fermer" onClick={fermer} aria-label="Fermer">×</button>
     </div>
   );

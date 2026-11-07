@@ -10,12 +10,13 @@
 //   - config/acces { blocage: true } (Firestore) : l'interrupteur serveur.
 // Tant qu'aucun n'est vrai, l'application se comporte exactement comme avant.
 //
-// ENCODAGE_ACTIF (05/11 Raci) : coupe l'ENCODAGE alimentaire pour tout le
-// monde, pour une duree indeterminee. Remettre a true = tout se rouvre.
-// Independant du plan coach / planCoachActif. Coach et proprietaire
-// (FIN_ILLIMITEE_MS) restent ouverts. lectureSeule / offreVisible /
-// cloudNutritionPermis ne bougent PAS (synchro et semis de plan OK).
+// ENCODAGE_ACTIF (05/11 Raci) : coupe l'ENCODAGE alimentaire pour les clients,
+// pour une duree indeterminee, y compris un acces PRO sans fin. Seul un
+// compte personnel (adresse confirmee, meme liste que le serveur) reste ouvert.
+// lectureSeule / offreVisible / cloudNutritionPermis ne bougent PAS.
 import { signal, computed } from '@preact/signals';
+import { utilisateur } from '../services/firebase.js';
+import { saisiePersonnel, encodageFermePour } from '../services/role-personnel.js';
 
 export const BLOCAGE_ALIMENTATION = true;
 
@@ -112,24 +113,25 @@ export const causeFermeture = computed(() => (etatEffectif().jusqu ? 'expire' : 
 /** Date de fin (ms) de l'acces expire, ou null. */
 export const finAccesMs = computed(() => etatEffectif().jusqu || null);
 
-/** Compte proprietaire / coach (acces sans fin). */
+/** Acces nutrition sans date de fin (31 dec. 9999). Ce n'est PAS un role :
+ *  un client PRO illimite a la meme date et ne doit pas saisir. */
 export function estCompteIllimite(jusquMs = etatEffectif().jusqu) {
   return jusquMs === FIN_ILLIMITEE_MS;
 }
 
 /** Encodage alimentaire ferme pour ce compte ?
- *  Independant de lectureSeule : un client paye garde synchro + plan coach,
- *  mais ne peut plus ajouter / scanner / modifier ses aliments tant que
- *  ENCODAGE_ACTIF est false. Coach et proprietaire restent ouverts. */
+ *  Independant de lectureSeule. Le drapeau client prime sur la duree. */
 export const encodageFerme = computed(() => {
-  if (ENCODAGE_ACTIF) return false;
-  const a = etatEffectif();
-  if (a.pret && estCompteIllimite(a.jusqu)) return false;
-  return true;
+  const u = utilisateur.value;
+  const personnel = saisiePersonnel({
+    email: u && u.email,
+    emailVerified: !!(u && u.emailVerified === true),
+  });
+  return encodageFermePour(ENCODAGE_ACTIF, personnel);
 });
 
 /** Non reactif : a appeler dans les actions (mutateurs) du store.
- *  Bloque aussi quand ENCODAGE_ACTIF est coupe (sauf comptes illimites). */
+ *  Bloque aussi quand ENCODAGE_ACTIF est coupe (sauf personnel confirme). */
 export function ecritureBloquee() {
   return lectureSeule.peek() || encodageFerme.peek();
 }

@@ -22,10 +22,17 @@ self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
 });
 
+// Seulement les caches du worker racine (belfit-v665, belfit-v666...).
+// belfit-v2-* et les photos restent : un autre worker les gere.
+function cacheRacine(nom) {
+  return /^belfit-v\d+$/.test(nom);
+}
+
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
+    caches.keys().then(keys => Promise.all(
+      keys.filter(k => cacheRacine(k) && k !== CACHE).map(k => caches.delete(k))
+    )).then(() => self.clients.claim())
   );
 });
 

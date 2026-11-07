@@ -2,6 +2,7 @@ import { auth } from './firebase.js';
 import { initializeApp, getApps } from 'firebase/app';
 import { effect } from '@preact/signals';
 import { lectureSeule, cloudNutritionPermis, sansNutrition } from '../store/acces-nutrition.js';
+import { ecritureAutorisee } from './sync-garde.js';
 
 /* Firestore pese 170 Ko gzip : importe en statique ici, il entrait
    dans le graphe de demarrage via Courses/Scanner/SeanceTracker et
@@ -156,7 +157,7 @@ export function sauvegarder(uid, champsPartiels) {
   // Pas encore de lecture cloud reussie pour ce compte : on garde le
   // changement en memoire et on l'ecrira juste apres la lecture. Ecrire
   // maintenant ecraserait la vraie copie par un etat incomplet.
-  if (uid !== uidEtat || !cloudLu) { if (uid === uidEtat) envoiEnAttente = true; return; }
+  if (!ecritureAutorisee(uid, uidEtat, cloudLu)) { if (uid === uidEtat) envoiEnAttente = true; return; }
   const instantane = { ...etatComplet, ts: Date.now() };
   try { localStorage.setItem(cleLocale(uid), JSON.stringify(instantane)); } catch (e) {}
   if (uid === UID_INVITE) return; // pas de cloud pour un invite
