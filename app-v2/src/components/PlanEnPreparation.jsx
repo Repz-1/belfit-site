@@ -79,6 +79,7 @@ function Virement({ v }) {
 export function PlanEnPreparation({ payeLe, questionnaire, commande }) {
   const vir = commande && commande.virement;
   const virAttente = !!(vir && vir.statut === 'attente');
+  const offert = !!(commande && commande.source === 'offert');
   const [, tic] = useState(0);
   const [voir, setVoir] = useState(false);
   useEffect(() => { const t = setInterval(() => tic(x => x + 1), 60000); return () => clearInterval(t); }, []);
@@ -123,7 +124,7 @@ export function PlanEnPreparation({ payeLe, questionnaire, commande }) {
       <div class="cp-carte pp-etapes">
         {virAttente
           ? <div class="pp-et c"><span class="pp-pt"><Icone nom="clock" taille={15} /></span><div><b>{APP_ANDROID ? 'Activation en attente' : 'Virement en attente'}</b>{!APP_ANDROID && <span>{vir.montant} € · communication {vir.communication}</span>}</div></div>
-          : <div class="pp-et f"><span class="pp-pt"><Icone nom="check" taille={15} /></span><div><b>{APP_ANDROID ? 'Programme activé' : 'Paiement reçu'}</b><span>{quand((vir && vir.recuLe) || payeLe)}</span></div></div>}
+          : <div class="pp-et f"><span class="pp-pt"><Icone nom="check" taille={15} /></span><div><b>{offert ? 'Plan offert' : APP_ANDROID ? 'Programme activé' : 'Paiement reçu'}</b><span>{quand((vir && vir.recuLe) || payeLe)}</span></div></div>}
         <div class="pp-et f"><span class="pp-pt"><Icone nom="check" taille={15} /></span><div><b>Questionnaire envoyé</b><span>{quand(envoye)}</span></div></div>
         {/* 01/11 Raci : 4 etapes. « Ton coach écrit ton plan » (doublon de
             l'elaboration) et la carte « Coach BelFit » sont retirees. */}

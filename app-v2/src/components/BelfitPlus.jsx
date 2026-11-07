@@ -154,7 +154,9 @@ effect(() => {
   try { localStorage.setItem(cle, marque); } catch (e) {}
 });
 
+let lectureGeneration = 0;
 export function chargerProgramme() {
+  const gen = ++lectureGeneration;
   chargePour = utilisateur.peek() ? utilisateur.peek().uid : null;
   // Apercu local : le meme drapeau que l'apercu Premium sert a poser
   // un programme de demonstration sans passer par Firestore.
@@ -179,6 +181,7 @@ export function chargerProgramme() {
   // on garde la derniere valeur connue au lieu de bloquer ou debloquer.
   lecteurProgramme(u.uid)
     .then(d => {
+      if (gen !== lectureGeneration) return;
       poserAcces(u.uid, d && d.accesNutritionJusqu);
       // Lu un peu apres le demarrage : la copie locale sert en attendant, et le chargement du journal n'est pas ralenti.
       setTimeout(() => { lireBlocageDistant().then(v => { if (v !== null) poserBlocageDistant(v); }); }, 4000);
@@ -188,8 +191,8 @@ export function chargerProgramme() {
       // plus de compteur affiche.
       ajustements.value = {restants: null, quota: null};
     })
-    .catch(() => { programmeBrut.value = null; })
-    .finally(() => { programmeCharge.value = true; });
+    .catch(() => { if (gen === lectureGeneration) programmeBrut.value = null; })
+    .finally(() => { if (gen === lectureGeneration) programmeCharge.value = true; });
 }
 
 // 27/10 Relecture automatique du plan. Avant : le plan n'etait lu qu'une

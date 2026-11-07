@@ -28,7 +28,7 @@ const rep = () => ({code: 200, body: null, set() {}, status(c) { this.code = c; 
   await A.alertePaiement({...p, id: "tr_2"}, {uid: "u1"}, deps);
   ok(mails.length === 2, "nouvel essai après refus : envoyé");
   const h = A.gestionnaireQuestionnaire(deps);
-  const req = (tok) => ({method: "POST", get: (k) => k === "Authorization" ? "Bearer " + tok : ""});
+  const req = (tok) => ({method: "POST", headers: {}, get: (k) => k === "Authorization" ? "Bearer " + tok : ""});
   let r = rep(); await h(req("mauvais"), r); ok(r.code === 401, "questionnaire sans jeton : 401");
   r = rep(); await h(req("tok"), r); ok(r.body.envoye === false && mails.length === 2, "pas de questionnaire : rien");
   store["users/u1"] = {questionnaireCoach: {envoyeLe: "2026-11-01T09:10:00Z", reponses: {prenom: "Raci"}, alerteSante: true}};

@@ -3,6 +3,7 @@
 // le bandeau et la page ne se contredisent jamais.
 import { signal } from '@preact/signals';
 import { utilisateur } from '../services/firebase.js';
+import { dossierOffert, payeLeHorsOffre } from '../services/statut-dossier.js';
 
 // Delai pour remplir le questionnaire apres paiement (regle de Raci).
 export const DELAI_QUESTIONNAIRE = 7;
@@ -68,9 +69,16 @@ export function etatCoach(dossier, pr) {
 // Meme valeur cote serveur : functions/index.js (JOURS_ACCES).
 export const JOURS_ACCES = 44;
 const plusJours = (base, n) => new Date(new Date(base).getTime() + n * 864e5);
-/** Date limite de la mise a jour, ou null (pas de plan, pas de paiement). */
+/** Plan offert : ce n'est pas un paiement, ni une fenetre nutrition. */
+export function commandeOfferte(dossier) {
+  return dossierOffert(dossier);
+}
+
+/** Date limite de la mise a jour, ou null (pas de plan, pas de paiement).
+ *  Un plan offert n'ouvre pas les 44 jours : l'acces PRO, s'il existe
+ *  a part, reste lu par finAcces. */
 export function majJusqua(dossier, pr) {
-  if (!pr) return null;
+  if (!pr || dossierOffert(dossier)) return null;
   const e = etatCoach(dossier, pr);
   const base = e.payeLe || pr.livreLe;
   if (!base) return null;
@@ -98,9 +106,7 @@ export function finAcces(dossier, pr) {
 // date de livraison du plan, ni un paiement note seulement sur ce
 // telephone ne suffisent.
 export function payeLeReel(dossier) {
-  const c = dossier && dossier.commande;
-  const v = c && c.payeLe;
-  return v && !isNaN(new Date(v).getTime()) ? v : null;
+  return payeLeHorsOffre(dossier);
 }
 /** Fin de l'acces nutrition = d'apres le seul
  *  paiement reel (payeLe + 44 jours). null sans paiement reel. */

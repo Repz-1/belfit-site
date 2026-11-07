@@ -1,5 +1,9 @@
 // En premier : detecte le mode app Android (TWA) avant tout nettoyage d'adresse.
 import './services/app-android.js';
+// Avant CoachPage, qui efface toute la requete sur un retour Mollie
+// (coach=questionnaire). Le code invitation est memorise ici, seul
+// ce parametre est retire, le reste de l'adresse reste lisible.
+import './services/invitation.js';
 import { render } from 'preact';
 import { createPortal } from 'preact/compat';
 import { useState, useRef, useEffect } from 'preact/hooks';
@@ -42,7 +46,6 @@ import { weightLog } from './store/stats.js';
 
 import { PremiumPage, estPremium } from './components/PremiumPage.jsx';
 import { CoachPage } from './components/CoachPage.jsx';
-import './services/invitation.js';
 import { Besoins, besoinsRequis, besoinsOuverts } from './components/Besoins.jsx';
 import { origineCalc, planCoachActif, programme, dossierCoach } from './components/BelfitPlus.jsx';
 import { finAcces } from './store/coach.js';
