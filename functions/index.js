@@ -800,10 +800,12 @@ exports.connexionParPseudo = onRequest(
 // ============================================================
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 
-/** Expediteur : doit correspondre au domaine verifie chez Resend. */
-const EXPEDITEUR = "BELFIT <noreply@belfit.be>";
+/** Expediteur : doit correspondre au domaine verifie chez Resend.
+ *  08/11 (Raci) : contact@ au lieu de noreply@. Outlook/Hotmail se
+ *  mefie des expediteurs « noreply » ; contact@ est une vraie boite. */
+const EXPEDITEUR = "BELFIT <contact@belfit.be>";
 
-/** Ou arrivent les reponses : noreply n'est pas une vraie boite. */
+/** Ou arrivent les reponses (meme boite que l'expediteur). */
 const REPONSE_A = "contact@belfit.be";
 
 /** Notre page de saisie du nouveau mot de passe. */
