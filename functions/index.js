@@ -928,6 +928,31 @@ function modeleMail(lien, langue, jeu) {
 </body></html>`;
 }
 
+/**
+ * Version texte du meme e-mail (08/11). Outlook/Hotmail penalise les
+ * messages HTML sans partie texte : on envoie toujours les deux.
+ */
+function texteMail(lien, langue, jeu) {
+  const J = jeu || TEXTES;
+  const T = J[langue] || J.fr;
+  const sansBalises = (x) => String(x || "").replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ").replace(/&middot;/g, "·").replace(/&amp;/g, "&").trim();
+  return [
+    "BELFIT",
+    "",
+    sansBalises(T.titre),
+    "",
+    sansBalises(T.intro),
+    "",
+    sansBalises(T.bouton) + " :",
+    lien,
+    "",
+    sansBalises(T.rassure),
+    "",
+    "BELFIT · belfit.be · contact@belfit.be",
+  ].join("\n");
+}
+
 // ---------------------------------------------------------------
 // Confirmation d'adresse a l'inscription.
 // Meme chaine que la reinitialisation : Firebase signe le jeton,
@@ -998,6 +1023,7 @@ exports.mailVerification = onRequest(
           to: [compte.email],
           subject: T.objet,
           html: modeleMail(lien, langue, TEXTES_VERIF),
+          text: texteMail(lien, langue, TEXTES_VERIF),
         }),
       });
       const corps = await envoi.json().catch(() => ({}));
@@ -1078,6 +1104,7 @@ exports.mailReinitialisation = onRequest(
           to: [email],
           subject: T.objet,
           html: modeleMail(lien, langue),
+          text: texteMail(lien, langue),
         }),
       });
 
