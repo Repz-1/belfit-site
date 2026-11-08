@@ -5,7 +5,6 @@
 // (coach=questionnaire), qui est lu plus tard et ne doit pas l'effacer.
 import { effect, signal } from '@preact/signals';
 import { utilisateur, adresseConfirmee } from './firebase.js';
-import { ongletActif } from '../components/BottomNav.jsx';
 import { chargerProgramme } from '../components/BelfitPlus.jsx';
 import { lireInvitationUrl, suiteInvitation } from './invitation-reponse.js';
 
@@ -40,9 +39,10 @@ effect(() => {
   (async () => {
     let retenter = false;
     try {
-      let forcer = confirmee;
-      try { if (sessionStorage.getItem(CLE_VERIF) === '1') forcer = true; } catch (e) {}
-      const token = await u.getIdToken(forcer);
+      // 08/11 : toujours un jeton neuf, sinon une adresse deja confirmee
+      // ailleurs est encore vue comme non confirmee.
+      void confirmee;
+      const token = await u.getIdToken(true);
       const r = await fetch(URL_FN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
@@ -52,7 +52,6 @@ effect(() => {
       if (r.ok && d.ok) {
         try { localStorage.removeItem(CLE); localStorage.removeItem(CLE_SILENCE); sessionStorage.removeItem(CLE_VERIF); } catch (e) {}
         chargerProgramme();
-        ongletActif.value = 'premium';
       } else {
         const suite = suiteInvitation(d.motif);
         if (!suite.garder) {

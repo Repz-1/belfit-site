@@ -210,15 +210,15 @@ try {
   ok(env && env.alerteSante && env.allergieGrave && env.consentements.k1 && env.consentements.k3 && env.reponses.source.texte === 'Autre', 'envoi : reponses, alertes et consentements');
   await p.context().close();
 
-  // 3) Bandeau + 7 jours
+  // 3) Bandeau + delai d'un mois
   p = await page(v => { localStorage.clear(); localStorage.setItem('belfit_qc_paye', JSON.stringify({ type: 'plan', le: v, uid: 'test' })); }, new Date(Date.now() - 2 * 86400000).toISOString());
   await p.reload(); await p.waitForTimeout(1800);
-  ok(/5 jours restants/.test(await p.locator('.bandeau-coach:visible').first().innerText()), 'bandeau : 5 jours restants');
-  await clicEcran(p, '.bandeau-coach'); await p.waitForTimeout(700);
+  ok(/\b(28|29) jours\b/.test(await p.locator('.bandeau-coach:visible').first().innerText()), 'bandeau : delai d\'un mois');
+  await clicEcran(p, '.bandeau-coach-bouton'); await p.waitForTimeout(700);
   ok(await p.locator('.pg-qc').count() === 1, 'bandeau : ouvre le questionnaire');
-  await p.evaluate(v => localStorage.setItem('belfit_qc_paye', JSON.stringify({ type: 'plan', le: v, uid: 'test' })), new Date(Date.now() - 10 * 86400000).toISOString());
+  await p.evaluate(v => localStorage.setItem('belfit_qc_paye', JSON.stringify({ type: 'plan', le: v, uid: 'test' })), new Date(Date.now() - 40 * 86400000).toISOString());
   await p.reload(); await p.waitForTimeout(1800);
-  ok(/rejoint la file/.test(await p.locator('.bandeau-coach:visible').first().innerText()), 'apres 7 jours : file');
+  ok(/rejoint la file/.test(await p.locator('.bandeau-coach:visible').first().innerText()), 'apres un mois : file');
   await p.context().close();
 
   // 3b) Autre compte sur le meme telephone : n'herite pas du paiement

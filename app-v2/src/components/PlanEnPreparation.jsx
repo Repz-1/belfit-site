@@ -1,12 +1,12 @@
 // Ecran « Ton plan arrive » (26/09, maquette validee par Raci) : ce que
 // voit le client entre l'envoi du questionnaire et la livraison du plan.
-// Heure limite = envoi + 48 h (si le questionnaire est arrive dans les
-// 7 jours du paiement ; sinon, la file, sans heure promise).
+// Heure limite = envoi + 48 h (si le questionnaire est arrive dans le
+// mois suivant le paiement ; sinon, la file, sans heure promise).
 import { useState, useEffect } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { Icone } from './IconesCoach.jsx';
 import { ongletActif } from './BottomNav.jsx';
-import { DELAI_QUESTIONNAIRE } from '../store/coach.js';
+import { finDelaiQuestionnaire } from '../store/coach.js';
 import { APP_ANDROID, MSG_INACTIF } from '../services/app-android.js';
 
 const H48 = 48 * 3600 * 1000;
@@ -85,8 +85,7 @@ export function PlanEnPreparation({ payeLe, questionnaire, commande }) {
   useEffect(() => { const t = setInterval(() => tic(x => x + 1), 60000); return () => clearInterval(t); }, []);
 
   const envoye = questionnaire && questionnaire.envoyeLe;
-  const joursAvantEnvoi = payeLe && envoye ? (new Date(envoye) - new Date(payeLe)) / 86400000 : 0;
-  const dansLaFile = joursAvantEnvoi >= DELAI_QUESTIONNAIRE;
+  const dansLaFile = !!(payeLe && envoye) && new Date(envoye) >= finDelaiQuestionnaire(payeLe);
   const limite = envoye ? new Date(new Date(envoye).getTime() + H48) : null;
   const ecoule = envoye ? Date.now() - new Date(envoye).getTime() : 0;
   const part = Math.min(0.97, Math.max(0.03, ecoule / H48));

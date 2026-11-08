@@ -11,7 +11,6 @@ const MESSAGES = {
   inconnue: 'Ce lien d\'invitation n\'est pas valide. Demande un nouveau lien à ton coach.',
   code: 'Ce lien d\'invitation n\'est pas valide. Demande un nouveau lien à ton coach.',
   adresse: 'Ce lien est réservé à une autre adresse e-mail. Connecte-toi avec l\'adresse choisie par ton coach. Rien n\'a été activé.',
-  verification: 'Confirme d\'abord ton adresse e-mail (le message de BelFit), puis rouvre l\'application. Le lien reste valable.',
   deja_commande: 'Ce compte a déjà un coaching. Le lien offert n\'a pas été utilisé.',
 };
 

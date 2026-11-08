@@ -12,7 +12,7 @@ import { QuestionnaireCoach, effacerBrouillon } from './QuestionnaireCoach.jsx';
 import { Entete } from './Entete.jsx';
 import { PlanEnPreparation } from './PlanEnPreparation.jsx';
 import '../styles/coach-page.css';
-import { etatCoach, demandeQuestionnaire, DELAI_QUESTIONNAIRE, marquerPaye } from '../store/coach.js';
+import { etatCoach, demandeQuestionnaire, marquerPaye } from '../store/coach.js';
 import { SuiviClient } from './SuiviClient.jsx';
 import { CarteProgramme, allerVers } from './Entrainer.jsx';
 import { programmeActif } from '../store/programme.js';
@@ -65,7 +65,7 @@ function joursDepuis(iso) {
   return isNaN(j) ? null : Math.max(0, j);
 }
 
-// Regle du delai : voir store/coach.js (7 jours pour remplir le
+// Regle du delai : voir store/coach.js (un mois pour remplir le
 // questionnaire ; au-dela, la file, detaillee dans les CGV / FAQ).
 
 // Retour de la page de paiement (Mollie renvoie ici que le paiement ait
@@ -314,7 +314,7 @@ export function CoachPage() {
             <li class="actif"><span class="cp-pastille">2</span>Tu complètes ton questionnaire</li>
             <li><span class="cp-pastille">3</span>Ton plan sur mesure, livré sous 48&nbsp;h</li>
           </ol>
-          {tardif && <p class="cp-txt">Ton délai de 7 jours est passé&nbsp;: ta demande rejoint la file.</p>}
+          {tardif && <p class="cp-txt">Ton délai d'un mois est passé&nbsp;: ta demande rejoint la file.</p>}
           <button class="cp-bt cp-bt--vert" onClick={() => ouvrirQuestionnaire(typePaye)}>Compléter mon questionnaire</button>
         </div>
       )}
@@ -421,7 +421,7 @@ export function CoachPage() {
                   ? <p class="cp-txt cp-petit">Aucun paiement. Le questionnaire part à ton coach, le plan est livré sous 48&nbsp;h.</p>
                   : viaInv
                   ? <p class="cp-txt cp-petit">Livraison sous 48&nbsp;h après la réception du virement. Détails dans les conditions générales.</p>
-                  : <p class="cp-txt cp-petit">Questionnaire à remplir dans les {DELAI_QUESTIONNAIRE} jours suivant le paiement pour une livraison sous 48&nbsp;h. Détails dans les conditions générales.</p>}
+                  : <p class="cp-txt cp-petit">Questionnaire à remplir dans le mois suivant le paiement pour une livraison sous 48&nbsp;h. Détails dans les conditions générales.</p>}
                 <button class="cp-bt cp-bt--or" disabled={!consent || !consent2} onClick={sansPaiement ? accepterInv : payer}>{sansPaiement ? 'Continuer vers le questionnaire' : 'Continuer vers le paiement'}</button>
                 {!sansPaiement && paiementOuvert.value && <p class="cp-petit cp-secure">Paiement sécurisé par Mollie.</p>}
               </>

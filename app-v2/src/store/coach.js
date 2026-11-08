@@ -5,8 +5,12 @@ import { signal } from '@preact/signals';
 import { utilisateur } from '../services/firebase.js';
 import { dossierOffert, payeLeHorsOffre } from '../services/statut-dossier.js';
 
-// Delai pour remplir le questionnaire apres paiement (regle de Raci).
-export const DELAI_QUESTIONNAIRE = 7;
+// Delai pour remplir le questionnaire : un mois apres le paiement (Raci, 08/11).
+export function finDelaiQuestionnaire(payeLe) {
+  const fin = new Date(payeLe);
+  fin.setMonth(fin.getMonth() + 1);
+  return fin;
+}
 
 // Demande d'ouverture du questionnaire depuis n'importe quelle page
 // (appui sur le bandeau). La page Coach la consomme.
@@ -54,11 +58,13 @@ export function etatCoach(dossier, pr) {
   const type = (cmd && cmd.type) || (local && local.type) || 'plan';
   const aRemplir = !!payeLe && avant(q && q.envoyeLe, payeLe);
   const enPrep = !!payeLe && !aRemplir && avant(pr && pr.livreLe, q.envoyeLe);
-  const ecoules = payeLe ? jours(payeLe) : 0;
+  const fin = payeLe ? finDelaiQuestionnaire(payeLe) : null;
+  const finValide = !!fin && !isNaN(fin.getTime());
+  const resteMs = finValide ? fin.getTime() - Date.now() : 0;
   return {
     payeLe, type, aRemplir, enPrep,
-    tardif: aRemplir && ecoules >= DELAI_QUESTIONNAIRE,
-    restants: Math.max(0, DELAI_QUESTIONNAIRE - ecoules),
+    tardif: aRemplir && finValide && resteMs <= 0,
+    restants: Math.max(0, Math.ceil(resteMs / 86400000)),
   };
 }
 
