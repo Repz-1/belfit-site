@@ -429,9 +429,16 @@ function bilanMorphologique(d) {
   const ratio = tour > 0 ? tour / taille : null;
   const mg = n('masseGrasse');
   const seuilMg = v('sexe') === 'Femme' ? 32 : 25;
-  const muscle = imc >= 25 && (mg > 0 ? mg < seuilMg : ratio !== null && ratio < 0.5);
-  const aConfirmer = imc >= 25 && !muscle && !(mg > 0) && ratio === null && n('seances') >= 3;
+  const jamaisMuscu = v('anciennete') === 'Jamais';
+  const entraine = !jamaisMuscu && (n('seances') >= 3 || ['1 à 3 ans', 'Plus de 3 ans'].includes(v('anciennete')));
+  const mgBasse = mg > 0 && mg < seuilMg;
+  const tourFin = ratio !== null && ratio < 0.5;
+  // Estimation basse mais gros tour de taille : on ne conclut pas, le coach verifie.
+  const discordant = imc >= 25 && mgBasse && ratio !== null && !tourFin;
+  const muscle = imc >= 25 && !jamaisMuscu && !discordant && (mgBasse || (!(mg > 0) && tourFin));
+  const aConfirmer = imc >= 25 && !muscle && (discordant || (!(mg > 0) && ratio === null && entraine));
   const cat = muscle ? ['un IMC élevé, probablement dû à la masse musculaire', 'IMC élevé, muscle probable']
+    : discordant ? ['un IMC élevé, à vérifier', 'IMC élevé, à vérifier']
     : aConfirmer ? ['un IMC élevé, à confirmer avec le tour de taille', 'IMC élevé, à confirmer']
     : imc < 18.5 ? ['une insuffisance pondérale', 'insuffisance pondérale']
     : imc < 25 ? ['une corpulence normale', 'corpulence normale']
@@ -453,6 +460,7 @@ function bilanMorphologique(d) {
     phraseVise = ` L'objectif de ${dec(vise, 0)} kg représente une perte de ${dec(ecart, 0)} kg, soit environ ${min} à ${max} mois à un rythme raisonnable.`;
   } else if (ecart < 0) phraseVise = ` L'objectif de ${dec(vise, 0)} kg représente une prise de ${dec(-ecart, 0)} kg.`;
   const alertes = [];
+  if (discordant) alertes.push('Réponses à vérifier : masse grasse estimée basse, mais tour de taille élevé.');
   if (imc >= 35 && !muscle) alertes.push('Avis médical conseillé vu l\'IMC.');
   if (imc < 18.5) alertes.push('Insuffisance pondérale : pas de déficit sans avis médical.');
   if (imcVise !== null && imcVise < 18.5) alertes.push('Poids visé trop bas (IMC ' + dec(imcVise, 1) + ').');
