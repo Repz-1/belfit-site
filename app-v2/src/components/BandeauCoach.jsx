@@ -1,6 +1,6 @@
-// Bandeau discret en haut de chaque page (26/09, maquette validee) :
+// Carte en haut de chaque page (08/11, maquette A validee) :
 // rappelle au client qui a paye de remplir son questionnaire. Une
-// ligne, un appui ouvre le questionnaire. Disparait des l'envoi.
+// carte, un bouton ouvre le questionnaire. Disparait des l'envoi.
 import { useEffect } from 'preact/hooks';
 import { chargerProgramme, programme, programmeCharge, dossierCoach } from './BelfitPlus.jsx';
 import { etatCoach, demandeQuestionnaire } from '../store/coach.js';
@@ -10,14 +10,17 @@ export function BandeauCoach() {
   useEffect(() => { if (!programmeCharge.value) chargerProgramme(); }, []);
   const e = etatCoach(dossierCoach.value, programme.value);
   if (!e.aRemplir || demandeQuestionnaire.value) return null;
-  const texte = e.tardif
-    ? 'Ta demande a rejoint la file · Remplir'
-    : `Remplis ton questionnaire · ${e.restants} jour${e.restants > 1 ? 's' : ''} restant${e.restants > 1 ? 's' : ''}`;
+  const titre = e.tardif ? 'Ta demande a rejoint la file' : 'Ton questionnaire t’attend';
   return (
-    <button class="bandeau-coach" onClick={() => { demandeQuestionnaire.value = e.type; ongletActif.value = 'premium'; }}>
-      <span class="bandeau-coach-point" aria-hidden="true" />
-      <span class="bandeau-coach-txt">{texte}</span>
-      <span class="bandeau-coach-fleche" aria-hidden="true">›</span>
-    </button>
+    <section class="bandeau-coach" aria-label="Questionnaire coach">
+      <div class="bandeau-coach-haut">
+        <div class="bandeau-coach-titre">{titre}</div>
+        {!e.tardif && <span class="bandeau-coach-delai">{e.restants} jour{e.restants > 1 ? 's' : ''}</span>}
+      </div>
+      <p class="bandeau-coach-txt">Ton coach en a besoin pour préparer ton plan.</p>
+      <button type="button" class="bandeau-coach-bouton" onClick={() => { demandeQuestionnaire.value = e.type; ongletActif.value = 'premium'; }}>
+        Remplir mon questionnaire
+      </button>
+    </section>
   );
 }
