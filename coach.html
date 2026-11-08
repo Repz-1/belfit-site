@@ -158,6 +158,16 @@ button.ia-go{display:block;width:100%;font:inherit;font-size:14px;font-weight:60
 .durees{display:flex;gap:6px;margin:10px 0 0}
 .durees button{flex:1;font:inherit;font-size:13px;border:0;border-radius:999px;padding:9px 0;background:#F4F3F0;color:var(--tx);cursor:pointer}
 .durees button.on{background:#F8CF01;font-weight:700}
+button.bilan-go,button.bilan-ia{display:block;width:100%;font:inherit;font-size:14px;font-weight:600;cursor:pointer;
+  color:#fff;background:#16130F;border:0;border-radius:12px;padding:12px;margin-top:12px}
+.bilan{background:#F4F3F0;border-radius:14px;padding:13px;margin-top:10px}
+.bilan-titre{font-size:16px;font-weight:700;margin:0}
+.bilan-txt{font-size:14px;line-height:1.5;margin:10px 0 0;color:var(--tx)}
+.bilan-grille{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:11px}
+.bilan-case{background:#fff;border-radius:10px;padding:8px 9px;min-width:0}
+.bilan-case span{display:block;font-size:11.5px;color:var(--tx2)}
+.bilan-case b{display:block;font-size:13.5px;overflow-wrap:anywhere}
+.bilan-alerte{font-size:13px;line-height:1.45;margin:10px 0 0;padding:9px 10px;border-radius:10px;background:#FFF4CC;color:#633806}
 button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:600;cursor:pointer;
   color:var(--tx);background:#FFF8E1;border:0;border-radius:12px;padding:12px;margin-top:12px}
   .vir{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 0 12px 46px;font-size:13px;color:#9A5B00}
@@ -401,6 +411,75 @@ function besoinsDe(rep) {
   const lip = Math.max(Math.round(kcal * 0.27 / 9), Math.round(poids * 0.8));
   const deficit = Math.round((1 - kcal / maintien) * 1000) / 10;
   return { kcal, prot, lip, carbs: Math.max(0, Math.round((kcal - prot * 4 - lip * 9) / 4)), maintien: Math.round(maintien / 10) * 10, bmr: Math.round(bmr), deficit };
+}
+// 08/11 Raci : bilan morphologique, visible uniquement par le coach.
+// Memes besoins que l'IA (besoinsDe). Proteines sur un poids de reference si IMC >= 30.
+function bilanMorphologique(d) {
+  const rep = d.reponses || {};
+  const v = (id) => (rep[id] || {}).valeur;
+  const n = (id) => parseFloat(String(v(id) || '').replace(',', '.'));
+  const besoins = besoinsDe(rep);
+  if (!besoins) return null;
+  const poids = n('poids'), taille = n('taille'), age = n('age');
+  const m = taille / 100;
+  const dec = (x, c) => x.toLocaleString('fr-BE', { minimumFractionDigits: c, maximumFractionDigits: c });
+  const imc = poids / (m * m);
+  const cat = imc < 18.5 ? ['une insuffisance pondérale', 'insuffisance pondérale']
+    : imc < 25 ? ['une corpulence normale', 'corpulence normale']
+    : imc < 30 ? ['un surpoids', 'surpoids']
+    : imc < 35 ? ['une obésité de classe 1', 'obésité classe 1']
+    : imc < 40 ? ['une obésité de classe 2', 'obésité classe 2']
+    : ['une obésité de classe 3', 'obésité classe 3'];
+  const tour = n('tourTaille');
+  const ratio = tour > 0 ? tour / taille : null;
+  const prot = imc >= 30 ? Math.round(m * m * 25 * (v('objectif') === 'Perdre du gras' ? 2.2 : 2)) : besoins.prot;
+  const vise = n('poidsVise');
+  const ecart = vise > 0 ? poids - vise : null;
+  const imcVise = vise > 0 ? vise / (m * m) : null;
+  // Maigreur ou poids vise trop bas : ni perte, ni chiffres, ni plan IA.
+  const prudence = imc < 18.5 || (imcVise !== null && imcVise < 18.5);
+  let phraseVise = '', rythme = '';
+  if (prudence) phraseVise = ' Objectif à revoir : pas de plan de perte sans avis médical.';
+  else if (ecart > 0) {
+    const min = Math.ceil(ecart / (poids * 0.01) / 4.345), max = Math.ceil(ecart / (poids * 0.005) / 4.345);
+    rythme = `0,5 à 1 % du poids par semaine, soit environ ${min} à ${max} mois`;
+    phraseVise = ` L'objectif de ${dec(vise, 0)} kg représente une perte de ${dec(ecart, 0)} kg, soit environ ${min} à ${max} mois à un rythme raisonnable.`;
+  } else if (ecart < 0) phraseVise = ` L'objectif de ${dec(vise, 0)} kg représente une prise de ${dec(-ecart, 0)} kg.`;
+  const alertes = [];
+  if (imc >= 35) alertes.push('Avis médical conseillé vu l\'IMC.');
+  if (imc < 18.5) alertes.push('Insuffisance pondérale : pas de déficit sans avis médical.');
+  if (imcVise !== null && imcVise < 18.5) alertes.push('Poids visé trop bas (IMC ' + dec(imcVise, 1) + ').');
+  if (d.alerteSante) alertes.push('Point de santé signalé dans le questionnaire.');
+  if (d.allergieGrave) alertes.push('Allergie grave signalée dans le questionnaire.');
+  const prenom = String(v('prenom') || nomDe(d) || 'Ce client').trim();
+  const texte = `${prenom}, ${dec(age, 0)} ans, présente ${cat[0]} (IMC ${dec(imc, 1)})${ratio !== null && ratio > 0.5 ? ' avec un tour de taille élevé' : ''}.${phraseVise}${prudence ? '' : ` Point de départ conseillé : environ ${dec(besoins.kcal, 0)} kcal par jour et ${prot} g de protéines.`}${imc >= 35 ? ' Un avis médical est conseillé avant de commencer.' : ''}`;
+  const demande = `Bilan morphologique du coach : IMC ${dec(imc, 1)} (${cat[1]})${ratio !== null ? ', ratio taille ' + dec(ratio, 2) : ''}${vise > 0 ? ', poids visé ' + dec(vise, 0) + ' kg' : ''}. Vise ${prot} g de protéines par jour. Plan simple et tenable au quotidien.`;
+  return { texte, alertes, rythme, demande, besoins, prot, prudence, profil: `${v('sexe') || '—'}, ${dec(age, 0)} ans`,
+    mesures: `${dec(poids, 0)} kg · ${dec(m, 2)} m`, imc: `${dec(imc, 1)} · ${cat[1]}`,
+    tour: tour > 0 ? `${dec(tour, 0)} cm · ratio ${dec(ratio, 2)}` : 'non renseigné',
+    vise: vise > 0 ? `${dec(vise, 0)} kg · ${ecart > 0 ? '−' : '+'}${dec(Math.abs(ecart), 0)} kg` : 'non renseigné' };
+}
+function ficheBilan(d, etat, avantIa) {
+  const box = el('div', 'bilan');
+  box.append(el('p', 'bilan-titre', 'Bilan morphologique'), el('p', 'dos-sous', 'Visible uniquement par toi'));
+  const b = bilanMorphologique(d);
+  if (!b) { box.append(el('p', 'bilan-txt', 'Questionnaire incomplet : poids, taille ou âge manquant.')); return box; }
+  box.append(el('p', 'bilan-txt', b.texte));
+  const grille = el('div', 'bilan-grille');
+  [['Profil', b.profil], ['Poids et taille', b.mesures], ['IMC', b.imc], ['Tour de taille', b.tour],
+    ['Besoin estimé', '≈ ' + b.besoins.maintien.toLocaleString('fr-BE') + ' kcal/jour'], ['Objectif visé', b.vise]].forEach(([k, val]) => {
+    const c = el('div', 'bilan-case');
+    c.append(el('span', '', k), el('b', '', val));
+    grille.append(c);
+  });
+  box.append(grille);
+  if (b.alertes.length) box.append(el('p', 'bilan-alerte', 'À vérifier : ' + b.alertes.join(' ')));
+  if (b.prudence) return box;
+  box.append(el('p', 'bilan-txt', 'Proposition : ≈ ' + b.besoins.kcal.toLocaleString('fr-BE') + ' kcal/jour, ' + b.prot + ' g de protéines.' + (b.rythme ? ' Rythme réaliste : ' + b.rythme + '.' : '')));
+  const go = el('button', 'bilan-ia', 'Préparer le plan avec ce bilan');
+  go.addEventListener('click', () => { if (avantIa()) proposer({ uid: d.uid, demande: b.demande }, etat); });
+  box.append(go);
+  return box;
 }
 function afficherCible() {
   const c = $('cible');
@@ -806,18 +885,26 @@ function detail(d) {
   const ia = el('button', 'ia-go', 'Proposer un plan avec l\'IA');
   // 01/11 : l'etat de l'IA s'affiche aussi sous le bouton (avant : seulement plus bas, hors de vue).
   const etat = el('div', 'msg ia-etat-fiche');
-  ia.addEventListener('click', () => {
-    if (brouillonNonVide(lireBrouillon(d.uid)) && !confirm('Un brouillon existe pour ' + nomDe(d) + '. Le remplacer par un plan de l\'IA ?')) return;
-    if (!choisir(d)) return;
+  const avantIa = () => {
+    if (brouillonNonVide(lireBrouillon(d.uid)) && !confirm('Un brouillon existe pour ' + nomDe(d) + '. Le remplacer par un plan de l\'IA ?')) return false;
+    if (!choisir(d)) return false;
     // 01/11 v656 : sans questionnaire, l'IA n'a rien pour calculer : on le dit clairement.
-    if (!aQuestionnaire(d)) { $('cible').scrollIntoView({ block: 'center' }); $('demande').focus({ preventScroll: true }); return; }
-    proposer({ uid: d.uid }, etat);
+    if (!aQuestionnaire(d)) { $('cible').scrollIntoView({ block: 'center' }); $('demande').focus({ preventScroll: true }); return false; }
+    return true;
+  };
+  ia.addEventListener('click', () => { if (avantIa()) proposer({ uid: d.uid }, etat); });
+  const btnBilan = el('button', 'bilan-go', 'Bilan morphologique');
+  let bilanOuvert = null;
+  btnBilan.addEventListener('click', () => {
+    if (bilanOuvert) { bilanOuvert.remove(); bilanOuvert = null; return; }
+    bilanOuvert = ficheBilan(d, etat, avantIa);
+    btnBilan.after(bilanOuvert);
   });
   const br = lireBrouillon(d.uid);
   if (brouillonNonVide(br)) box.append(el('p', 'dos-sous brouillon-note', 'Brouillon non envoyé · ' + new Date(br.le).toLocaleString('fr-BE', { dateStyle: 'short', timeStyle: 'short' })));
   const b = el('button', 'second', brouillonNonVide(br) ? 'Reprendre le brouillon' : 'Composer moi-même');
   b.addEventListener('click', () => choisir(d));
-  box.append(ia, etat, b);
+  box.append(ia, etat, btnBilan, b);
   return box;
 }
 
