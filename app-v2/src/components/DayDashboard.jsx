@@ -146,7 +146,8 @@ export function DayDashboard() {
   const jours = t('days_long').split('|');
   const moisCourt = t('months_min').split('|');
   const isoAuj = aujourdhuiBxl();
-  const retard = !!dateJour.value && dateJour.value !== isoAuj;
+  // 08/11 Raci : saisie fermee = pas de cloture possible, on affiche le jour reel.
+  const retard = !encodageFerme.value && !!dateJour.value && dateJour.value !== isoAuj;
   horlogeJour.value;   // abonnement : la carte se redessine apres minuit
   // 27/10 : journal d'un jour PASSE -> le bouton de cloture est mis en avant.
   const aCloturer = journalDUnJourPasse(dateJour.value);
