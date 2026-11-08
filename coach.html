@@ -424,15 +424,22 @@ function bilanMorphologique(d) {
   const m = taille / 100;
   const dec = (x, c) => x.toLocaleString('fr-BE', { minimumFractionDigits: c, maximumFractionDigits: c });
   const imc = poids / (m * m);
-  const cat = imc < 18.5 ? ['une insuffisance pondérale', 'insuffisance pondérale']
+  // 08/11 Raci : l'IMC ne distingue pas muscle et graisse. Masse grasse d'abord, sinon tour de taille.
+  const tour = n('tourTaille');
+  const ratio = tour > 0 ? tour / taille : null;
+  const mg = n('masseGrasse');
+  const seuilMg = v('sexe') === 'Femme' ? 32 : 25;
+  const muscle = imc >= 25 && (mg > 0 ? mg < seuilMg : ratio !== null && ratio < 0.5);
+  const aConfirmer = imc >= 25 && !muscle && !(mg > 0) && ratio === null && n('seances') >= 3;
+  const cat = muscle ? ['un IMC élevé, probablement dû à la masse musculaire', 'IMC élevé, muscle probable']
+    : aConfirmer ? ['un IMC élevé, à confirmer avec le tour de taille', 'IMC élevé, à confirmer']
+    : imc < 18.5 ? ['une insuffisance pondérale', 'insuffisance pondérale']
     : imc < 25 ? ['une corpulence normale', 'corpulence normale']
     : imc < 30 ? ['un surpoids', 'surpoids']
     : imc < 35 ? ['une obésité de classe 1', 'obésité classe 1']
     : imc < 40 ? ['une obésité de classe 2', 'obésité classe 2']
     : ['une obésité de classe 3', 'obésité classe 3'];
-  const tour = n('tourTaille');
-  const ratio = tour > 0 ? tour / taille : null;
-  const prot = imc >= 30 ? Math.round(m * m * 25 * (v('objectif') === 'Perdre du gras' ? 2.2 : 2)) : besoins.prot;
+  const prot = imc >= 30 && !muscle ? Math.round(m * m * 25 * (v('objectif') === 'Perdre du gras' ? 2.2 : 2)) : besoins.prot;
   const vise = n('poidsVise');
   const ecart = vise > 0 ? poids - vise : null;
   const imcVise = vise > 0 ? vise / (m * m) : null;
@@ -446,13 +453,13 @@ function bilanMorphologique(d) {
     phraseVise = ` L'objectif de ${dec(vise, 0)} kg représente une perte de ${dec(ecart, 0)} kg, soit environ ${min} à ${max} mois à un rythme raisonnable.`;
   } else if (ecart < 0) phraseVise = ` L'objectif de ${dec(vise, 0)} kg représente une prise de ${dec(-ecart, 0)} kg.`;
   const alertes = [];
-  if (imc >= 35) alertes.push('Avis médical conseillé vu l\'IMC.');
+  if (imc >= 35 && !muscle) alertes.push('Avis médical conseillé vu l\'IMC.');
   if (imc < 18.5) alertes.push('Insuffisance pondérale : pas de déficit sans avis médical.');
   if (imcVise !== null && imcVise < 18.5) alertes.push('Poids visé trop bas (IMC ' + dec(imcVise, 1) + ').');
   if (d.alerteSante) alertes.push('Point de santé signalé dans le questionnaire.');
   if (d.allergieGrave) alertes.push('Allergie grave signalée dans le questionnaire.');
   const prenom = String(v('prenom') || nomDe(d) || 'Ce client').trim();
-  const texte = `${prenom}, ${dec(age, 0)} ans, présente ${cat[0]} (IMC ${dec(imc, 1)})${ratio !== null && ratio > 0.5 ? ' avec un tour de taille élevé' : ''}.${phraseVise}${prudence ? '' : ` Point de départ conseillé : environ ${dec(besoins.kcal, 0)} kcal par jour et ${prot} g de protéines.`}${imc >= 35 ? ' Un avis médical est conseillé avant de commencer.' : ''}`;
+  const texte = `${prenom}, ${dec(age, 0)} ans, présente ${cat[0]} (IMC ${dec(imc, 1)})${ratio !== null && ratio > 0.5 ? ' avec un tour de taille élevé' : ''}.${phraseVise}${prudence ? '' : ` Point de départ conseillé : environ ${dec(besoins.kcal, 0)} kcal par jour et ${prot} g de protéines.`}${imc >= 35 && !muscle ? ' Un avis médical est conseillé avant de commencer.' : ''}`;
   const demande = `Bilan morphologique du coach : IMC ${dec(imc, 1)} (${cat[1]})${ratio !== null ? ', ratio taille ' + dec(ratio, 2) : ''}${vise > 0 ? ', poids visé ' + dec(vise, 0) + ' kg' : ''}. Vise ${prot} g de protéines par jour. Plan simple et tenable au quotidien.`;
   return { texte, alertes, rythme, demande, besoins, prot, prudence, profil: `${v('sexe') || '—'}, ${dec(age, 0)} ans`,
     mesures: `${dec(poids, 0)} kg · ${dec(m, 2)} m`, imc: `${dec(imc, 1)} · ${cat[1]}`,
