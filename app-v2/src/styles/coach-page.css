@@ -36,10 +36,13 @@
 .pg-coach .qc-alerte { background: #DDF3E4; border: 1px solid #2E7D52; color: #1F6B42; border-radius: 14px; padding: 12px; font-size: 13px; line-height: 1.5; margin: 12px 0 0; }
 .pg-coach .cp-petit { font-size: 12px; color: #55685D; margin-top: 8px; }
 /* Bandeau questionnaire en haut de chaque page (26/09) */
-.bandeau-coach { display: flex; align-items: center; gap: 8px; width: 100%; margin: 0 0 10px; box-sizing: border-box; background: #FFF4CC; border: 1px solid #F8CF01; border-radius: 999px; padding: 7px 12px; font-family: inherit; cursor: pointer; text-align: left; }
-.bandeau-coach-point { flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%; background: #B07400; }
-.bandeau-coach-txt { flex: 1; font-size: 13px; color: #8F6200; }
-.bandeau-coach-fleche { font-size: 14px; font-weight: 600; color: #8F6200; }
+.bandeau-coach { width: 100%; margin: 0 0 12px; box-sizing: border-box; background: #FAC408; color: #16130F; border-radius: 22px; padding: 18px; font-family: inherit; }
+.bandeau-coach-haut { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.bandeau-coach-titre { font-size: 21px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
+.bandeau-coach-delai { flex: none; background: #16130F; color: #FAC408; font-size: 12.5px; font-weight: 700; padding: 5px 10px; border-radius: 999px; white-space: nowrap; }
+.bandeau-coach-txt { margin: 6px 0 15px; font-size: 15px; line-height: 1.4; color: #16130F; }
+.bandeau-coach-bouton { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 50px; border: 0; border-radius: 999px; background: #16130F; color: #fff; font-family: inherit; font-size: 15.5px; font-weight: 700; cursor: pointer; }
+.bandeau-coach-bouton:active { transform: scale(.98); }
 
 /* Questionnaire coach v2 (26/09, maquettes validees) */
 .pg-qc { padding-bottom: 140px; }
@@ -239,9 +242,6 @@
 .pan-scroll:has(.pg-coach) { background: #F6F7F6; }
 .pg-coach .j-entete--perso.j-entete--perso .j-btn-icone { color: var(--prim-t); }
 .pg-coach .j-entete--perso.j-entete--perso .j-symbole { filter: brightness(0); opacity: .9; }
-.pg-coach .bandeau-coach { background: var(--pastel2); border-color: #DFE3E1; min-height: 44px; }
-.pg-coach .bandeau-coach-point { background: var(--prim); }
-.pg-coach .bandeau-coach-txt, .pg-coach .bandeau-coach-fleche { color: #14452B; }
 
 .pg-coach .cp-titre { font-size: 32px; font-weight: 800; letter-spacing: -.03em; color: var(--t1); }
 .pg-coach .cp-titre::after { content: ''; display: block; width: 44px; height: 5px; border-radius: 9px; margin-top: 6px; background: #6CC995; }
@@ -399,7 +399,6 @@
 
 /* Tarif : carte a ne pas changer (seule surface pastel verte), titres plus lisibles */
 .pg-coach .cp-pied { font-size: 13.5px; line-height: 1.5; color: var(--t2); margin: 14px 4px 0; text-wrap: pretty; }
-.pg-coach .bandeau-coach { background: #fff; }
 
 /* Micro-animations (desactivees si l'utilisateur reduit les animations) */
 @media (prefers-reduced-motion: no-preference) {
