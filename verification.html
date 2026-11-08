@@ -1,100 +1,49 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<script src="i18n-strings.js?v=41"></script>
+<script src="i18n-strings.js?v=42"></script>
 <script src="i18n.js?v=4"></script>
 <link rel="preconnect" href="https://www.gstatic.com">
 <link rel="stylesheet" href="/fonts/fonts.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#FAEFE1">
+<meta name="theme-color" content="#F4F3F0">
 <meta name="robots" content="noindex">
-<title>BELFIT — Confirmation</title>
+<title>BelFit — Confirmation</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-:root{
-  --creme:#FAEFE1; --ambre:#E19609; --encre:#141414;
-  --vague:#2E3D34; --dim:#6b6257;
-}
-html{background:var(--creme)}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root{ --bg:#F4F3F0; --text:#16130F; --muted:#5C564E; }
+html{ background:var(--bg); }
 body{
-  font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:var(--creme); color:var(--encre);
+  font-family:"Satoshi",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg); color:var(--text);
+  line-height:1.55; -webkit-font-smoothing:antialiased;
   min-height:100vh; min-height:100dvh;
-  display:flex; flex-direction:column; position:relative; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  padding:32px 20px; text-align:center;
 }
-
-/* ---- Marque en haut ---- */
-.tete{ padding:26px 24px 0; display:flex; align-items:flex-start; justify-content:space-between; }
-.marque{ display:flex; flex-direction:column; gap:4px; }
-.marque img{ width:42px; height:42px; display:block; }
-.marque .mot{ font-size:19px; font-weight:800; letter-spacing:.02em; line-height:1; }
-.marque .mot span{ color:var(--ambre); }
-.points{ display:grid; grid-template-columns:repeat(4,1fr); gap:9px; opacity:.3; }
-.points i{ width:3px; height:3px; border-radius:50%; background:var(--encre); display:block; }
-
-/* ---- Bloc central ---- */
-.centre{ flex:1; display:flex; flex-direction:column; justify-content:center; padding:0 24px 190px; }
-.gros{
-  font-family:'Bebas Neue','DejaVu Sans Condensed','Arial Narrow',sans-serif;
-  font-size:76px; font-weight:400; line-height:.92; letter-spacing:.015em;
-  text-transform:uppercase;
-}
-.gros .pt{ display:inline-block; width:13px; height:13px; background:var(--ambre); border-radius:3px; margin-left:5px; }
-.filet{ display:flex; align-items:center; gap:11px; margin:22px 0 20px; }
-.filet .l1{ height:1.5px; width:120px; background:linear-gradient(90deg,var(--encre),#c9bfae); opacity:.55; }
-.filet .l2{ height:3px; width:34px; background:var(--encre); border-radius:2px; }
-.filet .et{ color:var(--ambre); font-size:15px; }
-.corps{ font-size:18px; line-height:1.65; font-weight:500; max-width:320px; color:#2c2822; }
-.corps i{ font-style:normal; color:var(--ambre); font-weight:600; }
-.recap{ margin-top:26px; display:flex; flex-direction:column; gap:13px; }
-.rc{ display:flex; align-items:center; gap:12px; font-size:15px; font-weight:600; color:#3a352e; }
-.rc-ck{ flex:none; width:24px; height:24px; border-radius:50%; background:rgba(225,150,9,.14);
-  display:flex; align-items:center; justify-content:center; }
-.rc-ck svg{ width:13px; height:13px; fill:none; stroke:var(--ambre); stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
-
-/* ---- Vague + bouton ---- */
-.vague{ position:absolute; left:0; right:0; bottom:0; height:250px; pointer-events:none; }
-.vague svg{ display:block; width:100%; height:100%; }
-.zone-cta{ position:absolute; left:0; right:0; bottom:46px; display:flex; justify-content:center; padding:0 24px; }
-.cta{
-  display:inline-flex; align-items:center; gap:14px;
-  background:linear-gradient(180deg,#F7C24B,#E9A825);
-  color:var(--encre); border:none; border-radius:999px;
-  font-family:inherit; font-size:15px; font-weight:800; letter-spacing:.08em;
-  padding:17px 38px; cursor:pointer; text-transform:uppercase;
-  box-shadow:0 0 26px rgba(233,168,37,.45), 0 6px 16px rgba(0,0,0,.22);
-}
-.cta:active{ transform:scale(.985); }
-.cta svg{ width:19px; height:19px; stroke:var(--encre); stroke-width:2.2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
-
-/* ---- Etat d'attente ---- */
-.attente{ font-size:15px; font-weight:600; color:var(--dim); }
+.page{ width:100%; max-width:26rem; }
+.logo{ display:block; width:min(180px,55vw); height:auto; margin:0 auto 1.75rem; }
+.attente{ font-size:1rem; font-weight:500; color:var(--muted); }
 .vue{ display:none; }
 .vue.active{ display:block; }
-
-@media (max-height:700px){
-  .gros{ font-size:60px; }
-  .centre{ padding-bottom:150px; }
-  .vague{ height:200px; }
-  .recap{ margin-top:18px; gap:10px; }
+.gros{ font-size:clamp(2rem,9vw,2.6rem); font-weight:800; letter-spacing:-.035em; line-height:1.12; margin-bottom:1.1rem; }
+.corps{ font-size:1.1rem; color:var(--muted); margin-bottom:2rem; }
+.corps i{ font-style:normal; }
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  font-family:inherit; font-weight:700; font-size:.95rem;
+  padding:.85rem 1.75rem; border-radius:999px; border:2px solid transparent;
+  background:var(--text); color:#fff; cursor:pointer; white-space:nowrap;
 }
+.btn:active{ transform:scale(.98); }
 </style>
 </head>
 <body>
 
-<div class="tete">
-  <div class="marque">
-    <img src="belfit-logo-bf.png" alt="BELFIT">
-    <div class="mot">BEL<span>FIT</span></div>
-  </div>
-  <div class="points">
-    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-  </div>
-</div>
+<main class="page">
+  <img class="logo" src="belfit-logo-bf.png" width="180" height="74" alt="BelFit">
 
-<div class="centre">
   <!-- 1. Verification du jeton en cours -->
   <div class="vue active" id="vueAttente">
     <p class="attente" data-i18n="verif_checking">Confirmation en cours…</p>
@@ -103,33 +52,12 @@ body{
   <!-- 2. Resultat : adresse confirmee ou lien perime -->
   <div class="vue" id="vueFin">
     <h1 class="gros" id="finGros"></h1>
-    <div class="filet"><span class="l1"></span><span class="l2"></span><span class="et">&#10022;</span></div>
     <p class="corps" id="finTexte"></p>
-    <div class="recap" id="finRecap">
-      <div class="rc"><span class="rc-ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span data-i18n="verif_pt1"></span></div>
-      <div class="rc"><span class="rc-ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span data-i18n="verif_pt2"></span></div>
-      <div class="rc"><span class="rc-ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span data-i18n="verif_pt3"></span></div>
-    </div>
+    <button type="button" class="btn" id="finBouton" style="visibility:hidden">
+      <span id="finBoutonTxt"></span>
+    </button>
   </div>
-</div>
-
-<div class="vague">
-  <svg viewBox="0 0 390 250" preserveAspectRatio="none">
-    <path d="M0 92 C 130 18, 268 34, 390 100 L390 250 L0 250 Z" fill="#0E0E0E"/>
-    <path d="M0 92 C 130 18, 268 34, 390 100" fill="none" stroke="#E19609" stroke-opacity=".85" stroke-width="1.6"/>
-    <path d="M0 100 C 130 28, 268 44, 390 108" fill="none" stroke="#E19609" stroke-opacity=".22" stroke-width="4"/>
-    <path d="M-20 200 C 120 150, 210 235, 420 175" fill="none" stroke="#E19609" stroke-opacity=".28" stroke-width="1.1"/>
-    <path d="M60 250 C 160 195, 300 245, 410 205" fill="none" stroke="#E19609" stroke-opacity=".16" stroke-width="1.1"/>
-  </svg>
-</div>
-
-<div class="zone-cta">
-  <button type="button" class="cta" id="finBouton" style="visibility:hidden">
-    <span id="finBoutonTxt"></span>
-    <svg viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
-  </button>
-</div>
-
+</main>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script>
@@ -161,9 +89,8 @@ function montrer(idVue){
 
 function ecranFin(cleGros, cleTexte, cleBouton, destination){
     document.getElementById('finGros').innerHTML =
-        window.t(cleGros) + '<span class="pt"></span>';
+        window.t(cleGros);
     document.getElementById('finTexte').innerHTML = window.t(cleTexte);
-    document.getElementById('finRecap').style.display = cleGros === 'verif_ok_gros' ? '' : 'none';
     const b = document.getElementById('finBouton');
     document.getElementById('finBoutonTxt').textContent = window.t(cleBouton);
     b.style.visibility = 'visible';
