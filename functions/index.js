@@ -1165,12 +1165,15 @@ const PAGE_APP = "https://belfit.be/v2/";
 /** Modele du courriel « ton programme est pret », en trois langues. */
 const TEXTES_PROG = {
   fr: {
-    objet: "Ton programme BELFIT est prêt",
-    titre: "Ton programme est prêt",
+    objet: "Ton plan coach BELFIT est arrivé",
+    titre: "Ton plan coach est arrivé",
     intro: "Ton coach a terminé ton plan alimentaire. Voici tes " +
-      "objectifs quotidiens — ils t'attendent aussi dans l'application, " +
-      "où un bouton les applique à ton journal en une fois.",
-    bouton: "Ouvrir dans l'application",
+      "objectifs quotidiens — ton plan complet t'attend dans l'application.",
+    objetMaj: "Ton plan coach BELFIT a été mis à jour",
+    titreMaj: "Ton plan coach a été mis à jour",
+    introMaj: "Ton coach a modifié ton plan alimentaire. Voici tes " +
+      "nouveaux objectifs quotidiens — la nouvelle version t'attend dans l'application.",
+    bouton: "Voir mon plan dans l'application",
     rassure: "Une question sur ton plan ?<br>Réponds simplement à ce message.",
     slogan: "Ton coach nutrition et entraînement",
     pied: "Nous écrire",
@@ -1178,12 +1181,15 @@ const TEXTES_PROG = {
     carbs: "glucides", lip: "lipides", note: "Note de ton coach",
   },
   en: {
-    objet: "Your BELFIT programme is ready",
-    titre: "Your programme is ready",
+    objet: "Your BELFIT coach plan has arrived",
+    titre: "Your coach plan has arrived",
     intro: "Your coach has finished your nutrition plan. Here are your " +
-      "daily targets — they are waiting in the app too, where one button " +
-      "applies them to your journal.",
-    bouton: "Open in the app",
+      "daily targets — your full plan is waiting in the app.",
+    objetMaj: "Your BELFIT coach plan has been updated",
+    titreMaj: "Your coach plan has been updated",
+    introMaj: "Your coach has updated your nutrition plan. Here are your " +
+      "new daily targets — the new version is waiting in the app.",
+    bouton: "See my plan in the app",
     rassure: "A question about your plan?<br>Just reply to this message.",
     slogan: "Your nutrition and training coach",
     pied: "Contact us",
@@ -1191,12 +1197,15 @@ const TEXTES_PROG = {
     carbs: "carbs", lip: "fat", note: "Note from your coach",
   },
   nl: {
-    objet: "Je BELFIT-programma is klaar",
-    titre: "Je programma is klaar",
+    objet: "Je BELFIT-coachplan is er",
+    titre: "Je coachplan is er",
     intro: "Je coach heeft je voedingsplan afgerond. Dit zijn je " +
-      "dagelijkse doelen — ze staan ook in de app, waar één knop ze " +
-      "in je dagboek toepast.",
-    bouton: "Openen in de app",
+      "dagelijkse doelen — je volledige plan staat klaar in de app.",
+    objetMaj: "Je BELFIT-coachplan is bijgewerkt",
+    titreMaj: "Je coachplan is bijgewerkt",
+    introMaj: "Je coach heeft je voedingsplan aangepast. Dit zijn je " +
+      "nieuwe dagelijkse doelen — de nieuwe versie staat klaar in de app.",
+    bouton: "Mijn plan bekijken in de app",
     rassure: "Een vraag over je plan?<br>Antwoord gewoon op dit bericht.",
     slogan: "Jouw coach voor voeding en training",
     pied: "Contacteer ons",
@@ -1218,8 +1227,10 @@ const PHRASE_VERSIONS = {
 
 /** Message HTML du programme. Tables + styles en ligne, comme les
  *  autres modeles : seule mise en forme fiable en messagerie. */
-function modeleProgramme(prog, langue) {
-  const T = TEXTES_PROG[langue] || TEXTES_PROG.fr;
+function modeleProgramme(prog, langue, maj) {
+  const B = TEXTES_PROG[langue] || TEXTES_PROG.fr;
+  // 9/11 : un plan qui en remplace un autre s'annonce comme une mise a jour.
+  const T = maj ? {...B, objet: B.objetMaj, titre: B.titreMaj, intro: B.introMaj} : B;
   const e = (s) => String(s == null ? "" : s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const macro = (val, lb) => `
@@ -1410,6 +1421,8 @@ async function deposerChez(corps, parCoach) {
   if (client.email) {
     const langue = String(b.langue || "fr").slice(0, 2);
     const T = TEXTES_PROG[langue] || TEXTES_PROG.fr;
+    // 9/11 : le client avait deja un plan -> courriel « mis a jour ».
+    const majPlan = !!(ancienP && ancienP.livreLe);
     try {
       const envoi = await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -1421,12 +1434,12 @@ async function deposerChez(corps, parCoach) {
           from: EXPEDITEUR,
           reply_to: "coach@belfit.be",
           to: [client.email],
-          subject: T.objet,
+          subject: majPlan ? T.objetMaj : T.objet,
           html: modeleProgramme(parVersions ? {
             ...prog,
             note: [prog.note, (PHRASE_VERSIONS[langue] || PHRASE_VERSIONS.fr)]
               .filter(Boolean).join("\n\n"),
-          } : prog, langue),
+          } : prog, langue, majPlan),
         }),
       });
       mailEnvoye = envoi.ok;
