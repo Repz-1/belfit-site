@@ -36,7 +36,7 @@ export function annonceAMontrer(livreLe, vu, maintenant) {
 }
 
 export function AnnoncePlan() {
-  const [annonce, setAnnonce] = useState(null);   // { type, livreLe, uid, note }
+  const [annonce, setAnnonce] = useState(null);   // { type, livreLe, uid }
   const u = utilisateur.value;
   const charge = programmeCharge.value;
   const brut = programmeBrut.value;
@@ -53,7 +53,7 @@ export function AnnoncePlan() {
       if (livreLe !== vu) { try { localStorage.setItem(CLE(u.uid), livreLe); } catch (e) {} }
       return;
     }
-    setAnnonce({ type, livreLe, uid: u.uid, note: (brut.note || '').trim() });
+    setAnnonce({ type, livreLe, uid: u.uid });
   }, [u && u.uid, charge, brut && brut.livreLe]);
 
   if (!annonce) return null;
@@ -69,7 +69,6 @@ export function AnnoncePlan() {
   };
 
   const maj = annonce.type === 'maj';
-  const note = annonce.note.length > 160 ? annonce.note.slice(0, 157).trimEnd() + '…' : annonce.note;
 
   return createPortal((
     <div class="ap-voile" onClick={noter}>
@@ -78,12 +77,11 @@ export function AnnoncePlan() {
           <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
         </div>
         <h2 id="ap-titre" class="ap-titre">{maj ? 'Ton plan coach a été mis à jour' : 'Ton plan coach est arrivé'}</h2>
-        <p class="ap-texte">{maj
-          ? 'Ton coach a modifié ton plan alimentaire. La nouvelle version est prête.'
-          : 'Ton coach t’a préparé ton plan alimentaire. Il est prêt, tu peux le consulter.'}</p>
-        {note && <p class="ap-note">« {note} »</p>}
         <button class="ap-bt" onClick={voir}>Voir mon plan</button>
-        <button class="ap-plus-tard" onClick={noter}>Plus tard</button>
+        {/* Raci 9/11 : « Plus tard » devient une petite fleche discrete. */}
+        <button class="ap-plus-tard" onClick={noter} aria-label="Plus tard">
+          <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" /></svg>
+        </button>
       </div>
     </div>
   ), document.body);
