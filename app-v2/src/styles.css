@@ -1104,3 +1104,16 @@ button{cursor:pointer}
 .login-btn-sec:active{transform:scale(.98);box-shadow:0 1px 4px rgba(31,31,29,.08)}
 @keyframes refletVertInscr{0%,62%{left:-60%}90%,100%{left:130%}}
 @media (prefers-reduced-motion:reduce){.login-btn-sec::before{animation:none;display:none}}
+
+/* ===== Annonce « plan coach recu » (9/11) ===== */
+.ap-voile{position:fixed;inset:0;z-index:10000;background:rgba(21,21,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + env(safe-area-inset-bottom));animation:ap-fondu .2s ease-out}
+.ap-carte{width:100%;max-width:420px;background:#F8F2E8;border-radius:22px;padding:26px 22px 14px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.28);animation:ap-monte .28s cubic-bezier(.2,.8,.2,1)}
+.ap-pastille{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:#3D7E5C;display:flex;align-items:center;justify-content:center}
+.ap-pastille svg{width:28px;height:28px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.ap-titre{margin:0 0 8px;font-family:'Satoshi',sans-serif;font-weight:500;font-size:21px;line-height:1.25;color:#151515}
+.ap-texte{margin:0 0 14px;font-size:15px;line-height:1.45;color:#4a463f}
+.ap-note{margin:0 0 16px;padding:10px 12px;border-radius:12px;background:#fff;font-size:14px;line-height:1.4;color:#151515;font-style:italic;text-align:left}
+.ap-bt{width:100%;min-height:52px;border:0;border-radius:14px;background:#151515;color:#fff;font-family:'Satoshi',sans-serif;font-weight:500;font-size:16px;cursor:pointer}
+.ap-plus-tard{width:100%;min-height:44px;margin-top:4px;border:0;background:none;color:#6b665c;font-size:15px;cursor:pointer}
+@keyframes ap-fondu{from{opacity:0}to{opacity:1}}
+@keyframes ap-monte{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}

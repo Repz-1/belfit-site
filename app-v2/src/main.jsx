@@ -18,6 +18,7 @@ import { LoginScreen } from './components/LoginScreen.jsx';
 import { ACCES_INVITE, ONGLET_VITRINE, demanderConnexion } from './acces-invite.js';
 import { VERSION_APP } from './version.js';
 import { BandeauConfirmation } from './components/BandeauConfirmation.jsx';
+import { AnnoncePlan } from './components/AnnoncePlan.jsx';
 import { repas, objectifs, donneesPretes, calculBaseFait, totauxJourAff, repasAffiches } from './store/journal.js';
 import { DayDashboard, ouvrirCalcDemande } from './components/DayDashboard.jsx';
 import { CoachBar } from './components/CoachBar.jsx';
@@ -802,6 +803,8 @@ export function App() {
       )}
       <MealPage />
       <BottomNav />
+      {/* 9/11 : prevenir le client qu'un plan coach vient d'arriver. */}
+      <AnnoncePlan />
     </>
   );
 }
