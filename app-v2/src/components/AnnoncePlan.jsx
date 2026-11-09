@@ -1,7 +1,7 @@
 import { createPortal } from 'preact/compat';
 import { useState, useEffect } from 'preact/hooks';
 import { utilisateur } from '../services/firebase.js';
-import { programmeBrut, programmeCharge, progOuvert } from './BelfitPlus.jsx';
+import { programme, programmeBrut, programmeCharge, progOuvert } from './BelfitPlus.jsx';
 import { allerOnglet } from './BottomNav.jsx';
 
 // ============================================================
@@ -69,19 +69,33 @@ export function AnnoncePlan() {
   };
 
   const maj = annonce.type === 'maj';
+  // Plan du jour (versions a dates resolues) ; a defaut, le plan recu.
+  const p = programme.value || brut || {};
+  const kcal = Math.round(+p.kcal || 0);
+  const macros = [['Protéines', p.prot], ['Glucides', p.carbs], ['Lipides', p.lip]]
+    .filter(([, g]) => +g > 0);
 
   return createPortal((
     <div class="ap-voile" onClick={noter}>
       <div class="ap-carte" role="dialog" aria-modal="true" aria-labelledby="ap-titre" onClick={(e) => e.stopPropagation()}>
+        <div class="ap-sur">Coach BelFit</div>
         <div class="ap-pastille" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
         </div>
         <h2 id="ap-titre" class="ap-titre">{maj ? 'Ton plan coach a été mis à jour' : 'Ton plan coach est arrivé'}</h2>
+        {kcal > 0 && (
+          <div class="ap-chiffres">
+            <div class="ap-kcal"><b>{kcal.toLocaleString('fr-BE')}</b><span>kcal par jour</span></div>
+            {macros.length > 0 && (
+              <div class="ap-macros">
+                {macros.map(([n, g]) => <div key={n}><b>{Math.round(+g)} g</b><span>{n}</span></div>)}
+              </div>
+            )}
+          </div>
+        )}
         <button class="ap-bt" onClick={voir}>Voir mon plan</button>
-        {/* Raci 9/11 : « Plus tard » devient une petite fleche discrete. */}
-        <button class="ap-plus-tard" onClick={noter} aria-label="Plus tard">
-          <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" /></svg>
-        </button>
+        {/* Raci 9/11 : « Plus tard » discret, en bas a droite. */}
+        <button class="ap-plus-tard" onClick={noter}>Plus tard</button>
       </div>
     </div>
   ), document.body);

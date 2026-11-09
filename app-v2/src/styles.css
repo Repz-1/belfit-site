@@ -1106,13 +1106,21 @@ button{cursor:pointer}
 @media (prefers-reduced-motion:reduce){.login-btn-sec::before{animation:none;display:none}}
 
 /* ===== Annonce « plan coach recu » (9/11) — piste A : graphite + jaune ===== */
-.ap-voile{position:fixed;inset:0;z-index:10000;background:rgba(21,21,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:0 16px calc(22vh + env(safe-area-inset-bottom));animation:ap-fondu .2s ease-out}
-.ap-carte{position:relative;width:100%;max-width:420px;background:linear-gradient(168deg,#2A303B 0%,#1E232D 58%,#151920 100%);border-radius:24px;padding:28px 22px 22px;text-align:center;font-family:'Satoshi',system-ui,sans-serif;box-shadow:0 18px 50px rgba(0,0,0,.3);animation:ap-monte .28s cubic-bezier(.2,.8,.2,1)}
-.ap-pastille{width:58px;height:58px;margin:0 auto 16px;border-radius:50%;background:#FAC408;display:flex;align-items:center;justify-content:center}
-.ap-pastille svg{width:28px;height:28px;fill:none;stroke:#151515;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
-.ap-titre{margin:0 0 22px;font-family:'Satoshi',system-ui,sans-serif;font-weight:700;font-size:23px;line-height:1.2;letter-spacing:-.3px;color:#F4F6F8}
-.ap-bt{width:100%;height:54px;border:0;border-radius:15px;background:#FAC408;color:#151515;font-family:'Satoshi',system-ui,sans-serif;font-weight:700;font-size:16px;cursor:pointer}
-.ap-plus-tard{position:absolute;right:14px;bottom:-50px;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;cursor:pointer}
-.ap-plus-tard svg{width:18px;height:18px;fill:none;stroke:rgba(255,255,255,.8);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.ap-voile{position:fixed;inset:0;z-index:10000;background:rgba(21,21,21,.55);display:flex;align-items:center;justify-content:center;padding:0 14px 8vh;animation:ap-fondu .2s ease-out}
+.ap-carte{position:relative;overflow:hidden;width:100%;max-width:440px;background:radial-gradient(120% 70% at 50% 0%,rgba(250,196,8,.16) 0%,rgba(250,196,8,0) 60%),linear-gradient(168deg,#2A303B 0%,#1E232D 58%,#151920 100%);border:1px solid rgba(255,255,255,.08);border-radius:28px;padding:26px 24px 18px;text-align:center;font-family:'Satoshi',system-ui,sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:ap-monte .3s cubic-bezier(.2,.8,.2,1)}
+.ap-sur{font-weight:700;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:#FAC408;margin-bottom:34px}
+.ap-pastille{width:76px;height:76px;margin:0 auto 34px;border-radius:50%;background:#FAC408;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 10px rgba(250,196,8,.12),0 0 0 22px rgba(250,196,8,.05)}
+.ap-pastille svg{width:36px;height:36px;fill:none;stroke:#151515;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.ap-titre{margin:0 0 22px;font-family:'Satoshi',system-ui,sans-serif;font-weight:700;font-size:26px;line-height:1.18;letter-spacing:-.4px;color:#F4F6F8}
+.ap-chiffres{margin:0 0 22px;padding:16px 14px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+.ap-kcal b{display:block;font-family:'DM Mono',monospace;font-weight:500;font-size:34px;line-height:1;color:#fff}
+.ap-kcal span{display:block;margin-top:6px;font-size:13px;color:rgba(244,246,248,.6)}
+.ap-macros{display:flex;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}
+.ap-macros div{flex:1}
+.ap-macros div+div{border-left:1px solid rgba(255,255,255,.1)}
+.ap-macros b{display:block;font-family:'DM Mono',monospace;font-weight:500;font-size:16px;color:#F4F6F8}
+.ap-macros span{display:block;margin-top:3px;font-size:12px;color:rgba(244,246,248,.55)}
+.ap-bt{width:100%;height:56px;border:0;border-radius:16px;background:#FAC408;color:#151515;font-family:'Satoshi',system-ui,sans-serif;font-weight:700;font-size:17px;cursor:pointer}
+.ap-plus-tard{display:block;margin:10px 0 0 auto;padding:8px 4px;border:0;background:none;font-family:'Satoshi',system-ui,sans-serif;font-weight:500;font-size:14px;color:rgba(244,246,248,.5);cursor:pointer}
 @keyframes ap-fondu{from{opacity:0}to{opacity:1}}
 @keyframes ap-monte{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
