@@ -15,7 +15,7 @@
  * ni IndexedDB (session), ni Firestore : seul l'ancien cache
  * du worker (belfit-vNNN precedent) est retire.
  */
-const CACHE = 'belfit-v675';
+const CACHE = 'belfit-v676';
 const CORE = ['./index.html','./i18n.js','./i18n-strings.js','./manifest.json','./icon-192-v9.png','./icon-512-v9.png','./belfit-logo-bf.png'];
 
 self.addEventListener('install', e => {

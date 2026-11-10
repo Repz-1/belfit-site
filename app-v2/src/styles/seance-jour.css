@@ -185,12 +185,13 @@
 .sj-voile {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 1200;
+  font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
   background: rgba(10, 10, 10, .45);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding: 16px 16px 96px;
+  padding: 16px;
 }
 .sj-voile-carte {
   width: 100%;

@@ -2,6 +2,7 @@ import { t } from '../i18n/index.js';
 import { portraitSeanceDuJour, ETAT, abandonnerSeance, supprimerSeanceFaite, demandeVueEntrainer } from '../store/seance-active.js';
 import { ongletActif } from './BottomNav.jsx';
 import { useState } from 'preact/hooks';
+import { createPortal } from 'preact/compat';
 import '../styles/seance-jour.css';
 
 function allerEntrainer(vue, params) {
@@ -100,7 +101,8 @@ export function CarteSeanceJour({ ouvrirFaite }) {
           onClick={() => setConfirme(true)}
         >×</button>
       )}
-      {confirme && jetable && (
+      {/* 10/11 : en portail sur body, sinon un parent anime decale la fenetre hors ecran. */}
+      {confirme && jetable && createPortal((
         <div class="sj-voile" onClick={() => setConfirme(false)}>
           <div class="sj-voile-carte" onClick={(e) => e.stopPropagation()}>
             <p>{p.etat === ETAT.FAITE ? t('sea_supprimer_log') : t('sea_abandonner_t')}</p>
@@ -113,7 +115,7 @@ export function CarteSeanceJour({ ouvrirFaite }) {
             </button>
           </div>
         </div>
-      )}
+      ), document.body)}
     </section>
   );
 }
