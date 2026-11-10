@@ -141,8 +141,9 @@ export function BottomNav() {
     return () => { document.removeEventListener('scroll', surDefilement, true); clearTimeout(minuteur); };
   }, []);
 
+  const athlete = ongletActif.value === 'entrainer' && vueEntrainer.value.nom === 'accueil';
   return (
-    <nav class={'bn' + (cachee ? ' bn--escamotee' : '')}>
+    <nav class={'bn' + (cachee ? ' bn--escamotee' : '') + (athlete ? ' bn--athlete' : '')}>
       {ONGLETS.map(o => {
         const actif = ongletActif.value === o.k;
         return (

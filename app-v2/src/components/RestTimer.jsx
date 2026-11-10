@@ -32,7 +32,7 @@ function chargerEtat() {
   return { endAt: null, preset: 90, total: 90 };
 }
 
-export function RestTimer() {
+export function RestTimer({ fab = true, children } = {}) {
   const [etat, setEtat] = useState(chargerEtat);
   const [ouvert, setOuvert] = useState(false);
   const [, tick] = useState(0);
@@ -194,6 +194,7 @@ export function RestTimer() {
   }, []);
 
   const fabTime = enCours ? `${mm}:${ss}` : '';
+  const api = { mm, ss, enCours, restant, ouvrir: () => setOuvert(true) };
 
   return (
     <>
@@ -244,10 +245,13 @@ export function RestTimer() {
         </div>
       </div>
 
-      <button ref={fabRef} class={'v2-chrono-fab' + (enCours ? ' running' : '') + (enCours && restant <= 5 ? ' crit' : '')} aria-label={t('chrono_titre')}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8" /><path d="M12 13V9" /><path d="M9 2h6" /></svg>
-        <span class="v2-chrono-fab-time">{fabTime}</span>
-      </button>
+      {fab && (
+        <button ref={fabRef} class={'v2-chrono-fab' + (enCours ? ' running' : '') + (enCours && restant <= 5 ? ' crit' : '')} aria-label={t('chrono_titre')}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8" /><path d="M12 13V9" /><path d="M9 2h6" /></svg>
+          <span class="v2-chrono-fab-time">{fabTime}</span>
+        </button>
+      )}
+      {typeof children === 'function' ? children(api) : children}
     </>
   );
 }
