@@ -119,3 +119,50 @@ export function CarteSeanceJour({ ouvrirFaite }) {
     </section>
   );
 }
+
+/**
+ * 10/11 Raci : le brouillon (ou la seance en cours) vit DANS la carte du
+ * jour, plus dans une bulle au-dessus. Un « ! », un bouton, un lien.
+ */
+export function CarteBrouillon({ jour }) {
+  const p = portraitSeanceDuJour();
+  const [confirme, setConfirme] = useState(false);
+  const enCours = p.etat === ETAT.EN_COURS;
+  if (p.etat !== ETAT.BROUILLON && !enCours) return null;
+  const ouvrir = () => allerEntrainer(p.origine === 'programme' ? 'seanceDetail' : 'maseance',
+    p.seanceId ? { seanceId: p.seanceId, titre: p.titre } : null);
+  const detail = [
+    p.nExos ? p.nExos + ' ' + t(p.nExos > 1 ? 'ms_exercises' : 'ms_exercise') : '',
+    enCours ? '' : t('sj_pas_commencee'),
+  ].filter(Boolean).join(' · ');
+  return (
+    <div class="ent-action ent-brouillon">
+      <div class="ent-brouillon-tete">
+        <div class="ent-action-jour">{jour}</div>
+        <span class="ent-brouillon-badge">! {enCours ? t('sj_en_cours') : t('sj_badge_brouillon')}</span>
+      </div>
+      <div class="ent-action-titre">{p.titre || t('seance_jour')}</div>
+      <div class="ent-action-statut">{detail}</div>
+      <button class="ent-go" type="button" onClick={ouvrir}>
+        {enCours ? t('sj_reprendre_seance') : t('sj_continuer_seance')}
+      </button>
+      <button class="ent-brouillon-jeter" type="button" onClick={() => setConfirme(true)}>
+        {enCours ? t('sj_abandon_seance') : t('sj_abandon_brouillon')}
+      </button>
+      {confirme && createPortal((
+        <div class="sj-voile" onClick={() => setConfirme(false)}>
+          <div class="sj-voile-carte" onClick={(e) => e.stopPropagation()}>
+            <p>{t('sea_abandonner_t')}</p>
+            <p>{t('sea_abandonner_q')}</p>
+            <button class="sj-go sj-go--danger" type="button" onClick={() => { abandonnerSeance(); setConfirme(false); }}>
+              {t('sea_abandonner_ok')}
+            </button>
+            <button class="sj-annuler" type="button" onClick={() => setConfirme(false)}>
+              {t('sea_abandonner_no')}
+            </button>
+          </div>
+        </div>
+      ), document.body)}
+    </div>
+  );
+}

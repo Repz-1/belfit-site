@@ -1,5 +1,3 @@
-import { CoachBar } from './CoachBar.jsx';
-import { Icone } from './IconesCoach.jsx';
 import { useState } from 'preact/hooks';
 import { useRetour } from '../services/retour.js';
 import { signal, effect } from '@preact/signals';
@@ -16,7 +14,7 @@ import { programmeActif, seancePrevue, musclesPrevus, planifierSeance, planifs, 
 import { seancesDuJour, seances, enregistrerSeance } from '../store/seances.js';
 import { SESSION_EXOS } from '../data/sessionExos.js';
 import { portraitSeanceDuJour, ETAT, demandeVueEntrainer } from '../store/seance-active.js';
-import { CarteSeanceJour, recapFaite } from './CarteSeanceJour.jsx';
+import { CarteSeanceJour, CarteBrouillon, recapFaite } from './CarteSeanceJour.jsx';
 import { t } from '../i18n/index.js';
 import '../styles/seance-jour.css';
 
@@ -420,6 +418,8 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
    * disques, couleurs et marques. `vus` (facultatif) recueille les
    * couleurs affichees, pour la legende courte de la semaine.
    */
+  const etatCal = portraitSeanceDuJour().etat;
+  const enLiveCal = etatCal === ETAT.BROUILLON || etatCal === ETAT.EN_COURS;
   const cellule = (iso, j, vus) => {
     const vals = (log[iso] || []).filter(v => COULEUR[v] || v === 'repos');
     const repos = vals.includes('repos');
@@ -476,6 +476,7 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
         {repos ? <i class="wlog-coche" aria-label={t('mus_repos')}>✓</i> : j}
         {/* Le badge compte ce que la couleur ne montre pas. */}
         {muscles.length > 1 && <i class="wlog-more">+{muscles.length - 1}</i>}
+        {iso === todayIso && enLiveCal && <i class="wlog-alerte" aria-label={t('sj_badge_brouillon')}>!</i>}
       </div>
     );
   };
@@ -532,6 +533,10 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
     setMoisOuvert(true);
   };
 
+  // 10/11 : un brouillon ou une seance en cours prend la carte du jour.
+  const etatJour = portraitSeanceDuJour().etat;
+  const enLive = etatJour === ETAT.BROUILLON || etatJour === ETAT.EN_COURS;
+
   // ---- Resume, porte par la carte du jour ----
   const derniere = (seances.value || []).reduce((m, s) => (!m || (s.ts || 0) > (m.ts || 0) ? s : m), null);
   const statut = [
@@ -555,24 +560,8 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
           propose deja « Seance libre » et « Trouver mon programme » —
           l'invitation et l'action, l'une sur l'autre. La carte suffit. */}
 
-      {/* 1 — Barre coach (04/10, Raci) : « Aujourd'hui je fais pecs
-          biceps », quatre questions, une seance proposee. Elle reste EN
-          TETE (Raci, 7/10 : « le coach d'abord ») ; ce qui n'allait pas,
-          c'est qu'elle se fondait dans les gris voisins et collait aux
-          blocs. Elle prend donc une identite propre — pastille, libelle,
-          champ cerne, bouton jaune plein — et de l'air autour.
-          La barre repas reste sur Aujourd'hui. */}
-      <div class="ent-coach">
-        <CoachBar mode="seance" titre={(
-          <span class="ent-coach-tete">
-            <span class="ent-coach-ic"><Icone nom="sparkles" taille={15} /></span>
-            <span class="ent-coach-txt">
-              <span class="ent-coach-k">{t('coach_kicker')}</span>
-              <span class="ent-coach-t">{t('ent_coach_titre')}</span>
-            </span>
-          </span>
-        )} />
-      </div>
+      {/* 1 — La barre coach de seance est retiree (Raci, 10/11) :
+          « demander une seance au coach » ne fait pas partie de l'offre. */}
 
       {/* 2 — Carte du jour.
           AVEC un programme actif (ou des seances posees cette semaine),
@@ -580,9 +569,10 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
           bouton (Raci, 24/08 — « je viens piloter mon programme »).
           SANS programme, le bloc graphite mene au choix d'exercices et
           au questionnaire. Les deux portent le resume de la semaine. */}
+      {enLive && <CarteBrouillon jour={jourLong(today)} />}
       {(programmeActif.value || poseeCetteSemaine(today))
         ? <CarteProgramme today={today} todayIso={todayIso} allerVers={allerVers} />
-        : (
+        : enLive ? null : (
       <div class="ent-action">
         <div class="ent-action-jour">{jourLong(today)}</div>
         <div class="ent-action-titre">{t('ent_seance_jour')}</div>
@@ -1138,8 +1128,8 @@ export function Entrainer() {
         // Faite : la bande porte le recap (23/09), sauf quand la carte
         // programme le dit deja dans sa tuile du jour.
         const carteProg = programmeActif.value || poseeCetteSemaine(new Date());
-        const montre = p.etat === ETAT.BROUILLON || p.etat === ETAT.EN_COURS
-          || (p.etat === ETAT.FAITE && !carteProg);
+        // 10/11 : brouillon et seance en cours vivent dans la carte du jour.
+        const montre = p.etat === ETAT.FAITE && !carteProg;
         if (!montre) return null;
         return (
           <div style={{ margin: '0 16px 12px' }}>
