@@ -381,24 +381,32 @@ export function CarteProgramme({ today, todayIso, allerVers }) {
  * flottant entre l'en-tete et l'action (21/08, regle R43).
  */
 /**
- * Pectoraux et triceps a montrer sur le schema quand la seance pecs
- * n'est pas encore enregistree (prevue, ou brouillon du jour).
- * Une seance jambes, dos ou epaules ne renvoie rien : son schema
- * ne se colorie qu'une fois la seance faite.
+ * Muscles a poser sur le schema quand rien n'est encore enregistre.
+ *
+ * Un jour A VENIR (vendredi « pecs + biceps », par exemple) colorie
+ * tous les muscles de la seance prevue : pectoraux, triceps (regle
+ * des developpes) et biceps. Le schema de la semaine s'arretait a
+ * aujourd'hui, donc cette seance restait invisible.
+ *
+ * Aujourd'hui ou un jour passe : seule une seance pecs se voit avant
+ * d'etre faite, avec tous ses muscles — pas seulement pecs et triceps.
+ * Jambes, dos, epaules restent gris tant que la seance n'est pas faite.
  */
-function apercuPecs(iso, aujourdhui) {
+function musclesDuSchema(iso, aujourdhui) {
   const prevu = seancePrevue(iso);
   if (prevu) {
-    // On retire les triceps ajoutes par la regle pecs : sinon un
-    // compte unique (1 pec, 1 triceps) masquerait la seance pecs.
-    const sans = musclesDeSeancePrevue(prevu).filter(k => k !== 'triceps');
-    if (estSeancePecs(prevu.titre, sans)) return ['pecs', 'triceps'];
+    const tous = musclesDeSeancePrevue(prevu).filter(k => COULEUR[k]);
+    if (iso > aujourdhui && tous.length) return tous;
+    // Les triceps ajoutes par la regle pecs ne doivent pas masquer
+    // une seance qui est vraiment une seance pecs.
+    const sans = tous.filter(k => k !== 'triceps');
+    if (estSeancePecs(prevu.titre, sans)) return tous;
   }
   if (iso !== aujourdhui) return [];
   const cles = (seanceRefs.value || []).map(r => r && r.mKey).filter(Boolean);
   const titre = (seanceActive.value && seanceActive.value.titre) || '';
   if (!estSeancePecs(titre, cles)) return [];
-  return completerMusclesPecs(cles, titre).filter(k => k === 'pecs' || k === 'triceps');
+  return completerMusclesPecs(cles, titre).filter(k => COULEUR[k]);
 }
 
 function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
@@ -511,21 +519,22 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
     cellules.push(cellule(wlIso(new Date(ref.getFullYear(), ref.getMonth(), j)), j));
   }
 
-  // Silhouette de la semaine en cours, du lundi a aujourd'hui : la
+  // Silhouette de la semaine en cours, du lundi au dimanche : la
   // meme lecture que dans la modale d'un jour, mais posee sur la page
-  // pour qu'on la voie sans rien ouvrir.
+  // pour qu'on la voie sans rien ouvrir. Les jours deja passes ne
+  // comptent que ce qui a ete fait. Les jours a venir montrent la
+  // seance prevue (un vendredi « pecs + biceps » colorie le schema).
   const lundi = new Date(today);
   lundi.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  const dimanche = new Date(lundi);
+  dimanche.setDate(lundi.getDate() + 6);
   const compteSemaine = {};
   let seancesSemaine = 0;
-  for (const d = new Date(lundi); wlIso(d) <= todayIso; d.setDate(d.getDate() + 1)) {
+  for (const d = new Date(lundi); d <= dimanche; d.setDate(d.getDate() + 1)) {
     const isoJ = wlIso(d);
     const vals = (log[isoJ] || []).filter(v => v !== 'repos');
-    if (vals.length) seancesSemaine++;
-    // Seance faite : ses muscles, triceps compris pour une seance pecs.
-    // Rien d'enregistre : le schema montre quand meme pectoraux + triceps
-    // si la seance du jour (ou le brouillon en cours) est une seance pecs.
-    const teinte = vals.length ? vals : apercuPecs(isoJ, todayIso);
+    if (vals.length && isoJ <= todayIso) seancesSemaine++;
+    const teinte = vals.length ? vals : musclesDuSchema(isoJ, todayIso);
     teinte.forEach(k => { compteSemaine[k] = (compteSemaine[k] || 0) + 1; });
   }
   const travailles = GROUPES.filter(g => COULEUR[g.k] && compteSemaine[g.k]);
@@ -856,11 +865,11 @@ function ModaleMuscles({ iso, fermer, ouvrirSeance }) {
   // cocher la pastille laissait le corps gris.
   const jour = wlIsoToDate(iso);
   const compte = compteDuJour(iso);
-  // Rien encore enregistre : une seance pecs prevue ou en cours colorie
-  // les pectoraux (face) et les triceps (dos). Les autres seances
-  // restent grises tant qu'elles ne sont pas faites.
+  // Rien encore enregistre. Un jour a venir colorie tous les muscles
+  // de la seance prevue. Une seance pecs d'aujourd'hui ou d'un jour
+  // passe colorie aussi les siens (pectoraux, triceps, biceps).
   if (!Object.keys(compte).some(k => k !== 'repos' && compte[k] > 0)) {
-    apercuPecs(iso, isoAuj).forEach(k => { compte[k] = 1; });
+    musclesDuSchema(iso, isoAuj).forEach(k => { compte[k] = 1; });
   }
   // PORTAIL VERS document.body. Le rail des onglets porte
   // will-change:transform et z-index:1 : il cree un contexte
