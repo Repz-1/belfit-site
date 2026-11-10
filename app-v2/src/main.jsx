@@ -154,13 +154,16 @@ export function OngletJournal() {
 export function OngletEntrainer() {
   const vue = vueEntrainer.value;
   // Meme navigation qu'en v1 : une vue a la fois, fleche retour en haut.
-  // Le chrono de repos n'apparait qu'a deux endroits (Raci, 26/08) :
-  // ici, ou l'on pilote son entrainement, et pendant une seance en
-  // cours. Ailleurs — bibliotheque, planification, choix d'exercices,
-  // fiche d'une seance — il n'y avait rien a chronometrer : un bouton
-  // flottant de plus a eviter du pouce.
+  // Le chrono de repos n'apparait qu'ici, sur l'accueil, et pendant
+  // une seance en cours. v682 : plus de bouton flottant. Le temps vit
+  // dans la barre de la seance, juste au-dessus du menu. Le panneau
+  // (molettes, pause) s'ouvre en touchant ce temps.
   if (vue.nom === 'accueil') {
-    return (<><Entrainer /><RestTimer /></>);
+    return (
+      <RestTimer fab={false}>
+        {(chrono) => <Entrainer chrono={chrono} />}
+      </RestTimer>
+    );
   }
   if (vue.nom === 'planifier') {
     return <PlanifierProgramme progId={vue.params && vue.params.prog} />;

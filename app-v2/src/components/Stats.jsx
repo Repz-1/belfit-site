@@ -58,7 +58,14 @@ const eclaircir = (hex) => {
   return (CLAIR[hex] = `#${m((n >> 16) & 255)}${m((n >> 8) & 255)}${m(n & 255)}`);
 };
 
-export function BodyMap({ compte, onClick }) {
+// Jaune / orange de la maquette Athlete. Le jeu de muscles colories
+// ne change pas : seul le rendu, sur l'accueil de S'entrainer.
+const OR_ATH = {
+  pecs: '#F8CF01', dos: '#F8A05A', epaules: '#F86A0C', trapezes: '#EA8C00',
+  biceps: '#FFDF4B', triceps: '#F8CF01', jambes: '#F8A05A', abdos: '#FFDF4B', cardio: '#F8CF01',
+};
+
+export function BodyMap({ compte, onClick, rendu, fait, prevu }) {
   // Les traces viennent de data/silhouette.js, genere par tools/tracer.py
   // a partir de la planche de Raci. Ici on ne fait que colorer : aucune
   // geometrie n'est ecrite a la main, donc retoucher la silhouette veut
@@ -67,6 +74,11 @@ export function BodyMap({ compte, onClick }) {
   // S'entrainer, le #DDE1E7 d'origine devient un corps blanc eclatant
   // au milieu d'une page sombre. La variable permet a chaque page de
   // donner le sien sans que le composant ait a savoir ou il est monte.
+  // `rendu="athlete"` : travaille en or, prevu en creux, le reste gris.
+  // Stats et la fiche d'un jour ne passent pas ces props : palette inchangee.
+  const athlete = rendu === 'athlete';
+  const faitM = fait || {};
+  const prevuM = prevu || {};
   const REPOS = 'var(--bm-repos, #DDE1E7)';
   const col = (k) => (compte[k] > 0 ? (COL[k] || '#F7B500') : REPOS);
   const colBras = () => {
@@ -74,10 +86,26 @@ export function BodyMap({ compte, onClick }) {
     if (compte.triceps > 0) return COL.triceps;
     return REPOS;
   };
+  const etatCle = (k) => (faitM[k] > 0 ? 'on' : prevuM[k] > 0 ? 'todo' : 'off');
+  const etatBras = () => {
+    if (faitM.biceps > 0 || faitM.triceps > 0) return 'on';
+    if (prevuM.biceps > 0 || prevuM.triceps > 0) return 'todo';
+    return 'off';
+  };
   const teinte = (p) => {
-    if (p.g === 'tete') return '#151515';
-    const c = p.g === 'avantBras' ? colBras() : col(p.g);
-    return p.t === 'clair' ? eclaircir(c) : c;
+    if (p.g === 'tete') return { fill: athlete ? '#1C1916' : '#151515', etat: '' };
+    if (!athlete) {
+      const c = p.g === 'avantBras' ? colBras() : col(p.g);
+      return { fill: p.t === 'clair' ? eclaircir(c) : c, etat: '' };
+    }
+    const etat = p.g === 'avantBras' ? etatBras() : etatCle(p.g);
+    let base = '#2C2925';
+    if (etat === 'on') {
+      base = p.g === 'avantBras'
+        ? (faitM.biceps > 0 ? OR_ATH.biceps : OR_ATH.triceps)
+        : (OR_ATH[p.g] || '#F8CF01');
+    } else if (etat === 'todo') base = '#4A4038';
+    return { fill: p.t === 'clair' ? eclaircir(base) : base, etat };
   };
   // Deux modeles decalques, un par planche. Sans reponse au profil on
   // garde le masculin — c'etait le seul jusqu'ici, et inventer un
@@ -87,14 +115,24 @@ export function BodyMap({ compte, onClick }) {
   const vue = (chemins, nom) => (
     <div class="bm-vue">
       <svg viewBox="0 0 120 300" xmlns="http://www.w3.org/2000/svg" class="bm-svg">
-        {chemins.map((p, i) => <path key={i} fill={teinte(p)} d={p.d} />)}
+        {chemins.map((p, i) => {
+          const tnt = teinte(p);
+          const creux = tnt.etat === 'todo' && p.t !== 'clair';
+          return (
+            <path key={i} class={tnt.etat ? ('bm-' + tnt.etat) : undefined}
+              fill={tnt.fill} d={p.d}
+              stroke={creux ? '#C45A28' : undefined}
+              stroke-width={creux ? 1.15 : undefined}
+              stroke-linejoin={creux ? 'round' : undefined} />
+          );
+        })}
       </svg>
       <span class="bm-vue-nom">{nom}</span>
     </div>
   );
 
   return (
-    <div class="bodymap bodymap--double" onClick={onClick}>
+    <div class={'bodymap bodymap--double' + (athlete ? ' bodymap--athlete' : '')} onClick={onClick}>
       {vue(femme ? SILHOUETTE_FACE_F : SILHOUETTE_FACE, t('bm_face'))}
       {vue(femme ? SILHOUETTE_DOS_F : SILHOUETTE_DOS, t('bm_dos'))}
       {/* Le choix de silhouette a quitte cet endroit (Raci, 17/08 :
