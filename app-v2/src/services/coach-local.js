@@ -193,7 +193,7 @@ export function proposerRepas(objectifs, totaux, dejaAjoutes = []) {
 }
 
 const MUSCLE_ALIAS = [
-  { k: 'pecs', re: /\b(pecs?|pectoraux?|chest)\b/ },
+  { k: 'pecs', re: /\b(pecs?|pectoraux?|pectoral|poitrine|chest)\b/ },
   { k: 'biceps', re: /\b(biceps?)\b/ },
   { k: 'triceps', re: /\b(triceps?)\b/ },
   { k: 'dos', re: /\b(dos|dorsaux?|back|lats?)\b/ },
@@ -344,6 +344,7 @@ export function composerSeance(phrase, styleChoisi) {
   if (!muscles.length) return null;
   const veut = /\b(seance|session|workout|entrainement|entraine|train|composer)\b/.test(n)
     || /\bje (veux|vais) faire\b/.test(n)
+    || /\bje fais\b/.test(n)
     || /\bfais[- ]moi\b/.test(n)
     || /\b(une|la) seance\b/.test(n);
   if (!veut) return null;
