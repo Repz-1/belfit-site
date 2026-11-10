@@ -2,6 +2,7 @@ import { signal, effect } from '@preact/signals';
 import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { PROGRAMMES } from '../data/programmes.js';
+import { SESSION_EXOS } from '../data/sessionExos.js';
 
 // `programmeParId` existe aussi dans data/programmes.js ; on garde un
 // nom distinct pour eviter deux imports homonymes dans un composant.
@@ -207,20 +208,44 @@ export function seancePrevue(iso) {
   return { seanceId: `${a.id}-${index}`, titre: s.titre, sub: s.sub, index, prog: p };
 }
 
+/**
+ * 10/11 Raci : « la seance pec ne colorie ni les pecs ni les triceps ».
+ * Le titre seul ne suffit pas (« Haut du corps », « Push », « Bras » ne
+ * nomment pas leurs muscles). On lit donc d'abord les EXERCICES de la
+ * seance prevue — le muscle le plus travaille en tete — et le titre ne
+ * sert plus que de secours.
+ */
+export function musclesDeSeancePrevue(prevu) {
+  if (!prevu) return [];
+  const refs = prevu.exos || SESSION_EXOS[prevu.seanceId] || [];
+  const compte = {};
+  refs.forEach((r) => {
+    const k = typeof r === 'string' ? r.slice(0, r.indexOf(':')) : (r && r.mKey);
+    if (k) compte[k] = (compte[k] || 0) + 1;
+  });
+  const parExos = Object.keys(compte).sort((a, b) => compte[b] - compte[a]);
+  return parExos.length ? parExos : musclesPrevus(prevu.titre);
+}
+
 /** Les muscles d'une seance prevue, deduits de son titre. */
 const MOTS = {
-  pecs: ['pec', 'poitrine', 'push'], dos: ['dos', 'pull'], epaules: ['épaule', 'epaule'],
+  pecs: ['pec', 'poitrine', 'push', 'haut du corps'], dos: ['dos', 'pull', 'haut du corps'],
+  epaules: ['épaule', 'epaule', 'push', 'haut du corps'],
   // Trapezes : groupe a part depuis le 26/08, ils doivent se deduire
   // d'un titre comme les autres.
   trapezes: ['trapèze', 'trapeze', 'shrug'],
-  biceps: ['biceps'], triceps: ['triceps'], jambes: ['jambe', 'legs', 'quadri', 'fessier'],
+  biceps: ['biceps', 'bras', 'pull'], triceps: ['triceps', 'bras', 'push'],
+  jambes: ['jambe', 'legs', 'quadri', 'fessier', 'bas du corps'],
   abdos: ['abdo', 'gainage', 'core'], cardio: ['cardio', 'circuit', 'hiit'],
 };
 export function musclesPrevus(titre) {
   const t = (titre || '').toLowerCase();
   const out = [];
   for (const [k, mots] of Object.entries(MOTS)) {
-    if (mots.some(m => t.includes(m))) out.push(k);
+    // « abdos » contient « dos » : sans cette precaution, toute seance
+    // d'abdos se coloriait comme une seance de dos.
+    const lu = k === 'dos' ? t.replace(/abdo/g, '') : t;
+    if (mots.some(m => lu.includes(m))) out.push(k);
   }
   // « Full body » ne nomme aucun muscle mais les travaille tous :
   // sans ce cas, un programme full body laissait le calendrier vide.

@@ -10,7 +10,7 @@ import { Entete } from './Entete.jsx';
 import { createPortal } from 'preact/compat';
 import { BodyMap } from './Stats.jsx';
 import { DetailSeance } from './Seances.jsx';
-import { programmeActif, seancePrevue, musclesPrevus, planifierSeance, planifs, progParId, normaliserJours } from '../store/programme.js';
+import { programmeActif, seancePrevue, musclesPrevus, musclesDeSeancePrevue, planifierSeance, planifs, progParId, normaliserJours } from '../store/programme.js';
 import { seancesDuJour, seances, enregistrerSeance } from '../store/seances.js';
 import { SESSION_EXOS } from '../data/sessionExos.js';
 import { portraitSeanceDuJour, ETAT, demandeVueEntrainer } from '../store/seance-active.js';
@@ -433,7 +433,7 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
     let prevu = null;
     if (!muscles.length && !repos) {
       prevu = seancePrevue(iso);
-      if (prevu) muscles = musclesPrevus(prevu.titre).filter(k => COULEUR[k]);
+      if (prevu) muscles = musclesDeSeancePrevue(prevu).filter(k => COULEUR[k]);
     }
 
     // Une seule couleur par jour, plus un compte (Raci, 26/08).
