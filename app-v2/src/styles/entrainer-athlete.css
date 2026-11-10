@@ -209,10 +209,6 @@
   letter-spacing: .08em;
   color: var(--texte-3);
 }
-/* Liseré léger : le jaune reste lisible sur le creme, sans halo sombre. */
-.bodymap--athlete .bm-on {
-  filter: drop-shadow(0 0 0.6px rgba(var(--or-trait-rvb), .9));
-}
 .pg-entrainer--athlete .ath-legende {
   display: flex;
   justify-content: center;
@@ -235,13 +231,12 @@
   background: var(--or);
   box-shadow: inset 0 0 0 1px var(--or-trait);
 }
-.pg-entrainer--athlete .ath-lg-todo {
-  background: #4A4038;
-  box-shadow: inset 0 0 0 1px #C45A28;
+.pg-entrainer--athlete .ath-lg-prevu {
+  background: #F86A0C;
 }
 .pg-entrainer--athlete .ath-lg-off {
-  background: #2C2925;
-  box-shadow: inset 0 0 0 1px #3A3530;
+  background: #D0CBC4;
+  box-shadow: inset 0 0 0 1px #C4BFB8;
 }
 
 /* ---------- Actions conservees, sous le schema ---------- */

@@ -625,8 +625,8 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
         </div>
         <div class="ath-legende">
           <span><i class="ath-lg ath-lg-on" />{t('ath_travaille')}</span>
-          <span><i class="ath-lg ath-lg-todo" />{t('tr_week_missing')}</span>
-          <span><i class="ath-lg ath-lg-off" />{t('ath_autre')}</span>
+          <span><i class="ath-lg ath-lg-prevu" />{t('ath_programme')}</span>
+          <span><i class="ath-lg ath-lg-off" />{t('mus_repos')}</span>
         </div>
       </section>
 

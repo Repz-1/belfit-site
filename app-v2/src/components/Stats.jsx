@@ -58,12 +58,12 @@ const eclaircir = (hex) => {
   return (CLAIR[hex] = `#${m((n >> 16) & 255)}${m((n >> 8) & 255)}${m(n & 255)}`);
 };
 
-// Jaune / orange de la maquette Athlete. Le jeu de muscles colories
-// ne change pas : seul le rendu, sur l'accueil de S'entrainer.
-const OR_ATH = {
-  pecs: '#F8CF01', dos: '#F8A05A', epaules: '#F86A0C', trapezes: '#EA8C00',
-  biceps: '#FFDF4B', triceps: '#F8CF01', jambes: '#F8A05A', abdos: '#FFDF4B', cardio: '#F8CF01',
-};
+// Accueil S'entrainer seulement. Trois teintes, pas une par groupe :
+// l'ancienne palette mettait les jambes en #F8A05A des qu'elles
+// etaient comptees, d'ou l'orange des quadriceps et des mollets.
+const OR_TRAVAILLE = '#F8CF01';
+const OR_PROGRAMME = '#F86A0C';
+const GRIS_REPOS = '#D0CBC4';
 
 export function BodyMap({ compte, onClick, rendu, fait, prevu }) {
   // Les traces viennent de data/silhouette.js, genere par tools/tracer.py
@@ -74,7 +74,9 @@ export function BodyMap({ compte, onClick, rendu, fait, prevu }) {
   // S'entrainer, le #DDE1E7 d'origine devient un corps blanc eclatant
   // au milieu d'une page sombre. La variable permet a chaque page de
   // donner le sien sans que le composant ait a savoir ou il est monte.
-  // `rendu="athlete"` : travaille en or, prevu en creux, le reste gris.
+  // `rendu="athlete"` : or si travaille, orange si programme, un seul
+  // gris clair sinon. Tete, cou et avant-bras n'ont pas d'etat propre :
+  // ils restent gris, ils n'heritent pas des biceps ni des triceps.
   // Stats et la fiche d'un jour ne passent pas ces props : palette inchangee.
   const athlete = rendu === 'athlete';
   const faitM = fait || {};
@@ -87,24 +89,15 @@ export function BodyMap({ compte, onClick, rendu, fait, prevu }) {
     return REPOS;
   };
   const etatCle = (k) => (faitM[k] > 0 ? 'on' : prevuM[k] > 0 ? 'todo' : 'off');
-  const etatBras = () => {
-    if (faitM.biceps > 0 || faitM.triceps > 0) return 'on';
-    if (prevuM.biceps > 0 || prevuM.triceps > 0) return 'todo';
-    return 'off';
-  };
   const teinte = (p) => {
-    if (p.g === 'tete') return { fill: athlete ? '#1C1916' : '#151515', etat: '' };
     if (!athlete) {
+      if (p.g === 'tete') return { fill: '#151515', etat: '' };
       const c = p.g === 'avantBras' ? colBras() : col(p.g);
       return { fill: p.t === 'clair' ? eclaircir(c) : c, etat: '' };
     }
-    const etat = p.g === 'avantBras' ? etatBras() : etatCle(p.g);
-    let base = '#2C2925';
-    if (etat === 'on') {
-      base = p.g === 'avantBras'
-        ? (faitM.biceps > 0 ? OR_ATH.biceps : OR_ATH.triceps)
-        : (OR_ATH[p.g] || '#F8CF01');
-    } else if (etat === 'todo') base = '#4A4038';
+    const etat = etatCle(p.g);
+    if (etat === 'off') return { fill: GRIS_REPOS, etat: 'off' };
+    const base = etat === 'on' ? OR_TRAVAILLE : OR_PROGRAMME;
     return { fill: p.t === 'clair' ? eclaircir(base) : base, etat };
   };
   // Deux modeles decalques, un par planche. Sans reponse au profil on
@@ -117,13 +110,9 @@ export function BodyMap({ compte, onClick, rendu, fait, prevu }) {
       <svg viewBox="0 0 120 300" xmlns="http://www.w3.org/2000/svg" class="bm-svg">
         {chemins.map((p, i) => {
           const tnt = teinte(p);
-          const creux = tnt.etat === 'todo' && p.t !== 'clair';
           return (
             <path key={i} class={tnt.etat ? ('bm-' + tnt.etat) : undefined}
-              fill={tnt.fill} d={p.d}
-              stroke={creux ? '#C45A28' : undefined}
-              stroke-width={creux ? 1.15 : undefined}
-              stroke-linejoin={creux ? 'round' : undefined} />
+              fill={tnt.fill} d={p.d} />
           );
         })}
       </svg>
