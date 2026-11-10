@@ -35,6 +35,14 @@
 .pg-entrainer--carte .ent-coach .coach-bar-diner-nom { margin: 0; }
 .pg-entrainer--carte .ent-coach .coach-bar-diner-macros { margin: 4px 0 6px; }
 .pg-entrainer--carte .ent-coach .coach-bar-passe { margin-top: 4px; padding: 8px; }
+.pg-entrainer--carte .ent-coach .coach-bar-retour {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin: 8px 0 0; padding: 4px 2px;
+  border: none; background: none;
+  font: inherit; font-size: 13px; font-weight: 700;
+  color: var(--encre, #16130F); cursor: pointer;
+}
+.pg-entrainer--carte .ent-coach .coach-bar-retour-fleche { color: var(--or-fonce, #8F6200); }
 .pg-entrainer--carte .ent-coach .coach-bar-schema { margin-left: auto; padding-left: 10px; }
 .pg-entrainer--carte .ent-coach .coach-bar-style-bt { margin: 8px 0 0; padding: 13px 14px; }
 

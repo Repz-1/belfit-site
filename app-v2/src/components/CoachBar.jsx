@@ -45,14 +45,26 @@ function versLignes(aliments) {
 const QUESTIONS_SEANCE = [
   { cle: 'style', titre: 'Ton objectif', choix: [['hyper', 'Prise de muscle'], ['force', 'Force'], ['endu', 'Endurance / sèche']] },
   { cle: 'duree', titre: 'Ton temps', choix: [['court', '30 min'], ['normal', '45 min'], ['long', '1 h ou plus']] },
-  { cle: 'mat', titre: 'Ton matériel', choix: [['salle', 'Salle complète'], ['halteres', 'Haltères'], ['rien', 'Poids du corps']] },
+  // Deux choix (v677). « Salle complète » reprend l'ancienne salle
+  // (valeur `salle`, meme equipements). « Matériel maison » reunit
+  // ce que couvraient « Haltères » et « Poids du corps ».
+  { cle: 'mat', titre: 'Ton matériel', i18n: true, choix: [['salle', 'coach_mat_salle'], ['maison', 'coach_mat_maison']] },
   { cle: 'niveau', titre: 'Ton niveau', choix: [['debutant', 'Débutant'], ['intermediaire', 'Intermédiaire'], ['confirme', 'Avancé']] },
 ];
+// Ancien « Haltères » : halteres + kettlebell (pas l'elastique).
+// Ancien « Poids du corps » : rien + traction. La maison prend
+// l'union. Les cles `halteres` et `rien` restent lisibles comme
+// la maison : on ne reecrit aucune preference deja stockee.
+const MATS_MAISON = ['halteres', 'kettlebell', 'rien', 'traction'];
 const MATS_COACH = {
   salle: ['barre', 'machine', 'halteres', 'kettlebell', 'elastique'],
-  halteres: ['halteres', 'kettlebell'],
-  rien: ['rien', 'traction'],
+  maison: MATS_MAISON,
+  halteres: MATS_MAISON,
+  rien: MATS_MAISON,
 };
+function matAffiche(v) {
+  return v === 'halteres' || v === 'rien' ? 'maison' : v;
+}
 const MOT_DUREE = { court: ' 30 min', normal: '', long: ' 1h' };
 
 /** Compose la seance selon les 4 reponses : materiel respecte, volume selon le niveau. */
@@ -60,10 +72,11 @@ function composerAvecReponses(phrase, rep) {
   const out = composerSeance('seance ' + phrase + MOT_DUREE[rep.duree], rep.style);
   if (!out || out.action !== 'composerSeance') return out;
   // Materiel exact (data/exercices.js, 15/10) : l'elastique n'est plus
-  // devine au nom. Meme resultat qu'avant — « Halteres » garde les
-  // kettlebells et ecarte l'elastique ; « Salle complete » garde tout
-  // sauf le poids du corps.
-  const mats = MATS_COACH[rep.mat];
+  // devine au nom. « Salle complete » garde barre, machine, halteres,
+  // kettlebell et elastique — pas le poids du corps. « Materiel maison »
+  // garde halteres, kettlebell, poids du corps et traction. Une ancienne
+  // valeur `halteres` ou `rien` suit la maison, sans toucher au stockage.
+  const mats = MATS_COACH[matAffiche(rep.mat)];
   const okMat = (e) => !mats || mats.includes(materielPrecis(e));
   const vus = new Set(out.refs.map((r) => r.mKey + ':' + r.i));
   const refs = out.refs.map((r) => {
@@ -498,17 +511,25 @@ export function CoachBar({ mode = 'repas', titre }) {
       )}
       {etat === 'quiz' && quiz && (() => {
         const q = QUESTIONS_SEANCE[quiz.etape];
+        const reponse = q.cle === 'mat' ? matAffiche(quiz.rep.mat) : quiz.rep[q.cle];
         return (
           <div class="coach-bar-diner coach-bar-style">
             <p class="coach-bar-diner-nom">{quiz.titre} · {quiz.etape + 1}/4 · {q.titre}</p>
+            {quiz.etape > 0 && (
+              <button class="coach-bar-retour" type="button" onClick={() => setQuiz({ ...quiz, etape: quiz.etape - 1 })}>
+                <span class="coach-bar-retour-fleche" aria-hidden="true">←</span>
+                {t('coach_quiz_retour')}
+              </button>
+            )}
             {q.choix.map(([v, lib]) => (
-              <button class="coach-bar-style-bt" type="button" key={v} onClick={() => {
+              <button class={'coach-bar-style-bt' + (reponse === v ? ' coach-bar-style-bt--choisi' : '')}
+                type="button" key={v} aria-pressed={reponse === v} onClick={() => {
                 const rep = { ...quiz.rep, [q.cle]: v };
-                if (quiz.etape < 3) { setQuiz({ ...quiz, etape: quiz.etape + 1, rep }); return; }
+                if (quiz.etape < QUESTIONS_SEANCE.length - 1) { setQuiz({ ...quiz, etape: quiz.etape + 1, rep }); return; }
                 setQuiz(null);
                 const out = composerAvecReponses(quiz.phrase, rep);
                 if (out) appliquer(out); else { setMsg('Je n\'ai pas pu composer cette séance.'); setEtat('pret'); }
-              }}><b>{lib}</b></button>
+              }}><b>{q.i18n ? t(lib) : lib}</b></button>
             ))}
             <button class="coach-bar-passe" type="button" onClick={() => { setQuiz(null); setEtat('pret'); setMsg(''); }}>{t('coach_pas_maintenant')}</button>
           </div>
