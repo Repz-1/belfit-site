@@ -153,3 +153,26 @@
 .coach-bar-style-bt b { font-size: 15px; font-weight: 700; color: #191919; }
 .coach-bar-style-bt span { font-family: 'DM Mono', ui-monospace, monospace; font-size: 12.5px; color: #8F6200; }
 .coach-bar-style-bt:active { transform: scale(.99); background: #FFF8E1; }
+.coach-bar-style-bt.coach-bar-style-bt--choisi {
+  border-color: var(--or, #F8CF01);
+  background: #FFF8E1;
+}
+.coach-bar-retour {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 4px 2px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--encre, #16130F);
+  cursor: pointer;
+}
+.coach-bar-retour-fleche {
+  color: var(--or-fonce, #8F6200);
+  font-weight: 700;
+}
+.coach-bar-retour:active { color: var(--or-fonce, #8F6200); }
