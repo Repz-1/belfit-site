@@ -219,17 +219,58 @@ export function musclesDeSeancePrevue(prevu) {
   if (!prevu) return [];
   const refs = prevu.exos || SESSION_EXOS[prevu.seanceId] || [];
   const compte = {};
+  const brut = [];
   refs.forEach((r) => {
     const k = typeof r === 'string' ? r.slice(0, r.indexOf(':')) : (r && r.mKey);
-    if (k) compte[k] = (compte[k] || 0) + 1;
+    if (!k || k === 'repos') return;
+    compte[k] = (compte[k] || 0) + 1;
+    brut.push(k);
   });
   const parExos = Object.keys(compte).sort((a, b) => compte[b] - compte[a]);
-  return parExos.length ? parExos : musclesPrevus(prevu.titre);
+  const base = parExos.length ? parExos : musclesPrevus(prevu.titre);
+  // Les developpes d'une seance pecs recrutent aussi les triceps.
+  // Le titre ou le groupe dominant suffisent : la liste d'exercices
+  // ne porte que le muscle principal (« pecs:Developpe couche »).
+  // `brut` garde les comptes : la liste triee, elle, est unique.
+  return completerMusclesPecs(base, prevu.titre, brut.length ? brut : base);
+}
+
+/**
+ * Seance dont le sujet est les pectoraux.
+ * Le titre (« pec », « pecs », « pectoraux », « poitrine », « chest »)
+ * ou, a defaut, des exercices pecs nettement majoritaires — les abdos
+ * d'appoint (« Pecs / Abdos ») ne changent pas le sujet. Une seance
+ * dos, jambes, epaules ou full body ne passe pas par ici.
+ */
+const RE_PECS = /(^|[^a-z])(pecs?|pectoraux?|pectoral|poitrine|chest)([^a-z]|$)/;
+function normTitre(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+export function estSeancePecs(titre, cles) {
+  if (RE_PECS.test(normTitre(titre))) return true;
+  const n = {};
+  (cles || []).forEach((k) => { if (k && k !== 'repos') n[k] = (n[k] || 0) + 1; });
+  if (!n.pecs) return false;
+  return Object.entries(n).every(([k, v]) => k === 'pecs' || k === 'abdos' || v < n.pecs);
+}
+
+/**
+ * Ajoute pectoraux + triceps quand la seance est une seance pecs.
+ * `echantillon` sert au test de majorite quand `cles` a deja ete
+ * dedoublonne (le muscle le plus travaille en tete).
+ */
+export function completerMusclesPecs(cles, titre, echantillon) {
+  const out = [];
+  (cles || []).forEach((k) => { if (k && k !== 'repos' && !out.includes(k)) out.push(k); });
+  if (!estSeancePecs(titre, echantillon || cles)) return out;
+  if (!out.includes('pecs')) out.unshift('pecs');
+  if (!out.includes('triceps')) out.push('triceps');
+  return out;
 }
 
 /** Les muscles d'une seance prevue, deduits de son titre. */
 const MOTS = {
-  pecs: ['pec', 'poitrine', 'push', 'haut du corps'], dos: ['dos', 'pull', 'haut du corps'],
+  pecs: ['pec', 'poitrine', 'chest', 'push', 'haut du corps'], dos: ['dos', 'pull', 'haut du corps'],
   epaules: ['épaule', 'epaule', 'push', 'haut du corps'],
   // Trapezes : groupe a part depuis le 26/08, ils doivent se deduire
   // d'un titre comme les autres.

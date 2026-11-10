@@ -10,10 +10,10 @@ import { Entete } from './Entete.jsx';
 import { createPortal } from 'preact/compat';
 import { BodyMap } from './Stats.jsx';
 import { DetailSeance } from './Seances.jsx';
-import { programmeActif, seancePrevue, musclesPrevus, musclesDeSeancePrevue, planifierSeance, planifs, progParId, normaliserJours } from '../store/programme.js';
+import { programmeActif, seancePrevue, musclesPrevus, musclesDeSeancePrevue, estSeancePecs, completerMusclesPecs, planifierSeance, planifs, progParId, normaliserJours } from '../store/programme.js';
 import { seancesDuJour, seances, enregistrerSeance } from '../store/seances.js';
 import { SESSION_EXOS } from '../data/sessionExos.js';
-import { portraitSeanceDuJour, ETAT, demandeVueEntrainer } from '../store/seance-active.js';
+import { portraitSeanceDuJour, ETAT, demandeVueEntrainer, seanceRefs, seanceActive } from '../store/seance-active.js';
 import { CarteSeanceJour, CarteBrouillon, recapFaite } from './CarteSeanceJour.jsx';
 import { t } from '../i18n/index.js';
 import '../styles/seance-jour.css';
@@ -380,6 +380,27 @@ export function CarteProgramme({ today, todayIso, allerVers }) {
  * la carte du jour et non au-dessus : Raci avait refuse des pastilles
  * flottant entre l'en-tete et l'action (21/08, regle R43).
  */
+/**
+ * Pectoraux et triceps a montrer sur le schema quand la seance pecs
+ * n'est pas encore enregistree (prevue, ou brouillon du jour).
+ * Une seance jambes, dos ou epaules ne renvoie rien : son schema
+ * ne se colorie qu'une fois la seance faite.
+ */
+function apercuPecs(iso, aujourdhui) {
+  const prevu = seancePrevue(iso);
+  if (prevu) {
+    // On retire les triceps ajoutes par la regle pecs : sinon un
+    // compte unique (1 pec, 1 triceps) masquerait la seance pecs.
+    const sans = musclesDeSeancePrevue(prevu).filter(k => k !== 'triceps');
+    if (estSeancePecs(prevu.titre, sans)) return ['pecs', 'triceps'];
+  }
+  if (iso !== aujourdhui) return [];
+  const cles = (seanceRefs.value || []).map(r => r && r.mKey).filter(Boolean);
+  const titre = (seanceActive.value && seanceActive.value.titre) || '';
+  if (!estSeancePecs(titre, cles)) return [];
+  return completerMusclesPecs(cles, titre).filter(k => k === 'pecs' || k === 'triceps');
+}
+
 function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
   const [offset, setOffset] = useState(0);
   // Vue du calendrier : la semaine par defaut, le mois a la demande.
@@ -498,9 +519,14 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
   const compteSemaine = {};
   let seancesSemaine = 0;
   for (const d = new Date(lundi); wlIso(d) <= todayIso; d.setDate(d.getDate() + 1)) {
-    const vals = (log[wlIso(d)] || []).filter(v => v !== 'repos');
+    const isoJ = wlIso(d);
+    const vals = (log[isoJ] || []).filter(v => v !== 'repos');
     if (vals.length) seancesSemaine++;
-    vals.forEach(k => { compteSemaine[k] = (compteSemaine[k] || 0) + 1; });
+    // Seance faite : ses muscles, triceps compris pour une seance pecs.
+    // Rien d'enregistre : le schema montre quand meme pectoraux + triceps
+    // si la seance du jour (ou le brouillon en cours) est une seance pecs.
+    const teinte = vals.length ? vals : apercuPecs(isoJ, todayIso);
+    teinte.forEach(k => { compteSemaine[k] = (compteSemaine[k] || 0) + 1; });
   }
   const travailles = GROUPES.filter(g => COULEUR[g.k] && compteSemaine[g.k]);
   const oublies = GROUPES.filter(g => COULEUR[g.k] && !compteSemaine[g.k]);
@@ -830,6 +856,12 @@ function ModaleMuscles({ iso, fermer, ouvrirSeance }) {
   // cocher la pastille laissait le corps gris.
   const jour = wlIsoToDate(iso);
   const compte = compteDuJour(iso);
+  // Rien encore enregistre : une seance pecs prevue ou en cours colorie
+  // les pectoraux (face) et les triceps (dos). Les autres seances
+  // restent grises tant qu'elles ne sont pas faites.
+  if (!Object.keys(compte).some(k => k !== 'repos' && compte[k] > 0)) {
+    apercuPecs(iso, isoAuj).forEach(k => { compte[k] = 1; });
+  }
   // PORTAIL VERS document.body. Le rail des onglets porte
   // will-change:transform et z-index:1 : il cree un contexte
   // d'empilement, donc le z-index 100 de la modale ne valait que

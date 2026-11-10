@@ -1,5 +1,6 @@
 import { muscleLog } from '../store/entrainement.js';
 import { seances } from '../store/seances.js';
+import { completerMusclesPecs } from '../store/programme.js';
 
 // ============================================================
 // MUSCLES D'UN JOUR — source unique.
@@ -24,6 +25,12 @@ function musclesDeSeance(sa) {
   const out = [];
   (sa.muscles || []).forEach(k => { if (k && k !== 'repos') out.push(k); });
   (sa.exos || []).forEach(e => { if (e && e.mKey && e.mKey !== 'repos') out.push(e.mKey); });
+  // Une seance pecs (developpes, pompes, chest) doit colorer les
+  // pectoraux ET les triceps. Le muscle principal seul laissait
+  // le bras arriere gris.
+  completerMusclesPecs(out, sa && sa.titre).forEach(k => {
+    if (k && !out.includes(k)) out.push(k);
+  });
   return out;
 }
 
