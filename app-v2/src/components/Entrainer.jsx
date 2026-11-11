@@ -8,7 +8,7 @@ import { enDecouverte } from '../services/decouverte.js';
 import { ongletActif } from './BottomNav.jsx';
 import { Entete } from './Entete.jsx';
 import { createPortal } from 'preact/compat';
-import { BodyMap } from './Stats.jsx';
+import { BodyMap, COULEURS_ATHLETE } from './Stats.jsx';
 import { DetailSeance } from './Seances.jsx';
 import { programmeActif, seancePrevue, musclesPrevus, musclesDeSeancePrevue, estSeancePecs, completerMusclesPecs, planifierSeance, planifs, progParId, normaliserJours } from '../store/programme.js';
 import { seancesDuJour, seances, enregistrerSeance } from '../store/seances.js';
@@ -412,6 +412,12 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
   const [offset, setOffset] = useState(0);
   // Le mois du journal, replie : la semaine tient sur une seule rangee.
   const [moisOuvert, setMoisOuvert] = useState(false);
+  // Toucher un muscle le colorie, sans ecrire dans le journal.
+  const [choisis, setChoisis] = useState({});
+  const choisirMuscle = (k) => {
+    if (!k || k === 'tete') return;
+    setChoisis((s) => ({ ...s, [k]: !s[k] }));
+  };
 
   // Source unique : marquage manuel + seances enregistrees, reunis a
   // la lecture (services/muscles-jour.js). Le calendrier ne depend
@@ -524,11 +530,10 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
     portrait.seanceId ? { seanceId: portrait.seanceId, titre: portrait.titre } : null
   );
 
-  // Silhouette de la semaine : meme logique qu'avant (v680/v681).
-  // Un jour note colorie ce qui a ete fait. Un jour vide colorie la
-  // seance prevue, y compris un autre jour de la semaine, et une
-  // seance pecs ajoute les triceps. Le rendu, lui, separe les deux :
-  // fait en or, prevu en creux, le reste gris.
+  // Silhouette de la semaine : meme logique qu'avant (v680/v681) pour
+  // savoir QUELS muscles sont concernes (note ou seance prevue, pecs
+  // ajoute les triceps). Le rendu ne distingue plus fait et programme :
+  // chaque groupe a sa couleur des qu'il est concerne, ou touche.
   const lundi = new Date(today);
   lundi.setDate(today.getDate() - ((today.getDay() + 6) % 7));
   const dimanche = new Date(lundi);
@@ -573,6 +578,8 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
     if (m) totalProg = Number(m[1]);
   }
   const recapAuj = faitAuj ? recapFaite({ duree: faitAuj.duree, tonnage: faitAuj.tonnage }) : '';
+  const nomZone = (k) => (k === 'avantBras' ? t('ath_avant_bras') : nomMuscle(k));
+  const legende = Object.keys(COULEURS_ATHLETE).filter((k) => compteFait[k] || comptePrevu[k] || choisis[k]);
 
   const joursSem = [];
   for (let k = 0; k < 7; k++) {
@@ -621,13 +628,16 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
 
       <section class="ath-scene">
         <div class="ath-corps">
-          <BodyMap rendu="athlete" compte={{}} fait={compteFait} prevu={comptePrevu} />
+          <BodyMap rendu="athlete" compte={{}} fait={compteFait} prevu={comptePrevu}
+            choix={choisis} onMuscle={choisirMuscle} />
         </div>
-        <div class="ath-legende">
-          <span><i class="ath-lg ath-lg-on" />{t('ath_travaille')}</span>
-          <span><i class="ath-lg ath-lg-prevu" />{t('ath_programme')}</span>
-          <span><i class="ath-lg ath-lg-off" />{t('mus_repos')}</span>
-        </div>
+        {legende.length > 0 && (
+          <div class="ath-legende">
+            {legende.map((k) => (
+              <span key={k}><i class="ath-lg" style={{ background: COULEURS_ATHLETE[k] }} />{nomZone(k)}</span>
+            ))}
+          </div>
+        )}
       </section>
 
       <div class="ath-actions">

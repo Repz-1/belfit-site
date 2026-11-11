@@ -227,6 +227,15 @@
   margin-right: 4px;
   vertical-align: -1px;
 }
+.bodymap--athlete path[data-g="pecs"],
+.bodymap--athlete path[data-g="dos"],
+.bodymap--athlete path[data-g="epaules"],
+.bodymap--athlete path[data-g="trapezes"],
+.bodymap--athlete path[data-g="biceps"],
+.bodymap--athlete path[data-g="triceps"],
+.bodymap--athlete path[data-g="avantBras"],
+.bodymap--athlete path[data-g="abdos"],
+.bodymap--athlete path[data-g="jambes"] { cursor: pointer; }
 .pg-entrainer--athlete .ath-lg-on {
   background: var(--or);
   box-shadow: inset 0 0 0 1px var(--or-trait);

@@ -58,14 +58,25 @@ const eclaircir = (hex) => {
   return (CLAIR[hex] = `#${m((n >> 16) & 255)}${m((n >> 8) & 255)}${m(n & 255)}`);
 };
 
-// Accueil S'entrainer seulement. Trois teintes, pas une par groupe :
-// l'ancienne palette mettait les jambes en #F8A05A des qu'elles
-// etaient comptees, d'ou l'orange des quadriceps et des mollets.
-const OR_TRAVAILLE = '#F8CF01';
-const OR_PROGRAMME = '#F86A0C';
+// Accueil S'entrainer : une couleur fixe par groupe du schema.
+// Quadriceps, ischios, mollets et fessiers sont un seul trace `jambes`
+// (la planche ne les separe pas) : ils partagent donc cette couleur.
+// Tete et cou ne sont pas un muscle. L'avant-bras n'est colorie que
+// s'il est touche, il n'herite pas du biceps ni du triceps.
+export const COULEURS_ATHLETE = {
+  pecs: '#E11D48',
+  dos: '#2563EB',
+  epaules: '#D97706',
+  trapezes: '#7C3AED',
+  biceps: '#059669',
+  triceps: '#DB2777',
+  avantBras: '#0891B2',
+  abdos: '#EA580C',
+  jambes: '#4F46E5',
+};
 const GRIS_REPOS = '#D0CBC4';
 
-export function BodyMap({ compte, onClick, rendu, fait, prevu }) {
+export function BodyMap({ compte, onClick, rendu, fait, prevu, choix, onMuscle }) {
   // Les traces viennent de data/silhouette.js, genere par tools/tracer.py
   // a partir de la planche de Raci. Ici on ne fait que colorer : aucune
   // geometrie n'est ecrite a la main, donc retoucher la silhouette veut
@@ -74,13 +85,13 @@ export function BodyMap({ compte, onClick, rendu, fait, prevu }) {
   // S'entrainer, le #DDE1E7 d'origine devient un corps blanc eclatant
   // au milieu d'une page sombre. La variable permet a chaque page de
   // donner le sien sans que le composant ait a savoir ou il est monte.
-  // `rendu="athlete"` : or si travaille, orange si programme, un seul
-  // gris clair sinon. Tete, cou et avant-bras n'ont pas d'etat propre :
-  // ils restent gris, ils n'heritent pas des biceps ni des triceps.
-  // Stats et la fiche d'un jour ne passent pas ces props : palette inchangee.
+  // `rendu="athlete"` : la couleur du groupe des qu'il est fait,
+  // programme, ou touche. Sinon le gris clair. Stats et la fiche
+  // d'un jour ne passent pas ce rendu : leur palette ne change pas.
   const athlete = rendu === 'athlete';
   const faitM = fait || {};
   const prevuM = prevu || {};
+  const choixM = choix || {};
   const REPOS = 'var(--bm-repos, #DDE1E7)';
   const col = (k) => (compte[k] > 0 ? (COL[k] || '#F7B500') : REPOS);
   const colBras = () => {
@@ -88,17 +99,15 @@ export function BodyMap({ compte, onClick, rendu, fait, prevu }) {
     if (compte.triceps > 0) return COL.triceps;
     return REPOS;
   };
-  const etatCle = (k) => (faitM[k] > 0 ? 'on' : prevuM[k] > 0 ? 'todo' : 'off');
+  const concerne = (k) => faitM[k] > 0 || prevuM[k] > 0 || !!choixM[k];
   const teinte = (p) => {
     if (!athlete) {
       if (p.g === 'tete') return { fill: '#151515', etat: '' };
       const c = p.g === 'avantBras' ? colBras() : col(p.g);
       return { fill: p.t === 'clair' ? eclaircir(c) : c, etat: '' };
     }
-    const etat = etatCle(p.g);
-    if (etat === 'off') return { fill: GRIS_REPOS, etat: 'off' };
-    const base = etat === 'on' ? OR_TRAVAILLE : OR_PROGRAMME;
-    return { fill: p.t === 'clair' ? eclaircir(base) : base, etat };
+    if (p.g === 'tete' || !concerne(p.g)) return { fill: GRIS_REPOS, etat: 'off' };
+    return { fill: COULEURS_ATHLETE[p.g] || GRIS_REPOS, etat: 'on' };
   };
   // Deux modeles decalques, un par planche. Sans reponse au profil on
   // garde le masculin — c'etait le seul jusqu'ici, et inventer un
@@ -110,9 +119,12 @@ export function BodyMap({ compte, onClick, rendu, fait, prevu }) {
       <svg viewBox="0 0 120 300" xmlns="http://www.w3.org/2000/svg" class="bm-svg">
         {chemins.map((p, i) => {
           const tnt = teinte(p);
+          const touchable = athlete && p.g !== 'tete';
           return (
-            <path key={i} class={tnt.etat ? ('bm-' + tnt.etat) : undefined}
-              fill={tnt.fill} d={p.d} />
+            <path key={i} data-g={p.g}
+              class={tnt.etat ? ('bm-' + tnt.etat) : undefined}
+              fill={tnt.fill} d={p.d}
+              onClick={touchable ? (e) => { e.stopPropagation(); onMuscle && onMuscle(p.g); } : undefined} />
           );
         })}
       </svg>
