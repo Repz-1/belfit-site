@@ -1,53 +1,47 @@
 /* ============================================================
-   S'ENTRAINER — accueil, maquette Athlete (v682).
-   Theme sombre, grande typo, bonhomme en pleine largeur.
-   Ne vise que .pg-entrainer--athlete : les autres onglets et les
-   ecrans secondaires (planifier, seance, questionnaire) restent
-   sur le creme.
+   S'ENTRAINER — accueil Athlete, couleurs du Journal (v683).
+   Meme mise en page que la v682. Le fond, le halo, le texte et
+   l'accent sont les jetons de la page Alimentation
+   (design-system.css + le halo de journal-socle.css).
    La feuille legacy pose `.pg-entrainer * { margin:0; padding:0 }` :
    chaque bloc redonne ici ses ecarts.
    ============================================================ */
 
 .pan-scroll:has(.pg-entrainer--athlete),
 .rail-pan:has(.pg-entrainer--athlete) {
-  background: #0A0908;
+  background: var(--fond);
 }
 
 .pg-entrainer.pg-entrainer--carte.pg-entrainer--athlete {
-  --bm-repos: #2C2925;
-  color: #F4F3F0;
+  color: var(--texte);
   min-height: 100%;
+  /* Meme halo que .pg-journal::before, cale sur cette page. */
   background:
-    radial-gradient(90% 70% at 50% 38%, rgba(248, 106, 12, .16), transparent 62%),
-    radial-gradient(70% 50% at 50% 32%, rgba(248, 207, 1, .10), transparent 55%),
-    #0A0908 !important;
+    radial-gradient(150% 380px at 50% 0, var(--carte) 0%, var(--fond) 100%) !important;
   padding: 2px 16px calc(var(--hauteur-nav) + 12px + env(safe-area-inset-bottom));
 }
-.pg-entrainer.pg-entrainer--carte.pg-entrainer--athlete.ath-live {
-  padding-bottom: calc(var(--hauteur-nav) + 124px + env(safe-area-inset-bottom));
-}
 
-/* En-tete : pastilles sombres, icones claires. */
+/* En-tete : memes icones que le Journal (or-fonce, sans pastille sombre). */
 .pg-entrainer--athlete .j-entete--perso.j-entete--perso.j-entete--perso {
   margin-top: 2px;
   margin-bottom: 2px;
 }
 .pg-entrainer--athlete .j-entete--perso .j-symbole {
   height: 26px;
-  filter: none;
+  filter: drop-shadow(0 4px 16px rgba(247, 181, 0, .15));
 }
 .pg-entrainer--athlete .j-entete--perso.j-entete--perso .j-btn-icone {
   width: 36px;
   height: 36px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, .06);
-  color: #F4F3F0;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06);
+  background: none;
+  color: var(--or-fonce);
+  box-shadow: none;
 }
 .pg-entrainer--athlete.pg-entrainer--carte .j-entete .j-btn-icone svg {
   width: 20px;
   height: 20px;
-  stroke: #F4F3F0;
+  stroke: var(--or-fonce);
 }
 
 /* ---------- Affiche : date + compteurs reels ---------- */
@@ -63,7 +57,7 @@
   font-weight: 700;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: #F8CF01;
+  color: var(--or-fonce);
   margin: 0 0 2px;
 }
 .pg-entrainer--athlete .ath-date {
@@ -73,7 +67,7 @@
   font-weight: 400;
   letter-spacing: -1px;
   line-height: .85;
-  color: #F4F3F0;
+  color: var(--texte);
 }
 .pg-entrainer--athlete .ath-date small {
   display: block;
@@ -83,7 +77,7 @@
   font-weight: 600;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: #C2BAB0;
+  color: var(--texte-2);
 }
 .pg-entrainer--athlete .ath-stats {
   display: flex;
@@ -99,14 +93,14 @@
   font-weight: 400;
   letter-spacing: -.4px;
   line-height: 1;
-  color: #F4F3F0;
+  color: var(--texte);
 }
 .pg-entrainer--athlete .ath-stats span {
   font-size: 10.5px;
   font-weight: 650;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: #8A8279;
+  color: var(--texte-3);
 }
 
 /* ---------- Semaine : une rangee ---------- */
@@ -130,7 +124,7 @@
 .pg-entrainer--athlete .ath-dow {
   font-size: 9.5px;
   font-weight: 650;
-  color: #6E675E;
+  color: var(--texte-3);
   letter-spacing: .06em;
   text-transform: uppercase;
 }
@@ -142,18 +136,18 @@
   place-items: center;
   font-size: 13px;
   font-weight: 650;
-  color: #8A8279;
+  color: var(--texte-3);
 }
 .pg-entrainer--athlete .ath-jour.fait .ath-num {
-  background: #F8CF01;
-  color: #16130F;
+  background: var(--or);
+  color: #181818;
 }
 .pg-entrainer--athlete .ath-jour.auj .ath-num {
-  color: #F8CF01;
+  color: var(--or-fonce);
   background: transparent;
-  box-shadow: 0 0 0 1.5px #F8CF01, 0 0 10px rgba(248, 207, 1, .35);
+  box-shadow: 0 0 0 1.5px var(--or-trait);
 }
-.pg-entrainer--athlete .ath-jour.auj .ath-dow { color: #F8CF01; }
+.pg-entrainer--athlete .ath-jour.auj .ath-dow { color: var(--or-fonce); }
 
 /* ---------- Pastilles a faire ---------- */
 .pg-entrainer--athlete .ath-chips {
@@ -166,7 +160,7 @@
 .pg-entrainer--athlete .ath-chips-lab {
   font-size: 10.5px;
   font-weight: 650;
-  color: #8A8279;
+  color: var(--texte-3);
   padding: 4px 0;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -176,9 +170,9 @@
   font-weight: 650;
   padding: 3px 9px;
   border-radius: 100px;
-  background: rgba(196, 90, 40, .16);
-  color: #F8A05A;
-  border: 1px solid rgba(196, 90, 40, .45);
+  background: var(--or-pale);
+  color: var(--orange-fonce);
+  border: 1px solid rgba(var(--orange-fonce-rvb), .35);
 }
 
 /* ---------- Bonhomme pleine largeur ---------- */
@@ -193,9 +187,6 @@
   margin: 0;
   overflow: hidden;
 }
-.pg-entrainer--athlete.ath-live .ath-corps .bm-svg {
-  height: min(32vh, 270px);
-}
 .pg-entrainer--athlete .ath-corps .bodymap--double {
   width: 100%;
   max-width: none;
@@ -204,7 +195,7 @@
 }
 .pg-entrainer--athlete .ath-corps .bm-vue { min-width: 0; }
 .pg-entrainer--athlete .ath-corps .bm-svg {
-  height: min(42vh, 360px);
+  height: min(36vh, 300px);
   width: auto;
   max-width: 100%;
   margin: 0 auto;
@@ -216,10 +207,7 @@
   font-size: 10px;
   font-weight: 650;
   letter-spacing: .08em;
-  color: #8A8279;
-}
-.bodymap--athlete .bm-on {
-  filter: drop-shadow(0 0 3px rgba(248, 207, 1, .72));
+  color: var(--texte-3);
 }
 .pg-entrainer--athlete .ath-legende {
   display: flex;
@@ -229,7 +217,7 @@
   padding: 4px 0 8px;
   font-size: 10.5px;
   font-weight: 550;
-  color: #8A8279;
+  color: var(--texte-3);
 }
 .pg-entrainer--athlete .ath-lg {
   display: inline-block;
@@ -239,17 +227,25 @@
   margin-right: 4px;
   vertical-align: -1px;
 }
+.bodymap--athlete path[data-g="pecs"],
+.bodymap--athlete path[data-g="dos"],
+.bodymap--athlete path[data-g="epaules"],
+.bodymap--athlete path[data-g="trapezes"],
+.bodymap--athlete path[data-g="biceps"],
+.bodymap--athlete path[data-g="triceps"],
+.bodymap--athlete path[data-g="avantBras"],
+.bodymap--athlete path[data-g="abdos"],
+.bodymap--athlete path[data-g="jambes"] { cursor: pointer; }
 .pg-entrainer--athlete .ath-lg-on {
-  background: #F8CF01;
-  box-shadow: 0 0 6px rgba(248, 207, 1, .7);
+  background: var(--or);
+  box-shadow: inset 0 0 0 1px var(--or-trait);
 }
-.pg-entrainer--athlete .ath-lg-todo {
-  background: #4A4038;
-  box-shadow: inset 0 0 0 1px #C45A28;
+.pg-entrainer--athlete .ath-lg-prevu {
+  background: #F86A0C;
 }
 .pg-entrainer--athlete .ath-lg-off {
-  background: #2C2925;
-  box-shadow: inset 0 0 0 1px #3A3530;
+  background: #D0CBC4;
+  box-shadow: inset 0 0 0 1px #C4BFB8;
 }
 
 /* ---------- Actions conservees, sous le schema ---------- */
@@ -268,7 +264,7 @@
   padding: 0 2px;
   border: 0;
   background: none;
-  color: #F4F3F0;
+  color: var(--texte);
   text-align: left;
   cursor: pointer;
 }
@@ -279,7 +275,7 @@
 .pg-entrainer--athlete .ath-prog span {
   font-size: 12px;
   font-weight: 600;
-  color: #8A8279;
+  color: var(--texte-3);
 }
 .pg-entrainer--athlete .ath-faite {
   margin: 0;
@@ -289,7 +285,7 @@
   text-align: left;
   font-size: 13px;
   font-weight: 650;
-  color: #F8CF01;
+  color: var(--or-fonce);
   cursor: pointer;
 }
 .pg-entrainer--athlete .ath-go {
@@ -301,13 +297,12 @@
   min-height: 44px;
   padding: 10px 14px;
   border: 0;
-  border-radius: 12px;
-  background: #F8CF01;
-  color: #16130F;
+  border-radius: var(--rayon-puce);
+  background: var(--or);
+  color: #181818;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 3px 12px rgba(248, 207, 1, .22);
 }
 .pg-entrainer--athlete .ath-go span {
   min-width: 0;
@@ -327,139 +322,23 @@
   padding: 6px 0;
   border: 0;
   background: none;
-  color: #C2BAB0;
+  color: var(--orange-fonce);
   font-size: 13px;
   font-weight: 650;
   cursor: pointer;
 }
 
-/* ---------- Mois du journal, sur le fond sombre ---------- */
+/* ---------- Mois du journal d'entrainement ---------- */
 .pg-entrainer--athlete .ath-mois {
   margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px solid rgba(255, 255, 255, .08);
+  padding: 8px 12px 4px;
+  border-radius: var(--rayon-carte);
+  background: var(--carte);
+  border: 1.5px solid var(--bordure);
+  box-shadow: var(--ombre);
 }
-.pg-entrainer--athlete .wlog-cal-titre { color: #F4F3F0; }
-.pg-entrainer--athlete .wlog-wd { color: #8A8279; }
-.pg-entrainer--athlete .wlog-nav {
-  background: rgba(255, 255, 255, .06);
-  color: #F4F3F0;
-}
-.pg-entrainer--athlete .wlog-nav--avant {
-  background: rgba(248, 207, 1, .12);
-  color: #F8CF01;
-  box-shadow: inset 0 0 0 1px rgba(248, 207, 1, .35);
-}
-.pg-entrainer--athlete .wlog-cell:not(.seance):not(.repos):not(.planifie) { color: #C2BAB0; }
-.pg-entrainer--athlete .wlog-cell.futur:not(.seance):not(.planifie) { color: #6E675E; }
-.pg-entrainer--athlete .wlog-legende { color: #C2BAB0; }
+.pg-entrainer--athlete .wlog-cal-titre { color: var(--texte); }
+.pg-entrainer--athlete .wlog-legende { color: var(--texte-2); }
 
-/* ---------- Barre de seance, juste au-dessus du menu ---------- */
-.rail-pan .ath-barre {
-  position: absolute !important;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--hauteur-nav) + env(safe-area-inset-bottom));
-  z-index: 40;
-  margin: 0;
-  padding: 10px 16px 8px;
-  background: linear-gradient(180deg, #1C1916 0%, #141210 100%);
-  border-top: 1px solid rgba(248, 207, 1, .22);
-  box-shadow: 0 -12px 24px rgba(0, 0, 0, .35);
-}
-.pg-entrainer--athlete .ath-barre-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.pg-entrainer--athlete .ath-barre-txt { flex: 1; min-width: 0; }
-.pg-entrainer--athlete .ath-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  width: fit-content;
-  margin: 0 0 3px;
-  padding: 3px 7px 3px 6px;
-  border-radius: 100px;
-  background: #F8CF01;
-  color: #16130F;
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-}
-.pg-entrainer--athlete .ath-pill-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #16130F;
-}
-.pg-entrainer--athlete .ath-barre-txt b {
-  display: block;
-  font-size: 13.5px;
-  font-weight: 700;
-  letter-spacing: -.2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.pg-entrainer--athlete .ath-barre-meta {
-  display: block;
-  margin-top: 1px;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: #A79F95;
-}
-.pg-entrainer--athlete .ath-chrono {
-  padding: 0 4px;
-  border: 0;
-  background: none;
-  font-size: 22px;
-  font-weight: 650;
-  letter-spacing: -.8px;
-  font-variant-numeric: tabular-nums;
-  color: #F8CF01;
-  line-height: 1;
-  cursor: pointer;
-}
-.pg-entrainer--athlete .ath-reprendre {
-  height: 42px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 12px;
-  background: #F8CF01;
-  color: #16130F;
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-  cursor: pointer;
-  box-shadow: 0 3px 12px rgba(248, 207, 1, .22);
-}
-.pg-entrainer--athlete .ath-abandon {
-  display: block;
-  width: 100%;
-  margin-top: 6px;
-  padding: 2px 0 0;
-  border: 0;
-  background: none;
-  text-align: center;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: #8A8279;
-  cursor: pointer;
-}
-
-/* Menu : sombre seulement sur cet ecran. */
-.bn.bn--athlete {
-  background: rgba(14, 13, 11, .94);
-  border-color: rgba(255, 255, 255, .08);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .06),
-    0 10px 28px rgba(0, 0, 0, .45);
-}
-.bn.bn--athlete .bn-item { color: #7A746C; }
-.bn.bn--athlete .bn-item--actif { color: #F8CF01; }
-.bn.bn--athlete .bn-item--actif .bn-point { background: #F8CF01; }
-
-/* Le bouton flottant n'a plus sa place : le temps est dans la barre. */
+/* Pas de chrono flottant sur cet ecran. */
 .pan-scroll:has(.pg-entrainer--athlete) .v2-chrono-fab { display: none !important; }

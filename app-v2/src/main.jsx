@@ -28,7 +28,6 @@ const BARRE_REPAS_VISIBLE = false;
 import { WaterTracker } from './components/WaterTracker.jsx';
 import { RepasTimeline, ouvrirMesPlats } from './components/MealCard.jsx';
 import { AddMealModal } from './components/AddMealModal.jsx';
-import { RestTimer } from './components/RestTimer.jsx';
 import { Questionnaire } from './components/Questionnaire.jsx';
 import { PlanifierProgramme } from './components/PlanifierProgramme.jsx';
 import { SelectionExercices } from './components/SelectionExercices.jsx';
@@ -154,16 +153,10 @@ export function OngletJournal() {
 export function OngletEntrainer() {
   const vue = vueEntrainer.value;
   // Meme navigation qu'en v1 : une vue a la fois, fleche retour en haut.
-  // Le chrono de repos n'apparait qu'ici, sur l'accueil, et pendant
-  // une seance en cours. v682 : plus de bouton flottant. Le temps vit
-  // dans la barre de la seance, juste au-dessus du menu. Le panneau
-  // (molettes, pause) s'ouvre en touchant ce temps.
+  // v683 : pas de chrono sur l'accueil. Une seance en cours se reprend
+  // par le bouton sous le bonhomme. Le repos reste dans le lecteur.
   if (vue.nom === 'accueil') {
-    return (
-      <RestTimer fab={false}>
-        {(chrono) => <Entrainer chrono={chrono} />}
-      </RestTimer>
-    );
+    return <Entrainer />;
   }
   if (vue.nom === 'planifier') {
     return <PlanifierProgramme progId={vue.params && vue.params.prog} />;
@@ -172,8 +165,7 @@ export function OngletEntrainer() {
     return <SelectionExercices />;
   }
   // Seance libre ou coach : le meme lecteur guide que le programme
-  // (23/09). Le repos est integre au lecteur, reglable ±30 s ; le
-  // chrono flottant reste sur l'accueil pour l'usage hors seance.
+  // (23/09). Le repos est integre au lecteur, reglable ±30 s.
   // Sans exercice, on va directement au choix — plus d'ecran vide.
   if (vue.nom === 'maseance') {
     if (!seanceRefs.value.length) return <SelectionExercices />;

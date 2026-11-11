@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { useRetour } from '../services/retour.js';
 import { signal, effect } from '@preact/signals';
 import { GROUPES, muscleLog, basculerMuscle, borneCalendrier, texteSur } from '../store/entrainement.js';
@@ -8,12 +8,12 @@ import { enDecouverte } from '../services/decouverte.js';
 import { ongletActif } from './BottomNav.jsx';
 import { Entete } from './Entete.jsx';
 import { createPortal } from 'preact/compat';
-import { BodyMap } from './Stats.jsx';
+import { BodyMap, COULEURS_ATHLETE } from './Stats.jsx';
 import { DetailSeance } from './Seances.jsx';
 import { programmeActif, seancePrevue, musclesPrevus, musclesDeSeancePrevue, estSeancePecs, completerMusclesPecs, planifierSeance, planifs, progParId, normaliserJours } from '../store/programme.js';
 import { seancesDuJour, seances, enregistrerSeance } from '../store/seances.js';
 import { SESSION_EXOS } from '../data/sessionExos.js';
-import { portraitSeanceDuJour, ETAT, demandeVueEntrainer, seanceRefs, seanceActive, abandonnerSeance } from '../store/seance-active.js';
+import { portraitSeanceDuJour, ETAT, demandeVueEntrainer, seanceRefs, seanceActive } from '../store/seance-active.js';
 import { recapFaite } from './CarteSeanceJour.jsx';
 import { t } from '../i18n/index.js';
 import '../styles/seance-jour.css';
@@ -408,82 +408,16 @@ function musclesDuSchema(iso, aujourdhui) {
   return completerMusclesPecs(cles, titre).filter(k => COULEUR[k]);
 }
 
-/**
- * Barre de la seance en cours, collee au-dessus du menu.
- * Le temps affiche est celui de la seance (depuis son depart) ;
- * si le chrono de repos tourne, c'est lui qui prend la place —
- * c'etait le role du bouton flottant. Toucher le temps ouvre
- * les molettes. Rien n'est invente : sans depart et sans repos
- * en cours, on montre le reglage du chrono (sa duree memorisee).
- */
-function BarreSeance({ chrono }) {
-  const p = portraitSeanceDuJour();
-  const [confirme, setConfirme] = useState(false);
-  const [, setTick] = useState(0);
-  const a = seanceActive.value;
-  const reposTourne = !!(chrono && chrono.enCours);
-  const seanceTourne = !!(a && a.etat === ETAT.EN_COURS && a.tsDebut);
-  useEffect(() => {
-    if (!seanceTourne || reposTourne) return;
-    const id = setInterval(() => setTick(n => n + 1), 1000);
-    return () => clearInterval(id);
-  }, [seanceTourne, reposTourne]);
-  if (p.etat !== ETAT.BROUILLON && p.etat !== ETAT.EN_COURS) return null;
-
-  let temps = '';
-  if (reposTourne) temps = chrono.mm + ':' + chrono.ss;
-  else if (seanceTourne) {
-    const s = Math.max(0, Math.floor((Date.now() - a.tsDebut) / 1000));
-    temps = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
-  } else if (chrono) temps = chrono.mm + ':' + chrono.ss;
-
-  const enCours = p.etat === ETAT.EN_COURS;
-  const ouvrir = () => allerVers(
-    p.origine === 'programme' ? 'seanceDetail' : 'maseance',
-    p.seanceId ? { seanceId: p.seanceId, titre: p.titre } : null
-  );
-  const detail = p.nExos
-    ? p.nExos + ' ' + t(p.nExos > 1 ? 'ms_exercises' : 'ms_exercise')
-    : '';
-
-  return (
-    <div class="ath-barre">
-      <div class="ath-barre-row">
-        <div class="ath-barre-txt">
-          <span class="ath-pill"><i class="ath-pill-dot" />{enCours ? t('sj_en_cours') : t('sj_badge_brouillon')}</span>
-          <b>{p.titre || t('seance_jour')}</b>
-          {detail ? <span class="ath-barre-meta">{detail}</span> : null}
-        </div>
-        <button type="button" class="ath-chrono" onClick={() => chrono && chrono.ouvrir()} aria-label={t('chrono_titre')}>{temps}</button>
-        <button type="button" class="ath-reprendre" onClick={ouvrir}>
-          {enCours ? t('sj_reprendre') : t('sj_continuer')}
-        </button>
-      </div>
-      <button type="button" class="ath-abandon" onClick={() => setConfirme(true)}>
-        {enCours ? t('sj_abandon_seance') : t('sj_abandon_brouillon')}
-      </button>
-      {confirme && createPortal((
-        <div class="sj-voile" onClick={() => setConfirme(false)}>
-          <div class="sj-voile-carte" onClick={(e) => e.stopPropagation()}>
-            <p>{t('sea_abandonner_t')}</p>
-            <p>{t('sea_abandonner_q')}</p>
-            <button class="sj-go sj-go--danger" type="button" onClick={() => { abandonnerSeance(); setConfirme(false); }}>
-              {t('sea_abandonner_ok')}
-            </button>
-            <button class="sj-annuler" type="button" onClick={() => setConfirme(false)}>
-              {t('sea_abandonner_no')}
-            </button>
-          </div>
-        </div>
-      ), document.body)}
-    </div>
-  );
-}
-
-function JournalEntrainement({ ouvrirJour, ouvrirSeance, chrono }) {
+function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
   const [offset, setOffset] = useState(0);
   // Le mois du journal, replie : la semaine tient sur une seule rangee.
   const [moisOuvert, setMoisOuvert] = useState(false);
+  // Toucher un muscle le colorie, sans ecrire dans le journal.
+  const [choisis, setChoisis] = useState({});
+  const choisirMuscle = (k) => {
+    if (!k || k === 'tete') return;
+    setChoisis((s) => ({ ...s, [k]: !s[k] }));
+  };
 
   // Source unique : marquage manuel + seances enregistrees, reunis a
   // la lecture (services/muscles-jour.js). Le calendrier ne depend
@@ -589,14 +523,17 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance, chrono }) {
     cellules.push(cellule(wlIso(new Date(ref.getFullYear(), ref.getMonth(), j)), j));
   }
 
-  const etatJour = portraitSeanceDuJour().etat;
-  const enLive = etatJour === ETAT.BROUILLON || etatJour === ETAT.EN_COURS;
+  const portrait = portraitSeanceDuJour();
+  const enLive = portrait.etat === ETAT.BROUILLON || portrait.etat === ETAT.EN_COURS;
+  const reprendre = () => allerVers(
+    portrait.origine === 'programme' ? 'seanceDetail' : 'maseance',
+    portrait.seanceId ? { seanceId: portrait.seanceId, titre: portrait.titre } : null
+  );
 
-  // Silhouette de la semaine : meme logique qu'avant (v680/v681).
-  // Un jour note colorie ce qui a ete fait. Un jour vide colorie la
-  // seance prevue, y compris un autre jour de la semaine, et une
-  // seance pecs ajoute les triceps. Le rendu, lui, separe les deux :
-  // fait en or, prevu en creux, le reste gris.
+  // Silhouette de la semaine : meme logique qu'avant (v680/v681) pour
+  // savoir QUELS muscles sont concernes (note ou seance prevue, pecs
+  // ajoute les triceps). Le rendu ne distingue plus fait et programme :
+  // chaque groupe a sa couleur des qu'il est concerne, ou touche.
   const lundi = new Date(today);
   lundi.setDate(today.getDate() - ((today.getDay() + 6) % 7));
   const dimanche = new Date(lundi);
@@ -641,6 +578,8 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance, chrono }) {
     if (m) totalProg = Number(m[1]);
   }
   const recapAuj = faitAuj ? recapFaite({ duree: faitAuj.duree, tonnage: faitAuj.tonnage }) : '';
+  const nomZone = (k) => (k === 'avantBras' ? t('ath_avant_bras') : nomMuscle(k));
+  const legende = Object.keys(COULEURS_ATHLETE).filter((k) => compteFait[k] || comptePrevu[k] || choisis[k]);
 
   const joursSem = [];
   for (let k = 0; k < 7; k++) {
@@ -689,13 +628,16 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance, chrono }) {
 
       <section class="ath-scene">
         <div class="ath-corps">
-          <BodyMap rendu="athlete" compte={{}} fait={compteFait} prevu={comptePrevu} />
+          <BodyMap rendu="athlete" compte={{}} fait={compteFait} prevu={comptePrevu}
+            choix={choisis} onMuscle={choisirMuscle} />
         </div>
-        <div class="ath-legende">
-          <span><i class="ath-lg ath-lg-on" />{t('ath_travaille')}</span>
-          <span><i class="ath-lg ath-lg-todo" />{t('tr_week_missing')}</span>
-          <span><i class="ath-lg ath-lg-off" />{t('ath_autre')}</span>
-        </div>
+        {legende.length > 0 && (
+          <div class="ath-legende">
+            {legende.map((k) => (
+              <span key={k}><i class="ath-lg" style={{ background: COULEURS_ATHLETE[k] }} />{nomZone(k)}</span>
+            ))}
+          </div>
+        )}
       </section>
 
       <div class="ath-actions">
@@ -717,6 +659,11 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance, chrono }) {
             { seanceId: seanceIdAuj, titre: seanceAuj.titre, depuis: 'journal' })}>
             <span>{seanceAuj.titre}</span>
             <b>{t('cp_demarrer_simple')}</b>
+          </button>
+        )}
+        {enLive && (
+          <button type="button" class="ath-go" onClick={reprendre}>
+            {portrait.etat === ETAT.EN_COURS ? t('sj_reprendre_seance') : t('sj_continuer_seance')}
           </button>
         )}
         {!enLive && !peutLancer && (
@@ -765,7 +712,6 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance, chrono }) {
         </div>
       )}
 
-      <BarreSeance chrono={chrono} />
     </>
   );
 }
@@ -1142,7 +1088,7 @@ function ModalePremium({ montre, fermer }) {
 // ==========================================================
 // Page
 // ==========================================================
-export function Entrainer({ chrono } = {}) {
+export function Entrainer() {
   const [jourOuvertLocal, setJourOuvertLocal] = useState(null);
   // Une demande venue d'ailleurs prime sur l'etat local le temps d'un
   // rendu, puis on la consomme : sans quoi la fiche se rouvrirait a
@@ -1174,11 +1120,8 @@ export function Entrainer({ chrono } = {}) {
   const verrou = (e, dest) => { e.preventDefault(); allerVers(dest); };
   const locked = '';
 
-  const live = portraitSeanceDuJour().etat === ETAT.BROUILLON
-    || portraitSeanceDuJour().etat === ETAT.EN_COURS;
-
   return (
-    <div class={'pg-entrainer pg-entrainer--carte pg-entrainer--athlete' + (live ? ' ath-live' : '')}>
+    <div class="pg-entrainer pg-entrainer--carte pg-entrainer--athlete">
       <Entete />
       {/* Pas de bloc-titre sous la barre : comme le Journal, la barre
           puis le contenu. Le nom de l'onglet est deja dans la
@@ -1192,7 +1135,7 @@ export function Entrainer({ chrono } = {}) {
           Leurs deux destinations vivent maintenant dans la zone
           d'action, sous le bonhomme. Aucune n'est perdue. */}
       <JournalEntrainement ouvrirJour={setJourOuvert}
-        ouvrirSeance={setSeanceOuverte} chrono={chrono} />
+        ouvrirSeance={setSeanceOuverte} />
 
       <ModaleMuscles iso={jourOuvert} fermer={() => setJourOuvert(null)}
         ouvrirSeance={setSeanceOuverte} />
