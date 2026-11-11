@@ -141,7 +141,14 @@ export function animerGoutte() {
   // posait sur « Ajouter un repas » en fin de defilement (Raci, 9/08).
   const quaiBas = () => {
     const blocs = blocsColonne();
-    let y = Math.min(sc.clientHeight - QUAI_BAS_M, plafondBarre() - PASTILLE_H - 10);
+    const max = plafondBarre() - PASTILLE_H - 10;
+    let y = Math.min(sc.clientHeight - QUAI_BAS_M, max);
+    if (estLibre(y, blocs)) return y;
+    // 11/11 Raci : « l'eau ne redescend pas ». Saisie fermee, les repas
+    // forment un seul bloc jusqu'en bas : chercher vers le haut ne
+    // trouvait rien et la goutte restait en perles a mi-ecran. Le creux
+    // libre est SOUS le dernier repas, juste au-dessus de la barre.
+    for (let z = max; z > y; z -= 4) if (estLibre(z, blocs)) return z;
     for (let i = 0; i < 40 && !estLibre(y, blocs); i++) y -= 8;
     return y;
   };
