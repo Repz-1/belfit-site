@@ -1,10 +1,21 @@
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
+import { readFileSync } from 'node:fs';
+
+// 11/11 : /v2/version.json, lu par l'app pour savoir si elle est a jour
+// (services/mise-a-jour.js). Ecrit a chaque build depuis src/version.js.
+const versionJson = () => ({
+  name: 'belfit-version-json',
+  generateBundle() {
+    const m = /VERSION_APP\s*=\s*(\d+)/.exec(readFileSync(new URL('./src/version.js', import.meta.url), 'utf8'));
+    this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ v: m ? Number(m[1]) : 0 }) });
+  },
+});
 
 // Le build sort dans ../v2/ : servi sur belfit.be/v2/ A COTE du site actuel.
 // Le site live (app.html, main.html...) n'est jamais touche par ce chantier.
 export default defineConfig({
-  plugins: [preact()],
+  plugins: [preact(), versionJson()],
   // Dev (aperçu) à la racine. Production sur belfit.be/v2/.
   base: process.env.NODE_ENV === 'production' ? '/v2/' : '/',
   server: {

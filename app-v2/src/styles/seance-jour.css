@@ -226,3 +226,8 @@
 .pg-entrainer--carte .ent-brouillon-jeter { display: block; width: 100%; min-height: 44px; margin-top: 6px; border: none; background: transparent; color: var(--sur-graphite-2, #B9BEC8); font: inherit; font-size: 14px; font-weight: 500; text-decoration: underline; cursor: pointer; }
 .pg-entrainer .wlog-cell { position: relative; }
 .pg-entrainer .wlog-alerte { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; background: var(--or, #FAC408); color: #16130F; font-size: 11px; font-weight: 800; font-style: normal; line-height: 16px; text-align: center; }
+
+/* 11/11 — bandeau « nouvelle version » */
+.maj-bandeau { position: fixed; left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 1300; display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 16px; border-radius: 999px; background: #16130F; color: #fff; font-family: 'Satoshi', system-ui, -apple-system, sans-serif; box-shadow: 0 10px 30px rgba(0, 0, 0, .25); }
+.maj-txt { flex: 1; min-width: 0; font-size: 14px; font-weight: 500; }
+.maj-go { flex: none; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: #FAC408; color: #16130F; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }

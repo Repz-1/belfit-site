@@ -8,7 +8,7 @@
 //    unique par version, ils sont donc immuables : aucun risque
 //    de servir du perime, et l'ouverture reste instantanee.
 // ============================================================
-const CACHE = 'belfit-v2-452';
+const CACHE = 'belfit-v2-453';
 // Photos d'exercices (/img/exercices/, voir components/PhotoExo.jsx) :
 // cache a part, qui SURVIT aux nouvelles versions. Elles ne changent
 // pas d'une version a l'autre — les reprendre a chaque deploiement
@@ -70,6 +70,8 @@ self.addEventListener('fetch', (e) => {
   }
 
   if (!url.pathname.startsWith('/v2/')) return; // ne touche pas au site actuel
+  // 11/11 : le temoin de version ne passe jamais par un cache.
+  if (url.pathname === '/v2/version.json') return;
 
   const estDocument = req.mode === 'navigate' || req.destination === 'document';
 
@@ -83,10 +85,16 @@ self.addEventListener('fetch', (e) => {
       (async () => {
         const reseau = fetch(new Request(req, {cache: 'reload'}))
           .then(rep => {
-            const copie = rep.clone();
-            caches.open(CACHE).then(c => c.put(req, copie));
+            if (rep && rep.ok) {
+              const copie = rep.clone();
+              caches.open(CACHE).then(c => c.put(req, copie));
+            }
             return rep;
           });
+        // 11/11 : sans waitUntil, le worker pouvait etre arrete des la
+        // reponse rendue (reseau lent, cache servi) : la requete de fond
+        // n'aboutissait jamais et le HTML en cache ne se renouvelait plus.
+        e.waitUntil(reseau.catch(() => null));
         // 2,5 s : au-dela, le reseau n'est plus une reponse, c'est une
         // attente. On sert le cache et on laisse la requete finir en
         // arriere-plan — elle alimentera le prochain lancement.

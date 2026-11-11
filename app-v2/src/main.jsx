@@ -4,6 +4,8 @@ import './services/app-android.js';
 // (coach=questionnaire). Le code invitation est memorise ici, seul
 // ce parametre est retire, le reste de l'adresse reste lisible.
 import './services/invitation.js';
+import { BandeauMaj } from './components/BandeauMaj.jsx';
+import { surveillerMiseAJour } from './services/mise-a-jour.js';
 import { render } from 'preact';
 import { createPortal } from 'preact/compat';
 import { useState, useRef, useEffect } from 'preact/hooks';
@@ -846,7 +848,8 @@ window.addEventListener('unhandledrejection', (e) => {
 // BandeauConfirmation a la racine (27/09) : il n'etait monte que dans
 // un ecran de S'entrainer rarement ouvert, si bien que le courriel de
 // confirmation ne partait jamais a l'inscription (signale par Raci).
-if (racine) render(<><AvisAccesInvite /><BandeauConfirmation /><App /><AccueilGarde /></>, racine);
+if (racine) render(<><AvisAccesInvite /><BandeauConfirmation /><App /><AccueilGarde /><BandeauMaj /></>, racine);
+surveillerMiseAJour();
 
 // Retrait du splash.
 //
