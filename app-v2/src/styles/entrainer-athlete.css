@@ -342,3 +342,41 @@
 
 /* Pas de chrono flottant sur cet ecran. */
 .pan-scroll:has(.pg-entrainer--athlete) .v2-chrono-fab { display: none !important; }
+
+/* ============================================================
+   12/11 — refonte : la carte du jour d'abord, les silhouettes ensuite
+   ============================================================ */
+.pg-entrainer--athlete .ath2-tete { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 2px 2px 10px; }
+.pg-entrainer--athlete .ath2-tete h1 { margin: 0; font-size: 21px; font-weight: 700; letter-spacing: -.02em; color: var(--texte); text-transform: none; }
+.pg-entrainer--athlete .ath2-tete h1::first-letter { text-transform: uppercase; }
+.pg-entrainer--athlete .ath2-tete span { flex: none; font-size: 12.5px; font-weight: 500; color: var(--texte-2); }
+.pg-entrainer--athlete .ath2-jour { margin-top: 14px; padding: 18px; border-radius: 22px; background: #1E2430; color: #fff; }
+.pg-entrainer--athlete .ath2-kicker { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 500; color: #A7ADB8; }
+.pg-entrainer--athlete .ath2-badge { width: 18px; height: 18px; border-radius: 50%; background: #FAC408; color: #16130F; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+.pg-entrainer--athlete .ath2-titre { margin: 5px 0 0; font-size: 24px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; color: #fff; }
+.pg-entrainer--athlete .ath2-meta { margin: 4px 0 0; font-size: 14px; line-height: 1.4; color: #B9BEC8; }
+.pg-entrainer--athlete .ath2-muscles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
+.pg-entrainer--athlete .ath2-muscles span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, .1); font-size: 12.5px; color: #fff; }
+.pg-entrainer--athlete .ath2-muscles i { width: 8px; height: 8px; border-radius: 50%; }
+.pg-entrainer--athlete .ath2-go { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px; margin-top: 16px; border: 0; border-radius: 999px; background: #FAC408; color: #16130F; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
+.pg-entrainer--athlete .ath2-go:active { transform: scale(.98); }
+.pg-entrainer--athlete .ath2-go--calme { background: rgba(255, 255, 255, .12); color: #fff; }
+.pg-entrainer--athlete .ath2-lien { display: block; width: 100%; min-height: 44px; margin-top: 4px; border: 0; background: none; color: #B9BEC8; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; }
+.pg-entrainer--athlete .ath2-tuiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.pg-entrainer--athlete .ath2-tuile { min-width: 0; min-height: 64px; padding: 12px 14px; border: 0; border-radius: 16px; background: #fff; text-align: left; font: inherit; color: var(--texte); cursor: pointer; }
+.pg-entrainer--athlete .ath2-tuile b { display: block; font-size: 15px; font-weight: 700; }
+.pg-entrainer--athlete .ath2-tuile span { display: block; margin-top: 2px; font-size: 12.5px; color: var(--texte-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pg-entrainer--athlete .ath2-semaine { margin-top: 12px; padding: 16px; border-radius: 22px; background: #fff; }
+.pg-entrainer--athlete .ath2-sem-tete { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.pg-entrainer--athlete .ath2-sem-tete h2 { margin: 0; font-size: 17px; font-weight: 700; color: var(--texte); }
+.pg-entrainer--athlete .ath2-cal { min-height: 44px; padding: 0 2px; border: 0; background: none; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--or-fonce); cursor: pointer; }
+.pg-entrainer--athlete .ath2-sem-corps { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
+.pg-entrainer--athlete .ath2-sem-corps .ath-corps { flex: none; width: 46%; }
+.pg-entrainer--athlete .ath2-sem-corps .ath-corps .bm-svg { height: 150px; }
+.pg-entrainer--athlete .ath2-bilan { flex: 1; min-width: 0; }
+.pg-entrainer--athlete .ath2-compte b { font-size: 26px; font-weight: 700; color: var(--texte); }
+.pg-entrainer--athlete .ath2-compte span { margin-left: 6px; font-size: 13.5px; color: var(--texte-2); }
+.pg-entrainer--athlete .ath2-barre { height: 6px; margin-top: 6px; border-radius: 999px; background: #E5E3DE; overflow: hidden; }
+.pg-entrainer--athlete .ath2-barre i { display: block; height: 100%; border-radius: 999px; background: #FAC408; }
+.pg-entrainer--athlete .ath2-note { margin: 9px 0 0; font-size: 13px; line-height: 1.4; color: var(--texte-2); }
+.pg-entrainer--athlete .ath2-semaine .ath-legende { margin-top: 10px; }

@@ -13,7 +13,7 @@ import { DetailSeance } from './Seances.jsx';
 import { programmeActif, seancePrevue, musclesPrevus, musclesDeSeancePrevue, estSeancePecs, completerMusclesPecs, planifierSeance, planifs, progParId, normaliserJours } from '../store/programme.js';
 import { seancesDuJour, seances, enregistrerSeance } from '../store/seances.js';
 import { SESSION_EXOS } from '../data/sessionExos.js';
-import { portraitSeanceDuJour, ETAT, demandeVueEntrainer, seanceRefs, seanceActive } from '../store/seance-active.js';
+import { portraitSeanceDuJour, ETAT, demandeVueEntrainer, seanceRefs, seanceActive, abandonnerSeance } from '../store/seance-active.js';
 import { recapFaite } from './CarteSeanceJour.jsx';
 import { t } from '../i18n/index.js';
 import '../styles/seance-jour.css';
@@ -412,6 +412,7 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
   const [offset, setOffset] = useState(0);
   // Le mois du journal, replie : la semaine tient sur une seule rangee.
   const [moisOuvert, setMoisOuvert] = useState(false);
+  const [jeter, setJeter] = useState(false);
   // Toucher un muscle le colorie, sans ecrire dans le journal.
   const [choisis, setChoisis] = useState({});
   const choisirMuscle = (k) => {
@@ -578,6 +579,13 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
     if (m) totalProg = Number(m[1]);
   }
   const recapAuj = faitAuj ? recapFaite({ duree: faitAuj.duree, tonnage: faitAuj.tonnage }) : '';
+  // 12/11 : « Jour 1 — Pecs / Triceps » -> « Pecs / Triceps » dans la carte du jour.
+  const titreCourt = (x) => String(x || '').replace(/^.*?[—–-]\s+/, '') || String(x || '');
+  const musclesAuj = peutLancer
+    ? musclesDeSeancePrevue({ seanceId: seanceIdAuj, titre: seanceAuj.titre, exos: seanceAuj.exos }).filter(k => COULEUR[k]).slice(0, 4)
+    : [];
+  const objectifSemaine = prog ? Object.keys(aff).length : 0;
+  const travailles = groupesCouleur.filter(g => compteFait[g.k]).map(g => nomMuscle(g.k).toLowerCase());
   const nomZone = (k) => (k === 'avantBras' ? t('ath_avant_bras') : nomMuscle(k));
   const legende = Object.keys(COULEURS_ATHLETE).filter((k) => compteFait[k] || comptePrevu[k] || choisis[k]);
 
@@ -602,34 +610,117 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
 
   return (
     <>
-      <header class="ath-poster">
-        <div>
-          <p class="ath-kicker">{t('nav_train')}</p>
-          <h1 class="ath-date">{today.getDate()}
-            <small>{t('days_long').split('|')[today.getDay()]} · {t('months_long').split('|')[today.getMonth()]}</small>
-          </h1>
-        </div>
-        <div class="ath-stats">
-          <div><b>{seancesSemaine}</b><span>{t('tr_week_sessions')}</span></div>
-          <div><b>{groupesCouleur.filter(g => compteFait[g.k]).length}/{groupesCouleur.length}</b><span>{t('ath_groupes')}</span></div>
-        </div>
+      {/* 12/11 Raci : la page repond a UNE question — « qu'est-ce que je
+          fais aujourd'hui ? ». Date, semaine, puis la carte du jour et
+          son seul bouton. Les silhouettes viennent apres : la recompense,
+          plus l'obstacle. */}
+      <header class="ath2-tete">
+        <h1>{t('days_long').split('|')[today.getDay()]} {today.getDate()} {t('months_long').split('|')[today.getMonth()]}</h1>
+        {prog && semaineProg ? <span>{totalProg
+          ? t('cp_semaine', { n: semaineProg, t: totalProg })
+          : t('cp_semaine_seule', { n: semaineProg })}</span> : null}
       </header>
 
       <section class="ath-week" aria-label={t('tr_week_title')}>
         <div class="ath-jours">{joursSem}</div>
       </section>
 
-      {aFaire.length > 0 && (
-        <div class="ath-chips">
-          <span class="ath-chips-lab">{t('ath_a_faire')}</span>
-          {aFaire.map(g => <span key={g.k} class="ath-chip">{nomMuscle(g.k)}</span>)}
-        </div>
-      )}
+      <section class="ath2-jour">
+        {enLive ? (
+          <>
+            <div class="ath2-kicker"><span class="ath2-badge">!</span>{portrait.etat === ETAT.EN_COURS ? t('ent2_kicker_cours') : t('ent2_kicker_brouillon')}</div>
+            <h2 class="ath2-titre">{portrait.titre || t('seance_jour')}</h2>
+            <p class="ath2-meta">{[
+              portrait.nExos ? portrait.nExos + ' ' + t(portrait.nExos > 1 ? 'ms_exercises' : 'ms_exercise') : '',
+              portrait.etat === ETAT.EN_COURS ? '' : t('sj_pas_commencee'),
+            ].filter(Boolean).join(' · ')}</p>
+            <button type="button" class="ath2-go" onClick={reprendre}>
+              {portrait.etat === ETAT.EN_COURS ? t('sj_reprendre_seance') : t('sj_continuer_seance')}
+            </button>
+            <button type="button" class="ath2-lien" onClick={() => setJeter(true)}>
+              {portrait.etat === ETAT.EN_COURS ? t('sj_abandon_seance') : t('sj_abandon_brouillon')}
+            </button>
+          </>
+        ) : faitAuj ? (
+          <>
+            <div class="ath2-kicker">✓ {t('ent2_kicker_faite')}</div>
+            <h2 class="ath2-titre">{titreCourt(faitAuj.titre) || t('seance_jour')}</h2>
+            {recapAuj ? <p class="ath2-meta">{recapAuj}</p> : null}
+            <button type="button" class="ath2-go ath2-go--calme" onClick={() => ouvrirSeance && ouvrirSeance(faitAuj)}>
+              {t('ent2_voir_seance')}
+            </button>
+          </>
+        ) : peutLancer ? (
+          <>
+            <div class="ath2-kicker">{t('ent2_kicker_jour')}</div>
+            <h2 class="ath2-titre">{titreCourt(seanceAuj.titre)}</h2>
+            {seanceAuj.sub ? <p class="ath2-meta">{seanceAuj.sub}</p> : null}
+            {musclesAuj.length > 0 && (
+              <div class="ath2-muscles">
+                {musclesAuj.map(k => <span key={k}><i style={{ background: COULEUR[k] }} />{nomMuscle(k)}</span>)}
+              </div>
+            )}
+            <button type="button" class="ath2-go" onClick={() => allerVers('seanceDetail',
+              { seanceId: seanceIdAuj, titre: seanceAuj.titre, depuis: 'journal' })}>
+              {t('ent2_commencer')}
+            </button>
+          </>
+        ) : prog ? (
+          <>
+            <div class="ath2-kicker">{t('ent2_kicker_jour')}</div>
+            <h2 class="ath2-titre">{t('ent2_repos')}</h2>
+            <p class="ath2-meta">{t('ent2_repos_txt')}</p>
+            <button type="button" class="ath2-go ath2-go--calme" onClick={() => allerVers('selection')}>
+              {t('ent2_seance_plus')}
+            </button>
+          </>
+        ) : (
+          <>
+            <div class="ath2-kicker">{t('ent2_kicker_jour')}</div>
+            <h2 class="ath2-titre">{t('ent2_sans_prog')}</h2>
+            <p class="ath2-meta">{t('ent2_sans_prog_txt')}</p>
+            <button type="button" class="ath2-go" onClick={() => allerVers('questionnaire')}>
+              {t('ent2_choisir_prog')}
+            </button>
+          </>
+        )}
+      </section>
 
-      <section class="ath-scene">
-        <div class="ath-corps">
-          <BodyMap rendu="athlete" compte={{}} fait={compteFait} prevu={comptePrevu}
-            choix={choisis} onMuscle={choisirMuscle} />
+      <div class="ath2-tuiles">
+        <button type="button" class="ath2-tuile" onClick={() => allerVers('selection')}>
+          <b>{t('ent2_autre')}</b>
+          <span>{t('ent2_autre_txt')}</span>
+        </button>
+        <button type="button" class="ath2-tuile"
+          onClick={() => (prog ? allerVers('planifier', { prog: actif.id }) : allerVers('questionnaire'))}>
+          <b>{t('ent2_prog')}</b>
+          <span>{prog ? prog.name : t('ent2_prog_txt_sans')}</span>
+        </button>
+      </div>
+
+      <section class="ath2-semaine">
+        <div class="ath2-sem-tete">
+          <h2>{t('ent2_semaine')}</h2>
+          <button type="button" class="ath2-cal" aria-expanded={moisOuvert ? 'true' : 'false'}
+            onClick={() => { if (moisOuvert) setMoisOuvert(false); else { setOffset(0); setMoisOuvert(true); } }}>
+            {moisOuvert ? t('ent_voir_semaine') : t('ent_voir_mois')}
+          </button>
+        </div>
+        <div class="ath2-sem-corps">
+          <div class="ath-corps">
+            <BodyMap rendu="athlete" compte={{}} fait={compteFait} prevu={comptePrevu}
+              choix={choisis} onMuscle={choisirMuscle} />
+          </div>
+          <div class="ath2-bilan">
+            <div class="ath2-compte"><b>{seancesSemaine}</b>
+              <span>{objectifSemaine ? t('ent2_seances_sur', { t: objectifSemaine }) : t(seancesSemaine > 1 ? 'ent2_seances' : 'ent2_seance')}</span></div>
+            {objectifSemaine > 0 && (
+              <div class="ath2-barre"><i style={{ width: Math.min(100, Math.round(seancesSemaine / objectifSemaine * 100)) + '%' }} /></div>
+            )}
+            <p class="ath2-note">{travailles.length
+              ? t('ent2_travailles') + ' ' + travailles.join(', ')
+              : t(aFaire.length ? 'ent2_prevus' : 'ent2_rien')}</p>
+          </div>
         </div>
         {legende.length > 0 && (
           <div class="ath-legende">
@@ -640,54 +731,20 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
         )}
       </section>
 
-      <div class="ath-actions">
-        {prog && (
-          <button type="button" class="ath-prog" onClick={() => allerVers('planifier', { prog: actif.id })}>
-            <b>{prog.name}</b>
-            {semaineProg ? <span>{totalProg
-              ? t('cp_semaine', { n: semaineProg, t: totalProg })
-              : t('cp_semaine_seule', { n: semaineProg })}</span> : null}
-          </button>
-        )}
-        {faitAuj && !enLive && (
-          <button type="button" class="ath-faite" onClick={() => ouvrirSeance && ouvrirSeance(faitAuj)}>
-            ✓ {t('cp_realisee')}{recapAuj ? ' · ' + recapAuj : ''}
-          </button>
-        )}
-        {peutLancer && (
-          <button type="button" class="ath-go" onClick={() => allerVers('seanceDetail',
-            { seanceId: seanceIdAuj, titre: seanceAuj.titre, depuis: 'journal' })}>
-            <span>{seanceAuj.titre}</span>
-            <b>{t('cp_demarrer_simple')}</b>
-          </button>
-        )}
-        {enLive && (
-          <button type="button" class="ath-go" onClick={reprendre}>
-            {portrait.etat === ETAT.EN_COURS ? t('sj_reprendre_seance') : t('sj_continuer_seance')}
-          </button>
-        )}
-        {!enLive && !peutLancer && (
-          <button type="button" class="ath-go" onClick={() => allerVers('selection')}>
-            {t('tr_start_session')}
-          </button>
-        )}
-        <div class="ath-liens">
-          {(enLive || peutLancer) && (
-            <button type="button" class="ath-lien" onClick={() => allerVers('selection')}>
-              {t('tr_start_session')}
+      {jeter && createPortal((
+        <div class="sj-voile" onClick={() => setJeter(false)}>
+          <div class="sj-voile-carte" onClick={(e) => e.stopPropagation()}>
+            <p>{t('sea_abandonner_t')}</p>
+            <p>{t('sea_abandonner_q')}</p>
+            <button class="sj-go sj-go--danger" type="button" onClick={() => { abandonnerSeance(); setJeter(false); }}>
+              {t('sea_abandonner_ok')}
             </button>
-          )}
-          {!prog && (
-            <button type="button" class="ath-lien" onClick={() => allerVers('questionnaire')}>
-              {t('tr_adapt_prog')}
+            <button class="sj-annuler" type="button" onClick={() => setJeter(false)}>
+              {t('sea_abandonner_no')}
             </button>
-          )}
-          <button type="button" class="ath-lien" aria-expanded={moisOuvert ? 'true' : 'false'}
-            onClick={() => { if (moisOuvert) setMoisOuvert(false); else { setOffset(0); setMoisOuvert(true); } }}>
-            {moisOuvert ? t('ent_voir_semaine') : t('tr_log_title')}
-          </button>
+          </div>
         </div>
-      </div>
+      ), document.body)}
 
       {moisOuvert && (
         <div class="ath-mois">
