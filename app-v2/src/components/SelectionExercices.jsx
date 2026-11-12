@@ -95,8 +95,7 @@ export function SelectionExercices() {
 
   const mKey = MUSCLES[muscle].key;
   const { lieu, options } = lieuEntrainement.value;
-  // 12/11 : les doublons sont masques du choix (voir ANCIENS_NOMS).
-  const exoVisible = (ex) => !ex.masque && convientAuLieu(ex, lieu, options);
+  const exoVisible = (ex) => convientAuLieu(ex, lieu, options);
   // A domicile, on coche ce qu'on a. La derniere case ne se decoche
   // pas : « rien du tout » ne montrerait aucun exercice.
   const basculerOption = (k) => {
@@ -106,7 +105,7 @@ export function SelectionExercices() {
   };
   // Liste vide a domicile : quelles cases ajouter pour en avoir ?
   const nbSiOption = (k) => (EXERCISES[mKey] || [])
-    .filter(ex => !ex.masque && convientAuLieu(ex, 'domicile', [k])).length;
+    .filter(ex => convientAuLieu(ex, 'domicile', [k])).length;
 
   // Recherche par MOTS, insensible aux accents, a la casse et a
   // l'ordre : « couche incline » trouve « Developpe Couche Incline
@@ -135,7 +134,7 @@ export function SelectionExercices() {
   // resultats plutot que de laisser l'ecran muet.
   const ailleurs = mots.length && !liste.length
     ? MUSCLES.filter(m => m.key !== mKey)
-        .map(m => ({ m, n: (EXERCISES[m.key] || []).filter(ex => !ex.masque && correspond(ex)).length }))
+        .map(m => ({ m, n: (EXERCISES[m.key] || []).filter(correspond).length }))
         .filter(o => o.n > 0)
     : [];
 

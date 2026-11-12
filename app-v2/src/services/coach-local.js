@@ -3,7 +3,7 @@ import { ALIAS, normNom, resoudreAliment, noterManque } from '../data/alias-alim
 import { EAT_IDEAS } from '../data/idees.js';
 import { limitesPortion } from '../data/portions.js';
 import { proposerAdaptation } from '../store/adaptations.js';
-import { EXERCISES, nomActuel } from '../data/exercices.js';
+import { EXERCISES } from '../data/exercices.js';
 
 const PORTION = {
   'Pain blanc': 120, 'Frites': 200, 'Poulet cuit': 150,
@@ -316,7 +316,7 @@ function nbParGroupe(nMuscles, style, duree) {
 }
 
 function refParNom(mKey, nom) {
-  const n = normNom(nomActuel(nom));
+  const n = normNom(nom);
   const dans = (k) => {
     const liste = EXERCISES[k] || [];
     const i = liste.findIndex((e) => normNom(e.nom) === n);

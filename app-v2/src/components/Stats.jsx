@@ -3,7 +3,6 @@ import { weightLog, histoJours, ajouterPesee } from '../store/stats.js';
 import { objectifs } from '../store/journal.js';
 import { musclesParJour } from '../services/muscles-jour.js';
 import { setLog } from './SeanceTracker.jsx';
-import { nomActuel } from '../data/exercices.js';
 import { estPremium } from './PremiumPage.jsx';
 import { ongletActif, allerOnglet } from './BottomNav.jsx';
 import { seances } from '../store/seances.js';
@@ -351,8 +350,7 @@ export function Stats() {
       if (!e || !e.ex) return;
       const sets = (e.series || []).map(s => ({ w: s.kg, r: s.reps }));
       if (!sets.length) return;
-      const nomEx = nomActuel(e.ex);
-      (setLogAll[nomEx] = setLogAll[nomEx] || []).push({ iso, sets });
+      (setLogAll[e.ex] = setLogAll[e.ex] || []).push({ iso, sets });
     });
   });
   // « Seance faite ce jour » (remplace le sessionLog v1) : au moins une serie notee

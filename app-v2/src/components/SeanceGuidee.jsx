@@ -3,7 +3,7 @@ import { enregistrerSeance, supprimerSeance, seanceMemeJour } from '../store/sea
 import { poserBrouillon, demarrerSeanceActive, abandonnerSeance, marquerFaite, seanceActive, seanceRefs } from '../store/seance-active.js';
 import { planifs } from '../store/programme.js';
 import { t } from '../i18n/index.js';
-import { EXERCISES, nomActuel } from '../data/exercices.js';
+import { EXERCISES } from '../data/exercices.js';
 import { SESSION_EXOS } from '../data/sessionExos.js';
 import { retourEntrainer, allerVers } from './Entrainer.jsx';
 import '../styles/seance-guidee.css';
@@ -43,7 +43,7 @@ function resoudreExercices(seanceId) {
     const sep = String(ref).indexOf(':');
     const mKey = String(ref).slice(0, sep);
     const nom = String(ref).slice(sep + 1);
-    const ex = (EXERCISES[mKey] || []).find(e => e.nom === nomActuel(nom));
+    const ex = (EXERCISES[mKey] || []).find(e => e.nom === nom);
     return ex ? { mKey, ex } : null;
   }).filter(Boolean);
 }
@@ -127,7 +127,7 @@ function equivalents(mKey, ex) {
   const mots = motsDe(ex.nom);
   const geste = gesteDe(ex.nom);
   return (EXERCISES[mKey] || [])
-    .filter(x => !x.masque && x.nom !== ex.nom && (versLibre ? LIBRE.has(x.mat) : x.mat === 'machine'))
+    .filter(x => x.nom !== ex.nom && (versLibre ? LIBRE.has(x.mat) : x.mat === 'machine'))
     .map(x => {
       const c = motsDe(x.nom);
       let communs = 0;
@@ -171,13 +171,7 @@ function ecrireSetLog(log) {
 }
 /** La derniere serie notee sur ce mouvement : { w, r } ou null. */
 function derniereSerie(nom) {
-  // 12/11 : un exercice renomme garde son historique sous l'ancien nom.
-  const log = lireSetLog();
-  let hist = log[nom];
-  if (!hist || !hist.length) {
-    const ancien = Object.keys(log).find(k => k !== nom && nomActuel(k) === nom && (log[k] || []).length);
-    hist = ancien ? log[ancien] : null;
-  }
+  const hist = lireSetLog()[nom];
   if (!hist || !hist.length) return null;
   const sets = (hist[hist.length - 1].sets || []).filter(s => s.w !== '' || s.r !== '');
   return sets.length ? sets[sets.length - 1] : null;

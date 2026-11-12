@@ -83,7 +83,7 @@ function composerAvecReponses(phrase, rep) {
     const e = (EXERCISES[r.mKey] || [])[r.i];
     if (e && okMat(e)) return r;
     const liste = EXERCISES[r.mKey] || [];
-    const j = liste.findIndex((x, k) => !x.masque && okMat(x) && !vus.has(r.mKey + ':' + k));
+    const j = liste.findIndex((x, k) => okMat(x) && !vus.has(r.mKey + ':' + k));
     if (j < 0) return null;
     vus.add(r.mKey + ':' + j);
     return { mKey: r.mKey, i: j };

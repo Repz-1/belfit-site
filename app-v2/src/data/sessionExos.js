@@ -124,7 +124,7 @@ export const SESSION_EXOS = {
     "biceps:Curl Marteau (Haltère)",
     "triceps:Barre au Front Allongé (Barre EZ)",
     "triceps:Extension Triceps Allongé (Poulie)",
-    "triceps:Extension Triceps Un Bras (Haltère)"
+    "triceps:Extension Triceps Debout Un Bras (Haltère)"
   ],
   "deb-full-3j-0": [
     "pecs:Développé Couché (Machine)",
@@ -221,7 +221,7 @@ export const SESSION_EXOS = {
     "pecs:Développé Couché (Haltère)",
     "epaules:Développé Épaules (Haltère)",
     "biceps:Curl Biceps (Haltère)",
-    "triceps:Extension Triceps Un Bras (Haltère)",
+    "triceps:Extension Triceps Debout Un Bras (Haltère)",
     "abdos:Planche"
   ],
   "maison-halteres-3j-1": [
@@ -328,7 +328,7 @@ export const SESSION_EXOS = {
     "pecs:Pec Deck (Machine)",
     "epaules:Développé Épaules (Haltère)",
     "epaules:Élévation Latérale et Frontale (Haltère)",
-    "triceps:Extension Triceps Un Bras (Haltère)",
+    "triceps:Extension Triceps Debout Un Bras (Haltère)",
     "triceps:Kickback Triceps (Haltère)"
   ],
   "salle-ppl-6j-4": [
@@ -583,7 +583,7 @@ export const SESSION_EXOS = {
     "pecs:Développé Couché (Haltère)",
     "epaules:Développé Épaules (Haltère)",
     "biceps:Curl Biceps (Haltère)",
-    "triceps:Extension Triceps Un Bras (Haltère)",
+    "triceps:Extension Triceps Debout Un Bras (Haltère)",
     "abdos:Planche"
   ],
   "maison-halteres-2j-1": [
@@ -596,7 +596,7 @@ export const SESSION_EXOS = {
   "maison-halteres-4j-0": [
     "pecs:Développé Couché (Haltère)",
     "epaules:Développé Épaules (Haltère)",
-    "triceps:Extension Triceps Un Bras (Haltère)",
+    "triceps:Extension Triceps Debout Un Bras (Haltère)",
     "abdos:Planche"
   ],
   "maison-halteres-4j-1": [
@@ -619,7 +619,7 @@ export const SESSION_EXOS = {
   ],
   "maison-halteres-5j-0": [
     "pecs:Développé Couché (Haltère)",
-    "triceps:Extension Triceps Un Bras (Haltère)",
+    "triceps:Extension Triceps Debout Un Bras (Haltère)",
     "abdos:Planche"
   ],
   "maison-halteres-5j-1": [
