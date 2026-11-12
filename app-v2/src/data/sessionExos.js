@@ -29,16 +29,16 @@ export const SESSION_EXOS = {
   "masse-3j-0": [
     "pecs:Développé Couché (Barre)",
     "pecs:Développé Couché Incliné (Haltère)",
-    "pecs:Écarté (Pec Deck) (Machine)",
-    "triceps:Barre au Front (Barre EZ)",
-    "triceps:Extension Triceps (Poulie)",
-    "triceps:Dips",
+    "pecs:Pec Deck (Machine)",
+    "triceps:Barre au Front Allongé (Barre EZ)",
+    "triceps:Extension Triceps Allongé (Poulie)",
+    "triceps:Dips entre Bancs",
     "abdos:Crunch (Poulie)"
   ],
   "masse-3j-1": [
     "dos:Rowing (Barre)",
     "dos:Tractions",
-    "dos:Tirage Poitrine (Poulie)",
+    "dos:Tirage Poitrine Prise Large (Poulie)",
     "dos:Rowing Un Bras (Haltère)",
     "biceps:Curl Biceps (Barre)",
     "biceps:Curl Marteau (Haltère)"
@@ -56,7 +56,7 @@ export const SESSION_EXOS = {
     "pecs:Développé Couché (Barre)",
     "pecs:Développé Couché Incliné (Haltère)",
     "pecs:Développé Couché (Haltère)",
-    "pecs:Écarté (Pec Deck) (Machine)",
+    "pecs:Pec Deck (Machine)",
     "pecs:Développé Couché Décliné (Barre)",
     "abdos:Relevé de Jambes Suspendu",
     "abdos:Crunch (Poulie)"
@@ -64,7 +64,7 @@ export const SESSION_EXOS = {
   "masse-4j-1": [
     "dos:Tractions",
     "dos:Rowing (Barre)",
-    "dos:Tirage Poitrine (Poulie)",
+    "dos:Tirage Poitrine Prise Large (Poulie)",
     "dos:Rowing Un Bras (Haltère)",
     "dos:Rowing Assis (Poulie)"
   ],
@@ -82,14 +82,14 @@ export const SESSION_EXOS = {
     "epaules:Élévation Latérale (Haltère)",
     "epaules:Oiseau Penché Arrière (Haltère)",
     "biceps:Curl Biceps (Barre)",
-    "triceps:Barre au Front (Barre EZ)",
-    "triceps:Extension Triceps (Poulie)"
+    "triceps:Barre au Front Allongé (Barre EZ)",
+    "triceps:Extension Triceps Allongé (Poulie)"
   ],
   "masse-5j-0": [
     "pecs:Développé Couché (Barre)",
     "pecs:Développé Couché Incliné (Haltère)",
     "pecs:Développé Couché (Haltère)",
-    "pecs:Écarté (Pec Deck) (Machine)",
+    "pecs:Pec Deck (Machine)",
     "pecs:Développé Couché Décliné (Barre)",
     "abdos:Relevé de Jambes Suspendu",
     "abdos:Crunch (Poulie)"
@@ -97,9 +97,9 @@ export const SESSION_EXOS = {
   "masse-5j-1": [
     "dos:Tractions",
     "dos:Rowing (Barre)",
-    "dos:Tirage Poitrine (Poulie)",
+    "dos:Tirage Poitrine Prise Large (Poulie)",
     "dos:Rowing Un Bras (Haltère)",
-    "dos:Rowing Debout (Haltère)"
+    "dos:Tirage Menton (Haltère)"
   ],
   "masse-5j-2": [
     "jambes:Squat (Barre)",
@@ -112,7 +112,7 @@ export const SESSION_EXOS = {
   "masse-5j-3": [
     "epaules:Développé Militaire Debout (Barre)",
     "epaules:Élévation Latérale (Haltère)",
-    "epaules:Élévation Frontale Latérales Avant (Haltère)",
+    "epaules:Élévation Latérale et Frontale (Haltère)",
     "epaules:Oiseau Penché Arrière (Haltère)",
     "epaules:Oiseau Arrière (Poulie)",
     "abdos:Planche",
@@ -122,35 +122,35 @@ export const SESSION_EXOS = {
     "biceps:Curl Biceps (Barre)",
     "biceps:Curl Biceps (Haltère)",
     "biceps:Curl Marteau (Haltère)",
-    "triceps:Barre au Front (Barre EZ)",
-    "triceps:Extension Triceps (Poulie)",
+    "triceps:Barre au Front Allongé (Barre EZ)",
+    "triceps:Extension Triceps Allongé (Poulie)",
     "triceps:Extension Triceps Un Bras (Haltère)"
   ],
   "deb-full-3j-0": [
-    "pecs:Chest Press (Machine)",
+    "pecs:Développé Couché (Machine)",
     "dos:Rowing (Machine)",
     "jambes:Presse à Cuisses (Machine)",
-    "epaules:Presse Épaules (Machine)",
+    "epaules:Développé Épaules (Machine)",
     "abdos:Crunch Assis (Poulie)"
   ],
   "deb-full-3j-1": [
-    "pecs:Chest Press Incliné (Machine)",
+    "pecs:Développé Incliné (Machine)",
     "dos:Tirage Poitrine Prise Large (Poulie)",
     "jambes:Extension Jambes (Machine)",
     "biceps:Curl Biceps (Machine)",
     "abdos:Crunch (Poulie)"
   ],
   "deb-full-3j-2": [
-    "pecs:Écarté (Pec Deck) (Machine)",
+    "pecs:Pec Deck (Machine)",
     "dos:Rowing Assis (Poulie)",
     "jambes:Leg Curl Assis (Machine)",
     "triceps:Extension Triceps Corde (Poulie)",
-    "abdos:Crunch Corde (Poulie)"
+    "abdos:Crunch (Poulie)"
   ],
   "deb-2j-0": [
-    "pecs:Chest Press (Machine)",
+    "pecs:Développé Couché (Machine)",
     "dos:Tirage Poitrine Prise Large (Poulie)",
-    "epaules:Presse Épaules (Machine)",
+    "epaules:Développé Épaules (Machine)",
     "biceps:Curl Biceps (Machine)",
     "triceps:Extension Triceps Corde (Poulie)"
   ],
@@ -158,13 +158,13 @@ export const SESSION_EXOS = {
     "jambes:Presse à Cuisses (Machine)",
     "jambes:Extension Jambes (Machine)",
     "jambes:Leg Curl Allongé (Machine)",
-    "jambes:Extension Mollets Assises (Machine)",
+    "jambes:Extension Mollets Assis (Machine)",
     "abdos:Crunch Assis (Poulie)"
   ],
   "seche-full-3j-0": [
     "jambes:Squat (Barre)",
     "pecs:Pompes",
-    "dos:Tirage Poitrine (Poulie)",
+    "dos:Tirage Poitrine Prise Large (Poulie)",
     "epaules:Élévation Latérale (Haltère)",
     "abdos:Relevé de Jambes Suspendu",
     "jambes:Fentes (Haltère)",
@@ -174,7 +174,7 @@ export const SESSION_EXOS = {
     "jambes:Presse à Cuisses (Machine)",
     "pecs:Développé Couché (Barre)",
     "dos:Rowing (Barre)",
-    "triceps:Extension Triceps (Poulie)",
+    "triceps:Extension Triceps Allongé (Poulie)",
     "abdos:Rotation Russe",
     "jambes:Extension Mollets Debout (Machine)",
     "abdos:Crunch"
@@ -190,10 +190,10 @@ export const SESSION_EXOS = {
   ],
   "seche-circuit-4j-0": [
     "pecs:Développé Couché (Barre)",
-    "dos:Tirage Poitrine (Poulie)",
+    "dos:Tirage Poitrine Prise Large (Poulie)",
     "epaules:Élévation Latérale (Haltère)",
     "biceps:Curl Biceps (Barre)",
-    "triceps:Extension Triceps (Poulie)",
+    "triceps:Extension Triceps Allongé (Poulie)",
     "pecs:Pompes"
   ],
   "seche-circuit-4j-1": [
@@ -219,7 +219,7 @@ export const SESSION_EXOS = {
   ],
   "maison-halteres-3j-0": [
     "pecs:Développé Couché (Haltère)",
-    "epaules:Presse Épaules (Haltère)",
+    "epaules:Développé Épaules (Haltère)",
     "biceps:Curl Biceps (Haltère)",
     "triceps:Extension Triceps Un Bras (Haltère)",
     "abdos:Planche"
@@ -234,7 +234,7 @@ export const SESSION_EXOS = {
   "maison-halteres-3j-2": [
     "pecs:Développé Couché (Haltère)",
     "dos:Rowing Un Bras (Haltère)",
-    "epaules:Presse Épaules (Haltère)",
+    "epaules:Développé Épaules (Haltère)",
     "biceps:Curl Biceps (Haltère)",
     "jambes:Fentes (Haltère)",
     "abdos:Planche"
@@ -244,14 +244,14 @@ export const SESSION_EXOS = {
     "pecs:Développé Couché Incliné (Haltère)",
     "epaules:Développé Militaire Debout (Barre)",
     "epaules:Élévation Latérale (Haltère)",
-    "triceps:Extension Triceps (Poulie)",
-    "triceps:Barre au Front (Barre EZ)",
+    "triceps:Extension Triceps Allongé (Poulie)",
+    "triceps:Barre au Front Allongé (Barre EZ)",
     "abdos:Crunch (Poulie)"
   ],
   "salle-ppl-3j-1": [
     "dos:Tractions",
     "dos:Rowing (Barre)",
-    "dos:Tirage Poitrine (Poulie)",
+    "dos:Tirage Poitrine Prise Large (Poulie)",
     "dos:Rowing Un Bras (Haltère)",
     "biceps:Curl Biceps (Barre)",
     "biceps:Curl Marteau (Haltère)"
@@ -270,7 +270,7 @@ export const SESSION_EXOS = {
     "dos:Rowing (Barre)",
     "epaules:Développé Militaire Debout (Barre)",
     "biceps:Curl Biceps (Barre)",
-    "triceps:Barre au Front (Barre EZ)",
+    "triceps:Barre au Front Allongé (Barre EZ)",
     "abdos:Planche"
   ],
   "salle-half-4j-1": [
@@ -286,7 +286,7 @@ export const SESSION_EXOS = {
     "dos:Tractions",
     "epaules:Élévation Latérale (Haltère)",
     "biceps:Curl Marteau (Haltère)",
-    "triceps:Extension Triceps (Poulie)",
+    "triceps:Extension Triceps Allongé (Poulie)",
     "abdos:Rotation Russe"
   ],
   "salle-half-4j-3": [
@@ -302,13 +302,13 @@ export const SESSION_EXOS = {
     "pecs:Développé Couché Incliné (Haltère)",
     "epaules:Développé Militaire Debout (Barre)",
     "epaules:Élévation Latérale (Haltère)",
-    "triceps:Barre au Front (Barre EZ)",
-    "triceps:Extension Triceps (Poulie)"
+    "triceps:Barre au Front Allongé (Barre EZ)",
+    "triceps:Extension Triceps Allongé (Poulie)"
   ],
   "salle-ppl-6j-1": [
     "dos:Tractions",
     "dos:Rowing (Barre)",
-    "dos:Tirage Poitrine (Poulie)",
+    "dos:Tirage Poitrine Prise Large (Poulie)",
     "dos:Rowing Un Bras (Haltère)",
     "biceps:Curl Biceps (Barre)",
     "biceps:Curl Marteau (Haltère)"
@@ -325,14 +325,14 @@ export const SESSION_EXOS = {
   ],
   "salle-ppl-6j-3": [
     "pecs:Développé Couché (Haltère)",
-    "pecs:Écarté (Pec Deck) (Machine)",
-    "epaules:Presse Épaules (Haltère)",
-    "epaules:Élévation Frontale Latérales Avant (Haltère)",
+    "pecs:Pec Deck (Machine)",
+    "epaules:Développé Épaules (Haltère)",
+    "epaules:Élévation Latérale et Frontale (Haltère)",
     "triceps:Extension Triceps Un Bras (Haltère)",
     "triceps:Kickback Triceps (Haltère)"
   ],
   "salle-ppl-6j-4": [
-    "dos:Rowing Debout (Haltère)",
+    "dos:Tirage Menton (Haltère)",
     "dos:Rowing Assis (Poulie)",
     "dos:Tractions",
     "dos:Rowing Un Bras (Haltère)",
@@ -352,8 +352,8 @@ export const SESSION_EXOS = {
   "maison-pdc-2j-0": [
     "pecs:Pompes",
     "dos:Tractions Supination",
-    "epaules:Presse Épaules (Élastique)",
-    "triceps:Dips",
+    "epaules:Développé Épaules (Élastique)",
+    "triceps:Dips entre Bancs",
     "abdos:Planche"
   ],
   "maison-pdc-2j-1": [
@@ -367,8 +367,8 @@ export const SESSION_EXOS = {
     "pecs:Pompes",
     "pecs:Pompes Inclinées",
     "dos:Tractions",
-    "triceps:Dips",
-    "epaules:Presse Épaules (Élastique)"
+    "triceps:Dips entre Bancs",
+    "epaules:Développé Épaules (Élastique)"
   ],
   "maison-pdc-3j-1": [
     "jambes:Goblet Squat (Kettlebell)",
@@ -380,7 +380,7 @@ export const SESSION_EXOS = {
   "maison-pdc-3j-2": [
     "pecs:Pompes",
     "dos:Tractions Supination",
-    "jambes:Box Jump Assis Sauté (Haltère)",
+    "jambes:Box Jump Assis (Haltère)",
     "abdos:Planche",
     "abdos:Rotation Russe"
   ],
@@ -388,20 +388,20 @@ export const SESSION_EXOS = {
     "pecs:Pompes",
     "pecs:Pompes Inclinées",
     "triceps:Pompes Prise Serrée",
-    "triceps:Dips"
+    "triceps:Dips entre Bancs"
   ],
   "maison-pdc-4j-1": [
     "jambes:Goblet Squat (Kettlebell)",
     "jambes:Fentes (Haltère)",
     "jambes:Soulevé de Terre Roumain (Barre)",
     "jambes:Fentes Arrière (Haltère)",
-    "jambes:Box Jump Assis Sauté (Haltère)"
+    "jambes:Box Jump Assis (Haltère)"
   ],
   "maison-pdc-4j-2": [
     "dos:Tractions",
     "dos:Tractions Supination",
     "dos:Tractions Prise Large Arrière",
-    "epaules:Presse Épaules (Élastique)",
+    "epaules:Développé Épaules (Élastique)",
     "abdos:Planche"
   ],
   "maison-pdc-4j-3": [
@@ -415,20 +415,20 @@ export const SESSION_EXOS = {
     "pecs:Pompes",
     "pecs:Pompes Inclinées",
     "triceps:Pompes Prise Serrée",
-    "triceps:Dips"
+    "triceps:Dips entre Bancs"
   ],
   "maison-pdc-5j-1": [
     "dos:Tractions",
     "dos:Tractions Supination",
     "dos:Tractions Prise Large Arrière",
-    "epaules:Presse Épaules (Élastique)"
+    "epaules:Développé Épaules (Élastique)"
   ],
   "maison-pdc-5j-2": [
     "jambes:Goblet Squat (Kettlebell)",
     "jambes:Fentes (Haltère)",
     "jambes:Soulevé de Terre Roumain (Barre)",
     "jambes:Fentes Arrière (Haltère)",
-    "jambes:Box Jump Assis Sauté (Haltère)"
+    "jambes:Box Jump Assis (Haltère)"
   ],
   "maison-pdc-5j-3": [
     "abdos:Crunch",
@@ -447,7 +447,7 @@ export const SESSION_EXOS = {
     "pecs:Pompes",
     "pecs:Pompes Inclinées",
     "triceps:Pompes Prise Serrée",
-    "triceps:Dips"
+    "triceps:Dips entre Bancs"
   ],
   "maison-pdc-6j-1": [
     "dos:Tractions",
@@ -463,18 +463,18 @@ export const SESSION_EXOS = {
     "jambes:Extension Mollets Debout (Machine)"
   ],
   "maison-pdc-6j-3": [
-    "epaules:Presse Épaules (Élastique)",
+    "epaules:Développé Épaules (Élastique)",
     "abdos:Crunch Bicyclette",
     "abdos:Rotation Russe",
     "abdos:Relevé de Bassin Genoux Fléchis"
   ],
   "maison-pdc-6j-4": [
     "triceps:Pompes Prise Serrée",
-    "triceps:Dips",
+    "triceps:Dips entre Bancs",
     "dos:Tractions Supination"
   ],
   "maison-pdc-6j-5": [
-    "jambes:Box Jump Assis Sauté (Haltère)",
+    "jambes:Box Jump Assis (Haltère)",
     "pecs:Pompes Un Bras",
     "abdos:Planche"
   ],
@@ -485,7 +485,7 @@ export const SESSION_EXOS = {
     "dos:Rowing (Barre)",
     "epaules:Développé Militaire Debout (Barre)",
     "biceps:Curl Biceps (Barre)",
-    "triceps:Barre au Front (Barre EZ)"
+    "triceps:Barre au Front Allongé (Barre EZ)"
   ],
   "masse-2j-1": [
     "jambes:Squat (Barre)",
@@ -497,26 +497,26 @@ export const SESSION_EXOS = {
   ],
   "seche-2j-0": [
     "jambes:Presse à Cuisses (Machine)",
-    "pecs:Chest Press (Machine)",
+    "pecs:Développé Couché (Machine)",
     "dos:Tirage Poitrine Prise Large (Poulie)",
-    "epaules:Presse Épaules (Machine)",
+    "epaules:Développé Épaules (Machine)",
     "abdos:Crunch Assis (Poulie)",
     "abdos:Flexion Latérale (Poulie)"
   ],
   "seche-2j-1": [
     "jambes:Extension Jambes (Machine)",
     "jambes:Leg Curl Assis (Machine)",
-    "pecs:Écarté (Pec Deck) (Machine)",
+    "pecs:Pec Deck (Machine)",
     "dos:Rowing (Machine)",
     "triceps:Extension Triceps Corde (Poulie)",
     "abdos:Crunch (Poulie)"
   ],
   "seche-5j-0": [
     "pecs:Développé Couché (Barre)",
-    "dos:Tirage Poitrine (Poulie)",
+    "dos:Tirage Poitrine Prise Large (Poulie)",
     "epaules:Élévation Latérale (Haltère)",
     "biceps:Curl Biceps (Barre)",
-    "triceps:Extension Triceps (Poulie)"
+    "triceps:Extension Triceps Allongé (Poulie)"
   ],
   "seche-5j-1": [
     "jambes:Squat (Barre)",
@@ -539,16 +539,16 @@ export const SESSION_EXOS = {
     "abdos:Rotation Russe"
   ],
   "seche-5j-4": [
-    "jambes:Box Jump Assis Sauté (Haltère)",
+    "jambes:Box Jump Assis (Haltère)",
     "abdos:Planche",
     "abdos:Dead Bug"
   ],
   "seche-6j-0": [
     "pecs:Développé Couché (Barre)",
-    "dos:Tirage Poitrine (Poulie)",
+    "dos:Tirage Poitrine Prise Large (Poulie)",
     "epaules:Élévation Latérale (Haltère)",
     "biceps:Curl Biceps (Barre)",
-    "triceps:Extension Triceps (Poulie)"
+    "triceps:Extension Triceps Allongé (Poulie)"
   ],
   "seche-6j-1": [
     "jambes:Squat (Barre)",
@@ -571,7 +571,7 @@ export const SESSION_EXOS = {
     "abdos:Rotation Russe"
   ],
   "seche-6j-4": [
-    "jambes:Box Jump Assis Sauté (Haltère)",
+    "jambes:Box Jump Assis (Haltère)",
     "pecs:Pompes Un Bras",
     "abdos:Ciseaux de Jambes"
   ],
@@ -581,7 +581,7 @@ export const SESSION_EXOS = {
   ],
   "maison-halteres-2j-0": [
     "pecs:Développé Couché (Haltère)",
-    "epaules:Presse Épaules (Haltère)",
+    "epaules:Développé Épaules (Haltère)",
     "biceps:Curl Biceps (Haltère)",
     "triceps:Extension Triceps Un Bras (Haltère)",
     "abdos:Planche"
@@ -595,7 +595,7 @@ export const SESSION_EXOS = {
   ],
   "maison-halteres-4j-0": [
     "pecs:Développé Couché (Haltère)",
-    "epaules:Presse Épaules (Haltère)",
+    "epaules:Développé Épaules (Haltère)",
     "triceps:Extension Triceps Un Bras (Haltère)",
     "abdos:Planche"
   ],
@@ -608,7 +608,7 @@ export const SESSION_EXOS = {
   "maison-halteres-4j-2": [
     "dos:Rowing Un Bras (Haltère)",
     "biceps:Curl Biceps (Haltère)",
-    "epaules:Presse Épaules (Haltère)",
+    "epaules:Développé Épaules (Haltère)",
     "abdos:Rotation Russe"
   ],
   "maison-halteres-4j-3": [
@@ -633,8 +633,8 @@ export const SESSION_EXOS = {
     "jambes:Extension Mollets Debout (Machine)"
   ],
   "maison-halteres-5j-3": [
-    "epaules:Presse Épaules (Haltère)",
-    "epaules:Élévation Frontale Latérales Avant (Haltère)",
+    "epaules:Développé Épaules (Haltère)",
+    "epaules:Élévation Latérale et Frontale (Haltère)",
     "abdos:Rotation Russe",
     "abdos:Relevé de Jambes Suspendu"
   ],

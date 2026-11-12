@@ -3,7 +3,7 @@ import { ALIAS, normNom, resoudreAliment, noterManque } from '../data/alias-alim
 import { EAT_IDEAS } from '../data/idees.js';
 import { limitesPortion } from '../data/portions.js';
 import { proposerAdaptation } from '../store/adaptations.js';
-import { EXERCISES } from '../data/exercices.js';
+import { EXERCISES, nomActuel } from '../data/exercices.js';
 
 const PORTION = {
   'Pain blanc': 120, 'Frites': 200, 'Poulet cuit': 150,
@@ -224,19 +224,19 @@ const LABEL_MUSCLE = {
  */
 const PACKS = {
   pecs: {
-    force: ['Développé Couché (Barre)', 'Développé Couché Incliné (Barre)', 'Développé Couché (Haltère)', 'Dips', 'Chest Press (Machine)'],
-    hyper: ['Développé Couché (Barre)', 'Développé Couché Incliné (Haltère)', 'Chest Press (Machine)', 'Écarté (Pec Deck) (Machine)', 'Écarté (Poulie)', 'Pompes'],
-    endu: ['Pompes', 'Chest Press (Machine)', 'Écarté (Poulie)', 'Écarté (Pec Deck) (Machine)', 'Pompes Inclinées', 'Chest Press Incliné (Machine)'],
+    force: ['Développé Couché (Barre)', 'Développé Couché Incliné (Barre)', 'Développé Couché (Haltère)', 'Dips entre Bancs', 'Développé Couché (Machine)'],
+    hyper: ['Développé Couché (Barre)', 'Développé Couché Incliné (Haltère)', 'Développé Couché (Machine)', 'Pec Deck (Machine)', 'Écarté (Poulie)', 'Pompes'],
+    endu: ['Pompes', 'Développé Couché (Machine)', 'Écarté (Poulie)', 'Pec Deck (Machine)', 'Pompes Inclinées', 'Développé Incliné (Machine)'],
   },
   dos: {
-    force: ['Soulevé de Terre (Barre)', 'Tractions', 'Rowing Penché (Barre)', 'Tirage Poitrine (Poulie)', 'Rowing Un Bras (Haltère)'],
+    force: ['Soulevé de Terre (Barre)', 'Tractions', 'Rowing Penché (Barre)', 'Tirage Poitrine Prise Large (Poulie)', 'Rowing Un Bras (Haltère)'],
     hyper: ['Tractions', 'Rowing Penché (Barre)', 'Tirage Poitrine Prise Large (Poulie)', 'Rowing Assis (Poulie)', 'Rowing Un Bras (Haltère)', 'Pull-Over (Barre)'],
-    endu: ['Tirage Poitrine (Poulie)', 'Rowing Assis (Poulie)', 'Rowing (Machine)', 'Tirage Poitrine Prise Serrée Avant (Poulie)', 'Extension Dos', 'Superman'],
+    endu: ['Tirage Poitrine Prise Large (Poulie)', 'Rowing Assis (Poulie)', 'Rowing (Machine)', 'Tirage Poitrine Prise Serrée Avant (Poulie)', 'Extension Dos', 'Superman'],
   },
   epaules: {
-    force: ['Développé Militaire Debout (Barre)', 'Push Press (Barre)', 'Presse Épaules (Haltère)', 'Élévation Latérale (Haltère)'],
-    hyper: ['Développé Militaire Assis (Barre)', 'Élévation Latérale (Haltère)', 'Oiseau Penché Arrière (Haltère)', 'Tirage vers Visage (Poulie)', 'Presse Épaules (Machine)'],
-    endu: ['Presse Épaules (Machine)', 'Élévation Latérale (Poulie)', 'Écarté Inversé (Machine)', 'Tirage vers Visage (Poulie)', 'Élévation Latérale (Haltère)'],
+    force: ['Développé Militaire Debout (Barre)', 'Push Press (Barre)', 'Développé Épaules (Haltère)', 'Élévation Latérale (Haltère)'],
+    hyper: ['Développé Militaire Assis (Barre)', 'Élévation Latérale (Haltère)', 'Oiseau Penché Arrière (Haltère)', 'Tirage vers Visage (Poulie)', 'Développé Épaules (Machine)'],
+    endu: ['Développé Épaules (Machine)', 'Élévation Latérale (Poulie)', 'Écarté Inversé (Machine)', 'Tirage vers Visage (Poulie)', 'Élévation Latérale (Haltère)'],
   },
   biceps: {
     force: ['Curl Biceps (Barre)', 'Curl Marteau (Haltère)', 'Curl Pupitre (Barre)'],
@@ -244,8 +244,8 @@ const PACKS = {
     endu: ['Curl Biceps (Poulie)', 'Curl Marteau Corde (Poulie)', 'Curl Concentré (Haltère)', 'Curl Biceps (Machine)'],
   },
   triceps: {
-    force: ['Développé Couché Prise Serrée (Barre)', 'Dips', 'Barre au Front (Barre EZ)'],
-    hyper: ['Barre au Front (Barre EZ)', 'Extension Triceps Corde (Poulie)', 'Dips (Machine)', 'Extension Triceps au-dessus de la Tête Corde (Poulie)'],
+    force: ['Développé Couché Prise Serrée (Barre)', 'Dips entre Bancs', 'Barre au Front Allongé (Barre EZ)'],
+    hyper: ['Barre au Front Allongé (Barre EZ)', 'Extension Triceps Corde (Poulie)', 'Dips (Machine)', 'Extension Triceps au-dessus de la Tête Corde (Poulie)'],
     endu: ['Extension Triceps Corde (Poulie)', 'Extension Triceps (Machine)', 'Kickback Triceps (Haltère)', 'Pompes Prise Serrée'],
   },
   jambes: {
@@ -259,9 +259,9 @@ const PACKS = {
     endu: ['Planche', 'Crunch Bicyclette', 'Gainage Latéral', 'Ramené de Genoux', 'Crunch'],
   },
   trapezes: {
-    force: ['Shrug (Barre)', 'Shrug (Haltère)'],
-    hyper: ['Shrug (Barre)', 'Shrug (Haltère)', 'Shrug (Machine)'],
-    endu: ['Shrug (Poulie)', 'Shrug (Machine)', 'Shrug (Haltère)'],
+    force: ['Haussement d’Épaules (Barre)', 'Haussement d’Épaules (Haltère)'],
+    hyper: ['Haussement d’Épaules (Barre)', 'Haussement d’Épaules (Haltère)', 'Haussement d’Épaules (Machine)'],
+    endu: ['Haussement d’Épaules (Poulie)', 'Haussement d’Épaules (Machine)', 'Haussement d’Épaules (Haltère)'],
   },
 };
 
@@ -316,7 +316,7 @@ function nbParGroupe(nMuscles, style, duree) {
 }
 
 function refParNom(mKey, nom) {
-  const n = normNom(nom);
+  const n = normNom(nomActuel(nom));
   const dans = (k) => {
     const liste = EXERCISES[k] || [];
     const i = liste.findIndex((e) => normNom(e.nom) === n);

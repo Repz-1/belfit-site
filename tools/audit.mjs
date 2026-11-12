@@ -3048,31 +3048,22 @@ const DECALAGE_SW_V2 = 232;
 // contraste est le meme et le debordement devient impossible.
 // ------------------------------------------------------------
 {
+  // 12/11 Raci (« Ok vazy ») : la focale part avec les grandes fiches.
+  // La liste est desormais compacte — 7 a 8 exercices par ecran — et
+  // la regle verifie qu'elle le reste.
   const jsx = lire('app-v2/src/components/SelectionExercices.jsx');
   const css = lire('app-v2/src/legacy/selection-exercices.scoped.css');
   const soucis = [];
-  if (jsx) {
-    const max = (jsx.match(/const MAX = ([\d.]+);/) || [])[1];
-    if (!max) soucis.push('le plafond d\'echelle a disparu de la focale');
-    else if (+max > 1) soucis.push('l\'echelle monte a ' + max + ' : les vignettes recouvriront leurs voisines');
-    if (!/requestAnimationFrame\(appliquer\)/.test(jsx)) {
-      soucis.push('la focale ne passe plus par requestAnimationFrame : la liste tressautera');
-    }
-    if (!/capture: true/.test(jsx)) {
-      soucis.push('le defilement n\'est plus ecoute en capture : rien ne bougera dans un conteneur interne');
-    }
-  }
+  if (jsx && /data-focale/.test(jsx)) soucis.push('la focale est revenue sur une liste compacte');
   if (css) {
-    const ph = (css.match(/\.pg-selection \.ex-photo\{[^}]*\}/) || [''])[0];
-    const t = (ph.match(/width:(\d+)px/) || [])[1];
-    const it = (css.match(/\.pg-selection \.ex-item\{ min-height: (\d+)px/) || [])[1];
-    if (!t) soucis.push('la vignette n\'a plus de taille fixe : la focale n\'a plus de reference');
-    else if (!it || +it < +t) {
-      soucis.push('la ligne ne reserve plus la hauteur de la vignette (' + t + ' px)');
-    }
+    const regles = css.match(/\.pg-selection \.ex-photo\{[^}]*\}/g) || [];
+    const t = ((regles[regles.length - 1] || '').match(/width:(\d+)px/) || [])[1];
+    if (!t) soucis.push('la vignette n\'a plus de taille fixe');
+    else if (+t > 64) soucis.push('les vignettes repassent a ' + t + ' px : la liste ne montre plus 7 exercices par ecran');
   }
-  if (soucis.length) faute('R84 focale sans recouvrement', soucis.join(' ; '));
-  else passe('R84 focale sans recouvrement');
+  if (jsx && !/class="ex-filtres"/.test(jsx)) soucis.push('lieu, materiel et niveau ne sont plus ranges derriere « Filtres »');
+  if (soucis.length) faute('R84 liste d\'exercices compacte', soucis.join(' ; '));
+  else passe('R84 liste d\'exercices compacte');
 }
 
 // ------------------------------------------------------------
@@ -3341,7 +3332,7 @@ const DECALAGE_SW_V2 = 232;
     if (!/nbSiOption\(o\.key\)/.test(sel)) soucis.push('liste vide a domicile sans proposition de materiel');
   }
   if (cb && /FILTERS/.test(cb)) soucis.push('la barre coach lit encore l\'ancien filtre');
-  if (css && !/\.pg-selection \.lieu-rangee\{ flex-wrap:wrap; overflow:visible; \}/.test(css)) soucis.push('la rangee du lieu peut de nouveau defiler de cote (15/08)');
+  if (css && !/\.ex-feuille \.lieu-rangee\{[^}]*flex-wrap:wrap; overflow:visible;/.test(css)) soucis.push('la rangee du lieu peut de nouveau defiler de cote (15/08)');
   if (soucis.length) faute('R90 lieu puis materiel', soucis.join(' ; '));
   else passe('R90 lieu puis materiel');
 }

@@ -73,60 +73,9 @@ const equipLabel = (mat) => EQUIP[mat] || (mat ? mat[0].toUpperCase() + mat.slic
 // Libelle du materiel EXACT : un elastique ne s'affiche plus « Halteres ».
 const equipDe = (ex) => equipLabel(materielPrecis(ex));
 
-/**
- * Effet de focale sur les vignettes de la liste.
- *
- * Raci, 5/09 : « agrandir les images du menu deroulant uniquement
- * lorsque l'image se trouve au centre de l'ecran, et 3/4 avant et
- * apres le centre ». La vignette la plus proche du milieu de l'ecran
- * est a taille pleine ; plus elle s'en eloigne, plus elle retrecit,
- * jusqu'a 3/4 aux extremites. On parcourt la liste pendant qu'elle
- * defile et on lit celle qui est au centre, sans s'arreter.
- *
- * Le calcul suit le defilement dans un requestAnimationFrame — un
- * ecouteur de scroll qui redimensionne a chaque evenement ferait
- * tressauter la liste sur un telephone. Rien n'est mesure hors ecran :
- * les vignettes qui ne sont pas visibles gardent leur taille.
- */
-function useFocale() {
-  useEffect(() => {
-    let brut = null;
-    const MIN = 0.76;                       // au plus loin du centre
-    const MAX = 1;                          // au centre : la taille posee, jamais plus
-    const appliquer = () => {
-      brut = null;
-      const h = window.innerHeight || 800;
-      const centre = h / 2;
-      // Au-dela de cette distance du centre, la vignette est au plus
-      // petit. Une demi-hauteur d'ecran : la decroissance se voit sur
-      // trois a quatre lignes, pas sur toute la page.
-      const portee = h * 0.42;
-      document.querySelectorAll('[data-focale]').forEach((n) => {
-        const r = n.getBoundingClientRect();
-        if (r.bottom < 0 || r.top > h) return;     // hors ecran : on ne touche a rien
-        const d = Math.abs(r.top + r.height / 2 - centre);
-        // Courbe en cloche plutot que lineaire : l'agrandissement se
-        // concentre sur la vignette centrale au lieu de s'etaler
-        // mollement sur toute la hauteur.
-        const k = Math.max(0, 1 - d / portee);
-        const cloche = k * k * (3 - 2 * k);        // adoucissement aux deux bouts
-        n.style.setProperty('--focale', (MIN + (MAX - MIN) * cloche).toFixed(3));
-      });
-    };
-    const surDefilement = () => { if (brut == null) brut = requestAnimationFrame(appliquer); };
-    appliquer();
-    // En capture sur le document, pas sur window : si la liste defile
-    // dans un conteneur interne, l'evenement ne remonte pas jusqu'a
-    // window et rien ne bougeait (constate le 5/09).
-    document.addEventListener('scroll', surDefilement, { capture: true, passive: true });
-    window.addEventListener('resize', surDefilement, { passive: true });
-    return () => {
-      if (brut != null) cancelAnimationFrame(brut);
-      document.removeEventListener('scroll', surDefilement, { capture: true });
-      window.removeEventListener('resize', surDefilement);
-    };
-  });
-}
+// 12/11 : l'effet de focale (vignettes qui grandissent au centre de
+// l'ecran, 5/09) est retire avec les grandes fiches : en lignes
+// compactes de 56 px, il n'y a plus rien a agrandir.
 
 export function SelectionExercices() {
   const [muscle, setMuscle] = useState(0);          // index dans MUSCLES
@@ -141,10 +90,13 @@ export function SelectionExercices() {
   // Toucher la vignette OUVRE la fiche au lieu d'ajouter — voir le
   // commentaire sur .ex-photo plus bas.
   const [fiche, setFiche] = useState(null);
+  // 12/11 : lieu, materiel et niveau passent derriere « Filtres ».
+  const [filtres, setFiltres] = useState(false);
 
   const mKey = MUSCLES[muscle].key;
   const { lieu, options } = lieuEntrainement.value;
-  const exoVisible = (ex) => convientAuLieu(ex, lieu, options);
+  // 12/11 : les doublons sont masques du choix (voir ANCIENS_NOMS).
+  const exoVisible = (ex) => !ex.masque && convientAuLieu(ex, lieu, options);
   // A domicile, on coche ce qu'on a. La derniere case ne se decoche
   // pas : « rien du tout » ne montrerait aucun exercice.
   const basculerOption = (k) => {
@@ -154,7 +106,7 @@ export function SelectionExercices() {
   };
   // Liste vide a domicile : quelles cases ajouter pour en avoir ?
   const nbSiOption = (k) => (EXERCISES[mKey] || [])
-    .filter(ex => convientAuLieu(ex, 'domicile', [k])).length;
+    .filter(ex => !ex.masque && convientAuLieu(ex, 'domicile', [k])).length;
 
   // Recherche par MOTS, insensible aux accents, a la casse et a
   // l'ordre : « couche incline » trouve « Developpe Couche Incline
@@ -170,11 +122,12 @@ export function SelectionExercices() {
     return mots.every(m => cible.includes(m));
   };
 
-  useFocale();
-
   const liste = (EXERCISES[mKey] || [])
     .map((ex, i) => ({ ex, i }))
-    .filter(o => exoVisible(o.ex) && correspond(o.ex));
+    .filter(o => exoVisible(o.ex) && correspond(o.ex))
+    // Affichage alphabetique : les noms traduits le 12/11 ne sont plus
+    // a leur place dans la base, ou l'ordre (les positions) ne change pas.
+    .sort((a, b) => a.ex.nom.localeCompare(b.ex.nom, 'fr'));
 
   // Une recherche porte sur TOUT le catalogue, pas sur le seul muscle
   // affiche : chercher « squat » depuis l'onglet Pecs ne doit pas
@@ -182,9 +135,16 @@ export function SelectionExercices() {
   // resultats plutot que de laisser l'ecran muet.
   const ailleurs = mots.length && !liste.length
     ? MUSCLES.filter(m => m.key !== mKey)
-        .map(m => ({ m, n: (EXERCISES[m.key] || []).filter(correspond).length }))
+        .map(m => ({ m, n: (EXERCISES[m.key] || []).filter(ex => !ex.masque && correspond(ex)).length }))
         .filter(o => o.n > 0)
     : [];
+
+  const nomNiveau = (NIVEAUX_PRATIQUE.find(n => n.key === niveauPratique.value) || {}).label || '';
+  const resumeFiltres = (lieu === 'domicile'
+    ? 'À domicile' + (options.length < TOUTES_OPTIONS.length
+        ? ' · ' + OPTIONS_DOMICILE.filter(o => options.includes(o.key)).map(o => o.label).join(', ')
+        : '')
+    : 'En salle') + ' · ' + nomNiveau;
 
   const nbSelectionnes = Object.values(selection).reduce((n, s) => n + s.size, 0);
 
@@ -223,61 +183,6 @@ export function SelectionExercices() {
         <h1>Choisir mes exercices</h1>
       </div>
 
-      {/* Les muscles passent d'une rangee defilante a une GRILLE.
-          Neuf entrees dans une bande horizontale : on en voyait quatre,
-          et rien ne disait que les cinq autres existaient — il fallait
-          deviner qu'on pouvait faire glisser. Verrouiller le balayage
-          reglait le changement d'onglet accidentel, pas ce probleme-la.
-          En grille, tout est visible d'un coup : plus de geste a
-          decouvrir, plus rien de cache.
-          Les groupes sans aucun exercice (Etirements, Cardio) ne sont
-          pas affiches : une case qui ouvre une liste vide est une
-          promesse non tenue. */}
-      <div class="muscle-grille">
-        {MUSCLES.map((m, i) => (
-          (EXERCISES[m.key] || []).length > 0 && (
-            <button key={m.key} class={'muscle-case' + (i === muscle ? ' active' : '')}
-              aria-pressed={i === muscle}
-              onClick={() => setMuscle(i)}>{m.label}</button>
-          )
-        ))}
-      </div>
-
-      {/* Lieu puis materiel (Raci, 15/10). Les deux rangees passent a
-          la ligne si besoin : jamais de defilement lateral (15/08). */}
-      <div class="filter-tabs lieu-rangee" role="group" aria-label="Où t'entraînes-tu ?" data-sans-swipe>
-        {LIEUX.map(l => (
-          <button key={l.key} class={'filter-tab' + (l.key === lieu ? ' active' : '')}
-            aria-pressed={l.key === lieu}
-            onClick={() => poserLieu({ lieu: l.key, options })}>{l.label}</button>
-        ))}
-      </div>
-      {lieu === 'domicile' && (
-        <div class="materiel-rangee" role="group" aria-label="Matériel à la maison" data-sans-swipe>
-          {OPTIONS_DOMICILE.map(o => {
-            const on = options.includes(o.key);
-            return (
-              <button key={o.key} class={'materiel-case' + (on ? ' active' : '')}
-                role="checkbox" aria-checked={on}
-                onClick={() => basculerOption(o.key)}>
-                <span class="materiel-coche" aria-hidden="true">{on ? '✓' : ''}</span>{o.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Le niveau pilote le volume de TOUS les exercices : il se
-          choisit une fois ici, pas exercice par exercice. */}
-      <div class="niv-rangee" role="group" aria-label="Niveau de pratique" data-sans-swipe>
-        <span class="niv-libelle" aria-hidden="true">Niveau</span>
-        {NIVEAUX_PRATIQUE.map(n => (
-          <button key={n.key}
-            class={'niv-tab' + (niveauPratique.value === n.key ? ' active' : '')}
-            onClick={() => choisirNiveau(n.key)}>{n.label}</button>
-        ))}
-      </div>
-
       <div class="ex-recherche">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.6-3.6" />
@@ -290,26 +195,36 @@ export function SelectionExercices() {
         )}
       </div>
 
-      {/* Le compte des choix vivait uniquement dans la barre du bas,
-          masquee tant qu'on n'a rien choisi : au moment ou on se
-          demande « combien j'en ai pris ? », il n'y avait donc rien a
-          lire. Il est desormais ici, present des zero, et se met a
-          jour a chaque ajout. */}
+      {/* Grille des muscles conservee (15/08 : jamais de bande
+          defilante, tout visible d'un coup). */}
+      <div class="muscle-grille">
+        {MUSCLES.map((m, i) => (
+          (EXERCISES[m.key] || []).length > 0 && (
+            <button key={m.key} class={'muscle-case' + (i === muscle ? ' active' : '')}
+              aria-pressed={i === muscle}
+              onClick={() => setMuscle(i)}>{m.label}</button>
+          )
+        ))}
+      </div>
+
+      {/* 12/11 Raci (« Ok vazy ») : le lieu, le materiel et le niveau
+          ne sont plus etales avant le premier exercice. Ils sont repris
+          de la derniere fois (retenus sur l'appareil) et resumes ici en
+          une ligne ; on les change dans la feuille « Filtres ». */}
       <p class="section-hint">
-        <span class="hint-gauche">
-          {mots.length
-            ? `${liste.length} exercice${liste.length > 1 ? 's' : ''} trouvé${liste.length > 1 ? 's' : ''}`
-            : "Touche un exercice pour l'ajouter."}
-        </span>
-        {/* key = le nombre : Preact remonte l'element a chaque
-            changement, ce qui rejoue l'animation. Sans cela le compte
-            se mettait bien a jour, mais rien ne bougeait a l'ecran et
-            l'oeil, reste sur le bouton touche, ne le voyait pas. */}
+        <button type="button" class="ex-filtres" onClick={() => setFiltres(true)}
+          aria-label="Modifier les filtres">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>
+          {resumeFiltres}
+        </button>
         <span key={nbSelectionnes}
           class={'hint-compte' + (nbSelectionnes > 0 ? ' actif' : '')}>
           {nbSelectionnes} sélectionné{nbSelectionnes > 1 ? 's' : ''}
         </span>
       </p>
+      {mots.length > 0 && liste.length > 0 && (
+        <p class="ex-trouves">{liste.length} exercice{liste.length > 1 ? 's' : ''} trouvé{liste.length > 1 ? 's' : ''}</p>
+      )}
 
       <div class="ex-list">
         {liste.length === 0 ? (
@@ -353,7 +268,7 @@ export function SelectionExercices() {
                   l'ajouter a sa seance pour decouvrir a quoi il
                   ressemblait, donc s'engager avant de savoir. */}
               <div class="ex-photo" role="button" tabIndex={0}
-                aria-label={'Voir ' + ex.nom} data-focale
+                aria-label={'Voir ' + ex.nom}
                 onClick={() => setFiche(i)}>
                 <PhotoExo imgId={ex.imgId} taille={240} />
               </div>
@@ -401,6 +316,46 @@ export function SelectionExercices() {
             setJeter(true);
           }}>{t('sea_abandonner')}</button>
           <span class="go">Ma séance →</span>
+        </div>,
+        document.body
+      )}
+      {filtres && createPortal(
+        <div class="ex-feuille-voile" onClick={() => setFiltres(false)}>
+          <div class="ex-feuille" role="dialog" aria-label="Filtres" onClick={(e) => e.stopPropagation()}>
+            <div class="ex-feuille-poignee" aria-hidden="true" />
+            <p class="ex-feuille-titre">Où t'entraînes-tu ?</p>
+            <div class="filter-tabs lieu-rangee" role="group" aria-label="Où t'entraînes-tu ?" data-sans-swipe>
+              {LIEUX.map(l => (
+                <button key={l.key} class={'filter-tab' + (l.key === lieu ? ' active' : '')}
+                  aria-pressed={l.key === lieu}
+                  onClick={() => poserLieu({ lieu: l.key, options })}>{l.label}</button>
+              ))}
+            </div>
+            {lieu === 'domicile' && (
+              <div class="materiel-rangee" role="group" aria-label="Matériel à la maison" data-sans-swipe>
+                {OPTIONS_DOMICILE.map(o => {
+                  const on = options.includes(o.key);
+                  return (
+                    <button key={o.key} class={'materiel-case' + (on ? ' active' : '')}
+                      role="checkbox" aria-checked={on}
+                      onClick={() => basculerOption(o.key)}>
+                      <span class="materiel-coche" aria-hidden="true">{on ? '✓' : ''}</span>{o.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <p class="ex-feuille-titre">Ton niveau</p>
+            <div class="niv-rangee" role="group" aria-label="Niveau de pratique" data-sans-swipe>
+              {NIVEAUX_PRATIQUE.map(n => (
+                <button key={n.key}
+                  class={'niv-tab' + (niveauPratique.value === n.key ? ' active' : '')}
+                  onClick={() => choisirNiveau(n.key)}>{n.label}</button>
+              ))}
+            </div>
+            <p class="ex-feuille-note">Le niveau règle les séries de chaque exercice. Tout est retenu pour la prochaine fois.</p>
+            <button type="button" class="ex-feuille-ok" onClick={() => setFiltres(false)}>Voir les exercices</button>
+          </div>
         </div>,
         document.body
       )}
