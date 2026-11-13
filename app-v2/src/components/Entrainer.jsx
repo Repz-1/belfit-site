@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { mesSeances, commencerCreation, lancerMaSeance, musclesDe } from '../store/mes-seances.js';
 import { useRetour } from '../services/retour.js';
 import { signal, effect } from '@preact/signals';
 import { GROUPES, muscleLog, basculerMuscle, borneCalendrier, texteSur } from '../store/entrainement.js';
@@ -697,6 +698,41 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
           <span>{prog ? prog.name : t('ent2_prog_txt_sans')}</span>
         </button>
       </div>
+
+      {/* 13/11 Raci : « creer une seance carrement », comme Hevy.
+          Composee une fois, relancee en un toucher. */}
+      <section class="ms-section">
+        <div class="ath2-sem-tete">
+          <h2>Mes séances</h2>
+          {mesSeances.value.length > 0 && (
+            <button type="button" class="ath2-cal" onClick={() => { commencerCreation(null); allerVers('selection', { creation: true }); }}>+ Créer</button>
+          )}
+        </div>
+        {mesSeances.value.length ? (
+          <div class="ms-liste">
+            {mesSeances.value.map(s => {
+              const n = (s.exos || []).length;
+              return (
+                <div key={s.id} class="ms-carte">
+                  <button type="button" class="ms-lancer" onClick={() => { if (lancerMaSeance(s)) allerVers('maseance'); }}>
+                    <b>{s.nom}</b>
+                    <span>{n} exercice{n > 1 ? 's' : ''} · {musclesDe(s).join(', ')}</span>
+                  </button>
+                  <button type="button" class="ms-modif" aria-label={'Modifier ' + s.nom}
+                    onClick={() => { commencerCreation(s); allerVers('selection', { creation: true }); }}>Modifier</button>
+                  <button type="button" class="ms-go" aria-label={'Commencer ' + s.nom}
+                    onClick={() => { if (lancerMaSeance(s)) allerVers('maseance'); }}>▶</button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <button type="button" class="ms-vide" onClick={() => { commencerCreation(null); allerVers('selection', { creation: true }); }}>
+            <b>+ Créer une séance</b>
+            <span>Choisis tes exercices une fois, donne-lui un nom, relance-la en un toucher.</span>
+          </button>
+        )}
+      </section>
 
       <section class="ath2-semaine">
         <div class="ath2-sem-tete">

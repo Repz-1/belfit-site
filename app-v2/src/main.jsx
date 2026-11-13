@@ -164,7 +164,7 @@ export function OngletEntrainer() {
     return <PlanifierProgramme progId={vue.params && vue.params.prog} />;
   }
   if (vue.nom === 'selection') {
-    return <SelectionExercices />;
+    return <SelectionExercices enCreation={!!(vue.params && vue.params.creation)} />;
   }
   // Seance libre ou coach : le meme lecteur guide que le programme
   // (23/09). Le repos est integre au lecteur, reglable ±30 s.

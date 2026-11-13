@@ -45,6 +45,7 @@ import '../legacy/selection-exercices.scoped.css';
 import { PhotoExo } from './PhotoExo.jsx';
 import '../styles/seance-jour.css';
 import { selectionExos, poserBrouillon, abandonnerSeance, seanceRefs } from '../store/seance-active.js';
+import { creation, basculerCreation, enregistrerCreation, supprimerMaSeance, nomPropose } from '../store/mes-seances.js';
 
 // Garde l'ordre deja pose (celui du coach : polyarticulaires d'abord)
 // et ajoute les nouveaux a la fin, au lieu de retrier par muscle.
@@ -77,13 +78,24 @@ export const equipDe = (ex) => equipLabel(materielPrecis(ex));
 // l'ecran, 5/09) est retire avec les grandes fiches : en lignes
 // compactes de 56 px, il n'y a plus rien a agrandir.
 
-export function SelectionExercices() {
+export function SelectionExercices({ enCreation = false } = {}) {
   const [muscle, setMuscle] = useState(0);          // index dans MUSCLES
   const [jeter, setJeter] = useState(false);
+  // 13/11 « Mes seances » : en creation, la selection vient de la
+  // seance qu'on compose, pas du brouillon du jour.
+  const cree = enCreation ? creation.value : null;
+  const [nommer, setNommer] = useState(false);
+  const [nom, setNom] = useState(cree ? cree.nom : '');
+  const [supprimer, setSupprimer] = useState(false);
   // Copie locale : on n'ecrit PAS dans le signal pendant le rendu.
   const brut = selectionExos.value;
   const selection = {};
   MUSCLES.forEach(m => { selection[m.key] = brut[m.key] || new Set(); });
+  if (cree) {
+    MUSCLES.forEach(m => { selection[m.key] = new Set(); });
+    cree.ordre.forEach(r => { if (selection[r.mKey]) selection[r.mKey].add(r.i); });
+  }
+  const quitterCreation = () => { creation.value = null; retourEntrainer(); };
 
   const [recherche, setRecherche] = useState('');
   // Fiche d'exercice : index dans le groupe courant, ou null.
@@ -148,6 +160,7 @@ export function SelectionExercices() {
   const nbSelectionnes = Object.values(selection).reduce((n, s) => n + s.size, 0);
 
   const basculer = (i) => {
+    if (cree) { basculerCreation(mKey, i); return; }
     const prev = selectionExos.value;
     const copie = { ...prev, [mKey]: new Set(prev[mKey] || []) };
     if (copie[mKey].has(i)) copie[mKey].delete(i);
@@ -178,8 +191,8 @@ export function SelectionExercices() {
   return (
     <div class="pg-selection">
       <div class="top">
-        <button class="back-btn" onClick={retourEntrainer}>←&nbsp; {t('ml_retour')}</button>
-        <h1>Choisir mes exercices</h1>
+        <button class="back-btn" onClick={cree ? quitterCreation : retourEntrainer}>←&nbsp; {t('ml_retour')}</button>
+        <h1>{cree ? (cree.id ? 'Modifier ma séance' : 'Créer une séance') : 'Choisir mes exercices'}</h1>
       </div>
 
       <div class="ex-recherche">
@@ -298,7 +311,7 @@ export function SelectionExercices() {
         fermer={() => setFiche(null)} />
 
       {createPortal(
-        <div class={'session-bar pg-selection-portail' + (nbSelectionnes === 0 || ongletActif.value !== 'entrainer' ? ' hidden' : '')}
+        <div class={'session-bar pg-selection-portail' + (cree || nbSelectionnes === 0 || ongletActif.value !== 'entrainer' ? ' hidden' : '')}
           onClick={() => {
             const refs = [];
             MUSCLES.forEach(m => {
@@ -315,6 +328,44 @@ export function SelectionExercices() {
             setJeter(true);
           }}>{t('sea_abandonner')}</button>
           <span class="go">Ma séance →</span>
+        </div>,
+        document.body
+      )}
+      {cree && ongletActif.value === 'entrainer' && createPortal(
+        <div class={'session-bar pg-selection-portail ms-barre' + (nbSelectionnes === 0 ? ' hidden' : '')}
+          onClick={() => { setNom(cree.nom || ''); setNommer(true); }}>
+          <span class="count">{nbSelectionnes} exercice{nbSelectionnes > 1 ? 's' : ''}</span>
+          <span class="go">Enregistrer →</span>
+        </div>,
+        document.body
+      )}
+      {cree && cree.id && (
+        <button type="button" class="ms-suppr-lien" onClick={() => setSupprimer(true)}>Supprimer cette séance</button>
+      )}
+      {cree && nommer && createPortal(
+        <div class="ex-feuille-voile" onClick={() => setNommer(false)}>
+          <form class="ex-feuille" role="dialog" aria-label="Nom de la séance"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={(e) => { e.preventDefault(); if (enregistrerCreation(nom)) retourEntrainer(); }}>
+            <div class="ex-feuille-poignee" aria-hidden="true" />
+            <p class="ex-feuille-titre">Nom de la séance</p>
+            <input class="ms-nom" type="text" value={nom} maxLength={40} autoFocus
+              placeholder={nomPropose(cree.ordre)} onInput={(e) => setNom(e.currentTarget.value)} />
+            <p class="ex-feuille-note">{nbSelectionnes} exercice{nbSelectionnes > 1 ? 's' : ''}. Tu la retrouves dans « Mes séances », sur S'entraîner.</p>
+            <button type="submit" class="ex-feuille-ok">Enregistrer</button>
+          </form>
+        </div>,
+        document.body
+      )}
+      {cree && supprimer && createPortal(
+        <div class="ex-feuille-voile" onClick={() => setSupprimer(false)}>
+          <div class="ex-feuille" role="dialog" aria-label="Supprimer la séance" onClick={(e) => e.stopPropagation()}>
+            <div class="ex-feuille-poignee" aria-hidden="true" />
+            <p class="ex-feuille-titre">Supprimer « {cree.nom} » ?</p>
+            <p class="ex-feuille-note">Les séances déjà faites restent dans ton historique.</p>
+            <button type="button" class="ex-feuille-ok ms-rouge" onClick={() => { supprimerMaSeance(cree.id); retourEntrainer(); }}>Supprimer</button>
+            <button type="button" class="ms-annuler" onClick={() => setSupprimer(false)}>Annuler</button>
+          </div>
         </div>,
         document.body
       )}
