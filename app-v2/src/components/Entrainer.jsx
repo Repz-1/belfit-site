@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { creerCarte, partagerCarte } from '../services/carte-partage.js';
 import { mesSeances, commencerCreation, lancerMaSeance, musclesDe } from '../store/mes-seances.js';
 import { useRetour } from '../services/retour.js';
 import { signal, effect } from '@preact/signals';
@@ -414,6 +415,13 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
   // Le mois du journal, replie : la semaine tient sur une seule rangee.
   const [moisOuvert, setMoisOuvert] = useState(false);
   const [jeter, setJeter] = useState(false);
+  // 13/11 : carte de seance a partager (idee 4 de Raci).
+  const [carte, setCarte] = useState(null);   // { url, blob, titre }
+  const ouvrirCarte = async (s) => {
+    const blob = await creerCarte(s);
+    if (blob) setCarte({ url: URL.createObjectURL(blob), blob, titre: s.titre });
+  };
+  const fermerCarte = () => { if (carte) URL.revokeObjectURL(carte.url); setCarte(null); };
   // Toucher un muscle le colorie, sans ecrire dans le journal.
   const [choisis, setChoisis] = useState({});
   const choisirMuscle = (k) => {
@@ -650,6 +658,10 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
             <button type="button" class="ath2-go ath2-go--calme" onClick={() => ouvrirSeance && ouvrirSeance(faitAuj)}>
               {t('ent2_voir_seance')}
             </button>
+            <button type="button" class="ath2-partager" onClick={() => ouvrirCarte(faitAuj)}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></svg>
+              Partager ma séance
+            </button>
           </>
         ) : peutLancer ? (
           <>
@@ -771,6 +783,16 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
           </div>
         )}
       </section>
+
+      {carte && createPortal((
+        <div class="pc-voile" onClick={fermerCarte}>
+          <div class="pc-feuille" role="dialog" aria-label="Partager ma séance" onClick={(e) => e.stopPropagation()}>
+            <img class="pc-image" src={carte.url} alt="Carte de ta séance" />
+            <button type="button" class="pc-go" onClick={async () => { const r = await partagerCarte(carte.blob, carte.titre); if (r !== 'annule') fermerCarte(); }}>Partager</button>
+            <button type="button" class="pc-non" onClick={fermerCarte}>Fermer</button>
+          </div>
+        </div>
+      ), document.body)}
 
       {jeter && createPortal((
         <div class="sj-voile" onClick={() => setJeter(false)}>
