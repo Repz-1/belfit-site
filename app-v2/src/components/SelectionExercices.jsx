@@ -71,7 +71,7 @@ const EQUIP = {
 };
 const equipLabel = (mat) => EQUIP[mat] || (mat ? mat[0].toUpperCase() + mat.slice(1) : '—');
 // Libelle du materiel EXACT : un elastique ne s'affiche plus « Halteres ».
-const equipDe = (ex) => equipLabel(materielPrecis(ex));
+export const equipDe = (ex) => equipLabel(materielPrecis(ex));
 
 // 12/11 : l'effet de focale (vignettes qui grandissent au centre de
 // l'ecran, 5/09) est retire avec les grandes fiches : en lignes

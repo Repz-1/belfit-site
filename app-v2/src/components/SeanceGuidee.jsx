@@ -3,11 +3,13 @@ import { enregistrerSeance, supprimerSeance, seanceMemeJour } from '../store/sea
 import { poserBrouillon, demarrerSeanceActive, abandonnerSeance, marquerFaite, seanceActive, seanceRefs } from '../store/seance-active.js';
 import { planifs } from '../store/programme.js';
 import { t } from '../i18n/index.js';
-import { EXERCISES } from '../data/exercices.js';
+import { EXERCISES, materielPrecis } from '../data/exercices.js';
 import { SESSION_EXOS } from '../data/sessionExos.js';
 import { retourEntrainer, allerVers } from './Entrainer.jsx';
 import '../styles/seance-guidee.css';
 import { PhotoExo } from './PhotoExo.jsx';
+import { equipDe } from './SelectionExercices.jsx';
+import { createPortal } from 'preact/compat';
 
 // ==========================================================
 // SEANCE GUIDEE — un exercice a la fois, une serie a la fois.
@@ -81,7 +83,6 @@ function isoLocal(d = new Date()) {
  * avant « Curl Biceps », parce qu'on cherche le meme geste, pas
  * seulement le meme muscle.
  */
-const LIBRE = new Set(['halteres', 'barre', 'rien', 'traction']);
 
 /**
  * Le GESTE, deduit du nom. Les mots communs ne suffisent pas :
@@ -122,12 +123,16 @@ function motsDe(nom) {
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(m => m.length > 2));
 }
+// 13/11 Raci : « Pas ce materiel ? » ne proposait que l'autre camp
+// (barre -> machines seulement). Sans barre a la maison, on veut aussi
+// les halteres : toute fiche d'un AUTRE materiel est candidate, le meme
+// geste d'abord.
 function equivalents(mKey, ex) {
-  const versLibre = ex.mat === 'machine';
   const mots = motsDe(ex.nom);
   const geste = gesteDe(ex.nom);
+  const matEx = materielPrecis(ex);
   return (EXERCISES[mKey] || [])
-    .filter(x => x.nom !== ex.nom && (versLibre ? LIBRE.has(x.mat) : x.mat === 'machine'))
+    .filter(x => x.nom !== ex.nom && materielPrecis(x) !== matEx)
     .map(x => {
       const c = motsDe(x.nom);
       let communs = 0;
@@ -141,8 +146,16 @@ function equivalents(mKey, ex) {
     })
     .sort((a, b) => b.score - a.score)
     .filter((o, i, l) => o.score > 0 || l[0].score === 0)
-    .slice(0, 4)
+    .slice(0, 6)
     .map(o => o.ex);
+}
+
+/** « 4 séries × 8-10 reps » -> 8 : sans historique, on propose le bas
+ *  de la fourchette au lieu d'un champ vide (Raci, 13/11 : « pas
+ *  intuitif »). */
+function repsVisees(meta) {
+  const m = String(meta || '').match(/(\d+)(?:\s*[-–]\s*\d+)?\s*reps?/i);
+  return m ? m[1] : '';
 }
 
 /** « 4 séries × 8-10 reps » -> 4. Trois series par defaut. */
@@ -233,11 +246,14 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
   // 5/09 : la salle n'a pas toujours la machine du programme.
   const [remplaces, setRemplaces] = useState({});
   const [choixMateriel, setChoixMateriel] = useState(false);
+  // 13/11 Raci : « pouvoir ajouter une serie supplementaire ou en
+  // moins ». Ecart par exercice (position), garde avec la reprise.
+  const [ecart, setEcart] = useState(repris && repris.ecart ? repris.ecart : {});
 
   const courant = remplaces[iExo] || refs[iExo] || null;
   const seriesDe = (ex) => (schema && schema.series ? schema.series : nbSeries(ex.meta));
   const reposPour = (nom) => (schema && schema.repos ? schema.repos : reposDe(nom));
-  const seriesAttendues = courant ? seriesDe(courant.ex) : 0;
+  const seriesAttendues = courant ? Math.max(1, seriesDe(courant.ex) + (ecart[iExo] || 0)) : 0;
 
   // Champs de la serie en cours. Pre-remplis avec la derniere serie
   // notee sur CE mouvement : on n'ajuste que ce qui a change.
@@ -262,7 +278,7 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
     const precedente = posees.length ? posees[posees.length - 1] : derniereSerie(courant.ex.nom);
     setKg(precedente && precedente.w != null ? String(precedente.w) : '');
     setReps(precedente && precedente.r != null && precedente.r !== ''
-      ? String(precedente.r) : (schema && schema.reps ? String(schema.reps) : ''));
+      ? String(precedente.r) : (schema && schema.reps ? String(schema.reps) : repsVisees(courant.ex.meta)));
   }, [iExo, iSerie]);
 
   // Chrono de seance : il court tant qu'on n'a pas enregistre.
@@ -283,10 +299,10 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
   // serie sans rien perdre.
   useEffect(() => {
     if (termine) return;
-    ecrireEnCours({ seanceId: cleCours, iExo, iSerie, journal, secondes });
-  }, [iExo, iSerie, journal, secondes, termine]);
+    ecrireEnCours({ seanceId: cleCours, iExo, iSerie, journal, secondes, ecart });
+  }, [iExo, iSerie, journal, secondes, termine, ecart]);
 
-  const totalSeries = refs.reduce((n, r) => n + seriesDe(r.ex), 0);
+  const totalSeries = refs.reduce((n, r, i) => n + Math.max(1, seriesDe(r.ex) + (ecart[i] || 0)), 0);
   const faitesTotal = Object.values(journal).reduce((n, l) => n + l.length, 0);
   const avance = totalSeries ? Math.round((faitesTotal / totalSeries) * 100) : 0;
 
@@ -331,6 +347,27 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
     posees[iSerie] = { w: kg, r: reps };
     setJournal({ ...journal, [iExo]: posees });
     setISerie(posees.length);
+  };
+
+  const ajouterSerie = () => setEcart({ ...ecart, [iExo]: (ecart[iExo] || 0) + 1 });
+  /** Une serie de moins. Si toutes les series restantes sont deja
+   *  faites, l'exercice est fini : on enchaine comme apres la derniere. */
+  const retirerSerie = () => {
+    const faitesIci = (journal[iExo] || []).length;
+    if (seriesAttendues <= 1 || seriesAttendues - 1 < faitesIci) return;
+    setEcart({ ...ecart, [iExo]: (ecart[iExo] || 0) - 1 });
+    if (seriesAttendues - 1 === faitesIci) {
+      if (iExo + 1 < refs.length) {
+        setIExo(iExo + 1); setISerie(0);
+        setRepos(reposPour(refs[iExo + 1].ex.nom));
+      } else { setRepos(0); setTermine(true); }
+    }
+  };
+  /** Les boutons − et + des champs. Un champ vide part de 0. */
+  const pas = (val, d, min) => {
+    const n = parseFloat(String(val).replace(',', '.'));
+    const v = Math.max(min, Math.round(((isNaN(n) ? 0 : n) + d) * 10) / 10);
+    return String(v);
   };
 
   const passerExercice = () => {
@@ -460,17 +497,40 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
             {enCorrection ? 'CORRECTION · ' : ''}SÉRIE {iSerie + 1} SUR {seriesAttendues}
           </div>
           <div class="sg-exo-n">{courant.ex.nom}</div>
+          {/* 13/11 Raci : « pas intuitif le nombre de repetitions et
+              de charge ». Le libelle passe AU-DESSUS de la valeur, et
+              chaque champ a ses boutons − et + (2,5 kg, 1 rep) : on
+              ajuste au pouce sans ouvrir le clavier. Toucher le
+              chiffre ouvre toujours le clavier. */}
           <div class="sg-champs">
-            <label class="sg-ch">
-              <input type="number" inputMode="decimal" value={kg}
-                onInput={(e) => setKg(e.currentTarget.value)} placeholder="—" />
-              <span>CHARGE (KG)</span>
-            </label>
-            <label class="sg-ch">
-              <input type="number" inputMode="numeric" value={reps}
-                onInput={(e) => setReps(e.currentTarget.value)} placeholder="—" />
-              <span>RÉPÉTITIONS</span>
-            </label>
+            <div class="sg-ch">
+              <span class="sg-ch-l">Charge</span>
+              <div class="sg-ch-r">
+                <button type="button" class="sg-pm" aria-label="2,5 kg de moins"
+                  onClick={() => setKg(pas(kg, -2.5, 0))}>−</button>
+                <label class="sg-ch-v">
+                  <input type="number" inputMode="decimal" value={kg}
+                    onInput={(e) => setKg(e.currentTarget.value)} placeholder="0" aria-label="Charge en kg" />
+                  <i>kg</i>
+                </label>
+                <button type="button" class="sg-pm" aria-label="2,5 kg de plus"
+                  onClick={() => setKg(pas(kg, 2.5, 0))}>+</button>
+              </div>
+            </div>
+            <div class="sg-ch">
+              <span class="sg-ch-l">Répétitions</span>
+              <div class="sg-ch-r">
+                <button type="button" class="sg-pm" aria-label="Une répétition de moins"
+                  onClick={() => setReps(pas(reps, -1, 0))}>−</button>
+                <label class="sg-ch-v">
+                  <input type="number" inputMode="numeric" value={reps}
+                    onInput={(e) => setReps(e.currentTarget.value)} placeholder="0" aria-label="Répétitions" />
+                  <i>reps</i>
+                </label>
+                <button type="button" class="sg-pm" aria-label="Une répétition de plus"
+                  onClick={() => setReps(pas(reps, 1, 0))}>+</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -479,6 +539,9 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
           retour en arriere. Celle qui attend ne se touche pas, elle
           est deja a l'ecran. */}
       <div class="sg-pts">
+        <button type="button" class="sg-serie-pm" aria-label="Une série de moins"
+          disabled={seriesAttendues <= 1 || seriesAttendues - 1 < faites.length}
+          onClick={retirerSerie}>− Série</button>
         {pastilles.map(n => (
           n < faites.length ? (
             <button key={n} class={'sg-pt ok' + (n === iSerie ? ' vue' : '')}
@@ -488,6 +551,8 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
             <span key={n} class={'sg-pt' + (n === iSerie ? ' now' : '')}>{n + 1}</span>
           )
         ))}
+        <button type="button" class="sg-serie-pm" aria-label="Une série de plus"
+          onClick={ajouterSerie}>+ Série</button>
       </div>
 
       {repos > 0 && (
@@ -519,14 +584,16 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
         </button>
       </div>
 
-      {choixMateriel && (
+      {/* 13/11 : les deux feuilles passent en portail sur document.body.
+          Rendues dans l'ecran, elles heritaient du transform du rail
+          des onglets : la feuille s'ouvrait decalee a droite, coupee,
+          sous la barre de navigation (capture de Raci). */}
+      {choixMateriel && createPortal(
         <div class="sg-swap-voile" onClick={(e) => { if (e.target === e.currentTarget) setChoixMateriel(false); }}>
           <div class="sg-swap-carte">
-            <div class="sg-swap-t">
-              {courant.ex.mat === 'machine' ? 'Sans machine' : 'Sur machine'}
-            </div>
+            <div class="sg-swap-t">Remplacer l'exercice</div>
             <div class="sg-swap-l">
-              Même muscle, même geste — choisis ce que tu as sous la main.
+              Même muscle, même mouvement, avec un autre matériel. Choisis ce que tu as sous la main.
             </div>
             {equivalents(courant.mKey, courant.ex).map(alt => (
               <button key={alt.nom} class="sg-swap-o"
@@ -534,15 +601,20 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
                   setRemplaces({ ...remplaces, [iExo]: { mKey: courant.mKey, ex: alt } });
                   setChoixMateriel(false);
                 }}>
-                <span class="sg-swap-n">{alt.nom}</span>
+                <span class="sg-swap-ph"><PhotoExo imgId={alt.imgId} taille={240} /></span>
+                <span class="sg-swap-tx">
+                  <span class="sg-swap-n">{alt.nom}</span>
+                  <span class="sg-swap-m">{equipDe(alt)}</span>
+                </span>
                 <span class="sg-swap-fl" aria-hidden="true">&rsaquo;</span>
               </button>
             ))}
             <button class="sg-swap-x" onClick={() => setChoixMateriel(false)}>Annuler</button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-      {jeter && (
+      {jeter && createPortal(
         <div class="sg-swap-voile" onClick={(e) => { if (e.target === e.currentTarget) setJeter(false); }}>
           <div class="sg-swap-carte">
             <div class="sg-swap-t">{t('sea_abandonner_t')}</div>
@@ -559,7 +631,8 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
               {t('sea_abandonner_no')}
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
