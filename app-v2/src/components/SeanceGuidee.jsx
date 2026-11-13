@@ -175,6 +175,32 @@ function reposDe(nom) {
   return LOURDS.test(nom || '') ? 180 : 75;
 }
 
+// ---------- calculateur de disques (Raci, 13/11, idee 5) ----------
+// Pour une charge a la barre : quels disques mettre de CHAQUE cote.
+// Couleurs des disques de competition, pour qu'on les reconnaisse au
+// rack d'un coup d'oeil.
+const DISQUES = [
+  { kg: 25, c: '#D71016', h: 100 }, { kg: 20, c: '#2563EB', h: 100 },
+  { kg: 15, c: '#FAC408', h: 90 }, { kg: 10, c: '#059669', h: 78 },
+  { kg: 5, c: '#F8F2E8', h: 62 }, { kg: 2.5, c: '#151515', h: 50 },
+  { kg: 1.25, c: '#9CA3AF', h: 42 },
+];
+const BARRES = [20, 15, 10];
+function disquesPourCote(total, barre) {
+  let reste = Math.round(((total - barre) / 2) * 100) / 100;
+  const pris = [];
+  if (reste <= 0) return { pris, reste: 0 };
+  DISQUES.forEach((d) => {
+    while (reste + 1e-9 >= d.kg) { pris.push(d); reste = Math.round((reste - d.kg) * 100) / 100; }
+  });
+  return { pris, reste };
+}
+const kgTxt = (v) => String(Math.round(v * 100) / 100).replace('.', ',');
+function lireBarre(nom) {
+  try { const v = +localStorage.getItem('belfit_barre'); if (BARRES.includes(v)) return v; } catch (e) {}
+  return /barre ez/i.test(nom || '') ? 10 : 20;
+}
+
 // ---------- historique des charges (partage avec l'ancien ecran) ----------
 function lireSetLog() {
   try { return JSON.parse(localStorage.getItem('repz_setLog') || '{}'); } catch { return {}; }
@@ -246,6 +272,8 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
   // 5/09 : la salle n'a pas toujours la machine du programme.
   const [remplaces, setRemplaces] = useState({});
   const [choixMateriel, setChoixMateriel] = useState(false);
+  const [disques, setDisques] = useState(false);
+  const [barre, setBarre] = useState(20);
   // 13/11 Raci : « pouvoir ajouter une serie supplementaire ou en
   // moins ». Ecart par exercice (position), garde avec la reprise.
   const [ecart, setEcart] = useState(repris && repris.ecart ? repris.ecart : {});
@@ -497,6 +525,13 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" /></svg>
           Alternative
         </button>
+        {materielPrecis(courant.ex) === 'barre' && (
+          <button class="sg-swap sg-disques" aria-label="Calculer les disques à mettre"
+            onClick={() => { setBarre(lireBarre(courant.ex.nom)); setDisques(true); }}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h20M6 7v10M9 5v14M15 5v14M18 7v10" /></svg>
+            Disques
+          </button>
+        )}
         <div class="sg-bas">
           <div class="sg-serie-t">
             {enCorrection ? 'CORRECTION · ' : ''}SÉRIE {iSerie + 1} SUR {seriesAttendues}
@@ -619,6 +654,49 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
         </div>,
         document.body
       )}
+      {disques && createPortal((() => {
+        const total = parseFloat(String(kg).replace(',', '.')) || 0;
+        const { pris, reste } = disquesPourCote(total, barre);
+        const groupes = [];
+        pris.forEach((d) => {
+          const g = groupes.find((x) => x.d.kg === d.kg);
+          if (g) g.n++; else groupes.push({ d, n: 1 });
+        });
+        return (
+          <div class="sg-swap-voile" onClick={(e) => { if (e.target === e.currentTarget) setDisques(false); }}>
+            <div class="sg-swap-carte dq">
+              <div class="sg-swap-t">Disques par côté</div>
+              <div class="dq-charge">
+                <button type="button" class="dq-pm" aria-label="2,5 kg de moins" onClick={() => setKg(pas(kg, -2.5, 0))}>−</button>
+                <b>{kgTxt(total)} kg</b>
+                <button type="button" class="dq-pm" aria-label="2,5 kg de plus" onClick={() => setKg(pas(kg, 2.5, 0))}>+</button>
+              </div>
+              <div class="dq-barres" role="group" aria-label="Poids de la barre">
+                {BARRES.map((b) => (
+                  <button key={b} type="button" class={'dq-barre' + (b === barre ? ' on' : '')} aria-pressed={b === barre}
+                    onClick={() => { setBarre(b); try { localStorage.setItem('belfit_barre', String(b)); } catch (e) {} }}>
+                    Barre {b} kg
+                  </button>
+                ))}
+              </div>
+              <div class="dq-dessin" aria-hidden="true">
+                <span class="dq-manchon" />
+                {pris.map((d, i) => (
+                  <span key={i} class="dq-disque" style={{ height: d.h + 'px', background: d.c, width: (d.kg >= 10 ? 16 : 11) + 'px' }} />
+                ))}
+                <span class="dq-bout" />
+              </div>
+              <p class="dq-txt">
+                {total <= barre
+                  ? (total < barre ? 'La barre seule pèse ' + barre + ' kg.' : 'La barre seule, sans disque.')
+                  : groupes.map((g) => g.n + ' × ' + kgTxt(g.d.kg) + ' kg').join(' + ') + ' de chaque côté.'}
+              </p>
+              {reste > 0 && <p class="dq-reste">Il manque {kgTxt(reste * 2)} kg pour tomber juste avec ces disques.</p>}
+              <button class="sg-swap-x" onClick={() => setDisques(false)}>Fermer</button>
+            </div>
+          </div>
+        );
+      })(), document.body)}
       {jeter && createPortal(
         <div class="sg-swap-voile" onClick={(e) => { if (e.target === e.currentTarget) setJeter(false); }}>
           <div class="sg-swap-carte">

@@ -356,3 +356,20 @@ button.sg-pt:active { transform: scale(.92); }
 /* Bouton « Alternative » : deux fleches + mot (Raci, 13/11). */
 .sg-swap { display: inline-flex; align-items: center; gap: 6px; }
 .sg-swap svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---- Calculateur de disques (Raci, 13/11) ---- */
+.sg-disques { top: 84px; }
+.dq .sg-swap-t { text-align: center; }
+.dq-charge { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 12px 0 14px; }
+.dq-charge b { font-family: 'DM Mono', ui-monospace, monospace; font-size: 32px; font-weight: 500; min-width: 140px; text-align: center; }
+.dq-pm { width: 44px; height: 44px; border-radius: 50%; border: 0; background: #EDEAE4; color: #151515; font-family: inherit; font-size: 22px; cursor: pointer; }
+.dq-pm:active { background: #FAC408; }
+.dq-barres { display: flex; gap: 6px; justify-content: center; }
+.dq-barre { flex: 1; padding: 9px 4px; border-radius: 999px; border: 1px solid #E2DDD3; background: #fff; font-family: inherit; font-size: 12.5px; font-weight: 700; color: #4A443C; cursor: pointer; white-space: nowrap; }
+.dq-barre.on { background: #181818; border-color: #181818; color: #fff; }
+.dq-dessin { display: flex; align-items: center; justify-content: center; gap: 3px; height: 116px; margin: 18px 0 8px; }
+.dq-manchon { width: 70px; height: 12px; border-radius: 3px; background: #B5AFA4; margin-right: 4px; }
+.dq-disque { border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
+.dq-bout { width: 26px; height: 12px; border-radius: 0 3px 3px 0; background: #B5AFA4; }
+.dq-txt { text-align: center; font-size: 15px; font-weight: 700; margin: 4px 0 0; }
+.dq-reste { text-align: center; font-size: 12.5px; color: #8A8378; margin: 6px 0 0; }
