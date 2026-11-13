@@ -3059,7 +3059,7 @@ const DECALAGE_SW_V2 = 232;
     const regles = css.match(/\.pg-selection \.ex-photo\{[^}]*\}/g) || [];
     const t = ((regles[regles.length - 1] || '').match(/width:(\d+)px/) || [])[1];
     if (!t) soucis.push('la vignette n\'a plus de taille fixe');
-    else if (+t > 64) soucis.push('les vignettes repassent a ' + t + ' px : la liste ne montre plus 7 exercices par ecran');
+    else if (+t > 100) soucis.push('les vignettes repassent a ' + t + ' px : la liste ne montre plus 6 exercices par ecran');
   }
   if (jsx && !/class="ex-filtres"/.test(jsx)) soucis.push('lieu, materiel et niveau ne sont plus ranges derriere « Filtres »');
   if (soucis.length) faute('R84 liste d\'exercices compacte', soucis.join(' ; '));

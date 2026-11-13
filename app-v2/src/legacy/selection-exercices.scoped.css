@@ -487,8 +487,12 @@
 .pg-selection .ex-item{
   min-height:0; gap:12px; padding:7px 8px 7px 7px; border-radius:14px; border-width:1px;
 }
+/* Raci, 13/11 : « les images sont tres petites ». Les photos sont en
+   paysage : un carre de 56 px rognait les cotes et rendait la personne
+   minuscule. Vignette en 4:3 de 96 x 72 : le mouvement se lit, la
+   liste garde 6 a 7 exercices par ecran. */
 .pg-selection .ex-photo{
-  width:56px; height:56px; border-radius:10px; transform:none; will-change:auto; transition:none;
+  width:96px; height:72px; border-radius:12px; transform:none; will-change:auto; transition:none;
 }
 .pg-selection .ex-info{ padding-left:0; }
 .pg-selection .ex-name{
