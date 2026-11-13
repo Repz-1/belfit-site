@@ -489,8 +489,11 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
             possede pas la possibilite de faire tel exercice, car il
             n'a pas le materiel ». Pose sur l'image, la ou l'on
             constate que la machine est prise ou absente. */}
-        <button class="sg-swap" onClick={() => setChoixMateriel(true)}>
-          {courant.ex.mat === 'machine' ? 'Pas cette machine ?' : 'Pas ce matériel ?'}
+        {/* 13/11 Raci : deux fleches et « Alternative » au lieu de
+            « Pas ce materiel ? ». */}
+        <button class="sg-swap" aria-label="Remplacer par un exercice équivalent" onClick={() => setChoixMateriel(true)}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" /></svg>
+          Alternative
         </button>
         <div class="sg-bas">
           <div class="sg-serie-t">
