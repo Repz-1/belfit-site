@@ -38,6 +38,7 @@ import { Reglages, vueReglages } from './components/Reglages.jsx';
 import { StatsAvancees, statsAvOuvertes } from './components/StatsAvancees.jsx';
 import { depilerRetour, retourEnAttente } from './services/retour.js';
 import { SeanceGuidee } from './components/SeanceGuidee.jsx';
+import { MaProgression } from './components/MaProgression.jsx';
 import { seanceRefs } from './store/seance-active.js';
 import { Stats } from './components/Stats.jsx';
 import { BottomNav, ongletActif, allerOnglet, scrollSortant, defileur } from './components/BottomNav.jsx';
@@ -177,6 +178,9 @@ export function OngletEntrainer() {
   // bouton n'y menait, et elle n'avait jamais ete alignee sur l'
   // identite de V2 : fond degrade, pastilles vertes, cartes a lisere.
   // Les programmes s'atteignent par les quatre questions.
+  if (vue.nom === 'progression') {
+    return <MaProgression />;
+  }
   if (vue.nom === 'questionnaire') {
     return <Questionnaire />;
   }

@@ -697,6 +697,11 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
           <b>{t('ent2_prog')}</b>
           <span>{prog ? prog.name : t('ent2_prog_txt_sans')}</span>
         </button>
+        {/* 13/11 : la courbe de chaque exercice (idee 3 de Raci). */}
+        <button type="button" class="ath2-tuile ath2-tuile--large" onClick={() => allerVers('progression')}>
+          <b>Ma progression</b>
+          <span>La courbe de chaque exercice que tu as fait</span>
+        </button>
       </div>
 
       {/* 13/11 Raci : « creer une seance carrement », comme Hevy.

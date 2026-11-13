@@ -379,7 +379,9 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
   /** Ecrit les charges dans l'historique, pour la prochaine fois. */
   const memoriserCharges = () => {
     const log = lireSetLog();
-    refs.forEach(({ ex }, i) => {
+    refs.forEach(({ ex: ex0 }, i) => {
+      // L'exercice remplace (« Alternative ») garde SES charges.
+      const ex = (remplaces[i] || { ex: ex0 }).ex;
       const sets = journal[i];
       if (!sets || !sets.length) return;
       log[ex.nom] = (log[ex.nom] || []).concat([{ date: Date.now(), sets }]).slice(-20);
