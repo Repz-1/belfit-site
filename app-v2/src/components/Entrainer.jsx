@@ -548,14 +548,20 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
   lundi.setDate(today.getDate() - ((today.getDay() + 6) % 7));
   const dimanche = new Date(lundi);
   dimanche.setDate(lundi.getDate() + 6);
+  const seancesFaitesAuj = (seances.value || []).some(s => s.iso === todayIso);
   const compteFait = {};
   const comptePrevu = {};
   let seancesSemaine = 0;
   for (const d = new Date(lundi); d <= dimanche; d.setDate(d.getDate() + 1)) {
     const isoJ = wlIso(d);
     const vals = (log[isoJ] || []).filter(v => v !== 'repos' && COULEUR[v]);
-    if (vals.length && isoJ <= todayIso) seancesSemaine++;
-    if (vals.length) vals.forEach(k => { compteFait[k] = (compteFait[k] || 0) + 1; });
+    // 16/11 Raci : « c'est ecrit deja travailles mais non, c'est ce que
+    // j'ai prevu ». Un jour a venir note au calendrier est un PROJET ;
+    // aujourd'hui ne compte comme fait qu'une fois une seance enregistree.
+    const fait = vals.length && (isoJ < todayIso || (isoJ === todayIso && seancesFaitesAuj));
+    if (fait) seancesSemaine++;
+    if (fait) vals.forEach(k => { compteFait[k] = (compteFait[k] || 0) + 1; });
+    else if (vals.length) vals.forEach(k => { comptePrevu[k] = (comptePrevu[k] || 0) + 1; });
     else musclesDuSchema(isoJ, todayIso).forEach(k => {
       if (!compteFait[k]) comptePrevu[k] = (comptePrevu[k] || 0) + 1;
     });
@@ -769,9 +775,11 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
             {objectifSemaine > 0 && (
               <div class="ath2-barre"><i style={{ width: Math.min(100, Math.round(seancesSemaine / objectifSemaine * 100)) + '%' }} /></div>
             )}
-            <p class="ath2-note">{travailles.length
-              ? t('ent2_travailles') + ' ' + travailles.join(', ')
-              : t(aFaire.length ? 'ent2_prevus' : 'ent2_rien')}</p>
+            {travailles.length > 0 && <p class="ath2-note">{t('ent2_travailles') + ' ' + travailles.join(', ')}</p>}
+            {aFaire.length > 0 && (
+              <p class="ath2-note">{t('ent2_a_venir') + ' ' + aFaire.map(g => nomMuscle(g.k).toLowerCase()).join(', ')}</p>
+            )}
+            {!travailles.length && !aFaire.length && <p class="ath2-note">{t('ent2_rien')}</p>}
           </div>
         </div>
         {legende.length > 0 && (
