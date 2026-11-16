@@ -533,7 +533,7 @@ export function renommerRepas(repasId, nom) {
 export const clotures = signal(0);
 
 export function nouvelleJournee() {
-  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
+  if (suiviPlanBloque()) return;   // 16/11 : cloture = suivi du plan, pas saisie
   repas.value = structuredClone(DEFAUTS.repas);
   eau.value = 0;
   dateJour.value = aujourdhui();

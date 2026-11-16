@@ -122,6 +122,9 @@ export function DayDashboard() {
   // Encodage coupe : pas de cloture / rappel (ecriture), mais le cadran
   // « Plan en preparation » reste base sur lectureSeule seule.
   const saisieFerme = ro || encodageFerme.value;
+  // 16/11 Raci : cloturer la journee fait partie du SUIVI du plan coach,
+  // pas de la saisie : le bouton jaune reste la des qu'un plan est actif.
+  const clotureFermee = ro || (encodageFerme.value && !planCoachActif.value);
   const obj = objectifs.value;
   const tot = totauxJourAff.value;
   const restant = kcalRestantes.value;
@@ -210,10 +213,10 @@ export function DayDashboard() {
         <Macro nom={t('fats')}     valeur={tot.lip}   cible={enPreparation ? null : obj.lip}   teinte="var(--mac-lip)" />
       </div>
       {!saisieFerme && <RappelRecalcul />}
-      {retard && !saisieFerme && (
+      {retard && !clotureFermee && (
         <div class="cal-retard">{t('jour_non_cloture').replace('{j}', jourOuvert)}</div>
       )}
-      {!saisieFerme && <button class={'cal-reset' + (aCloturer ? ' cal-reset--rappel' : '')} disabled={clotureBloquee}
+      {!clotureFermee && <button class={'cal-reset' + (aCloturer ? ' cal-reset--rappel' : '')} disabled={clotureBloquee}
         aria-disabled={clotureBloquee ? 'true' : undefined}
         onClick={() => {
         if (clotureBloquee) return;
