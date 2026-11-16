@@ -548,6 +548,9 @@ export function MealCard({ r, aSuivre, fait, puce }) {
   const [edite, setEdite] = useState(false);
   // Alimentation fermee : on consulte, on ne modifie rien (ni cases, ni boutons).
   const ro = lectureSeule.value || encodageFerme.value;
+  // 16/11 : le suivi du plan (Mangé / Sauté / annuler) reste ouvert quand
+  // seule la saisie est coupee.
+  const roPlan = lectureSeule.value;
   // 22/10 : etat d'un repas du plan — prevu, mange, saute, autre (remplace).
   const choisi = r.duPlan && (r.saute || r.remplace);
   // Trois zones : vignette, contenu, actions.
@@ -589,13 +592,13 @@ export function MealCard({ r, aSuivre, fait, puce }) {
         <div class="mc-actions">
           {puce}
           {/* 22/10 Raci : repas du plan coche en un geste, decochable. */}
-          {choisi && !ro && (
+          {choisi && !roPlan && !r.remplace && (
             <button class="mc-annuler" aria-label={`Remettre ${r.nom} en prévu`}
               onClick={e => { e.stopPropagation(); remettrePrevu(r.id); }}>
               <svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5" /><path d="M4 9h10a6 6 0 010 12h-3" /></svg>
             </button>
           )}
-          {!ro && r.duPlan && !vide && !choisi && !r.prevu && (
+          {!roPlan && r.duPlan && !vide && !choisi && !r.prevu && (
             <button
               class="mc-coche mc-coche--fait"
               role="checkbox"
@@ -635,11 +638,11 @@ export function MealCard({ r, aSuivre, fait, puce }) {
       {/* 24/10 Raci : les trois issues d'un repas du plan sont visibles d'emblee,
           HORS de la zone qui ouvre la fiche (.mc-tete) : aucun clic ici n'ouvre le repas,
           sauf « Mangé autre chose » qui ouvre la page pour noter ce qui a ete mange. */}
-      {!ro && r.duPlan && r.prevu && !r.remplace && !vide && (
+      {!roPlan && r.duPlan && r.prevu && !r.remplace && !vide && (
         <div class="mc-plan" role="group" aria-label={`Que s'est-il passé pour ${r.nom} ?`} onClick={e => e.stopPropagation()}>
           <button class="mc-plan-btn mc-plan-btn--mange" onClick={e => { e.stopPropagation(); validerRepas(r.id); }}>✓ Mangé</button>
           <button class="mc-plan-btn mc-plan-btn--saute" onClick={e => { e.stopPropagation(); sauterRepas(r.id); }}>Sauté</button>
-          <button class="mc-plan-btn mc-plan-btn--autre" aria-label="Mangé autre chose" onClick={e => { e.stopPropagation(); mangeAutreChose(r.id); repasOuvertId.value = r.id; }}>Autre chose</button>
+          {!ro && <button class="mc-plan-btn mc-plan-btn--autre" aria-label="Mangé autre chose" onClick={e => { e.stopPropagation(); mangeAutreChose(r.id); repasOuvertId.value = r.id; }}>Autre chose</button>}
           {/* 01/11 Raci (timeline) : « Autre idée » devient une pastille discrete sur la meme ligne. */}
           <button class="mc-idee-btn mc-idee-btn--pastille" aria-label="Autre idée" onClick={e => { e.stopPropagation(); setTour(n => n + 1); autreIdee(); }}>
             <svg key={tour} class={'mc-idee-ic' + (tour ? ' mc-idee-ic--tour' : '')} viewBox="0 0 24 24" aria-hidden="true">
@@ -741,7 +744,7 @@ export function RepasTimeline({ r, aSuivre, fait }) {
           petite pastille grise en haut a droite de la carte, pleine largeur. */}
       {choix && <SelecteurHeure heure={heure} titre={'Heure du ' + String(r.nom).toLowerCase()}
         fermer={() => setChoix(false)} valider={(v) => { setHeureRepas(r.id, v); setChoix(false); }} />}
-      <MealCard r={r} aSuivre={aSuivre} fait={fait} puce={mange && !ro ? (
+      <MealCard r={r} aSuivre={aSuivre} fait={fait} puce={mange && !lectureSeule.value ? (
         <button class={'tl-puce tl-puce--reelle' + (choix ? ' tl-puce--edition' : '')}
           aria-label={`Heure du repas ${r.nom} : ${heure}. Modifier`} onClick={e => { e.stopPropagation(); setChoix(!choix); }}>
           ✓ {heure.replace(':', 'h')}

@@ -4,7 +4,7 @@ import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { enregistrerJour } from './stats.js';
 import { aujourdhuiBxl } from './plans-par-date.js';
-import { ecritureBloquee, lectureSeule, encodageFerme } from './acces-nutrition.js';
+import { ecritureBloquee, lectureSeule, encodageFerme, suiviPlanBloque } from './acces-nutrition.js';
 import { recalerJour, confirmerIdeeJour } from '../services/recalage-jour.js';
 import { calerParNom } from '../services/autre-idee.js';
 
@@ -327,7 +327,9 @@ function recaler() {
 
 /** Repas prevu -> mange : il compte desormais dans le cadran. */
 export function validerRepas(repasId) {
-  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
+  // Repas du plan : confirmer n'est pas saisir (16/11). Autre repas : saisie.
+  const r0 = repas.value.find(r => r.id === repasId);
+  if (r0 && r0.duPlan ? suiviPlanBloque() : ecritureBloquee()) return;
   // Idee affichee mais pas encore choisie : « Mangé » vaut choix (le total reste juste).
   const x = repas.value.find(r => r.id === repasId);
   if (x && x.idee && !x.idee.confirme) choisirIdee(repasId);
@@ -347,7 +349,7 @@ export function heurePrevue(r) {
 
 /** 01/11 Raci : corrige l'heure reelle d'un repas mange (selecteur de la timeline). */
 export function setHeureRepas(repasId, heure) {
-  if (ecritureBloquee()) return;
+  if (suiviPlanBloque()) return;
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(heure)) return;
   repas.value = repas.value.map(r => r.id === repasId ? { ...r, heure } : r);
 }
@@ -436,7 +438,7 @@ export function repasAffiches(liste, planRepas) {
  *  sort du cadran (totauxJour / totauxJourAff ignorent les prevus, la
  *  cloture aussi). Seulement pour les repas venus du plan (duPlan). */
 export function annulerValidation(repasId) {
-  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
+  if (suiviPlanBloque()) return;
   remettrePrevu(repasId);
 }
 
@@ -448,7 +450,7 @@ export function annulerValidation(repasId) {
  *    il reste « prevu » (hors cadran) jusqu'a « Terminer ».
  *  remettrePrevu annule chacune d'un geste. Seuls les repas duPlan. */
 export function sauterRepas(repasId) {
-  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
+  if (suiviPlanBloque()) return;
   repas.value = repas.value.map(r => r.id === repasId && r.duPlan ? { ...r, prevu: false, saute: true } : r);
   recaler();
 }
@@ -463,7 +465,7 @@ export function mangeAutreChose(repasId) {
   recaler();
 }
 export function remettrePrevu(repasId) {
-  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
+  if (suiviPlanBloque()) return;   // blocage alimentation : lecture seule
   repas.value = repas.value.map(r => {
     if (r.id !== repasId || !r.duPlan) return r;
     const n = { ...r, prevu: true };
@@ -501,7 +503,7 @@ export function appliquerIdee(repasId, idee) {
  *  l'ecart de kcal est reparti sur les repas encore prevus du jour
  *  (dernier repas : l'idee elle-meme est calee sur le plan). */
 export function choisirIdee(repasId) {
-  if (ecritureBloquee()) return null;
+  if (suiviPlanBloque()) return null;   // 16/11 : choix d'une idee du plan = suivi, pas saisie
   const res = confirmerIdeeJour(repas.value, repasId, calerParNom);
   repas.value = res.liste;
   return res;

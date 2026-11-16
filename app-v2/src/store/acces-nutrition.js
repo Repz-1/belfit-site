@@ -177,3 +177,11 @@ export function sansNutrition(o) {
   for (const k of CLES_NUTRITION) delete r[k];
   return r;
 }
+
+/** 16/11 Raci (« je ne peux pas appuyer sur Mangé ») : confirmer les repas
+ *  du PLAN COACH (Mangé, Sauté, annuler, heure) n'est pas de la saisie
+ *  alimentaire. ENCODAGE_ACTIF ne le coupe donc pas ; seule la lecture
+ *  seule (aucun acces) le ferme. */
+export function suiviPlanBloque() {
+  return lectureSeule.peek();
+}
