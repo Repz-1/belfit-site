@@ -325,8 +325,12 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
 
   // Sauvegarde continue : l'app peut etre fermee au milieu d'une
   // serie sans rien perdre.
+  // 16/11 Raci : une seance jetee revenait a la reouverture. Le chrono
+  // tournait encore une seconde apres « Abandonner » et reecrivait la
+  // reprise avec les series du test. Une fois jetee, plus rien n'ecrit.
+  const jetee = useRef(false);
   useEffect(() => {
-    if (termine) return;
+    if (termine || jetee.current) return;
     ecrireEnCours({ seanceId: cleCours, iExo, iSerie, journal, secondes, ecart });
   }, [iExo, iSerie, journal, secondes, termine, ecart]);
 
@@ -704,7 +708,9 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
             <div class="sg-swap-l">{t('sea_abandonner_q')}</div>
             <button class="sg-go sg-jeter-ok" type="button"
               onClick={() => {
+                jetee.current = true;
                 abandonnerSeance();
+                oublierEnCours();
                 setJeter(false);
                 revenir();
               }}>
