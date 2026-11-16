@@ -61,6 +61,8 @@ export function MealPage() {
   const [edite, setEdite] = useState(false);
   // Alimentation fermee : la fiche se consulte, sans recherche ni modification.
   const ro = lectureSeule.value || encodageFerme.value;
+  // 16/11 : le titre d'un repas du plan se renomme meme saisie coupee.
+  const roTitre = r && r.duPlan ? lectureSeule.value : ro;
   const [enrego, setEnrego] = useState(false);
   const [nomPlat, setNomPlat] = useState('');
   const [garde, setGarde] = useState(false);
@@ -152,7 +154,7 @@ export function MealPage() {
           <button class="rp-retour" onClick={() => { repasOuvertId.value = null; }} aria-label="Retour">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
-          {edite && !ro ? (
+          {edite && !roTitre ? (
             <input
               class="rp-titre-champ"
               value={r.nom}
@@ -162,7 +164,7 @@ export function MealPage() {
               autoFocus
             />
           ) : (
-            <h1 class="rp-titre" onClick={() => { if (!ro) setEdite(true); }}>{r.nom}</h1>
+            <h1 class="rp-titre" onClick={() => { if (!roTitre) setEdite(true); }}>{r.nom}</h1>
           )}
           {/* Une seule sortie : la barre du bas. Un second « Terminer »
               ici laissait croire que la fleche retour annulait quelque

@@ -628,7 +628,7 @@ export function MealCard({ r, aSuivre, fait, puce }) {
       </div>
       {/* 24/10 Raci : renommer un repas du plan. Bouton HORS de .mc-tete (donc il
           n'ouvre jamais la fiche), cale juste a gauche du chevron. */}
-      {!ro && r.duPlan && !edite && (
+      {!roPlan && r.duPlan && !edite && (
         <button class="mc-renommer" aria-label={`Renommer ${r.nom}`}
           onClick={e => { e.stopPropagation(); setEdite(true); }}>
           <svg viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>

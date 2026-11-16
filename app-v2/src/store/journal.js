@@ -520,7 +520,9 @@ export function annulerIdee(repasId) {
 }
 
 export function renommerRepas(repasId, nom) {
-  if (ecritureBloquee()) return;   // blocage alimentation : lecture seule
+  // 16/11 Raci : renommer un repas du PLAN reste possible saisie coupee.
+  const r0 = repas.value.find(r => r.id === repasId);
+  if (r0 && r0.duPlan ? suiviPlanBloque() : ecritureBloquee()) return;
   repas.value = repas.value.map(r => r.id !== repasId ? r : { ...r, nom });
 }
 
