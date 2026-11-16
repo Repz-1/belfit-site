@@ -704,13 +704,17 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
           <b>{t('ent2_autre')}</b>
           <span>{t('ent2_autre_txt')}</span>
         </button>
-        <button type="button" class="ath2-tuile"
-          onClick={() => (prog ? allerVers('planifier', { prog: actif.id }) : allerVers('questionnaire'))}>
-          <b>{t('ent2_prog')}</b>
-          <span>{prog ? prog.name : t('ent2_prog_txt_sans')}</span>
-        </button>
+        {/* 16/11 Raci : sans programme, « Mon programme » doublait le bouton
+            « Choisir mon programme » de la carte du jour (meme menu). La
+            tuile n'apparait donc qu'une fois un programme choisi. */}
+        {prog && (
+          <button type="button" class="ath2-tuile" onClick={() => allerVers('planifier', { prog: actif.id })}>
+            <b>{t('ent2_prog')}</b>
+            <span>{prog.name}</span>
+          </button>
+        )}
         {/* 13/11 : la courbe de chaque exercice (idee 3 de Raci). */}
-        <button type="button" class="ath2-tuile ath2-tuile--large" onClick={() => allerVers('progression')}>
+        <button type="button" class={'ath2-tuile' + (prog ? ' ath2-tuile--large' : '')} onClick={() => allerVers('progression')}>
           <b>Ma progression</b>
           <span>La courbe de chaque exercice que tu as fait</span>
         </button>

@@ -1231,8 +1231,10 @@ const DECALAGE_SW_V2 = 232;
   const pl = lire('app-v2/src/components/PlanifierProgramme.jsx');
   if (ent && pl) {
     const soucis = [];
-    if (!/programmeActif\.value\s*\r?\n?\s*\? allerVers\('planifier'/.test(ent.replace(/\s+/g, ' ').replace(/ \? /g, ' ? ')) &&
-        !/programmeActif\.value \? allerVers\('planifier'/.test(ent.replace(/\s+/g, ' ')))
+    // 16/11 : la tuile n'existe plus qu'avec un programme ({prog && ...}).
+    const plat = ent.replace(/\s+/g, ' ');
+    if (!/programmeActif\.value \? allerVers\('planifier'/.test(plat) &&
+        !/\{prog && \( <button.{0,120}?allerVers\('planifier'/.test(plat))
       soucis.push('la carte « Mon programme » ne mene plus a la planification : la suppression redevient inaccessible');
     if (!/abandonnerProgramme\(\)/.test(pl))
       soucis.push('le bouton d\'abandon a disparu de la planification');
@@ -3360,8 +3362,10 @@ const DECALAGE_SW_V2 = 232;
   } else soucis.push('acces-nutrition.js ou firestore.rules introuvable');
   if (jrn) {
     for (const f of ['setPortion', 'ajouterIngredient', 'ajouterPlat', 'remplacerAliment', 'basculerCuisson', 'supprimerIngredient', 'ajouterRepas', 'supprimerRepas', 'validerRepas', 'semerPlan', 'annulerValidation', 'sauterRepas', 'mangeAutreChose', 'remettrePrevu', 'renommerRepas', 'nouvelleJournee', 'setObjectifs']) {
-      const m = jrn.match(new RegExp('export function ' + f + '\\([^)]*\\) \\{\\s*\\n?\\s*if \\(ecritureBloquee\\(\\)\\)'));
-      if (!m) soucis.push(f + ' ecrit le journal sans le garde ecritureBloquee()');
+      // 16/11 : le SUIVI du plan coach (Mange, Saute, cloture, renommer...)
+      // a son propre garde, suiviPlanBloque() (lecture seule uniquement).
+      const corps = (jrn.split('export function ' + f + '(')[1] || '').slice(0, 400);
+      if (!/ecritureBloquee\(\)|suiviPlanBloque\(\)|lectureSeule\.peek\(\)/.test(corps)) soucis.push(f + ' ecrit le journal sans garde d\'acces');
     }
   }
   const coachSrv = lire('functions/coach.js');
