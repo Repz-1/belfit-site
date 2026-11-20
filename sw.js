@@ -15,7 +15,7 @@
  * ni IndexedDB (session), ni Firestore : seul l'ancien cache
  * du worker (belfit-vNNN precedent) est retire.
  */
-const CACHE = 'belfit-v704';
+const CACHE = 'belfit-v705';
 const CORE = ['./index.html','./i18n.js','./i18n-strings.js','./manifest.json','./icon-192-v9.png','./icon-512-v9.png','./belfit-logo-bf.png'];
 
 self.addEventListener('install', e => {
@@ -59,7 +59,12 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // googletagmanager.com et google-analytics.com : autre domaine,
+  // jamais intercepte ni mis en cache.
   if (url.origin !== location.origin) return;
+  // Le script de consentement non plus : une copie ancienne ne doit
+  // pas ignorer un choix que l'on vient de changer.
+  if (url.pathname === '/analytics.js') return;
   // L'app /v2/ a son propre cache. L'intercepter figeait son HTML.
   if (url.pathname.startsWith('/v2/')) return;
 

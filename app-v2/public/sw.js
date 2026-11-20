@@ -8,7 +8,7 @@
 //    unique par version, ils sont donc immuables : aucun risque
 //    de servir du perime, et l'ouverture reste instantanee.
 // ============================================================
-const CACHE = 'belfit-v2-472';
+const CACHE = 'belfit-v2-473';
 // Photos d'exercices (/img/exercices/, voir components/PhotoExo.jsx) :
 // cache a part, qui SURVIT aux nouvelles versions. Elles ne changent
 // pas d'une version a l'autre — les reprendre a chaque deploiement
@@ -34,6 +34,8 @@ self.addEventListener('fetch', (e) => {
   // Polices distantes : cache d'abord, pour toujours. Elles ne
   // changent jamais et elles ne doivent plus dependre du reseau a
   // chaque ouverture (Raci, 02/09).
+  // googletagmanager.com et google-analytics.com n'y figurent pas :
+  // on ne les intercepte pas et on ne les met pas en cache.
   if (url.host === 'api.fontshare.com' || url.host === 'cdn.fontshare.com' ||
       url.host === 'fonts.gstatic.com' || url.host === 'fonts.googleapis.com') {
     e.respondWith(
