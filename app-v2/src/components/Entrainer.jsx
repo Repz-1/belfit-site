@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { tx } from '../i18n/ecrans.js';
 import { creerCarte, partagerCarte } from '../services/carte-partage.js';
 import { mesSeances, commencerCreation, lancerMaSeance, musclesDe } from '../store/mes-seances.js';
 import { useRetour } from '../services/retour.js';
@@ -725,9 +726,9 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
           Composee une fois, relancee en un toucher. */}
       <section class="ms-section">
         <div class="ath2-sem-tete">
-          <h2>Mes séances</h2>
+          <h2>{tx('Mes séances')}</h2>
           {mesSeances.value.length > 0 && (
-            <button type="button" class="ath2-cal" onClick={() => { commencerCreation(null); allerVers('selection', { creation: true }); }}>+ Créer</button>
+            <button type="button" class="ath2-cal" onClick={() => { commencerCreation(null); allerVers('selection', { creation: true }); }}>{tx('+ Créer')}</button>
           )}
         </div>
         {mesSeances.value.length ? (
@@ -738,11 +739,11 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
                 <div key={s.id} class="ms-carte">
                   <button type="button" class="ms-lancer" onClick={() => { if (lancerMaSeance(s)) allerVers('maseance'); }}>
                     <b>{s.nom}</b>
-                    <span>{n} exercice{n > 1 ? 's' : ''} · {musclesDe(s).join(', ')}</span>
+                    <span>{tx(n > 1 ? '{n} exercices' : '{n} exercice', { n })} · {musclesDe(s).join(', ')}</span>
                   </button>
-                  <button type="button" class="ms-modif" aria-label={'Modifier ' + s.nom}
-                    onClick={() => { commencerCreation(s); allerVers('selection', { creation: true }); }}>Modifier</button>
-                  <button type="button" class="ms-go" aria-label={'Commencer ' + s.nom}
+                  <button type="button" class="ms-modif" aria-label={tx('Modifier {nom}', { nom: s.nom })}
+                    onClick={() => { commencerCreation(s); allerVers('selection', { creation: true }); }}>{tx('Modifier')}</button>
+                  <button type="button" class="ms-go" aria-label={tx('Commencer {nom}', { nom: s.nom })}
                     onClick={() => { if (lancerMaSeance(s)) allerVers('maseance'); }}>▶</button>
                 </div>
               );
@@ -750,8 +751,8 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
           </div>
         ) : (
           <button type="button" class="ms-vide" onClick={() => { commencerCreation(null); allerVers('selection', { creation: true }); }}>
-            <b>+ Créer une séance</b>
-            <span>Choisis tes exercices une fois, donne-lui un nom, relance-la en un toucher.</span>
+            <b>{tx('+ Créer une séance')}</b>
+            <span>{tx('Choisis tes exercices une fois, donne-lui un nom, relance-la en un toucher.')}</span>
           </button>
         )}
       </section>
@@ -793,10 +794,10 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
 
       {carte && createPortal((
         <div class="pc-voile" onClick={fermerCarte}>
-          <div class="pc-feuille" role="dialog" aria-label="Partager ma séance" onClick={(e) => e.stopPropagation()}>
-            <img class="pc-image" src={carte.url} alt="Carte de ta séance" />
-            <button type="button" class="pc-go" onClick={async () => { const r = await partagerCarte(carte.blob, carte.titre); if (r !== 'annule') fermerCarte(); }}>Partager</button>
-            <button type="button" class="pc-non" onClick={fermerCarte}>Fermer</button>
+          <div class="pc-feuille" role="dialog" aria-label={tx('Partager ma séance')} onClick={(e) => e.stopPropagation()}>
+            <img class="pc-image" src={carte.url} alt={tx('Carte de ta séance')} />
+            <button type="button" class="pc-go" onClick={async () => { const r = await partagerCarte(carte.blob, carte.titre); if (r !== 'annule') fermerCarte(); }}>{tx('Partager')}</button>
+            <button type="button" class="pc-non" onClick={fermerCarte}>{tx('Fermer')}</button>
           </div>
         </div>
       ), document.body)}

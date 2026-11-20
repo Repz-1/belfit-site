@@ -3,6 +3,7 @@
 // un seul bouton, aucun prix (le prix et le bon tarif sont sur la page de
 // l'offre, qui connait le cas du client). Visible seulement si le blocage est
 // applique (voir store/acces-nutrition.js).
+import { tx } from '../i18n/ecrans.js';
 import { allerOnglet } from './BottomNav.jsx';
 import '../styles/alimentation-verrouillee.css';
 import { APP_ANDROID, MSG_INACTIF } from '../services/app-android.js';
@@ -12,10 +13,10 @@ export function AlimentationVerrouillee({ cause = 'jamais', fin = null, commande
   // App Android (Play) : message neutre, sans offre, sans lien, sans prix.
   if (APP_ANDROID) {
     return (
-      <div class="vr-carte" role="region" aria-label="Alimentation" data-android-inactif>
+      <div class="vr-carte" role="region" aria-label={tx('Alimentation')} data-android-inactif>
         <span class="vr-trait" aria-hidden="true" />
-        <p class="vr-kicker">ALIMENTATION</p>
-        <p class="vr-txt">{MSG_INACTIF}{expire ? ' Tes anciens repas restent consultables ci-dessous.' : ''}</p>
+        <p class="vr-kicker">{tx('ALIMENTATION')}</p>
+        <p class="vr-txt">{tx(MSG_INACTIF)}{expire ? tx(' Tes anciens repas restent consultables ci-dessous.') : ''}</p>
       </div>
     );
   }
@@ -23,12 +24,12 @@ export function AlimentationVerrouillee({ cause = 'jamais', fin = null, commande
   // sans titre, toujours avec le bouton d'achat (jamais « Bientot disponible ») :
   // il mene a l'onglet de l'offre (parcours Mollie existant).
   const puces = expire
-    ? [fin ? `Accès terminé le ${fin}` : 'Accès terminé', 'Tes anciens repas restent consultables', 'Entraînement offert']
-    : ['Tu remplis un questionnaire personnalisé', 'Ton plan repas sur mesure, livré sous 48 h', 'Entraînement offert'];
+    ? [fin ? tx('Accès terminé le {d}', { d: fin }) : tx('Accès terminé'), tx('Tes anciens repas restent consultables'), tx('Entraînement offert')]
+    : [tx('Tu remplis un questionnaire personnalisé'), tx('Ton plan repas sur mesure, livré sous 48 h'), tx('Entraînement offert')];
   return (
-    <div class="vr-carte vr-bulle" role="region" aria-label="Alimentation">
+    <div class="vr-carte vr-bulle" role="region" aria-label={tx('Alimentation')}>
       {puces.length > 0 && <ol class="vr-puces">{puces.map(t => <li key={t}>{t}</li>)}</ol>}
-      <button class="vr-btn" onClick={() => allerOnglet('premium')}>{expire ? 'Reprendre mon programme' : 'Débloquer mon programme'}</button>
+      <button class="vr-btn" onClick={() => allerOnglet('premium')}>{tx(expire ? 'Reprendre mon programme' : 'Débloquer mon programme')}</button>
     </div>
   );
 }

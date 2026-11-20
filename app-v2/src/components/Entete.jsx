@@ -1,4 +1,5 @@
 import { BandeauCoach } from './BandeauCoach.jsx';
+import { tx } from '../i18n/ecrans.js';
 import '../styles/coach-page.css';
 import { signal } from '@preact/signals';
 import { utilisateur } from '../services/firebase.js';
@@ -73,7 +74,7 @@ export function Entete({ retour, sansBandeau } = {}) {
             if (typeof retour === 'function') retour();
             else ongletActif.value = 'journal';
           }}
-          aria-label="Retour"
+          aria-label={tx('Retour')}
         >
           <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" /></svg>
         </button>
@@ -93,7 +94,7 @@ export function Entete({ retour, sansBandeau } = {}) {
         <button class="j-btn-icone" onClick={ouvrirProfil} aria-label="Profil">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6" /><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" /></svg>
         </button>
-        <button class="j-btn-icone" onClick={ouvrirReglages} aria-label="Réglages">
+        <button class="j-btn-icone" onClick={ouvrirReglages} aria-label={tx('Réglages')}>
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" /><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1.03 1.56V21a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1.11-1.56 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.87 1.7 1.7 0 00-1.56-1.03H3a2 2 0 110-4h.09a1.7 1.7 0 001.56-1.11 1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34h.01A1.7 1.7 0 0010 4.09V4a2 2 0 114 0v.09a1.7 1.7 0 001.03 1.56h.01a1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06a1.7 1.7 0 00-.34 1.87v.01a1.7 1.7 0 001.56 1.03H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.51 1.02z" /></svg>
         </button>
       </div>

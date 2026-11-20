@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { tx, locale } from '../i18n/ecrans.js';
 import { planCoachActif, programme } from './BelfitPlus.jsx';
 import { signal } from '@preact/signals';
 
@@ -141,7 +142,7 @@ export function DayDashboard() {
   // v661 (Raci 04/11) : en lecture seule aussi -> jamais le 4300 par defaut ;
   // un plan envoye qui commence plus tard affiche « Plan reçu · … ».
   const cadran = etatCadran({ ro, reserve: calculReserveCoach.value, planActif: planCoachActif.value,
-    prog: programme.value, auj: aujourdhuiBxl() });
+    prog: programme.value, auj: aujourdhuiBxl(), tr: tx, loc: locale() });
   const enPreparation = cadran.masquer;
   const ratio = !enPreparation && obj.kcal > 0 ? tot.kcal / obj.kcal : 0;
   const d = new Date();
@@ -164,7 +165,7 @@ export function DayDashboard() {
     ? `${jours[dOuvert.getDay()] || ''} ${dOuvert.getDate()} ${moisCourt[dOuvert.getMonth()] || ''}`
     : `${t('today')}, ${d.getDate()} ${moisCourt[d.getMonth()] || ''}`;
   const dateTexteAff = ro
-    ? `Journal du ${(jours[dOuvert.getDay()] || '').toLowerCase()} ${dOuvert.getDate()} ${moisCourt[dOuvert.getMonth()] || ''}`.replace(/\s+/g, ' ').trim()
+    ? tx('Journal du {d}', { d: `${(jours[dOuvert.getDay()] || '').toLowerCase()} ${dOuvert.getDate()} ${moisCourt[dOuvert.getMonth()] || ''}`.replace(/\s+/g, ' ').trim() })
     : dateTexte;
   const jourOuvert = retard
     ? `${(jours[dOuvert.getDay()] || '').toLowerCase()} ${dOuvert.getDate()} ${moisCourt[dOuvert.getMonth()] || ''}`.trim()

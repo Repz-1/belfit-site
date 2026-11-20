@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
+import { tx } from '../i18n/ecrans.js';
 import { enregistrerSeance, supprimerSeance, seanceMemeJour } from '../store/seances.js';
 import { poserBrouillon, demarrerSeanceActive, abandonnerSeance, marquerFaite, seanceActive, seanceRefs } from '../store/seance-active.js';
 import { planifs } from '../store/programme.js';
@@ -196,6 +197,8 @@ function disquesPourCote(total, barre) {
   return { pris, reste };
 }
 const kgTxt = (v) => String(Math.round(v * 100) / 100).replace('.', ',');
+// « 4 séries × 8-10 reps » dans la langue de l'app (la donnee reste en francais).
+const metaAff = (m) => String(m || '').replace(/séries?/g, (x) => tx(x === 'série' ? 'série' : 'séries')).replace(/\breps\b/g, tx('reps'));
 function lireBarre(nom) {
   try { const v = +localStorage.getItem('belfit_barre'); if (BARRES.includes(v)) return v; } catch (e) {}
   return /barre ez/i.test(nom || '') ? 10 : 20;
@@ -471,9 +474,9 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
   if (!courant) {
     return (
       <div class="sg">
-        <div class="sg-fin-t">Aucun exercice</div>
-        <div class="sg-fin-s">Cette séance n'a pas d'exercices enregistrés.</div>
-        <button class="sg-go" onClick={revenir}>Retour</button>
+        <div class="sg-fin-t">{tx('Aucun exercice')}</div>
+        <div class="sg-fin-s">{tx("Cette séance n'a pas d'exercices enregistrés.")}</div>
+        <button class="sg-go" onClick={revenir}>{tx('Retour')}</button>
       </div>
     );
   }
@@ -486,7 +489,7 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
   return (
     <div class="sg">
       <div class="sg-hd">
-        <span class="sg-hd-t">Exercice {iExo + 1} sur {refs.length}</span>
+        <span class="sg-hd-t">{tx('Exercice {i} sur {n}', { i: iExo + 1, n: refs.length })}</span>
         <span class="sg-hd-c">{mmss(secondes)}</span>
       </div>
       <div class="sg-prog"><span style={{ width: avance + '%' }} /></div>
@@ -516,8 +519,8 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
         </div>
         <div class="sg-voile" />
         <div class="sg-haut">
-          <span>{NOMS_MUSCLES[courant.mKey] || ''}</span>
-          <span>{courant.ex.meta}</span>
+          <span>{NOMS_MUSCLES[courant.mKey] ? t('mus_' + courant.mKey) : ''}</span>
+          <span>{metaAff(courant.ex.meta)}</span>
         </div>
         {/* Raci, 5/09 : « un bouton dans le cas ou l'utilisateur ne
             possede pas la possibilite de faire tel exercice, car il
@@ -525,20 +528,20 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
             constate que la machine est prise ou absente. */}
         {/* 13/11 Raci : deux fleches et « Alternative » au lieu de
             « Pas ce materiel ? ». */}
-        <button class="sg-swap" aria-label="Remplacer par un exercice équivalent" onClick={() => setChoixMateriel(true)}>
+        <button class="sg-swap" aria-label={tx('Remplacer par un exercice équivalent')} onClick={() => setChoixMateriel(true)}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" /></svg>
-          Alternative
+          {tx('Alternative')}
         </button>
         {materielPrecis(courant.ex) === 'barre' && (
-          <button class="sg-swap sg-disques" aria-label="Calculer les disques à mettre"
+          <button class="sg-swap sg-disques" aria-label={tx('Calculer les disques à mettre')}
             onClick={() => { setBarre(lireBarre(courant.ex.nom)); setDisques(true); }}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h20M6 7v10M9 5v14M15 5v14M18 7v10" /></svg>
-            Disques
+            {tx('Disques')}
           </button>
         )}
         <div class="sg-bas">
           <div class="sg-serie-t">
-            {enCorrection ? 'CORRECTION · ' : ''}SÉRIE {iSerie + 1} SUR {seriesAttendues}
+            {enCorrection ? tx('CORRECTION · ') : ''}{tx('SÉRIE {i} SUR {n}', { i: iSerie + 1, n: seriesAttendues })}
           </div>
           <div class="sg-exo-n">{courant.ex.nom}</div>
           {/* 13/11 Raci : « pas intuitif le nombre de repetitions et
@@ -548,30 +551,30 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
               chiffre ouvre toujours le clavier. */}
           <div class="sg-champs">
             <div class="sg-ch">
-              <span class="sg-ch-l">Charge</span>
+              <span class="sg-ch-l">{tx('Charge')}</span>
               <div class="sg-ch-r">
-                <button type="button" class="sg-pm" aria-label="2,5 kg de moins"
+                <button type="button" class="sg-pm" aria-label={tx('2,5 kg de moins')}
                   onClick={() => setKg(pas(kg, -2.5, 0))}>−</button>
                 <label class="sg-ch-v">
                   <input type="number" inputMode="decimal" value={kg}
-                    onInput={(e) => setKg(e.currentTarget.value)} placeholder="0" aria-label="Charge en kg" />
+                    onInput={(e) => setKg(e.currentTarget.value)} placeholder="0" aria-label={tx('Charge en kg')} />
                   <i>kg</i>
                 </label>
-                <button type="button" class="sg-pm" aria-label="2,5 kg de plus"
+                <button type="button" class="sg-pm" aria-label={tx('2,5 kg de plus')}
                   onClick={() => setKg(pas(kg, 2.5, 0))}>+</button>
               </div>
             </div>
             <div class="sg-ch">
-              <span class="sg-ch-l">Répétitions</span>
+              <span class="sg-ch-l">{tx('Répétitions')}</span>
               <div class="sg-ch-r">
-                <button type="button" class="sg-pm" aria-label="Une répétition de moins"
+                <button type="button" class="sg-pm" aria-label={tx('Une répétition de moins')}
                   onClick={() => setReps(pas(reps, -1, 0))}>−</button>
                 <label class="sg-ch-v">
                   <input type="number" inputMode="numeric" value={reps}
-                    onInput={(e) => setReps(e.currentTarget.value)} placeholder="0" aria-label="Répétitions" />
-                  <i>reps</i>
+                    onInput={(e) => setReps(e.currentTarget.value)} placeholder="0" aria-label={tx('Répétitions')} />
+                  <i>{tx('reps')}</i>
                 </label>
-                <button type="button" class="sg-pm" aria-label="Une répétition de plus"
+                <button type="button" class="sg-pm" aria-label={tx('Une répétition de plus')}
                   onClick={() => setReps(pas(reps, 1, 0))}>+</button>
               </div>
             </div>
@@ -583,46 +586,46 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
           retour en arriere. Celle qui attend ne se touche pas, elle
           est deja a l'ecran. */}
       <div class="sg-pts">
-        <button type="button" class="sg-serie-pm" aria-label="Une série de moins"
+        <button type="button" class="sg-serie-pm" aria-label={tx('Une série de moins')}
           disabled={seriesAttendues <= 1 || seriesAttendues - 1 < faites.length}
-          onClick={retirerSerie}>− Série</button>
+          onClick={retirerSerie}>{tx('− Série')}</button>
         {pastilles.map(n => (
           n < faites.length ? (
             <button key={n} class={'sg-pt ok' + (n === iSerie ? ' vue' : '')}
-              aria-label={'Corriger la série ' + (n + 1)}
+              aria-label={tx('Corriger la série {n}', { n: n + 1 })}
               onClick={() => setISerie(n)}>{n + 1}</button>
           ) : (
             <span key={n} class={'sg-pt' + (n === iSerie ? ' now' : '')}>{n + 1}</span>
           )
         ))}
-        <button type="button" class="sg-serie-pm" aria-label="Une série de plus"
-          onClick={ajouterSerie}>+ Série</button>
+        <button type="button" class="sg-serie-pm" aria-label={tx('Une série de plus')}
+          onClick={ajouterSerie}>{tx('+ Série')}</button>
       </div>
 
       {repos > 0 && (
         <div class="sg-repos">
-          <span class="sg-repos-l">REPOS</span>
+          <span class="sg-repos-l">{tx('REPOS')}</span>
           <span class="sg-repos-c">{mmss(repos)}</span>
           <button class="sg-repos-b" onClick={() => setRepos(r => Math.max(1, r - 30))}>−30</button>
           <button class="sg-repos-b" onClick={() => setRepos(r => r + 30)}>+30</button>
-          <button class="sg-repos-x" onClick={() => setRepos(0)}>Arrêter</button>
+          <button class="sg-repos-x" onClick={() => setRepos(0)}>{tx('Arrêter')}</button>
         </div>
       )}
 
       <button class={'sg-go' + (enCorrection ? ' sg-go--corr' : '')}
         onClick={enCorrection ? corriger : suivant}>
-        {enCorrection ? 'Reprendre ma série ›'
+        {tx(enCorrection ? 'Reprendre ma série ›'
           : (faites.length + 1 >= seriesAttendues && iExo + 1 >= refs.length
-            ? 'Terminer ›' : 'Suivant ›')}
+            ? 'Terminer ›' : 'Suivant ›'))}
       </button>
       {/* Une rangee, des mots courts (Raci, 14/10) : en libelles
           complets les quatre boutons passaient sur deux lignes, en
           gris pale sur beige. Le libelle complet reste lu par les
           lecteurs d'ecran. Toujours un seul « Suivant » ; pas de chrono. */}
       <div class="sg-sec">
-        {libre && <button aria-label={t('ms_ajouter')} onClick={() => allerVers('selection')}>+ Exercice</button>}
-        <button aria-label="Passer l'exercice" onClick={passerExercice}>Passer</button>
-        <button aria-label="Terminer la séance" onClick={() => setTermine(true)}>Terminer</button>
+        {libre && <button aria-label={t('ms_ajouter')} onClick={() => allerVers('selection')}>{tx('+ Exercice')}</button>}
+        <button aria-label={tx("Passer l'exercice")} onClick={passerExercice}>{tx('Passer')}</button>
+        <button aria-label={tx('Terminer la séance')} onClick={() => setTermine(true)}>{tx('Terminer')}</button>
         <button class="sg-jeter" type="button" onClick={() => setJeter(true)}>
           {t('sea_abandonner')}
         </button>
@@ -635,9 +638,9 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
       {choixMateriel && createPortal(
         <div class="sg-swap-voile" onClick={(e) => { if (e.target === e.currentTarget) setChoixMateriel(false); }}>
           <div class="sg-swap-carte">
-            <div class="sg-swap-t">Remplacer l'exercice</div>
+            <div class="sg-swap-t">{tx("Remplacer l'exercice")}</div>
             <div class="sg-swap-l">
-              Même muscle, même mouvement, avec un autre matériel. Choisis ce que tu as sous la main.
+              {tx('Même muscle, même mouvement, avec un autre matériel. Choisis ce que tu as sous la main.')}
             </div>
             {equivalents(courant.mKey, courant.ex).map(alt => (
               <button key={alt.nom} class="sg-swap-o"
@@ -653,7 +656,7 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
                 <span class="sg-swap-fl" aria-hidden="true">&rsaquo;</span>
               </button>
             ))}
-            <button class="sg-swap-x" onClick={() => setChoixMateriel(false)}>Annuler</button>
+            <button class="sg-swap-x" onClick={() => setChoixMateriel(false)}>{tx('Annuler')}</button>
           </div>
         </div>,
         document.body
@@ -669,17 +672,17 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
         return (
           <div class="sg-swap-voile" onClick={(e) => { if (e.target === e.currentTarget) setDisques(false); }}>
             <div class="sg-swap-carte dq">
-              <div class="sg-swap-t">Disques par côté</div>
+              <div class="sg-swap-t">{tx('Disques par côté')}</div>
               <div class="dq-charge">
-                <button type="button" class="dq-pm" aria-label="2,5 kg de moins" onClick={() => setKg(pas(kg, -2.5, 0))}>−</button>
+                <button type="button" class="dq-pm" aria-label={tx('2,5 kg de moins')} onClick={() => setKg(pas(kg, -2.5, 0))}>−</button>
                 <b>{kgTxt(total)} kg</b>
-                <button type="button" class="dq-pm" aria-label="2,5 kg de plus" onClick={() => setKg(pas(kg, 2.5, 0))}>+</button>
+                <button type="button" class="dq-pm" aria-label={tx('2,5 kg de plus')} onClick={() => setKg(pas(kg, 2.5, 0))}>+</button>
               </div>
-              <div class="dq-barres" role="group" aria-label="Poids de la barre">
+              <div class="dq-barres" role="group" aria-label={tx('Poids de la barre')}>
                 {BARRES.map((b) => (
                   <button key={b} type="button" class={'dq-barre' + (b === barre ? ' on' : '')} aria-pressed={b === barre}
                     onClick={() => { setBarre(b); try { localStorage.setItem('belfit_barre', String(b)); } catch (e) {} }}>
-                    Barre {b} kg
+                    {tx('Barre {n} kg', { n: b })}
                   </button>
                 ))}
               </div>
@@ -692,11 +695,11 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
               </div>
               <p class="dq-txt">
                 {total <= barre
-                  ? (total < barre ? 'La barre seule pèse ' + barre + ' kg.' : 'La barre seule, sans disque.')
-                  : groupes.map((g) => g.n + ' × ' + kgTxt(g.d.kg) + ' kg').join(' + ') + ' de chaque côté.'}
+                  ? (total < barre ? tx('La barre seule pèse {n} kg.', { n: barre }) : tx('La barre seule, sans disque.'))
+                  : groupes.map((g) => g.n + ' × ' + kgTxt(g.d.kg) + ' kg').join(' + ') + tx(' de chaque côté.')}
               </p>
-              {reste > 0 && <p class="dq-reste">Il manque {kgTxt(reste * 2)} kg pour tomber juste avec ces disques.</p>}
-              <button class="sg-swap-x" onClick={() => setDisques(false)}>Fermer</button>
+              {reste > 0 && <p class="dq-reste">{tx('Il manque {n} kg pour tomber juste avec ces disques.', { n: kgTxt(reste * 2) })}</p>}
+              <button class="sg-swap-x" onClick={() => setDisques(false)}>{tx('Fermer')}</button>
             </div>
           </div>
         );
