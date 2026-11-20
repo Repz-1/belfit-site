@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { nomExo } from '../i18n/exercices.js';
 import { tx } from '../i18n/ecrans.js';
 import { createPortal } from 'preact/compat';
 import { MUSCLES, EXERCISES, NIVEAUX, LIEUX, OPTIONS_DOMICILE,
@@ -40,7 +41,7 @@ function poserLieu(v) {
 
 
 import { retourEntrainer } from './Entrainer.jsx';
-import { t } from '../i18n/index.js';
+import { t, langue } from '../i18n/index.js';
 import { GROUPES } from '../store/entrainement.js';
 import '../legacy/selection-exercices.scoped.css';
 import { PhotoExo } from './PhotoExo.jsx';
@@ -130,7 +131,8 @@ export function SelectionExercices({ enCreation = false } = {}) {
   const mots = normaliser(recherche).split(/\s+/).filter(Boolean);
   const correspond = (ex) => {
     if (!mots.length) return true;
-    const cible = normaliser(ex.nom);
+    // Recherche sur le nom affiche ET le nom francais (20/11).
+    const cible = normaliser(ex.nom + ' ' + nomExo(ex.nom));
     return mots.every(m => cible.includes(m));
   };
 
@@ -139,7 +141,7 @@ export function SelectionExercices({ enCreation = false } = {}) {
     .filter(o => exoVisible(o.ex) && correspond(o.ex))
     // Affichage alphabetique : les noms traduits le 12/11 ne sont plus
     // a leur place dans la base, ou l'ordre (les positions) ne change pas.
-    .sort((a, b) => a.ex.nom.localeCompare(b.ex.nom, 'fr'));
+    .sort((a, b) => nomExo(a.ex.nom).localeCompare(nomExo(b.ex.nom), langue.value));
 
   // Une recherche porte sur TOUT le catalogue, pas sur le seul muscle
   // affiche : chercher « squat » depuis l'onglet Pecs ne doit pas
@@ -281,12 +283,12 @@ export function SelectionExercices({ enCreation = false } = {}) {
                   l'ajouter a sa seance pour decouvrir a quoi il
                   ressemblait, donc s'engager avant de savoir. */}
               <div class="ex-photo" role="button" tabIndex={0}
-                aria-label={tx('Voir {nom}', { nom: ex.nom })}
+                aria-label={tx('Voir {nom}', { nom: nomExo(ex.nom) })}
                 onClick={() => setFiche(i)}>
                 <PhotoExo imgId={ex.imgId} taille={240} />
               </div>
               <div class="ex-info" onClick={() => setFiche(i)}>
-                <div class="ex-name">{ex.nom}</div>
+                <div class="ex-name">{nomExo(ex.nom)}</div>
                 <div class="ex-equip">{equipDe(ex)}</div>
                 {/* Raci, 14/10 (« corrige tout ») : la mention ne
                     s'affiche que si l'exercice NE convient PAS a tous.
@@ -449,7 +451,7 @@ function FicheExercice({ mKey, ex, choisi, basculer, fermer }) {
       <div class="exo-fiche-carte exo-fiche--bande">
         <div class="exo-fiche-bande" style={{ background: couleur }}>
           <div class="exo-fiche-muscle">{groupe ? t('mus_' + groupe.k) : ''}</div>
-          <h2>{ex.nom}</h2>
+          <h2>{nomExo(ex.nom)}</h2>
           <button class="exo-fiche-fermer" onClick={fermer} aria-label={tx('Fermer')}>×</button>
         </div>
 

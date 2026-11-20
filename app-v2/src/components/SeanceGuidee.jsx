@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
+import { nomExo } from '../i18n/exercices.js';
 import { tx } from '../i18n/ecrans.js';
 import { enregistrerSeance, supprimerSeance, seanceMemeJour } from '../store/seances.js';
 import { poserBrouillon, demarrerSeanceActive, abandonnerSeance, marquerFaite, seanceActive, seanceRefs } from '../store/seance-active.js';
@@ -543,7 +544,7 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
           <div class="sg-serie-t">
             {enCorrection ? tx('CORRECTION · ') : ''}{tx('SÉRIE {i} SUR {n}', { i: iSerie + 1, n: seriesAttendues })}
           </div>
-          <div class="sg-exo-n">{courant.ex.nom}</div>
+          <div class="sg-exo-n">{nomExo(courant.ex.nom)}</div>
           {/* 13/11 Raci : « pas intuitif le nombre de repetitions et
               de charge ». Le libelle passe AU-DESSUS de la valeur, et
               chaque champ a ses boutons − et + (2,5 kg, 1 rep) : on
@@ -650,7 +651,7 @@ export function SeanceGuidee({ seanceId, titre, retour, libre }) {
                 }}>
                 <span class="sg-swap-ph"><PhotoExo imgId={alt.imgId} taille={240} /></span>
                 <span class="sg-swap-tx">
-                  <span class="sg-swap-n">{alt.nom}</span>
+                  <span class="sg-swap-n">{nomExo(alt.nom)}</span>
                   <span class="sg-swap-m">{equipDe(alt)}</span>
                 </span>
                 <span class="sg-swap-fl" aria-hidden="true">&rsaquo;</span>
