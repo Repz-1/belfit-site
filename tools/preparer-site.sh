@@ -12,7 +12,7 @@ for f in index.html cgv.html confidentialite.html mentions-legales.html \
          suppression-compte.html plans.html; do
   [ -f "$f" ] && cp "$f" _site/
 done
-cp *.png sw.js i18n.js i18n-strings.js manifest.json CNAME robots.txt sitemap.xml _site/
+cp *.png sw.js analytics.js i18n.js i18n-strings.js manifest.json CNAME robots.txt sitemap.xml _site/
 cp -r img fonts v2 .well-known _site/
 [ -d __ ] && cp -r __ _site/
 # coach.html importe ces deux modules a l'execution (sans dependances)
