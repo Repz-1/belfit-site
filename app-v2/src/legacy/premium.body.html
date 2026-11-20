@@ -75,10 +75,6 @@ function logout() {
     <span class="hero-badge">✦ PREMIUM</span>
     <h1 data-i18n-html="pl_hero_h1">Ton coach nutrition,<br>dans ta poche.</h1>
     <p data-i18n="pl_hero_p">Calories, macros et plan sur mesure — comme un diététicien, sans y penser.</p>
-    <div class="hero-foot">
-        <div class="hero-price"><span class="hp-from" data-i18n="pl_from">dès</span> <b>3,99€</b><span class="hp-mo" data-i18n="pl_per_mo">/mois</span></div>
-        <a class="hero-cta" onclick="scrollFormules()" data-i18n="pl_see_plans">Voir les formules</a>
-    </div>
 </div>
 
 <h2 class="section-title" data-i18n="pl_daily">Ton quotidien avec Premium</h2>
@@ -133,42 +129,6 @@ function logout() {
         
         </div>
 
-        <h3 id="formules" style="font-size:18px;font-weight:800;letter-spacing:-.01em;margin:26px 0 4px;scroll-margin-top:16px;" data-i18n="pl_choose">Choisis ta formule</h3>
-        <p style="font-size:13px;color:var(--text-dim);font-weight:500;margin-bottom:16px;" data-i18n="pl_choose_sub">Le tarif au mois baisse avec la durée. Sans engagement.</p>
-
-        <div class="price-cards">
-            <div class="pc" id="pcMensuel" onclick="choisirFormule('mensuel')">
-                <div class="pc-dur">1<small data-i18n="pl_month_w">mois</small></div>
-                <div class="pc-price">7,99 €</div>
-                <div class="pc-permo">7,99 € <span data-i18n="pl_slash_mo">/ mois</span></div>
-                <div class="pc-note" data-i18n="pl_no_commit">Sans engagement</div>
-            </div>
-
-            <div class="pc selected" id="pcTrimestriel" onclick="choisirFormule('trimestriel')">
-                <span class="pc-badge" data-i18n="pl_popular">POPULAIRE</span>
-                <div class="pc-dur">3<small data-i18n="pl_month_w">mois</small></div>
-                <div class="pc-price">19,99 €</div>
-                <div class="pc-permo">6,66 € <span data-i18n="pl_slash_mo">/ mois</span></div>
-                <div class="pc-note" data-i18n="pl_per_quarter">Facturé par trimestre</div>
-            </div>
-
-            <div class="pc" id="pcAnnuel" onclick="choisirFormule('annuel')">
-                <span class="pc-badge gold">−50%</span>
-                <div class="pc-dur">12<small data-i18n="pl_month_w">mois</small></div>
-                <div class="pc-price">47,88 €</div>
-                <div class="pc-permo">3,99 € <span data-i18n="pl_slash_mo">/ mois</span></div>
-                <div class="pc-note" data-i18n="pl_best_price">Meilleur prix</div>
-            </div>
-        </div>
-        <div class="badge-be-mini">🇧🇪 <span data-i18n="pl_belgian">App belge indépendante</span></div>
-        <div class="cafe-line" data-i18n="pl_coffee">À partir de 0,92 € par semaine — moins cher qu'un café.</div>
-
-        <div class="reassure">
-            <span><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg><span data-i18n="pl_secure">Paiement sécurisé</span></span>
-            <span><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span data-i18n="pl_cancel_any">Résiliable à tout moment</span></span>
-            <span><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span data-i18n="pl_no_commit">Sans engagement</span></span>
-        </div>
-        <button class="plan-btn premium" id="planPayBtn" onclick="payerFormule()" data-i18n="pl_unlock">Débloquer Premium</button>
     </div>
 
     <!-- GRATUIT en dessous -->
@@ -298,7 +258,6 @@ function toggleFaq(element){
 
 function goToPremium(){
     // Redirection temporaire vers questionnaire
-    // Sera remplacé par lien Lemonqueezy plus tard
     window.location.href = 'questionnaire.html';
 }
 
@@ -334,15 +293,8 @@ function ouvrirPaiement(lien){
             return;
         }
         enregistrerConsentement();
-        // Transmettre l'uid Firebase à LemonSqueezy (le webhook en a besoin pour activer le bon compte)
+        // 20/11 : formules Lemon Squeezy retirees ; plus aucun lien de paiement ici.
         let url = lienPaiement;
-        // Pays de facturation prérempli : Belgique
-        url += (url.indexOf('?') === -1 ? '?' : '&') + 'checkout[billing_address][country]=BE';
-        const usr = (window.firebase && firebase.auth) ? firebase.auth().currentUser : null;
-        if(usr && usr.uid){
-            url += '&checkout[custom][uid]=' + encodeURIComponent(usr.uid);
-            if(usr.email){ url += '&checkout[email]=' + encodeURIComponent(usr.email); }
-        }
         // Paiement TOUJOURS en plein écran (jamais dans le panneau du shell)
         setTimeout(() => {
             try { (window.top || window).location.href = url; }
@@ -397,63 +349,6 @@ async function validerCode(){
     msg.className = 'promo-msg err';
 }
 
-// ===== FORMULE ANNUEL / MENSUEL =====
-const FORMULES = {
-    trimestriel: {
-        lien:'https://belfit.lemonsqueezy.com/checkout/buy/62c379de-5b7e-4a8d-868f-87595f4d7733',
-        features:[
-            ['<strong>Programme alimentaire sur mesure</strong>'],
-            ['Bibliothèque de programmes d\'entraînement'],
-            ['Calculateur de calories avancé'],
-            ['Suggestions « Idées recettes »'],
-            ['Liste de courses automatique'],
-            ['Scan code-barres (ajout auto)'],
-            ['Ajout vocal intelligent (IA)'],
-            ['Historique illimité'],
-            ['<strong>Le bon équilibre — 6,66 €/mois</strong>']
-        ]
-    },
-    annuel: {
-        lien:'https://belfit.lemonsqueezy.com/checkout/buy/b66fe18e-6b2a-4953-ab29-d5b4ab99e04a',
-        features:[
-            ['<strong>Programme alimentaire sur mesure</strong>'],
-            ['Bibliothèque de programmes d\'entraînement'],
-            ['Calculateur de calories avancé'],
-            ['Suggestions « Idées recettes »'],
-            ['Liste de courses automatique'],
-            ['Scan code-barres (ajout auto)'],
-            ['Ajout vocal intelligent (IA)'],
-            ['Historique illimité'],
-            ['<strong>Meilleur prix — 3,99 €/mois</strong>']
-        ]
-    },
-    mensuel: {
-        lien:'https://belfit.lemonsqueezy.com/checkout/buy/390c6785-f085-4452-b43a-6206fbc3c106',
-        features:[
-            ['<strong>Programme alimentaire sur mesure</strong>'],
-            ['Bibliothèque de programmes d\'entraînement'],
-            ['Calculateur de calories avancé'],
-            ['Suggestions « Idées recettes »'],
-            ['Liste de courses automatique'],
-            ['Scan code-barres (ajout auto)'],
-            ['Ajout vocal intelligent (IA)'],
-            ['Historique illimité'],
-            ['<strong>Sans engagement</strong>']
-        ]
-    }
-};
-let formuleActive = 'annuel';
-
-function choisirFormule(f){
-    formuleActive = f;
-    document.getElementById('pcMensuel').classList.toggle('selected', f==='mensuel');
-    document.getElementById('pcTrimestriel').classList.toggle('selected', f==='trimestriel');
-    document.getElementById('pcAnnuel').classList.toggle('selected', f==='annuel');
-}
-function payerFormule(){ ouvrirPaiement(FORMULES[formuleActive].lien); }
-function scrollFormules(){ const el = document.getElementById('formules'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }
-// Init
-choisirFormule('trimestriel');
 
 // « Continuer en standard » : route selon l'état du compte
 function continuerStandard(){

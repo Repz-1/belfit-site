@@ -8,6 +8,16 @@
 // Aucune adresse e-mail, aucune cle dans ce fichier.
 import { signal } from '@preact/signals';
 import { utilisateur } from './firebase.js';
+import { langue, t } from '../i18n/index.js';
+
+// 20/11 : le serveur renvoie un MOTIF (inconnu, expire...) ; le texte est
+// traduit ici, dans la langue de l'app. Le message francais du serveur ne
+// sert plus que de secours pour un motif inconnu de l'app.
+const messageCode = (motif, secours) => {
+  const k = 'red_' + motif;
+  const m = motif ? t(k) : '';
+  return m && m !== k ? m : (secours || t('red_serveur'));
+};
 
 const BASE = 'https://europe-west1-repz-baf60.cloudfunctions.net/';
 export const paiementOuvert = signal(false);   // ce compte peut payer
@@ -52,12 +62,13 @@ export function verifierAcces() {
 // Code de reduction : sur les 80 € (type 'plan', le seul produit depuis le 01/11).
 // Le montant n'est JAMAIS envoye : le serveur le recalcule depuis le code.
 export async function payerMollie(type, code) {
-  const corps = { type };
+  // La langue choisit la page Mollie (fr_BE, nl_BE, en_US) et le libelle du paiement.
+  const corps = { type, langue: langue.peek() };
   if (type === 'plan' && code) corps.code = code;
   const r = await appeler('creerPaiementMollie', corps);
   if (!r || r.statut !== 200 || !r.d.url) {
     const e = new Error((r && r.d && r.d.motif) || 'paiement');
-    if (r && r.d && r.d.message) { e.motif = r.d.motif; e.messageCode = r.d.message; }   // refus lie au code
+    if (r && r.d && r.d.message) { e.motif = r.d.motif; e.messageCode = messageCode(r.d.motif, r.d.message); }   // refus lie au code
     throw e;
   }
   window.location.href = r.d.url;
@@ -65,10 +76,9 @@ export async function payerMollie(type, code) {
 
 // Le client saisit un code : le serveur dit s'il est valable et a quel prix.
 // Retourne {ok:true, ...prix} ou {ok:false, message}. Ne reserve rien.
-const MSG_ERREUR = 'Le code n\'a pas pu être vérifié. Réessaie dans un instant.';
 export async function verifierCodeReduction(code) {
   const saisi = String(code || '').trim();
-  if (!saisi) return { ok: false, message: 'Saisis ton code de réduction.' };
+  if (!saisi) return { ok: false, message: t('red_vide') };
   try {
     const r = await appeler('verifierCodeReduction', { code: saisi, type: 'plan' });
     if (r && r.statut === 200 && r.d && r.d.ok) {
@@ -76,8 +86,8 @@ export async function verifierCodeReduction(code) {
       return { ok: true };
     }
     reduction.value = null;
-    return { ok: false, message: (r && r.d && r.d.message) || MSG_ERREUR };
-  } catch (e) { reduction.value = null; return { ok: false, message: MSG_ERREUR }; }
+    return { ok: false, message: messageCode(r && r.d && r.d.motif, r && r.d && r.d.message) };
+  } catch (e) { reduction.value = null; return { ok: false, message: t('red_serveur') }; }
 }
 
 // type = 'plan' | 'maj', lu dans l'adresse de retour. onPaye(type) est appele

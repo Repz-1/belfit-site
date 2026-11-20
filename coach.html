@@ -1403,7 +1403,7 @@ $('btnEnvoi').addEventListener('click', () => {
     extra = { versions: liste };
   }
   b.disabled = true; b.textContent = 'Envoi…';
-  appel('deposer', { client, note: $('note').value.trim(), langue: 'fr', ...extra }).then((d) => {
+  appel('deposer', { client, note: $('note').value.trim(), ...extra })   /* 20/11 : langue = celle du compte du client, lue par le serveur */.then((d) => {
     if (d && d.ok) {
       afficher(msg, d.mailEnvoye ? 'Programme envoyé : dans l\'app et par e-mail.'
         : 'Programme déposé dans l\'app. L\'e-mail n\'a pas pu partir, le client le voit quand même.', true);

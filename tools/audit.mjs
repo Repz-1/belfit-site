@@ -2440,10 +2440,13 @@ const DECALAGE_SW_V2 = 232;
 // client : lisible, elle se laisserait enumerer.
 // ------------------------------------------------------------
 {
-  const pp = lire('app-v2/src/components/PremiumPage.jsx');
+  let pp = lire('app-v2/src/components/PremiumPage.jsx');
   const fn = lire('functions/index.js');
   const rules = lire('firestore.rules');
   const soucis = [];
+  // 20/11 : la page de vente Premium est retiree ; la saisie d'un code vit
+  // dans CodeAcces.jsx. La regle suit le composant qui porte le champ.
+  if (pp && !/utiliserCode/.test(pp)) pp = lire('app-v2/src/components/CodeAcces.jsx');
   if (pp) {
     if (!/utiliserCode/.test(pp)) soucis.push('la page n\'appelle plus la verification serveur');
     // Un code en dur dans le composant = la faille de la V1, reprise.
@@ -2487,7 +2490,8 @@ const DECALAGE_SW_V2 = 232;
     soucis.push('interface ' + vCli[1] + ' mais serveur ' + vSrv[1] + ' : le micro et la photo ne suivront pas');
   }
   const pp = lire('app-v2/src/components/PremiumPage.jsx');
-  if (pp && !/if \(PREMIUM_OUVERT \|\| dejaPremium\)/.test(pp)) {
+  // 20/11 : plus de page de vente du tout (formules Lemon Squeezy retirees).
+  if (pp && /lemonsqueezy|FORMULES/.test(pp) && !/if \(PREMIUM_OUVERT \|\| dejaPremium\)/.test(pp)) {
     soucis.push('la page de vente reste affichee alors que tout est offert');
   }
   if (soucis.length) faute('R73 periode de test', soucis.join(' ; '));

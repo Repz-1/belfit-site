@@ -8,11 +8,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#f7efd9">
 <link rel="manifest" href="manifest.json">
-<script src="i18n-strings.js?v=45"></script>
-<script src="i18n.js?v=4"></script>
+<script src="i18n-strings.js?v=46"></script>
+<script src="i18n.js?v=5"></script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Confidentialité et conditions d’utilisation — BelFit</title>
+<title data-i18n="cfs_title">Confidentialité et conditions d’utilisation — BelFit</title>
 <meta name="description" content="Comment BelFit protège vos données (RGPD) et conditions d’utilisation de l’application de coaching nutrition.">
 <link rel="canonical" href="https://www.belfit.be/confidentialite.html">
 <meta property="og:type" content="website">
@@ -50,7 +50,7 @@ a { color:#8F6200; font-weight:700; }
 </head>
 <body>
 <div class="container">
-    <a href="/v2/" class="back-btn">←</a>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><a href="/v2/" class="back-btn" aria-label="Retour" data-i18n-aria="cfs_retour">←</a><div data-langues></div></div>
     <h1 data-i18n="cf_title">Politique de confidentialité & conditions d'utilisation</h1>
     <div class="maj" data-i18n-html="cf_maj">Version 2.2 · Dernière mise à jour : octobre 2026<br>BELFIT — Belgique · Contact : <a href="mailto:contact@belfit.be">contact@belfit.be</a></div>
 
@@ -146,7 +146,7 @@ a { color:#8F6200; font-weight:700; }
     </ul>
     <p>Pour exercer tes droits : <a href="mailto:contact@belfit.be">contact@belfit.be</a>. La suppression du compte et le retrait des consentements se font aussi depuis Paramètres. Autorité compétente en Belgique : Autorité de protection des données (APD), <a href="https://www.autoriteprotectiondonnees.be">autoriteprotectiondonnees.be</a>.</p>
 
-    </div><section id="suppression" style="margin:18px 0;padding:14px 16px;border:1px solid #e5d9b8;border-radius:12px;background:#fffaf0">
+    </div><section data-i18n-html="cfs_suppr" id="suppression" style="margin:18px 0;padding:14px 16px;border:1px solid #e5d9b8;border-radius:12px;background:#fffaf0">
     <h3 style="margin-top:0">Supprimer mon compte et mes données</h3>
     <p>Tu peux demander à tout moment la suppression de ton compte BELFIT, ou d'une partie seulement de tes données (par exemple ton questionnaire santé ou ton historique de repas).</p>
     <p>Envoie un e-mail à <a href="mailto:contact@belfit.be?subject=Suppression%20de%20mon%20compte">contact@belfit.be</a> <strong>depuis l'adresse e-mail de ton compte</strong>, en précisant si tu veux supprimer tout ton compte ou seulement certaines données. Ta demande est traitée dans un délai de <strong>30 jours</strong> maximum, et nous te confirmons la suppression par e-mail.</p>

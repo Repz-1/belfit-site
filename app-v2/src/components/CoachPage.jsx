@@ -18,12 +18,13 @@ import { CarteProgramme, allerVers } from './Entrainer.jsx';
 import { programmeActif } from '../store/programme.js';
 import { ongletActif } from './BottomNav.jsx';
 import { Icone } from './IconesCoach.jsx';
-import { APP_ANDROID, MSG_INACTIF } from '../services/app-android.js';
+import { APP_ANDROID } from '../services/app-android.js';
+import { t } from '../i18n/index.js';
 
 // Onglets du coaching (20/10, Raci) : visibles seulement pour un client
 // qui a un plan ou une commande. Le choix est memorise sur l'appareil.
 const CLE_VUE = 'belfit_coach_vue';
-const VUES = [['programme', 'Ton programme'], ['seances', 'Tes séances'], ['suivi', 'Mon suivi']];
+const VUES = [['programme', 'cp_vue_programme'], ['seances', 'cp_vue_seances'], ['suivi', 'cp_vue_suivi']];
 function vueMemorisee() {
   try { const v = localStorage.getItem(CLE_VUE); return VUES.some(x => x[0] === v) ? v : null; } catch (e) { return null; }
 }
@@ -37,9 +38,9 @@ function TesSeances() {
   if (programmeActif.value) return <div class="pg-entrainer sv-seances"><CarteProgramme today={today} todayIso={iso} allerVers={aller} /></div>;
   return (
     <div class="cp-carte sv-seances-vide">
-      <p class="cp-nom">Pas encore de programme d'entraînement</p>
-      <p class="cp-txt">Réponds à 4 questions et l'app te propose un programme adapté à ton objectif et à ton matériel. Le coaching entraînement est inclus.</p>
-      <button class="cp-bt cp-bt--or" onClick={() => aller('questionnaire')}>Créer mon programme</button>
+      <p class="cp-nom">{t('cp_seances_vide_t')}</p>
+      <p class="cp-txt">{t('cp_seances_vide_txt')}</p>
+      <button class="cp-bt cp-bt--or" onClick={() => aller('questionnaire')}>{t('cp_seances_vide_bt')}</button>
     </div>
   );
 }
@@ -119,21 +120,21 @@ function envoyerQuestionnaire(type, reponses, alerte, extra = {}) {
 function RetourPaiement({ retour }) {
   const e = retour.etat; const st = retour.statut;
   let titre; let txt;
-  if (e === 'verif') { titre = 'Vérification de ton paiement…'; txt = 'Un instant, on confirme avec la banque.'; }
-  else if (e === 'connexion') { titre = 'Connecte-toi pour finaliser'; txt = 'Reconnecte-toi avec le compte utilisé pour payer\u00A0: on confirmera ton paiement.'; }
+  if (e === 'verif') { titre = t('cp_ret_verif_t'); txt = t('cp_ret_verif'); }
+  else if (e === 'connexion') { titre = t('cp_ret_cnx_t'); txt = t('cp_ret_cnx'); }
   else if (e === 'attente') {
-    titre = retour.fini ? 'Paiement pas encore confirmé' : 'Paiement en cours de confirmation…';
-    txt = retour.fini ? 'Rien n\'est débité tant que le paiement n\'est pas confirmé. Si tu as payé, patiente une minute puis vérifie de nouveau.' : 'Ça ne prend que quelques secondes.';
-  } else if (st === 'canceled') { titre = 'Paiement annulé'; txt = 'Tu as annulé le paiement. Rien n\'a été débité et rien n\'est activé. Tu peux réessayer quand tu veux.'; }
-  else if (st === 'expired') { titre = 'Paiement expiré'; txt = 'Le délai pour payer est dépassé. Rien n\'a été débité. Tu peux recommencer.'; }
-  else if (st === 'failed') { titre = 'Paiement refusé'; txt = 'Le paiement n\'a pas abouti. Rien n\'a été débité et rien n\'est activé. Tu peux réessayer ou écrire à ' + MAIL + '.'; }
-  else { titre = 'Paiement non trouvé'; txt = 'Aucun paiement confirmé pour ce compte. Rien n\'est activé. Écris à ' + MAIL + ' si tu as payé.'; }
+    titre = t(retour.fini ? 'cp_ret_att_fin_t' : 'cp_ret_att_t');
+    txt = t(retour.fini ? 'cp_ret_att_fin' : 'cp_ret_att');
+  } else if (st === 'canceled') { titre = t('cp_ret_annule_t'); txt = t('cp_ret_annule'); }
+  else if (st === 'expired') { titre = t('cp_ret_expire_t'); txt = t('cp_ret_expire'); }
+  else if (st === 'failed') { titre = t('cp_ret_refuse_t'); txt = t('cp_ret_refuse', { mail: MAIL }); }
+  else { titre = t('cp_ret_introuvable_t'); txt = t('cp_ret_introuvable', { mail: MAIL }); }
   return (
     <div class="cp-carte" role="status" data-retour={e}>
       <p class="cp-nom">{titre}</p>
       <p class="cp-txt">{txt}</p>
-      {e === 'attente' && retour.fini && <button class="cp-bt cp-bt--or" onClick={() => reverifierRetour((type) => { marquerPaye(type); chargerProgramme(); })}>Vérifier de nouveau</button>}
-      {(e === 'echec' || (e === 'attente' && retour.fini)) && <button class="cp-bt cp-bt--gris" onClick={fermerRetour}>Fermer</button>}
+      {e === 'attente' && retour.fini && <button class="cp-bt cp-bt--or" onClick={() => reverifierRetour((type) => { marquerPaye(type); chargerProgramme(); })}>{t('cp_reverifier')}</button>}
+      {(e === 'echec' || (e === 'attente' && retour.fini)) && <button class="cp-bt cp-bt--gris" onClick={fermerRetour}>{t('cp_fermer')}</button>}
     </div>
   );
 }
@@ -198,7 +199,7 @@ export function CoachPage() {
   const occupe = aRemplir || enPrep;
 
   // App Android (Play) : aucun achat dans l'app.
-  const ouvrirAchat = t => { if (APP_ANDROID) return; setAdulte(null); setTca(null); setConsent(false); setConsent2(false); setAchat(t); };
+  const ouvrirAchat = (quoi) => { if (APP_ANDROID) return; setAdulte(null); setTca(null); setConsent(false); setConsent2(false); setAchat(quoi); };
   const aAchat = !!pr || !!payeLeEtat;
   const vue = aAchat ? (vueChoisie || (pr ? 'suivi' : 'programme')) : 'programme';
   const viaInv = !!achat && achat.startsWith('invitation:');
@@ -227,15 +228,15 @@ export function CoachPage() {
   const blocCode = (idChamp) => (
             <div class="cp-code">
               {red ? (
-                <p class="cp-code-ok" role="status">Code <b>{red.code}</b>&nbsp;: −{red.pourcent}&nbsp;% appliqué. Tu paies <b>{prixCourt(red.montant)} €</b> au lieu de 80 €. <button class="cp-code-lien" onClick={retirerCode}>Retirer</button></p>
+                <p class="cp-code-ok" role="status">{t('cp_code_ok', { code: red.code, pct: red.pourcent, prix: prixCourt(red.montant) })} <button class="cp-code-lien" onClick={retirerCode}>{t('cp_code_retirer')}</button></p>
               ) : (
                 <form class="cp-code-form" onSubmit={(e) => { e.preventDefault(); appliquerCode(); }}>
-                  <label class="cp-code-lib" for={idChamp}>Code de réduction</label>
+                  <label class="cp-code-lib" for={idChamp}>{t('cp_code_lib')}</label>
                   <div class="cp-code-ligne">
                     <input id={idChamp} class="cp-code-champ" type="text" inputMode="text" autoCapitalize="characters" autoComplete="off" autoCorrect="off" spellCheck={false}
-                      maxLength={40} placeholder="Ton code" value={saisieCode} aria-invalid={msgCode ? 'true' : undefined} aria-describedby={msgCode ? idChamp + '-err' : undefined}
+                      maxLength={40} placeholder={t('cp_code_ph')} value={saisieCode} aria-invalid={msgCode ? 'true' : undefined} aria-describedby={msgCode ? idChamp + '-err' : undefined}
                       onInput={(e) => { setSaisieCode(e.target.value); if (msgCode) setMsgCode(''); }} />
-                    <button type="submit" class="cp-code-bt" disabled={verifCode || !saisieCode.trim()}>{verifCode ? '…' : 'Appliquer'}</button>
+                    <button type="submit" class="cp-code-bt" disabled={verifCode || !saisieCode.trim()}>{verifCode ? '…' : t('cp_code_appliquer')}</button>
                   </div>
                   {msgCode && <p id={idChamp + '-err'} class="cp-code-err" role="alert">{msgCode}</p>}
                 </form>
@@ -248,10 +249,10 @@ export function CoachPage() {
     if (paiementOuvert.value) {
       payerMollie(achat, achat === 'plan' && red ? red.code : undefined).catch((e) => {
         if (e && e.messageCode) { reduction.value = null; setMsgCode(e.messageCode); setAchat(null); return; }   // le code n'est plus valable : on revient au champ
-        alert('Le paiement n\'a pas pu démarrer. Réessaie ou écris à ' + MAIL + '.');
+        alert(t('cp_erreur_paiement', { mail: MAIL }));
       });
     } else if (!lien) {
-      const sujet = pr ? 'Continuer mon coaching (nouveau mois)' : 'Mon premier mois de coaching';
+      const sujet = t(pr ? 'cp_sujet_continuer' : 'cp_sujet_premier');
       window.location.href = `mailto:${MAIL}?subject=${encodeURIComponent(sujet)}`;
     } else {
       window.location.href = urlPaiement(lien, achat);
@@ -260,7 +261,7 @@ export function CoachPage() {
   const Choix = ({ val, set }) => (
     <div class="cp-oui-non">
       {['oui', 'non'].map(v => (
-        <button type="button" class={'qc-chip' + (val === v ? ' on' : '')} aria-pressed={val === v} onClick={() => set(v)}>{v === 'oui' ? 'Oui' : 'Non'}</button>
+        <button type="button" class={'qc-chip' + (val === v ? ' on' : '')} aria-pressed={val === v} onClick={() => set(v)}>{t(v === 'oui' ? 'cp_oui' : 'cp_non')}</button>
       ))}
     </div>
   );
@@ -278,18 +279,18 @@ export function CoachPage() {
   return (
     <div class="pg-coach">
       <Entete />
-      <h1 class="cp-titre">Ton coach</h1>
+      <h1 class="cp-titre">{t('cp_titre')}</h1>
       {retour && retour.etat !== 'paye' && <RetourPaiement retour={retour} />}
       {aAchat ? (
         <div class="prog-onglets" role="tablist">
-          {VUES.map(([k, l]) => <button type="button" role="tab" aria-selected={vue === k} class={vue === k ? 'actif' : ''} onClick={() => choisirVue(k)}>{l}</button>)}
+          {VUES.map(([k, l]) => <button type="button" role="tab" aria-selected={vue === k} class={vue === k ? 'actif' : ''} onClick={() => choisirVue(k)}>{t(l)}</button>)}
         </div>
-      ) : (APP_ANDROID ? null : <p class="cp-sous">L'app est gratuite. Le plan sur mesure, c'est moi.</p>)}
+      ) : (APP_ANDROID ? null : <p class="cp-sous">{t('cp_sous')}</p>)}
       {vue === 'suivi' && <SuiviClient onContinuer={() => ouvrirAchat('plan')} onNouveau={() => ouvrirAchat('plan')} />}
       {vue === 'seances' && <TesSeances />}
       {vue === 'programme' && APP_ANDROID && !pr && !occupe && (
         <div class="cp-carte cp-android-inactif" data-android-inactif>
-          <p class="cp-txt">{MSG_INACTIF}</p>
+          <p class="cp-txt">{t('cp_inactif')}</p>
         </div>
       )}
       {vue === 'programme' && !(APP_ANDROID && !pr && !occupe) && (<>
@@ -298,82 +299,82 @@ export function CoachPage() {
           Les 3 « preuves » deviennent une carte : le delai (48 h) en gros, deux garanties en lignes. */}
       {!pr && !occupe && (
         <div class="cp-carte cp-preuve">
-          <p class="cp-preuve-t"><b>48&nbsp;h</b><span>pour recevoir ton plan</span></p>
+          <p class="cp-preuve-t"><b>48&nbsp;h</b><span>{t('cp_preuve_h')}</span></p>
           <ul class="cp-preuve-l">
-            <li><span class="cp-coche" aria-hidden="true">✓</span>Ajustements inclus pendant 1&nbsp;mois</li>
-            <li><span class="cp-coche" aria-hidden="true">✓</span>Sans abonnement, sans prélèvement</li>
+            <li><span class="cp-coche" aria-hidden="true">✓</span>{t('cp_preuve_1')}</li>
+            <li><span class="cp-coche" aria-hidden="true">✓</span>{t('cp_preuve_2')}</li>
           </ul>
         </div>
       )}
 
       {aRemplir && (
         <div class="cp-carte cp-etapes-paye" data-apres-paiement data-plan={offert ? 'offert' : invite ? 'virement' : 'paiement'}>
-          <p class="cp-nom">{offert ? 'Plan offert' : invite ? 'Invitation de ton coach' : (APP_ANDROID ? 'Programme activé' : 'Paiement reçu')}</p>
+          <p class="cp-nom">{t(offert ? 'cp_plan_offert' : invite ? 'cp_invitation' : (APP_ANDROID ? 'cp_programme_active' : 'cp_paiement_recu'))}</p>
           <ol class="cp-etapes">
-            <li class="fait"><span class="cp-pastille">✓</span>{offert ? 'Plan offert par ton coach' : 'Paiement reçu'}</li>
-            <li class="actif"><span class="cp-pastille">2</span>Tu complètes ton questionnaire</li>
-            <li><span class="cp-pastille">3</span>Ton plan sur mesure, livré sous 48&nbsp;h</li>
+            <li class="fait"><span class="cp-pastille">✓</span>{t(offert ? 'cp_offert_par' : 'cp_paiement_recu')}</li>
+            <li class="actif"><span class="cp-pastille">2</span>{t('cp_etape_questionnaire')}</li>
+            <li><span class="cp-pastille">3</span>{t('cp_etape_plan')}</li>
           </ol>
-          {tardif && <p class="cp-txt">Ton délai d'un mois est passé&nbsp;: ta demande rejoint la file.</p>}
-          <button class="cp-bt cp-bt--vert" onClick={() => ouvrirQuestionnaire(typePaye)}>Compléter mon questionnaire</button>
+          {tardif && <p class="cp-txt">{t('cp_tardif')}</p>}
+          <button class="cp-bt cp-bt--vert" onClick={() => ouvrirQuestionnaire(typePaye)}>{t('cp_completer')}</button>
         </div>
       )}
       {enPrep && (
         <div class="cp-carte cp-attente">
-          <p class="cp-nom">Plan en préparation</p>
-          <p class="cp-txt">Questionnaire reçu, ton plan arrive sous 48&nbsp;h.</p>
+          <p class="cp-nom">{t('cp_prep_t')}</p>
+          <p class="cp-txt">{t('cp_prep')}</p>
           <ol class="cp-etapes">
-            <li class="fait"><span class="cp-pastille">✓</span>Paiement reçu</li>
-            <li class="fait"><span class="cp-pastille">✓</span>Questionnaire complété</li>
-            <li class="actif"><span class="cp-pastille">3</span>Ton plan sur mesure, livré sous 48&nbsp;h</li>
+            <li class="fait"><span class="cp-pastille">✓</span>{t('cp_paiement_recu')}</li>
+            <li class="fait"><span class="cp-pastille">✓</span>{t('cp_questionnaire_ok')}</li>
+            <li class="actif"><span class="cp-pastille">3</span>{t('cp_etape_plan')}</li>
           </ol>
         </div>
       )}
 
       {pr && (
         <>
-          <p class="cp-sec">MON PLAN</p>
+          <p class="cp-sec">{t('cp_sec_plan')}</p>
           <div class="cp-carte">
-            <div class="cp-ligne"><span class="cp-nom">Mon plan</span><span class="cp-txt">{pr.kcal} kcal</span></div>
-            <p class="cp-txt">{j === null ? 'Reçu récemment' : j === 0 ? "Reçu aujourd'hui" : `Reçu il y a ${j} jour${j > 1 ? 's' : ''}`}</p>
-            <button class="cp-bt cp-bt--or" onClick={() => { progOuvert.value = true; }}>Voir mon plan</button>
+            <div class="cp-ligne"><span class="cp-nom">{t('cp_mon_plan')}</span><span class="cp-txt">{pr.kcal} kcal</span></div>
+            <p class="cp-txt">{j === null ? t('cp_recu_recent') : j === 0 ? t('cp_recu_auj') : j === 1 ? t('cp_recu_1') : t('cp_recu_n', { n: j })}</p>
+            <button class="cp-bt cp-bt--or" onClick={() => { progOuvert.value = true; }}>{t('cp_voir_plan')}</button>
           </div>
         </>
       )}
 
       {!pr && !occupe && (
         <>
-          <p class="cp-sec">COMMENT ÇA MARCHE</p>
+          <p class="cp-sec">{t('cp_sec_comment')}</p>
           <div class="cp-carte cp-etapes">
-            <div class="cp-etape"><span class="cp-n"><Icone nom="bolt" taille={16} /></span><span class="cp-txt">Tu paies ton 1er mois de coaching alimentaire en ligne (80 €).</span></div>
-            <div class="cp-etape"><span class="cp-n"><Icone nom="list-check" taille={16} /></span><span class="cp-txt">Tu réponds au questionnaire.</span></div>
-            <div class="cp-etape"><span class="cp-n"><Icone nom="flame" taille={16} /></span><span class="cp-txt">Je t'écris ton plan, livré dans l'app sous 48&nbsp;h.</span></div>
+            <div class="cp-etape"><span class="cp-n"><Icone nom="bolt" taille={16} /></span><span class="cp-txt">{t('cp_comment_1')}</span></div>
+            <div class="cp-etape"><span class="cp-n"><Icone nom="list-check" taille={16} /></span><span class="cp-txt">{t('cp_comment_2')}</span></div>
+            <div class="cp-etape"><span class="cp-n"><Icone nom="flame" taille={16} /></span><span class="cp-txt">{t('cp_comment_3')}</span></div>
           </div>
         </>
       )}
 
       {/* 21/10 Raci : plus de tarifs dans Ton programme pour un client qui a deja un plan. Le mois suivant (80 €) se propose dans Mon suivi. */}
-      {!occupe && !pr && <p class="cp-sec">TARIFS</p>}
+      {!occupe && !pr && <p class="cp-sec">{t('cp_sec_tarifs')}</p>}
       {!occupe && !pr && (
         <div class="cp-carte cp-recu cp-offre" data-tarifs="recu">
-          <p class="cp-recu-titre">Coaching alimentaire</p>
-          <p class="cp-recu-sous">1 mois · sans abonnement</p>
-          <div class="cp-recu-l"><span>Plan sur mesure, livré sous 48&nbsp;h</span><span>inclus</span></div>
-          <div class="cp-recu-l"><span>Ajustements pendant le mois</span><span>inclus</span></div>
-          <div class="cp-recu-l"><span>Accès nutrition</span><span>44 jours</span></div>
-          <div class="cp-recu-l"><span>Entraînement</span><span>offert</span></div>
-          <div class="cp-recu-tot"><span>Total</span>
+          <p class="cp-recu-titre">{t('cp_offre_t')}</p>
+          <p class="cp-recu-sous">{t('cp_offre_sous')}</p>
+          <div class="cp-recu-l"><span>{t('cp_offre_l1')}</span><span>{t('cp_inclus')}</span></div>
+          <div class="cp-recu-l"><span>{t('cp_offre_l2')}</span><span>{t('cp_inclus')}</span></div>
+          <div class="cp-recu-l"><span>{t('cp_offre_l3')}</span><span>{t('cp_44j')}</span></div>
+          <div class="cp-recu-l"><span>{t('cp_offre_l4')}</span><span>{t('cp_offert')}</span></div>
+          <div class="cp-recu-tot"><span>{t('cp_total')}</span>
             {red && paiementOuvert.value
-              ? <span class="cp-prix-bloc"><s class="cp-prix-barre" aria-label="Prix normal 80 euros">80 €</s><span class="cp-prix cp-prix--promo">{prixCourt(red.montant)} €</span></span>
+              ? <span class="cp-prix-bloc"><s class="cp-prix-barre" aria-label={t('cp_prix_normal')}>80 €</s><span class="cp-prix cp-prix--promo">{prixCourt(red.montant)} €</span></span>
               : <span class="cp-prix">80 €</span>}
           </div>
-          <p class="cp-recu-m">Paiement unique. Aucun prélèvement automatique.</p>
+          <p class="cp-recu-m">{t('cp_offre_m')}</p>
           {commandesOuvertes()
-            ? <button class="cp-bt cp-bt--vert" onClick={() => ouvrirAchat('plan')}>Demander mon plan</button>
-            : <button class="cp-bt cp-bt--gris" disabled>Bientôt disponible</button>}
+            ? <button class="cp-bt cp-bt--vert" onClick={() => ouvrirAchat('plan')}>{t('cp_demander')}</button>
+            : <button class="cp-bt cp-bt--gris" disabled>{t('cp_bientot')}</button>}
           {commandesOuvertes() && paiementOuvert.value && (red || codeOuvert
             ? blocCode('cp-code-champ')
-            : <p class="cp-recu-code"><button class="cp-code-lien" onClick={() => setCodeOuvert(true)}>J'ai un code de réduction</button></p>)}
+            : <p class="cp-recu-code"><button class="cp-code-lien" onClick={() => setCodeOuvert(true)}>{t('cp_code_lien')}</button></p>)}
         </div>
       )}
       </>)}
@@ -381,27 +382,27 @@ export function CoachPage() {
       {achat && (!APP_ANDROID || sansPaiement) && createPortal(
         <div class="pg-coach cp-portail"><div class="cp-voile" onClick={(e) => { if (e.target === e.currentTarget) setAchat(null); }}>
           <div class="cp-modale" role="dialog" aria-modal="true">
-            {paiementOuvert.value && modeTest.value && !sansPaiement && <p class="qc-alerte">Mode test&nbsp;: paiement fictif, aucun argent n'est débité.</p>}
-            {viaOffert ? <p class="cp-nom">Premier plan offert</p> : APP_ANDROID ? <p class="cp-nom">Invitation de ton coach</p> : <p class="cp-nom">{(pr ? 'Nouveau mois' : 'Premier mois') + ' · ' + (red && !viaInv ? `${prixCourt(red.montant)} € (au lieu de 80 €)` : '80 €')}</p>}
+            {paiementOuvert.value && modeTest.value && !sansPaiement && <p class="qc-alerte">{t('cp_mode_test')}</p>}
+            {viaOffert ? <p class="cp-nom">{t('cp_premier_offert')}</p> : APP_ANDROID ? <p class="cp-nom">{t('cp_invitation')}</p> : <p class="cp-nom">{t(pr ? 'cp_nouveau_mois' : 'cp_premier_mois') + ' · ' + (red && !viaInv ? t('cp_au_lieu', { prix: prixCourt(red.montant) }) : '80 €')}</p>}
             {viaOffert
-              ? <p class="cp-txt">Aucun paiement. Tu réponds au questionnaire, ton coach prépare ton plan.</p>
-              : !APP_ANDROID && <p class="cp-txt">{viaInv ? 'Paiement par virement, après ton questionnaire. Ton plan est préparé dès réception.' : 'Paiement sécurisé, sans abonnement. Tu remplis ensuite ton questionnaire.'}</p>}
+              ? <p class="cp-txt">{t('cp_offert_txt')}</p>
+              : !APP_ANDROID && <p class="cp-txt">{t(viaInv ? 'cp_virement_txt' : 'cp_securise_txt')}</p>}
             {/* 02/10 : avantage IA annonce explicitement avant le paiement. Pas pour un plan offert. */}
-            {!APP_ANDROID && !viaOffert && <p class="cp-txt cp-inclus">Inclus&nbsp;: analyses IA (photo et micro) illimitées pendant ton mois de coaching et les 2 semaines qui suivent (44 jours à partir {viaInv ? 'de la réception du virement' : 'du paiement'}).</p>}
+            {!APP_ANDROID && !viaOffert && <p class="cp-txt cp-inclus">{t(viaInv ? 'cp_inclus_ia_virement' : 'cp_inclus_ia_paiement')}</p>}
             {!APP_ANDROID && typeAchat === 'plan' && !sansPaiement && pr && paiementOuvert.value && <div class="cp-code-modale">{blocCode('cp-code-champ-modale')}</div>}
             {typeAchat === 'plan' && (
               <div class="cp-elim">
-                <p class="cp-q">As-tu 18 ans ou plus&nbsp;?</p>
+                <p class="cp-q">{t('cp_q_adulte')}</p>
                 <Choix val={adulte} set={setAdulte} />
-                <p class="cp-q">Es-tu suivi actuellement pour un trouble alimentaire&nbsp;?</p>
+                <p class="cp-q">{t('cp_q_tca')}</p>
                 <Choix val={tca} set={setTca} />
               </div>
             )}
             {typeAchat === 'plan' && adulte === 'non' && (
-              <p class="qc-alerte">Le plan coach est réservé aux 18 ans et plus. L'app, elle, reste gratuite pour toi.</p>
+              <p class="qc-alerte">{t('cp_mineur')}</p>
             )}
             {typeAchat === 'plan' && adulte !== 'non' && tca === 'oui' && (
-              <p class="qc-alerte">Merci de ta confiance. Pendant un suivi en cours, un plan chiffré peut faire plus de mal que de bien&nbsp;: parle de ton alimentation avec le professionnel qui te suit. L'app reste gratuite pour toi.</p>
+              <p class="qc-alerte">{t('cp_tca')}</p>
             )}
             {!bloque && eligible && (
               <>
@@ -411,22 +412,22 @@ export function CoachPage() {
                     Deux cases distinctes, decochees. Texte a faire valider. */}
                 <label class="cp-consent">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-                  <span>Je demande que mon coach commence mon plan dès réception de mon {viaInv && !APP_ANDROID ? 'virement' : 'questionnaire'}, pour une livraison sous 48&nbsp;h. Je reconnais perdre mon droit de rétractation de 14 jours une fois le plan livré.</span>
+                  <span>{t(viaInv && !APP_ANDROID ? 'cp_consent_virement' : 'cp_consent_questionnaire')}</span>
                 </label>
                 <label class="cp-consent">
                   <input type="checkbox" checked={consent2} onChange={(e) => setConsent2(e.target.checked)} />
-                  <span>J'accepte les <a href="https://www.belfit.be/cgv.html" target="_blank" rel="noopener">conditions et la FAQ</a>. Je comprends que ce plan n'est pas un avis médical.</span>
+                  <span>{t('cp_cgv_avant')}<a href="https://www.belfit.be/cgv.html" target="_blank" rel="noopener">{t('cp_cgv_lien')}</a>{t('cp_cgv_apres')}</span>
                 </label>
                 {APP_ANDROID ? null : viaOffert
-                  ? <p class="cp-txt cp-petit">Aucun paiement. Le questionnaire part à ton coach, le plan est livré sous 48&nbsp;h.</p>
+                  ? <p class="cp-txt cp-petit">{t('cp_petit_offert')}</p>
                   : viaInv
-                  ? <p class="cp-txt cp-petit">Livraison sous 48&nbsp;h après la réception du virement. Détails dans les conditions générales.</p>
-                  : <p class="cp-txt cp-petit">Questionnaire à remplir dans le mois suivant le paiement pour une livraison sous 48&nbsp;h. Détails dans les conditions générales.</p>}
-                <button class="cp-bt cp-bt--or" disabled={!consent || !consent2} onClick={sansPaiement ? accepterInv : payer}>{sansPaiement ? 'Continuer vers le questionnaire' : 'Continuer vers le paiement'}</button>
-                {!sansPaiement && paiementOuvert.value && <p class="cp-petit cp-secure">Paiement sécurisé par Mollie.</p>}
+                  ? <p class="cp-txt cp-petit">{t('cp_petit_virement')}</p>
+                  : <p class="cp-txt cp-petit">{t('cp_petit_paiement')}</p>}
+                <button class="cp-bt cp-bt--or" disabled={!consent || !consent2} onClick={sansPaiement ? accepterInv : payer}>{t(sansPaiement ? 'cp_vers_questionnaire' : 'cp_vers_paiement')}</button>
+                {!sansPaiement && paiementOuvert.value && <p class="cp-petit cp-secure">{t('cp_securise_mollie')}</p>}
               </>
             )}
-            <button class="cp-bt cp-bt--gris" onClick={() => setAchat(null)}>{bloque ? 'Fermer' : 'Annuler'}</button>
+            <button class="cp-bt cp-bt--gris" onClick={() => setAchat(null)}>{t(bloque ? 'cp_fermer' : 'cp_annuler')}</button>
           </div>
         </div></div>,
         document.body

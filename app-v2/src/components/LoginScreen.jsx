@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { connexion, connexionGoogle, connexionApple, APPLE_ACTIF, inscription, messageErreurAuth, envoyerLienReinitialisation } from '../services/firebase.js';
-import { t, langue } from '../i18n/index.js';
+import { t, langue, setLangue, LANGUES } from '../i18n/index.js';
 import { signal } from '@preact/signals';
 
 // Force du mot de passe : memes regles qu'en v1 (index.html).
@@ -21,11 +21,11 @@ function scoreMdp(pw) {
 /** Ce qui manque encore, enonce simplement. */
 function manquesMdp(pw) {
   const m = [];
-  if (pw.length < 8) m.push('8 caractères');
-  if (!/[A-Z]/.test(pw)) m.push('majuscule');
-  if (!/[a-z]/.test(pw)) m.push('minuscule');
-  if (!/[0-9]/.test(pw)) m.push('chiffre');
-  if (!/[^a-zA-Z0-9]/.test(pw)) m.push('symbole');
+  if (pw.length < 8) m.push(t('lg_m_8'));
+  if (!/[A-Z]/.test(pw)) m.push(t('lg_m_maj'));
+  if (!/[a-z]/.test(pw)) m.push(t('lg_m_min'));
+  if (!/[0-9]/.test(pw)) m.push(t('lg_m_chiffre'));
+  if (!/[^a-zA-Z0-9]/.test(pw)) m.push(t('lg_m_symbole'));
   return m;
 }
 
@@ -34,6 +34,19 @@ function manquesMdp(pw) {
 // doit pas changer sous les yeux pendant que la personne tape.
 
 // Ecran de connexion / inscription — sobre, palette BelFit.
+
+// 20/11 : petit selecteur FR / EN / NL, en haut de chaque ecran de connexion.
+function ChoixLangue() {
+  const actuelle = langue.value;
+  return (
+    <div class="lg-langues" role="group" aria-label={t('lg_langue')}>
+      {LANGUES.map(({ k, label }) => (
+        <button key={k} type="button" class={'lg-langue' + (k === actuelle ? ' on' : '')}
+          aria-pressed={k === actuelle} lang={k} onClick={() => setLangue(k)}>{label}</button>
+      ))}
+    </div>
+  );
+}
 
 /** Oeil d'affichage du mot de passe — meme geste et meme trace qu'en v1. */
 function ChampMotDePasse({ valeur, onInput, placeholder, autocomplete }) {
@@ -46,7 +59,7 @@ function ChampMotDePasse({ valeur, onInput, placeholder, autocomplete }) {
       />
       <button
         type="button" class="pw-eye" onClick={() => setVisible(!visible)}
-        aria-label={visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+        aria-label={t(visible ? 'lg_masquer' : 'lg_afficher')}
       >
         <svg viewBox="0 0 24 24">
           <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
@@ -113,12 +126,12 @@ export function LoginScreen() {
     erreurPersistante.value = '';
     if (mode === 'inscription') {
       if (!mdpValide(mdp)) {
-        setErreur('Mot de passe trop faible : 8 caractères min avec majuscule, minuscule, chiffre et symbole');
+        setErreur(t('lg_mdp_faible'));
         return;
       }
-      if (mdp !== mdp2) { setErreur('Les deux mots de passe ne correspondent pas'); return; }
+      if (mdp !== mdp2) { setErreur(t('lg_mdp_diff')); return; }
       if (!prenom.trim()) { setErreur(t('js_enter_firstname')); return; }
-      if (!consent) { setErreur("Merci d'accepter la politique de confidentialité pour créer ton compte"); return; }
+      if (!consent) { setErreur(t('lg_consent_requis')); return; }
     }
     setChargement(true);
     try {
@@ -150,7 +163,7 @@ export function LoginScreen() {
     };
 
     return (
-      <div class="login-fond login-fond--accueil"><Aurore /><div class="login-ecran login-ecran--aurore">
+      <div class="login-fond login-fond--accueil"><Aurore /><ChoixLangue /><div class="login-ecran login-ecran--aurore">
         <img src="/belfit-logo-bf.png" alt="BelFit" class="login-logo" />
         <h1 class="login-titre">{t('recup_titre')}</h1>
 
@@ -189,7 +202,7 @@ export function LoginScreen() {
       setErreur('');
       try { await connexionApple(); }
       catch (e) { setErreur(messageErreurAuth(e && e.code)); }
-    }}>{logoApple}Continuer avec Apple</button>
+    }}>{logoApple}{t('lg_apple')}</button>
   );
 
   // ----- Accueil d'un nouveau venu : aurore aux couleurs du logo -----
@@ -198,13 +211,14 @@ export function LoginScreen() {
     return (
       <div class="login-fond login-fond--accueil">
         <Aurore />
+        <ChoixLangue />
         <div class="login-accueil">
           <img src="/belfit-logo-bf.png" alt="BelFit" class="la-logo" />
           <p class="la-marque">BELFIT</p>
           <div class="la-bloc">
-            <h1 class="la-titre">Mange juste.<br /><span>Progresse vraiment.</span></h1>
-            <p class="la-sous">Journal, séances et un vrai coach, dans une seule app.</p>
-            <button class="la-cta" onClick={() => { setMode('inscription'); setErreur(''); }}>Créer mon compte</button>
+            <h1 class="la-titre">{t('lg_pitch_1')}<br /><span>{t('lg_pitch_2')}</span></h1>
+            <p class="la-sous">{t('lg_sous')}</p>
+            <button class="la-cta" onClick={() => { setMode('inscription'); setErreur(''); }}>{t('lg_creer')}</button>
             <button class="la-google" onClick={async () => {
               setErreur('');
               try { await connexionGoogle(); }
@@ -212,21 +226,21 @@ export function LoginScreen() {
             }}>{logoGoogle}{t('auth_google')}</button>
             {boutonApple('la-google')}
             {erreur && <div class="login-erreur">{erreur}</div>}
-            <p class="la-deja">Déjà un compte ? <button onClick={() => { setMode('connexion'); setErreur(''); }}>Se connecter</button></p>
+            <p class="la-deja">{t('lg_deja')} <button onClick={() => { setMode('connexion'); setErreur(''); }}>{t('lg_se_connecter')}</button></p>
           </div>
-          <p class="la-pied"><a href="https://www.belfit.be/cgv.html" target="_blank" rel="noopener">Conditions</a> · <a href="https://www.belfit.be/confidentialite.html" target="_blank" rel="noopener">Confidentialité</a></p>
+          <p class="la-pied"><a href="https://www.belfit.be/cgv.html" target="_blank" rel="noopener">{t('lg_conditions')}</a> · <a href="https://www.belfit.be/confidentialite.html" target="_blank" rel="noopener">{t('lg_confidentialite')}</a></p>
         </div>
       </div>
     );
   }
 
   return (
-    <div class="login-fond login-fond--accueil"><Aurore /><div class="login-ecran login-ecran--aurore">
+    <div class="login-fond login-fond--accueil"><Aurore /><ChoixLangue /><div class="login-ecran login-ecran--aurore">
       <img src="/belfit-logo-bf.png" alt="BelFit" class="login-logo" />
       {/* Raci, 31/10 : plus de titre d'accueil sur l'ecran de connexion. */}
       {mode !== 'connexion' && (
         <h1 class="login-titre">
-          {prenom ? `Garde ton programme, ${prenom}` : t('hello_new')}
+          {prenom ? t('lg_garde', { p: prenom }) : t('hello_new')}
         </h1>
       )}
 
@@ -280,12 +294,12 @@ export function LoginScreen() {
             </div>
             <div class={'login-pseudo-note' + (mdp && mdpValide(mdp) ? ' login-pseudo-note--libre' : '')}>
               {!mdp
-                ? '8 caractères min, avec majuscule, minuscule, chiffre et symbole.'
-                : mdpValide(mdp) ? '✓ Mot de passe solide' : 'Manque : ' + manquesMdp(mdp).join(', ')}
+                ? t('lg_mdp_regle')
+                : mdpValide(mdp) ? t('lg_mdp_ok') : t('lg_manque', { m: manquesMdp(mdp).join(', ') })}
             </div>
 
             <ChampMotDePasse
-              placeholder="Confirmer le mot de passe" valeur={mdp2}
+              placeholder={t('lg_mdp_confirmer')} valeur={mdp2}
               onInput={e => setMdp2(e.currentTarget.value)} autocomplete="new-password"
             />
 

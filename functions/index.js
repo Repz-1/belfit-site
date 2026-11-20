@@ -1419,7 +1419,11 @@ async function deposerChez(corps, parCoach) {
   //    le plan est deja dans l'app, c'est le canal qui fait foi.
   let mailEnvoye = false;
   if (client.email) {
-    const langue = String(b.langue || "fr").slice(0, 2);
+    // 20/11 : la langue ENREGISTREE du client (v2Data.langue, recopiee par
+    // l'app) prime ; a defaut celle envoyee, puis le francais. Liste blanche.
+    const dH = avantH.exists ? avantH.data() : {};
+    const langue = [dH.v2Data && dH.v2Data.langue, dH.langue, b.langue]
+        .map((x) => String(x || "").slice(0, 2)).find((x) => ["fr", "en", "nl"].includes(x)) || "fr";
     const T = TEXTES_PROG[langue] || TEXTES_PROG.fr;
     // 9/11 : le client avait deja un plan -> courriel « mis a jour ».
     const majPlan = !!(ancienP && ancienP.livreLe);
