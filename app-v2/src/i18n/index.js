@@ -1,5 +1,6 @@
 import { STRINGS_V1 } from '../legacy/strings.js';
 import { signal } from '@preact/signals';
+import { ACHAT } from './achat.js';
 
 // ============================================================
 // I18N v2 — FR (canonique) / EN / NL.
@@ -10,7 +11,9 @@ import { signal } from '@preact/signals';
 const CLE = 'belfit_v2_langue';
 let init = 'fr';
 try {
-  const sauve = localStorage.getItem(CLE);
+  // 20/11 : a defaut du choix de l'app, celui fait sur le site (repz_lang,
+  // i18n.js) — le client qui a lu belfit.be en neerlandais garde sa langue.
+  const sauve = localStorage.getItem(CLE) || localStorage.getItem('repz_lang');
   const nav = (navigator.language || 'fr').slice(0, 2);
   const choix = sauve || nav;
   if (['fr', 'en', 'nl'].includes(choix)) init = choix;
@@ -18,8 +21,15 @@ try {
 
 export const langue = signal(init);
 
+// <html lang> suit la langue affichee (lecteurs d'ecran, traduction auto).
+function poserLangHtml(l) {
+  try { document.documentElement.lang = l === 'nl' ? 'nl-BE' : l === 'en' ? 'en' : 'fr-BE'; } catch (e) { /* hors navigateur */ }
+}
+poserLangHtml(init);
+
 export function setLangue(l) {
   langue.value = l;
+  poserLangHtml(l);
   try { localStorage.setItem(CLE, l); } catch (e) {}
 }
 
@@ -497,6 +507,9 @@ const T = {
     premium_merci: 'Alle functies zijn ontgrendeld. Bedankt voor je steun 💪',
   },
 };
+
+// Achat du plan coach, paiement, connexion (20/11) : fusionnes ici.
+for (const l of ['fr', 'en', 'nl']) Object.assign(T[l], ACHAT[l]);
 
 export function t(cle, vars) {
   const l = langue.value;

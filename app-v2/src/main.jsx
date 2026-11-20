@@ -1,5 +1,7 @@
 // En premier : detecte le mode app Android (TWA) avant tout nettoyage d'adresse.
 import { APP_ANDROID } from './services/app-android.js';
+// 20/11 : la langue de l'app est recopiee sur le compte (e-mail du plan coach).
+import './store/langue-compte.js';
 // Avant CoachPage, qui efface toute la requete sur un retour Mollie
 // (coach=questionnaire). Le code invitation est memorise ici, seul
 // ce parametre est retire, le reste de l'adresse reste lisible.

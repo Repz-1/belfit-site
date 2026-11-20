@@ -2,11 +2,13 @@
 <html lang="fr">
 <head>
 <script src="/analytics.js"></script>
+<script src="/i18n-strings.js?v=46"></script>
+<script src="/i18n.js?v=5"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- En relecture (27/09) : a retirer apres validation par un juriste. -->
 <meta name="theme-color" content="#f7efd9">
-<title>Conditions de vente et FAQ du coaching — BelFit</title>
+<title data-i18n="cg_title">Conditions de vente et FAQ du coaching — BelFit</title>
 <meta name="description" content="Conditions de vente et questions fréquentes du coaching nutrition BelFit : prix, paiement par Bancontact ou carte, délais, rétractation.">
 <link rel="canonical" href="https://www.belfit.be/cgv.html">
 <meta property="og:type" content="website">
@@ -58,14 +60,14 @@ a{ color:#8F6200; font-weight:700; }
 </head>
 <body>
 <div class="container">
-  <a href="/v2/" class="back-btn" aria-label="Retour">←</a>
-  <h1>Coaching BELFIT</h1>
-  <div class="maj">Conditions de vente et questions fréquentes · Version 1.3 · novembre 2026<br>Contact : <a href="mailto:contact@belfit.be">contact@belfit.be</a></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><a href="/v2/" class="back-btn" aria-label="Retour" data-i18n-aria="cg_retour">←</a><div data-langues></div></div>
+  <h1 data-i18n="cg_h1">Coaching BELFIT</h1>
+  <div data-i18n-html="cg_maj" class="maj">Conditions de vente et questions fréquentes · Version 1.3 · novembre 2026<br>Contact : <a href="mailto:contact@belfit.be">contact@belfit.be</a></div>
 
-  <nav class="toc"><a href="#faq">Questions fréquentes</a><a href="#cgv">Conditions de vente</a></nav>
+  <nav data-i18n-html="cg_toc" class="toc"><a href="#faq">Questions fréquentes</a><a href="#cgv">Conditions de vente</a></nav>
 
   <!-- ================= FAQ ================= -->
-  <section class="card" id="faq">
+  <section data-i18n-html="cg_faq" class="card" id="faq">
     <h2>Questions fréquentes</h2>
 
     <details open><summary>Comment se passe le coaching ?</summary><div>
@@ -123,7 +125,7 @@ a{ color:#8F6200; font-weight:700; }
   </section>
 
   <!-- ================= CGV ================= -->
-  <section class="card" id="cgv">
+  <section data-i18n-html="cg_cgv" class="card" id="cgv">
     <h2>Conditions générales de vente du coaching</h2>
     <p>Ces conditions s'appliquent à l'achat d'un plan coach BELFIT. L'utilisation de l'application reste régie par les <a href="/confidentialite.html">conditions d'utilisation et la politique de confidentialité</a>.</p>
 

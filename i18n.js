@@ -55,9 +55,38 @@
     });
   }
 
+  // 20/11 : selecteur FR / EN / NL. Toute page qui contient un element
+  // [data-langues] recoit trois boutons ; le choix est memorise (repz_lang)
+  // et partage avec l'app (qui le lit a defaut du sien).
+  var STYLE_LANGUES = '.bf-langues{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:#fff;border:1.5px solid #eee9e0}' +
+    '.bf-langues button{min-width:36px;height:30px;padding:0 8px;border:0;border-radius:999px;background:none;font:700 12.5px/1 inherit;font-family:inherit;color:#6b7280;cursor:pointer;letter-spacing:.04em}' +
+    '.bf-langues button[aria-pressed="true"]{background:#1a1a1a;color:#fff}';
+  function poserLangues() {
+    var hotes = document.querySelectorAll('[data-langues]');
+    if (!hotes.length) return;
+    if (!document.getElementById('bf-langues-style')) {
+      var st = document.createElement('style'); st.id = 'bf-langues-style'; st.textContent = STYLE_LANGUES;
+      document.head.appendChild(st);
+    }
+    hotes.forEach(function (h) {
+      h.innerHTML = '';
+      var g = document.createElement('div'); g.className = 'bf-langues'; g.setAttribute('role', 'group');
+      g.setAttribute('aria-label', t('lang_choix'));
+      LANGS.forEach(function (l) {
+        var b = document.createElement('button'); b.type = 'button'; b.lang = l;
+        b.textContent = l.toUpperCase(); b.setAttribute('aria-pressed', l === current ? 'true' : 'false');
+        b.addEventListener('click', function () { setLang(l); });
+        g.appendChild(b);
+      });
+      h.appendChild(g);
+    });
+  }
+  try { window.addEventListener('langchange', poserLangues); } catch (e) {}
+
   document.addEventListener('DOMContentLoaded', function () {
     document.documentElement.setAttribute('lang', current);
     applyDom();
+    poserLangues();
   });
 
   // Sync inter-pages / iframes : si la langue change ailleurs, on suit
@@ -67,6 +96,7 @@
         current = e.newValue;
         document.documentElement.setAttribute('lang', current);
         applyDom();
+        poserLangues();
         try { window.dispatchEvent(new CustomEvent('langchange', { detail: { lang: current } })); } catch (err) {}
       }
     });

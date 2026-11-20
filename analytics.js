@@ -45,18 +45,33 @@
     if (bandeau && bandeau.parentNode) bandeau.parentNode.removeChild(bandeau);
   }
 
+  // 20/11 : bandeau en fr / en / nl. Langue choisie sur le site (repz_lang),
+  // puis dans l'app (belfit_v2_langue), puis celle du navigateur.
+  var TEXTES = {
+    fr: { titre: 'Mesure d\u2019audience', txt: 'BelFit mesure l\u2019audience du site seulement si tu es d\u2019accord. Pas de publicit\u00e9.', lien: 'Politique de confidentialit\u00e9', non: 'Refuser', oui: 'Accepter' },
+    en: { titre: 'Audience measurement', txt: 'BelFit measures site traffic only if you agree. No advertising.', lien: 'Privacy policy', non: 'Decline', oui: 'Accept' },
+    nl: { titre: 'Bezoekersmeting', txt: 'BelFit meet het bezoek aan de site enkel als je akkoord gaat. Geen reclame.', lien: 'Privacybeleid', non: 'Weigeren', oui: 'Aanvaarden' }
+  };
+  function langue() {
+    var l = '';
+    try { l = localStorage.getItem('repz_lang') || localStorage.getItem('belfit_v2_langue') || ''; } catch (e) {}
+    if (!l) l = (navigator.language || 'fr');
+    l = String(l).slice(0, 2).toLowerCase();
+    return TEXTES[l] ? l : 'fr';
+  }
+
   function afficher() {
     if (!document.body) return;
     var bandeau = document.createElement('div');
     bandeau.className = 'bf-analytics';
     bandeau.setAttribute('role', 'dialog');
-    bandeau.setAttribute('aria-label', 'Mesure d\u2019audience');
+    var T = TEXTES[langue()];
+    bandeau.setAttribute('aria-label', T.titre);
     bandeau.innerHTML =
-      '<p>BelFit mesure l\u2019audience du site seulement si tu es d\u2019accord. Pas de publicit\u00e9. ' +
-      '<a href="/confidentialite.html">Politique de confidentialit\u00e9</a></p>' +
+      '<p>' + T.txt + ' <a href="/confidentialite.html">' + T.lien + '</a></p>' +
       '<div class="bf-analytics-actions">' +
-      '<button type="button" data-choix="refuse">Refuser</button>' +
-      '<button type="button" data-choix="accepte">Accepter</button>' +
+      '<button type="button" data-choix="refuse">' + T.non + '</button>' +
+      '<button type="button" data-choix="accepte">' + T.oui + '</button>' +
       '</div>';
     bandeau.addEventListener('click', function (e) {
       var bouton = e.target && e.target.getAttribute && e.target.getAttribute('data-choix');

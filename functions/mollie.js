@@ -28,6 +28,20 @@ const JOURS_ACCES = 44;
 const PRODUITS = {
   plan: {montant: "80.00", description: "BelFit - Mois de coaching alimentaire"},
 };
+// 20/11 : la page Mollie et le libelle du paiement suivent la langue de
+// l'app. Liste blanche : toute autre valeur retombe sur le francais.
+const LOCALES = {fr: "fr_BE", nl: "nl_BE", en: "en_US"};
+const DESCRIPTIONS = {
+  plan: {
+    fr: "BelFit - Mois de coaching alimentaire",
+    nl: "BelFit - Maand voedingscoaching",
+    en: "BelFit - Month of nutrition coaching",
+  },
+};
+function langueDe(x) {
+  const l = String(x || "").toLowerCase().slice(0, 2);
+  return Object.prototype.hasOwnProperty.call(LOCALES, l) ? l : "fr";
+}
 const RETOUR = "https://www.belfit.be/v2/?onglet=premium&coach=questionnaire&type=";
 const WEBHOOK = "https://" + REGION + "-repz-baf60.cloudfunctions.net/mollieWebhook";
 
@@ -206,6 +220,7 @@ exports.creerPaiementMollie = onRequest(
         if (!paiementPermis(j.email, j.verifie)) { res.status(403).json({ok: false, motif: "test"}); return; }
         const type = "plan";   // 01/11 : un seul produit (80 EUR), meme pour un client qui revient
         const p = PRODUITS[type];
+        const lg = langueDe((req.body || {}).langue);
         let montant = p.montant;
         let leCode = null; let prixCode = null;
         // Code de reduction : revalide ICI (rien du navigateur n'est cru), reserve, puis le
@@ -229,10 +244,10 @@ exports.creerPaiementMollie = onRequest(
             method: "POST",
             body: JSON.stringify({
               amount: {currency: "EUR", value: montant},
-              description: p.description,
+              description: (DESCRIPTIONS[type] && DESCRIPTIONS[type][lg]) || p.description,
               redirectUrl: RETOUR + type,
               webhookUrl: WEBHOOK,
-              locale: "fr_BE",
+              locale: LOCALES[lg],
               metadata: {uid, type},
             }),
           });
@@ -241,7 +256,7 @@ exports.creerPaiementMollie = onRequest(
           throw e;
         }
         await db().collection("commandes").doc(paiement.id).set({
-          uid, email, type, montant, statut: paiement.status,
+          uid, email, type, montant, statut: paiement.status, langue: lg,
           source: "mollie", mode: paiement.mode, creeLe: new Date().toISOString(),
           ...(leCode ? {code: leCode, pourcent: prixCode.pourcent, montantBase: p.montant, reduction: prixCode.reduction} : {}),
         });

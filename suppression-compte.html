@@ -2,10 +2,12 @@
 <html lang="fr">
 <head>
 <script src="/analytics.js"></script>
+<script src="/i18n-strings.js?v=46"></script>
+<script src="/i18n.js?v=5"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#f7efd9">
-<title>Supprimer mon compte et mes données — BelFit</title>
+<title data-i18n="sc_title">Supprimer mon compte et mes données — BelFit</title>
 <meta name="description" content="Comment demander la suppression de ton compte BelFit et des données associées (application web et Android).">
 <link rel="canonical" href="https://www.belfit.be/suppression-compte.html">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32-v9.png">
@@ -27,11 +29,11 @@ a{ color:#8F6200; font-weight:700; }
 </head>
 <body>
 <div class="container">
-  <a href="/v2/" class="back-btn" aria-label="Retour">←</a>
-  <h1>Supprimer mon compte et mes données</h1>
-  <div class="maj">BelFit (application web et application Android « BelFit », éditeur BELFIT — Belgique) · Contact : <a href="mailto:contact@belfit.be">contact@belfit.be</a></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><a href="/v2/" class="back-btn" aria-label="Retour" data-i18n-aria="sc_retour">←</a><div data-langues></div></div>
+  <h1 data-i18n="sc_h1">Supprimer mon compte et mes données</h1>
+  <div data-i18n-html="sc_maj" class="maj">BelFit (application web et application Android « BelFit », éditeur BELFIT — Belgique) · Contact : <a href="mailto:contact@belfit.be">contact@belfit.be</a></div>
 
-  <div class="card">
+  <div data-i18n-html="sc_c1" class="card">
     <h2 style="margin-top:0">1. Depuis l'application</h2>
     <ol>
       <li>Ouvre BelFit et connecte-toi.</li>
@@ -41,12 +43,12 @@ a{ color:#8F6200; font-weight:700; }
     <p>Par sécurité, il peut t'être demandé de te reconnecter avant la suppression.</p>
   </div>
 
-  <div class="card">
+  <div data-i18n-html="sc_c2" class="card">
     <h2 style="margin-top:0">2. Par e-mail (sans l'application)</h2>
     <p>Écris à <a href="mailto:contact@belfit.be?subject=Demande%20de%20suppression%20de%20compte">contact@belfit.be</a> avec l'objet « Demande de suppression de compte », depuis l'adresse e-mail liée à ton compte BelFit. Nous pouvons te demander de confirmer ta demande pour vérifier qu'elle vient bien de toi. Nous traitons la demande dans un délai d'un mois au plus (article 12 du RGPD).</p>
   </div>
 
-  <div class="card">
+  <div data-i18n-html="sc_c3" class="card">
     <h2 style="margin-top:0">3. Données supprimées</h2>
     <ul>
       <li>Ton compte (adresse e-mail, identifiant de connexion) ;</li>
@@ -59,7 +61,7 @@ a{ color:#8F6200; font-weight:700; }
     <p>Tu peux aussi demander l'effacement d'une partie de tes données (par exemple ton questionnaire) sans supprimer ton compte, à la même adresse : <a href="mailto:contact@belfit.be">contact@belfit.be</a>.</p>
   </div>
 
-  <p style="margin-top:18px">Plus de détails dans notre <a href="/confidentialite.html">politique de confidentialité</a>.</p>
+  <p data-i18n-html="sc_fin" style="margin-top:18px">Plus de détails dans notre <a href="/confidentialite.html">politique de confidentialité</a>.</p>
 </div>
 </body>
 </html>

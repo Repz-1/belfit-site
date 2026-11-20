@@ -19,16 +19,19 @@ const srv = createServer((q, r) => {
 const PORT = srv.address().port;
 const SHOTS = process.env.SHOTS;
 let code = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); if (!c) code = 1; };
-const nav = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const nav = await chromium.launch({ executablePath: process.env.PW || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 const PRIX = /\d\s?(€|euros?)\b|€\s?\d/i;
 const ACHAT = /Demander mon plan|S'ABONNER|Reprendre ·|Voir l'offre|Code de réduction|Continuer vers le paiement|Paiement sécurisé|Mollie|virement|IBAN|TARIFS|Bientôt disponible|Débloquer|Reprendre mon programme|J'ai un code|code de réduction|Premium|acheter|abonne/i;
-async function ouvrir(query, { plan = null, referrer = null } = {}) {
+// 20/11 : memes interdits en anglais et en neerlandais.
+const ACHAT_EN_NL = /Request my plan|Continue to payment|Secure payment|Discount code|discount code|PRICES|Coming soon|Buy a plan|bank transfer|Mijn plan aanvragen|Verder naar de betaling|Veilige betaling|Kortingscode|kortingscode|TARIEVEN|Binnenkort beschikbaar|Een plan kopen|overschrijving/i;
+async function ouvrir(query, { plan = null, referrer = null, langue = null } = {}) {
   const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: 'fr-BE', deviceScaleFactor: 2 });
   if (referrer) await ctx.addInitScript(r => { Object.defineProperty(Document.prototype, 'referrer', { get: () => r }); }, referrer);
   const p = await ctx.newPage(); p.setDefaultTimeout(8000);
   p.on('pageerror', e => ok(false, 'erreur JS ' + e.message));
   await p.goto(`http://localhost:${PORT}/app.html${query}`);
   await p.evaluate(pl => { if (pl) localStorage.setItem('belfit_v2_apercu_programme', JSON.stringify(pl)); else localStorage.removeItem('belfit_v2_apercu_programme'); }, plan);
+  await p.evaluate(l => { if (l) localStorage.setItem('belfit_v2_langue', l); else localStorage.removeItem('belfit_v2_langue'); }, langue);
   await p.reload(); await p.waitForTimeout(1800);
   // Pire cas : paiement en ligne ouvert (compte autorise) et commandes ouvertes (?cmd=1).
   await p.evaluate(() => { window.__banc.paiementOuvert.value = true; }); await p.waitForTimeout(300);
@@ -99,6 +102,21 @@ try {
     ok((await liensPaiement(p)).length === 0, `twa : onglet ${i + 1} sans lien de paiement`);
   }
   await p.context().close();
+
+  // 6. TWA en anglais puis en neerlandais : aucun prix ni achat, dans aucun onglet.
+  for (const langue of ['en', 'nl']) {
+    for (const [q, nomCas, pl] of [['?source=twa&cmd=1', 'sans plan', null], ['?source=twa&cmd=1', 'avec plan', plan]]) {
+      p = await ouvrir(q, { langue, plan: pl });
+      const it = p.locator('.bn-item');
+      for (let i = 0; i < await it.count(); i++) {
+        await it.nth(i).tap(); await p.waitForTimeout(600);
+        const ti = await p.locator('#app').innerText();
+        ok(!PRIX.test(ti) && !ACHAT.test(ti) && !ACHAT_EN_NL.test(ti), `twa ${langue} ${nomCas} : onglet ${i + 1} sans prix ni achat`);
+      }
+      await shot(p, `4-twa-${langue}-${nomCas.replace(' ', '-')}`);
+      await p.context().close();
+    }
+  }
 } catch (e) { ok(false, e.message.split('\n')[0]); }
 await nav.close(); srv.close();
 process.exit(code);

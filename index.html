@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
 <script src="/analytics.js"></script>
+<script src="/i18n-strings.js?v=46"></script>
+<script src="/i18n.js?v=5"></script>
   <meta charset="utf-8">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.belfit.be/">
@@ -51,7 +53,7 @@
       }
     })();
   </script>
-  <title>BelFit — Coaching nutrition personnalisé</title>
+  <title data-i18n="ix_title">BelFit — Coaching nutrition personnalisé</title>
   <meta name="description" content="BelFit : coaching nutrition personnalisé, avec conseils sur mesure en compléments alimentaires. Plan sous 48 h. 80 € le mois, sans abonnement.">
   <meta name="google-site-verification" content="ijKWWCgPfdsSxX5bt1grLsS0AD3SdpiWord1TMopRQc" />
   <link rel="canonical" href="https://www.belfit.be/">
@@ -729,9 +731,10 @@
         <img src="belfit-logo-bf.png" width="42" height="17" alt="BelFit">
         <span class="brand-word">BelFit</span>
       </a>
-      <nav class="nav" aria-label="Navigation principale">
-        <a class="nav-link" href="#offre">Offre</a>
-        <a class="nav-link" href="#processus">Processus</a>
+      <nav data-i18n-aria="ix_nav_aria" class="nav" aria-label="Navigation principale">
+        <a data-i18n="ix_nav1" class="nav-link" href="#offre">Offre</a>
+        <a class="nav-link" href="#processus" data-i18n="ix_nav2">Processus</a>
+        <div data-langues></div>
       </nav>
     </div>
   </header>
@@ -740,17 +743,17 @@
     <section class="hero">
       <div class="wrap">
         <img class="hero-logo" src="belfit-logo-bf.png" width="180" height="74" alt="BelFit">
-        <div class="eyebrow">Coaching nutrition</div>
-        <h1>Votre plan alimentaire, coaché et personnalisé</h1>
-        <p class="hero-lead">
+        <div data-i18n="ix_eyebrow" class="eyebrow">Coaching nutrition</div>
+        <h1 data-i18n="ix_h1">Votre plan alimentaire, coaché et personnalisé</h1>
+        <p data-i18n="ix_lead" class="hero-lead">
           BelFit combine un accompagnement nutritionnel sur mesure et une application simple pour suivre votre plan au quotidien.
         </p>
         <div class="hero-ctas">
-          <a class="btn btn-primary" href="/v2/">Ouvrir l’app</a>
-          <a class="btn btn-secondary" href="/v2/?onglet=coach">Acheter un plan</a>
-          <a class="btn btn-ghost" href="mailto:contact@belfit.be" data-contact>Contacter</a>
+          <a data-i18n="ix_ouvrir" class="btn btn-primary" href="/v2/">Ouvrir l’app</a>
+          <a data-i18n="ix_acheter" class="btn btn-secondary" href="/v2/?onglet=coach">Acheter un plan</a>
+          <a data-i18n="ix_contacter" class="btn btn-ghost" href="mailto:contact@belfit.be" data-contact>Contacter</a>
         </div>
-        <div class="hero-card">
+        <div data-i18n-html="ix_hero_card" class="hero-card">
           <p>
             <strong>Sans abonnement</strong> — 80&nbsp;€ le mois de coaching, ajustements inclus.
             Après paiement, vous remplissez le questionnaire dans l’app&nbsp;;
@@ -760,7 +763,7 @@
       </div>
     </section>
 
-    <section id="offre">
+    <section data-i18n-html="ix_offre" id="offre">
       <div class="wrap">
         <div class="section-head">
           <p class="section-label">Offre</p>
@@ -792,7 +795,7 @@
       </div>
     </section>
 
-    <section id="complements">
+    <section data-i18n-html="ix_complements" id="complements">
       <div class="wrap">
         <div class="section-head">
           <p class="section-label">Compléments alimentaires</p>
@@ -810,7 +813,7 @@
       </div>
     </section>
 
-    <section id="entrainement">
+    <section data-i18n-html="ix_entrainement" id="entrainement">
       <div class="wrap">
         <div class="section-head">
           <p class="section-label">Entraînement</p>
@@ -826,7 +829,7 @@
       </div>
     </section>
 
-    <section id="processus">
+    <section data-i18n-html="ix_processus" id="processus">
       <div class="wrap">
         <div class="process">
           <div class="section-head">
@@ -854,7 +857,7 @@
 
     <section>
       <div class="wrap">
-        <div class="value-strip">
+        <div data-i18n-html="ix_valeurs" class="value-strip">
           <div class="value-item">
             <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
             <h3>Personnalisé</h3>
@@ -884,18 +887,18 @@
             <img src="belfit-logo-bf.png" width="36" height="15" alt="">
             <span>BelFit</span>
           </div>
-          <p class="footer-copy">
+          <p data-i18n="ix_footer_copy" class="footer-copy">
             Coaching fitness &amp; nutrition. Plan alimentaire personnalisé, livré via l’application.
           </p>
         </div>
-        <nav class="footer-links" aria-label="Liens légaux">
+        <nav data-i18n-html="ix_footer_liens" class="footer-links" aria-label="Liens légaux">
           <a href="/cgv.html">Conditions générales (CGV)</a>
           <a href="/confidentialite.html">Confidentialité</a>
           <a href="/mentions-legales.html">Mentions légales</a>
           <a href="mailto:contact@belfit.be">contact@belfit.be</a>
         </nav>
       </div>
-      <div class="footer-meta">
+      <div data-i18n-html="ix_footer_meta" class="footer-meta">
         <span>© 2026 BelFit · BCE/TVA BE 0767.899.411</span>
         <span>Coaching nutrition · Belgique</span>
       </div>
@@ -904,31 +907,31 @@
 
   <div id="contact-modal" class="cm-fond" hidden>
     <div class="cm-carte" role="dialog" aria-modal="true" aria-labelledby="cm-titre">
-      <button type="button" class="cm-x" data-fermer aria-label="Fermer">&times;</button>
-      <h2 id="cm-titre">Contactez BelFit</h2>
-      <p class="cm-sous">Une question&nbsp;? Écrivez-nous, on répond vite.</p>
+      <button data-i18n-aria="ix_fermer_aria" type="button" class="cm-x" data-fermer aria-label="Fermer">&times;</button>
+      <h2 data-i18n="ix_cm_titre" id="cm-titre">Contactez BelFit</h2>
+      <p data-i18n="ix_cm_sous" class="cm-sous">Une question&nbsp;? Écrivez-nous, on répond vite.</p>
       <form id="cm-form" novalidate>
-        <label>Nom<input name="nom" autocomplete="name" required maxlength="80"></label>
-        <label>E-mail<input name="email" type="email" autocomplete="email" required maxlength="120"></label>
-        <label>Sujet<select name="sujet" required>
-          <option value="Question">Question</option>
-          <option value="Achat">Achat</option>
-          <option value="Suivi">Suivi</option>
-          <option value="Autre">Autre</option>
+        <label><span data-i18n="ix_l_nom">Nom</span><input name="nom" autocomplete="name" required maxlength="80"></label>
+        <label><span data-i18n="ix_l_mail">E-mail</span><input name="email" type="email" autocomplete="email" required maxlength="120"></label>
+        <label><span data-i18n="ix_l_sujet">Sujet</span><select name="sujet" required>
+          <option data-i18n="ix_o1" value="Question">Question</option>
+          <option data-i18n="ix_o2" value="Achat">Achat</option>
+          <option data-i18n="ix_o3" value="Suivi">Suivi</option>
+          <option data-i18n="ix_o4" value="Autre">Autre</option>
         </select></label>
-        <label>Message<textarea name="message" rows="4" required maxlength="2000"></textarea></label>
+        <label><span data-i18n="ix_l_msg">Message</span><textarea name="message" rows="4" required maxlength="2000"></textarea></label>
         <label class="cm-rgpd"><input type="checkbox" name="rgpd" required>
-          <span>J’accepte que BelFit utilise ces informations pour me répondre. <a href="/confidentialite.html" target="_blank" rel="noopener">Politique de confidentialité</a></span></label>
+          <span data-i18n-html="ix_rgpd">J’accepte que BelFit utilise ces informations pour me répondre. <a href="/confidentialite.html" target="_blank" rel="noopener">Politique de confidentialité</a></span></label>
         <p class="cm-erreur" role="alert" hidden></p>
-        <div class="cm-pot" aria-hidden="true"><label>Site web<input name="site" tabindex="-1" autocomplete="off"></label></div>
-        <button type="submit" class="btn btn-primary cm-envoyer">Envoyer</button>
-        <p class="cm-note">Votre message arrive directement à contact@belfit.be.</p>
+        <div class="cm-pot" aria-hidden="true"><label><span data-i18n="ix_l_site">Site web</span><input name="site" tabindex="-1" autocomplete="off"></label></div>
+        <button data-i18n="ix_envoyer" type="submit" class="btn btn-primary cm-envoyer">Envoyer</button>
+        <p data-i18n="ix_note" class="cm-note">Votre message arrive directement à contact@belfit.be.</p>
       </form>
       <div class="cm-merci" hidden>
         <div class="cm-merci-ico" aria-hidden="true">✓</div>
-        <h2>Message envoyé&nbsp;!</h2>
-        <p>Merci, on vous répond très vite par e-mail.</p>
-        <button type="button" class="btn btn-primary" data-fermer>Fermer</button>
+        <h2 data-i18n="ix_merci_t">Message envoyé&nbsp;!</h2>
+        <p data-i18n="ix_merci">Merci, on vous répond très vite par e-mail.</p>
+        <button data-i18n="ix_fermer" type="button" class="btn btn-primary" data-fermer>Fermer</button>
       </div>
     </div>
   </div>
@@ -937,6 +940,8 @@
       var m = document.getElementById('contact-modal'), f = document.getElementById('cm-form');
       var err = m.querySelector('.cm-erreur'), merci = m.querySelector('.cm-merci'), btn = f.querySelector('.cm-envoyer'), dernier = null;
       var API = 'https://europe-west1-repz-baf60.cloudfunctions.net/envoyerContact';
+      // 20/11 : messages traduits (fr / en / nl) via i18n.js.
+      function T(k) { return (window.BELFIT_I18N && BELFIT_I18N.t(k)) || k; }
       function ouvrir(e) {
         e.preventDefault(); dernier = e.currentTarget;
         m.hidden = false; document.body.style.overflow = 'hidden';
@@ -954,10 +959,10 @@
       f.addEventListener('submit', function (e) {
         e.preventDefault();
         var msg = '';
-        if (!f.nom.value.trim()) msg = 'Indiquez votre nom.';
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.value.trim())) msg = 'Indiquez un e-mail valide.';
-        else if (!f.message.value.trim()) msg = 'Écrivez votre message.';
-        else if (!f.rgpd.checked) msg = 'Cochez la case de consentement.';
+        if (!f.nom.value.trim()) msg = T('ix_err_nom');
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.value.trim())) msg = T('ix_err_mail');
+        else if (!f.message.value.trim()) msg = T('ix_err_msg');
+        else if (!f.rgpd.checked) msg = T('ix_err_rgpd');
         err.textContent = msg; err.hidden = !msg;
         if (msg) return;
         var d = { nom: f.nom.value.trim(), email: f.email.value.trim(), sujet: f.sujet.value,
@@ -968,7 +973,7 @@
           window.location.href = 'mailto:contact@belfit.be?subject=' +
             encodeURIComponent('[BelFit] ' + d.sujet + ' – ' + d.nom) + '&body=' + encodeURIComponent(corps);
         }
-        btn.disabled = true; btn.textContent = 'Envoi…';
+        btn.disabled = true; btn.textContent = T('ix_envoi');
         fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) })
           .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
           .then(function (x) {
@@ -976,13 +981,13 @@
               f.reset(); f.hidden = true; m.querySelector('.cm-sous').hidden = true; m.querySelector('#cm-titre').hidden = true;
               merci.hidden = false; merci.querySelector('button').focus();
             } else if (x.s === 400) {
-              err.textContent = 'Vérifiez les champs du formulaire.'; err.hidden = false;
+              err.textContent = T('ix_err_champs'); err.hidden = false;
             } else if (x.s === 429) {
-              err.textContent = 'Trop de messages envoyés. Réessayez plus tard ou écrivez à contact@belfit.be.'; err.hidden = false;
+              err.textContent = T('ix_err_trop'); err.hidden = false;
             } else { secours(); }
           })
           .catch(secours)
-          .then(function () { btn.disabled = false; btn.textContent = 'Envoyer'; });
+          .then(function () { btn.disabled = false; btn.textContent = T('ix_envoyer'); });
       });
     })();
   </script>
