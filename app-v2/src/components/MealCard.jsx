@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
+import { tx } from '../i18n/ecrans.js';
 import { createPortal } from 'preact/compat';
 import { DB, NOMS_ALIMENTS, macrosOf, scoreRecherche, facteurCuisson, PAIRES_CUISSON } from '../data/aliments.js';
 import { customFoods, Scanner } from './Scanner.jsx';
@@ -575,7 +576,7 @@ export function MealCard({ r, aSuivre, fait, puce }) {
               ref={el => { if (el && !el.dataset.fait) { el.dataset.fait = '1'; el.focus(); } }}
             />
           ) : (
-            <h3 class="mc-titre">{r.nom}</h3>
+            <h3 class="mc-titre">{tx(r.nom)}</h3>
           )}
           <p class="mc-sous">{
             r.saute ? 'Sauté · 0 kcal'

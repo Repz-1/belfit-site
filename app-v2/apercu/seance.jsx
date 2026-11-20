@@ -10,7 +10,7 @@ import { utilisateur, authPrete } from '../src/services/firebase.js';
 import { langue } from '../src/i18n/index.js';
 import { SeanceGuidee } from '../src/components/SeanceGuidee.jsx';
 
-langue.value = 'fr';
+langue.value = new URLSearchParams(location.search).get('lang') || 'fr';
 utilisateur.value = { uid: 'test', email: 'coach@belfit.be', displayName: 'Raci', metadata: { creationTime: new Date().toISOString() } };
 authPrete.value = true;
 try { localStorage.clear(); } catch (e) {}

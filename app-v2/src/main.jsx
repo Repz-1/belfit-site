@@ -1,5 +1,6 @@
 // En premier : detecte le mode app Android (TWA) avant tout nettoyage d'adresse.
 import { APP_ANDROID } from './services/app-android.js';
+import { tx, locale } from './i18n/ecrans.js';
 // 20/11 : la langue de l'app est recopiee sur le compte (e-mail du plan coach).
 import './store/langue-compte.js';
 // Avant CoachPage, qui efface toute la requete sur un retour Mollie
@@ -223,7 +224,7 @@ export function OngletEntrainer() {
   }
   return (
     <div class="pg-entrainer">
-      <button class="v2-retour v2-retour--mot" onClick={retourEntrainer}>←&nbsp; Retour</button>
+      <button class="v2-retour v2-retour--mot" onClick={retourEntrainer}>←&nbsp; {tx('Retour')}</button>
     </div>
   );
 }
@@ -688,6 +689,7 @@ export function App() {
             planActif: planCoachActif.value,
             prog: pr,
             auj: aujourdhuiBxl(),
+            tr: tx, loc: locale(),
           });
           const enPreparation = cadran.masquer;
           const fr = (n) => Math.round(n || 0).toLocaleString('fr-BE');

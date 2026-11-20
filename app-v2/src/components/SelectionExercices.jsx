@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
+import { nomExo } from '../i18n/exercices.js';
+import { tx } from '../i18n/ecrans.js';
 import { createPortal } from 'preact/compat';
 import { MUSCLES, EXERCISES, NIVEAUX, LIEUX, OPTIONS_DOMICILE,
          convientAuLieu, materielPrecis,
@@ -39,7 +41,7 @@ function poserLieu(v) {
 
 
 import { retourEntrainer } from './Entrainer.jsx';
-import { t } from '../i18n/index.js';
+import { t, langue } from '../i18n/index.js';
 import { GROUPES } from '../store/entrainement.js';
 import '../legacy/selection-exercices.scoped.css';
 import { PhotoExo } from './PhotoExo.jsx';
@@ -70,7 +72,7 @@ const EQUIP = {
   poulie: 'Poulie', rien: 'Poids du corps', traction: 'Poids du corps',
   kettlebell: 'Kettlebell', elastique: 'Élastique',
 };
-const equipLabel = (mat) => EQUIP[mat] || (mat ? mat[0].toUpperCase() + mat.slice(1) : '—');
+const equipLabel = (mat) => EQUIP[mat] ? tx(EQUIP[mat]) : (mat ? mat[0].toUpperCase() + mat.slice(1) : '—');
 // Libelle du materiel EXACT : un elastique ne s'affiche plus « Halteres ».
 export const equipDe = (ex) => equipLabel(materielPrecis(ex));
 
@@ -129,7 +131,8 @@ export function SelectionExercices({ enCreation = false } = {}) {
   const mots = normaliser(recherche).split(/\s+/).filter(Boolean);
   const correspond = (ex) => {
     if (!mots.length) return true;
-    const cible = normaliser(ex.nom);
+    // Recherche sur le nom affiche ET le nom francais (20/11).
+    const cible = normaliser(ex.nom + ' ' + nomExo(ex.nom));
     return mots.every(m => cible.includes(m));
   };
 
@@ -138,7 +141,7 @@ export function SelectionExercices({ enCreation = false } = {}) {
     .filter(o => exoVisible(o.ex) && correspond(o.ex))
     // Affichage alphabetique : les noms traduits le 12/11 ne sont plus
     // a leur place dans la base, ou l'ordre (les positions) ne change pas.
-    .sort((a, b) => a.ex.nom.localeCompare(b.ex.nom, 'fr'));
+    .sort((a, b) => nomExo(a.ex.nom).localeCompare(nomExo(b.ex.nom), langue.value));
 
   // Une recherche porte sur TOUT le catalogue, pas sur le seul muscle
   // affiche : chercher « squat » depuis l'onglet Pecs ne doit pas
@@ -150,12 +153,12 @@ export function SelectionExercices({ enCreation = false } = {}) {
         .filter(o => o.n > 0)
     : [];
 
-  const nomNiveau = (NIVEAUX_PRATIQUE.find(n => n.key === niveauPratique.value) || {}).label || '';
+  const nomNiveau = tx((NIVEAUX_PRATIQUE.find(n => n.key === niveauPratique.value) || {}).label || '');
   const resumeFiltres = (lieu === 'domicile'
-    ? 'À domicile' + (options.length < TOUTES_OPTIONS.length
-        ? ' · ' + OPTIONS_DOMICILE.filter(o => options.includes(o.key)).map(o => o.label).join(', ')
+    ? tx('À domicile') + (options.length < TOUTES_OPTIONS.length
+        ? ' · ' + OPTIONS_DOMICILE.filter(o => options.includes(o.key)).map(o => tx(o.label)).join(', ')
         : '')
-    : 'En salle') + ' · ' + nomNiveau;
+    : tx('En salle')) + ' · ' + nomNiveau;
 
   const nbSelectionnes = Object.values(selection).reduce((n, s) => n + s.size, 0);
 
@@ -192,18 +195,18 @@ export function SelectionExercices({ enCreation = false } = {}) {
     <div class="pg-selection">
       <div class="top">
         <button class="back-btn" onClick={cree ? quitterCreation : retourEntrainer}>←&nbsp; {t('ml_retour')}</button>
-        <h1>{cree ? (cree.id ? 'Modifier ma séance' : 'Créer une séance') : 'Choisir mes exercices'}</h1>
+        <h1>{tx(cree ? (cree.id ? 'Modifier ma séance' : 'Créer une séance') : 'Choisir mes exercices')}</h1>
       </div>
 
       <div class="ex-recherche">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.6-3.6" />
         </svg>
-        <input type="search" value={recherche} placeholder="Chercher un exercice"
+        <input type="search" value={recherche} placeholder={tx('Chercher un exercice')}
           onInput={(e) => setRecherche(e.currentTarget.value)} />
         {recherche && (
           <button class="ex-recherche-vider" onClick={() => setRecherche('')}
-            aria-label="Effacer">×</button>
+            aria-label={tx('Effacer')}>×</button>
         )}
       </div>
 
@@ -214,7 +217,7 @@ export function SelectionExercices({ enCreation = false } = {}) {
           (EXERCISES[m.key] || []).length > 0 && (
             <button key={m.key} class={'muscle-case' + (i === muscle ? ' active' : '')}
               aria-pressed={i === muscle}
-              onClick={() => setMuscle(i)}>{m.label}</button>
+              onClick={() => setMuscle(i)}>{t('mus_' + m.key)}</button>
           )
         ))}
       </div>
@@ -225,26 +228,26 @@ export function SelectionExercices({ enCreation = false } = {}) {
           une ligne ; on les change dans la feuille « Filtres ». */}
       <p class="section-hint">
         <button type="button" class="ex-filtres" onClick={() => setFiltres(true)}
-          aria-label="Modifier les filtres">
+          aria-label={tx('Modifier les filtres')}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>
           {resumeFiltres}
         </button>
         <span key={nbSelectionnes}
           class={'hint-compte' + (nbSelectionnes > 0 ? ' actif' : '')}>
-          {nbSelectionnes} sélectionné{nbSelectionnes > 1 ? 's' : ''}
+          {tx(nbSelectionnes > 1 ? '{n} sélectionnés' : '{n} sélectionné', { n: nbSelectionnes })}
         </span>
       </p>
       {mots.length > 0 && liste.length > 0 && (
-        <p class="ex-trouves">{liste.length} exercice{liste.length > 1 ? 's' : ''} trouvé{liste.length > 1 ? 's' : ''}</p>
+        <p class="ex-trouves">{tx(liste.length > 1 ? '{n} exercices trouvés' : '{n} exercice trouvé', { n: liste.length })}</p>
       )}
 
       <div class="ex-list">
         {liste.length === 0 ? (
           <div style="text-align:center;color:#6b7280;font-size:14px;padding:34px 20px;line-height:1.5">
             <span style="display:block;font-size:44px;margin-bottom:10px">💪</span>
-            {mots.length ? 'Aucun exercice ne correspond.'
-              : lieu === 'domicile' ? `Rien pour ${MUSCLES[muscle].label.toLowerCase()} avec ce matériel.`
-              : 'Aucun exercice pour ce matériel.'}
+            {mots.length ? tx('Aucun exercice ne correspond.')
+              : lieu === 'domicile' ? tx('Rien pour {m} avec ce matériel.', { m: t('mus_' + MUSCLES[muscle].key).toLowerCase() })
+              : tx('Aucun exercice pour ce matériel.')}
             {/* Liste vide a domicile : on propose d'un geste ce qui en
                 donnerait — Poids du corps d'abord (rien a acheter),
                 puis le reste, chacun avec son nombre d'exercices. */}
@@ -253,17 +256,17 @@ export function SelectionExercices({ enCreation = false } = {}) {
                 {[...OPTIONS_DOMICILE].sort((a, b) => (b.key === 'corps') - (a.key === 'corps'))
                   .filter(o => !options.includes(o.key) && nbSiOption(o.key) > 0).map(o => (
                   <button key={o.key} class={o.key === 'corps' ? 'principal' : ''} onClick={() => basculerOption(o.key)}>
-                    + {o.label} ({nbSiOption(o.key)})
+                    + {tx(o.label)} ({nbSiOption(o.key)})
                   </button>
                 ))}
-                <button onClick={() => poserLieu({ lieu: 'salle', options })}>En salle</button>
+                <button onClick={() => poserLieu({ lieu: 'salle', options })}>{tx('En salle')}</button>
               </div>
             )}
             {ailleurs.length > 0 && (
               <div class="ex-ailleurs">
                 {ailleurs.map(o => (
                   <button key={o.m.key} onClick={() => setMuscle(MUSCLES.indexOf(o.m))}>
-                    {o.m.label} ({o.n})
+                    {t('mus_' + o.m.key)} ({o.n})
                   </button>
                 ))}
               </div>
@@ -280,12 +283,12 @@ export function SelectionExercices({ enCreation = false } = {}) {
                   l'ajouter a sa seance pour decouvrir a quoi il
                   ressemblait, donc s'engager avant de savoir. */}
               <div class="ex-photo" role="button" tabIndex={0}
-                aria-label={'Voir ' + ex.nom}
+                aria-label={tx('Voir {nom}', { nom: nomExo(ex.nom) })}
                 onClick={() => setFiche(i)}>
                 <PhotoExo imgId={ex.imgId} taille={240} />
               </div>
               <div class="ex-info" onClick={() => setFiche(i)}>
-                <div class="ex-name">{ex.nom}</div>
+                <div class="ex-name">{nomExo(ex.nom)}</div>
                 <div class="ex-equip">{equipDe(ex)}</div>
                 {/* Raci, 14/10 (« corrige tout ») : la mention ne
                     s'affiche que si l'exercice NE convient PAS a tous.
@@ -297,7 +300,7 @@ export function SelectionExercices({ enCreation = false } = {}) {
                     data/exercices.js. */}
                 {ex.reserve && <div class="ex-sets">{ex.reserve}</div>}
               </div>
-              <button class="ex-add" onClick={() => basculer(i)} aria-label="Ajouter">{sel ? '✓' : '+'}</button>
+              <button class="ex-add" onClick={() => basculer(i)} aria-label={tx('Ajouter')}>{sel ? '✓' : '+'}</button>
             </div>
           );
         })}
@@ -322,89 +325,89 @@ export function SelectionExercices({ enCreation = false } = {}) {
             poserBrouillon({ refs: gardeOrdre(refs), origine: 'libre' });
             allerVers('maseance');
           }}>
-          <span class="count">{nbSelectionnes} exercices sélectionnés</span>
+          <span class="count">{tx('{n} exercices sélectionnés', { n: nbSelectionnes })}</span>
           <button class="vider" type="button" onClick={(e) => {
             e.stopPropagation();
             setJeter(true);
           }}>{t('sea_abandonner')}</button>
-          <span class="go">Ma séance →</span>
+          <span class="go">{tx('Ma séance →')}</span>
         </div>,
         document.body
       )}
       {cree && ongletActif.value === 'entrainer' && createPortal(
         <div class={'session-bar pg-selection-portail ms-barre' + (nbSelectionnes === 0 ? ' hidden' : '')}
           onClick={() => { setNom(cree.nom || ''); setNommer(true); }}>
-          <span class="count">{nbSelectionnes} exercice{nbSelectionnes > 1 ? 's' : ''}</span>
-          <span class="go">Enregistrer →</span>
+          <span class="count">{tx(nbSelectionnes > 1 ? '{n} exercices' : '{n} exercice', { n: nbSelectionnes })}</span>
+          <span class="go">{tx('Enregistrer →')}</span>
         </div>,
         document.body
       )}
       {cree && cree.id && (
-        <button type="button" class="ms-suppr-lien" onClick={() => setSupprimer(true)}>Supprimer cette séance</button>
+        <button type="button" class="ms-suppr-lien" onClick={() => setSupprimer(true)}>{tx('Supprimer cette séance')}</button>
       )}
       {cree && nommer && createPortal(
         <div class="ex-feuille-voile" onClick={() => setNommer(false)}>
-          <form class="ex-feuille" role="dialog" aria-label="Nom de la séance"
+          <form class="ex-feuille" role="dialog" aria-label={tx('Nom de la séance')}
             onClick={(e) => e.stopPropagation()}
             onSubmit={(e) => { e.preventDefault(); if (enregistrerCreation(nom)) retourEntrainer(); }}>
             <div class="ex-feuille-poignee" aria-hidden="true" />
-            <p class="ex-feuille-titre">Nom de la séance</p>
+            <p class="ex-feuille-titre">{tx('Nom de la séance')}</p>
             <input class="ms-nom" type="text" value={nom} maxLength={40} autoFocus
               placeholder={nomPropose(cree.ordre)} onInput={(e) => setNom(e.currentTarget.value)} />
-            <p class="ex-feuille-note">{nbSelectionnes} exercice{nbSelectionnes > 1 ? 's' : ''}. Tu la retrouves dans « Mes séances », sur S'entraîner.</p>
-            <button type="submit" class="ex-feuille-ok">Enregistrer</button>
+            <p class="ex-feuille-note">{tx(nbSelectionnes > 1 ? '{n} exercices' : '{n} exercice', { n: nbSelectionnes })}. {tx("Tu la retrouves dans « Mes séances », sur S'entraîner.")}</p>
+            <button type="submit" class="ex-feuille-ok">{tx('Enregistrer')}</button>
           </form>
         </div>,
         document.body
       )}
       {cree && supprimer && createPortal(
         <div class="ex-feuille-voile" onClick={() => setSupprimer(false)}>
-          <div class="ex-feuille" role="dialog" aria-label="Supprimer la séance" onClick={(e) => e.stopPropagation()}>
+          <div class="ex-feuille" role="dialog" aria-label={tx('Supprimer la séance')} onClick={(e) => e.stopPropagation()}>
             <div class="ex-feuille-poignee" aria-hidden="true" />
-            <p class="ex-feuille-titre">Supprimer « {cree.nom} » ?</p>
-            <p class="ex-feuille-note">Les séances déjà faites restent dans ton historique.</p>
-            <button type="button" class="ex-feuille-ok ms-rouge" onClick={() => { supprimerMaSeance(cree.id); retourEntrainer(); }}>Supprimer</button>
-            <button type="button" class="ms-annuler" onClick={() => setSupprimer(false)}>Annuler</button>
+            <p class="ex-feuille-titre">{tx('Supprimer « {nom} » ?', { nom: cree.nom })}</p>
+            <p class="ex-feuille-note">{tx('Les séances déjà faites restent dans ton historique.')}</p>
+            <button type="button" class="ex-feuille-ok ms-rouge" onClick={() => { supprimerMaSeance(cree.id); retourEntrainer(); }}>{tx('Supprimer')}</button>
+            <button type="button" class="ms-annuler" onClick={() => setSupprimer(false)}>{tx('Annuler')}</button>
           </div>
         </div>,
         document.body
       )}
       {filtres && createPortal(
         <div class="ex-feuille-voile" onClick={() => setFiltres(false)}>
-          <div class="ex-feuille" role="dialog" aria-label="Filtres" onClick={(e) => e.stopPropagation()}>
+          <div class="ex-feuille" role="dialog" aria-label={tx('Filtres')} onClick={(e) => e.stopPropagation()}>
             <div class="ex-feuille-poignee" aria-hidden="true" />
-            <p class="ex-feuille-titre">Où t'entraînes-tu ?</p>
-            <div class="filter-tabs lieu-rangee" role="group" aria-label="Où t'entraînes-tu ?" data-sans-swipe>
+            <p class="ex-feuille-titre">{tx("Où t'entraînes-tu ?")}</p>
+            <div class="filter-tabs lieu-rangee" role="group" aria-label={tx("Où t'entraînes-tu ?")} data-sans-swipe>
               {LIEUX.map(l => (
                 <button key={l.key} class={'filter-tab' + (l.key === lieu ? ' active' : '')}
                   aria-pressed={l.key === lieu}
-                  onClick={() => poserLieu({ lieu: l.key, options })}>{l.label}</button>
+                  onClick={() => poserLieu({ lieu: l.key, options })}>{tx(l.label)}</button>
               ))}
             </div>
             {lieu === 'domicile' && (
-              <div class="materiel-rangee" role="group" aria-label="Matériel à la maison" data-sans-swipe>
+              <div class="materiel-rangee" role="group" aria-label={tx('Matériel à la maison')} data-sans-swipe>
                 {OPTIONS_DOMICILE.map(o => {
                   const on = options.includes(o.key);
                   return (
                     <button key={o.key} class={'materiel-case' + (on ? ' active' : '')}
                       role="checkbox" aria-checked={on}
                       onClick={() => basculerOption(o.key)}>
-                      <span class="materiel-coche" aria-hidden="true">{on ? '✓' : ''}</span>{o.label}
+                      <span class="materiel-coche" aria-hidden="true">{on ? '✓' : ''}</span>{tx(o.label)}
                     </button>
                   );
                 })}
               </div>
             )}
-            <p class="ex-feuille-titre">Ton niveau</p>
-            <div class="niv-rangee" role="group" aria-label="Niveau de pratique" data-sans-swipe>
+            <p class="ex-feuille-titre">{tx('Ton niveau')}</p>
+            <div class="niv-rangee" role="group" aria-label={tx('Niveau de pratique')} data-sans-swipe>
               {NIVEAUX_PRATIQUE.map(n => (
                 <button key={n.key}
                   class={'niv-tab' + (niveauPratique.value === n.key ? ' active' : '')}
-                  onClick={() => choisirNiveau(n.key)}>{n.label}</button>
+                  onClick={() => choisirNiveau(n.key)}>{tx(n.label)}</button>
               ))}
             </div>
-            <p class="ex-feuille-note">Le niveau règle les séries de chaque exercice. Tout est retenu pour la prochaine fois.</p>
-            <button type="button" class="ex-feuille-ok" onClick={() => setFiltres(false)}>Voir les exercices</button>
+            <p class="ex-feuille-note">{tx('Le niveau règle les séries de chaque exercice. Tout est retenu pour la prochaine fois.')}</p>
+            <button type="button" class="ex-feuille-ok" onClick={() => setFiltres(false)}>{tx('Voir les exercices')}</button>
           </div>
         </div>,
         document.body
@@ -447,9 +450,9 @@ function FicheExercice({ mKey, ex, choisi, basculer, fermer }) {
     <div class="exo-fiche" onClick={(e) => { if (e.target === e.currentTarget) fermer(); }}>
       <div class="exo-fiche-carte exo-fiche--bande">
         <div class="exo-fiche-bande" style={{ background: couleur }}>
-          <div class="exo-fiche-muscle">{groupe ? groupe.label : ''}</div>
-          <h2>{ex.nom}</h2>
-          <button class="exo-fiche-fermer" onClick={fermer} aria-label="Fermer">×</button>
+          <div class="exo-fiche-muscle">{groupe ? t('mus_' + groupe.k) : ''}</div>
+          <h2>{nomExo(ex.nom)}</h2>
+          <button class="exo-fiche-fermer" onClick={fermer} aria-label={tx('Fermer')}>×</button>
         </div>
 
         <div class="exo-fiche-vues">
@@ -464,7 +467,7 @@ function FicheExercice({ mKey, ex, choisi, basculer, fermer }) {
           <span>{equipDe(ex)}</span>
           {groupe && (
             <span class="exo-fiche-chip-mus" style={{ background: couleur + '1f', color: couleur }}>
-              {groupe.label}
+              {t('mus_' + groupe.k)}
             </span>
           )}
         </div>
@@ -473,11 +476,11 @@ function FicheExercice({ mKey, ex, choisi, basculer, fermer }) {
             reglage global que la rangee du haut : un seul niveau pour
             la seance, modifiable d'ou l'on veut. Aucun choix n'est
             obligatoire — l'ajout marche dans tous les cas. */}
-        <div class="exo-fiche-niveaux" role="group" aria-label="Niveau de pratique">
+        <div class="exo-fiche-niveaux" role="group" aria-label={tx('Niveau de pratique')}>
           {NIVEAUX_PRATIQUE.map(n => (
             <button key={n.key}
               class={'niv-tab' + (niveauPratique.value === n.key ? ' active' : '')}
-              onClick={() => choisirNiveau(n.key)}>{n.label}</button>
+              onClick={() => choisirNiveau(n.key)}>{tx(n.label)}</button>
           ))}
         </div>
 
@@ -488,18 +491,18 @@ function FicheExercice({ mKey, ex, choisi, basculer, fermer }) {
             {PROTOCOLES[niveauPratique.value].series.map((se, k) => (
               <li key={k} class={se.degressive ? 'degressive' : ''}>
                 <i class="exo-serie-n">{k + 1}</i>
-                <b>{se.pct != null ? se.pct + ' %' : se.reps + ' reps'}</b>
-                {se.note && <span>{se.note}</span>}
+                <b>{se.pct != null ? se.pct + ' %' : se.reps + ' ' + tx('reps')}</b>
+                {se.note && <span>{tx(se.note)}</span>}
               </li>
             ))}
           </ol>
         ) : (
-          <p class="exo-series-libre">Compose tes séries comme tu veux : ajoute, enlève, choisis tes charges.</p>
+          <p class="exo-series-libre">{tx('Compose tes séries comme tu veux : ajoute, enlève, choisis tes charges.')}</p>
         )}
 
         <button class={'exo-fiche-ajout' + (choisi ? ' retire' : '')}
           onClick={() => { basculer(); fermer(); }}>
-          {choisi ? 'Retirer de ma séance' : 'Ajouter à ma séance'}
+          {tx(choisi ? 'Retirer de ma séance' : 'Ajouter à ma séance')}
         </button>
       </div>
     </div>,

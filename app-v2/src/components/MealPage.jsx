@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
+import { tx } from '../i18n/ecrans.js';
 import { repas, totauxRepas, fourchetteRepas, renommerRepas, validerRepas } from '../store/journal.js';
 import { macrosOf } from '../data/aliments.js';
 import { enregistrerPlat } from '../store/perso.js';
@@ -164,7 +165,7 @@ export function MealPage() {
               autoFocus
             />
           ) : (
-            <h1 class="rp-titre" onClick={() => { if (!roTitre) setEdite(true); }}>{r.nom}</h1>
+            <h1 class="rp-titre" onClick={() => { if (!roTitre) setEdite(true); }}>{tx(r.nom)}</h1>
           )}
           {/* Une seule sortie : la barre du bas. Un second « Terminer »
               ici laissait croire que la fleche retour annulait quelque

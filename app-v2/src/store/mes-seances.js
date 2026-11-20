@@ -1,4 +1,6 @@
 import { signal, effect } from '@preact/signals';
+import { t } from '../i18n/index.js';
+import { tx } from '../i18n/ecrans.js';
 import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
 import { EXERCISES, MUSCLES } from '../data/exercices.js';
@@ -64,14 +66,14 @@ export function refsDe(seance) {
 /** Les muscles d'une seance, dans l'ordre de la base, sans doublon. */
 export function musclesDe(seance) {
   const ks = new Set((seance.exos || []).map((s) => s.split(':')[0]));
-  return MUSCLES.filter((m) => ks.has(m.key)).map((m) => m.label);
+  return MUSCLES.filter((m) => ks.has(m.key)).map((m) => t('mus_' + m.key));
 }
 
 /** Nom propose quand on n'en tape pas : les muscles travailles. */
 export function nomPropose(ordre) {
   const ks = new Set(ordre.map((r) => r.mKey));
-  const noms = MUSCLES.filter((m) => ks.has(m.key)).map((m) => m.label);
-  return noms.slice(0, 3).join(' · ') || 'Ma séance';
+  const noms = MUSCLES.filter((m) => ks.has(m.key)).map((m) => t('mus_' + m.key));
+  return noms.slice(0, 3).join(' · ') || tx('Ma séance');
 }
 
 export function commencerCreation(seance) {

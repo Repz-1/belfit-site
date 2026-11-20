@@ -1,4 +1,6 @@
 import { SILHOUETTE_FACE, SILHOUETTE_DOS, SILHOUETTE_FACE_F, SILHOUETTE_DOS_F } from '../data/silhouette.js';
+import { t } from '../i18n/index.js';
+import { tx, locale } from '../i18n/ecrans.js';
 import { COULEURS_ATHLETE } from '../components/Stats.jsx';
 import { GROUPES } from '../store/entrainement.js';
 import { sexe } from '../store/perso.js';
@@ -52,9 +54,9 @@ export function chiffresDe(s) {
   const series = exos.reduce((n, e) => n + (e.series || e.sets || []).length, 0);
   const min = s.duree ? Math.max(1, Math.round(s.duree / 60)) : 0;
   return [
-    min ? { v: String(min), l: 'minutes' } : null,
-    { v: String(exos.length), l: exos.length > 1 ? 'exercices' : 'exercice' },
-    { v: String(series || s.nbSeries || 0), l: 'séries' },
+    min ? { v: String(min), l: tx('minutes') } : null,
+    { v: String(exos.length), l: tx(exos.length > 1 ? 'exercices' : 'exercice') },
+    { v: String(series || s.nbSeries || 0), l: tx('séries') },
   ].filter(Boolean);
 }
 
@@ -78,11 +80,12 @@ export async function creerCarte(s) {
 
   // Date et titre.
   const d = new Date((s.iso || '') + 'T12:00:00');
-  const date = isNaN(d) ? '' : JOURS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()];
+  const date = isNaN(d) ? '' : (locale() === 'fr-BE' ? JOURS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()]
+    : d.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' }));
   ctx.fillStyle = 'rgba(248,242,232,0.62)';
   ctx.font = `600 40px ${POLICE}`;
   ctx.fillText(date.charAt(0).toUpperCase() + date.slice(1), 80, 400);
-  const titre = String(s.titre || 'Séance').replace(/^.*?[—–-]\s+/, '') || 'Séance';
+  const titre = tx(String(s.titre || 'Séance').replace(/^.*?[—–-]\s+/, '') || 'Séance');
   ctx.fillStyle = CREME;
   texteAjuste(ctx, titre, W - 160, 96, 800);
   ctx.fillText(titre, 80, 500);
@@ -99,13 +102,13 @@ export async function creerCarte(s) {
   const noms = GROUPES.filter((g) => actifs.has(g.k));
   let yM = y0 + haut + 70;
   ctx.font = `600 34px ${POLICE}`;
-  const largeurs = noms.map((g) => 30 + ctx.measureText(g.label).width);
+  const largeurs = noms.map((g) => 30 + ctx.measureText(t('mus_' + g.k)).width);
   const total = largeurs.reduce((a, b) => a + b, 0) + Math.max(0, noms.length - 1) * 40;
   let xM = (W - total) / 2;
   noms.forEach((g, i) => {
     ctx.fillStyle = COULEURS_ATHLETE[g.k] || JAUNE;
     ctx.beginPath(); ctx.arc(xM + 9, yM - 11, 9, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = CREME; ctx.fillText(g.label, xM + 30, yM);
+    ctx.fillStyle = CREME; ctx.fillText(t('mus_' + g.k), xM + 30, yM);
     xM += largeurs[i] + 40;
   });
 
@@ -134,7 +137,7 @@ export async function partagerCarte(blob, titre) {
   const fichier = new File([blob], 'belfit-seance.png', { type: 'image/png' });
   try {
     if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
-      await navigator.share({ files: [fichier], title: titre || 'Ma séance BelFit' });
+      await navigator.share({ files: [fichier], title: titre || tx('Ma séance BelFit') });
       return 'partage';
     }
   } catch (e) {

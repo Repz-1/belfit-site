@@ -1,4 +1,6 @@
 import { GROUPES } from '../store/entrainement.js';
+import { nomExo } from '../i18n/exercices.js';
+import { tx, locale } from '../i18n/ecrans.js';
 import { t } from '../i18n/index.js';
 import '../styles/seances.css';
 
@@ -53,20 +55,20 @@ export function DetailSeance({ seance }) {
   return (
     <div class="pg-seances">
       <div class="sea-tete">
-        <h2>{s.titre}</h2>
+        <h2>{tx(s.titre)}</h2>
         <p>{libelleJour(s.iso)} · {heure(s.ts)}</p>
       </div>
 
       <div class="det-chiffres">
         <div class="det-case"><b>{duree(s.duree)}</b><span>min</span></div>
         <div class="det-case"><b>{s.nbSeries}</b><span>{t('sets')}</span></div>
-        <div class="det-case"><b>{s.tonnage.toLocaleString('fr-BE')}</b><span>kg</span></div>
+        <div class="det-case"><b>{s.tonnage.toLocaleString(locale())}</b><span>kg</span></div>
       </div>
 
       {s.exos.map((e, i) => (
         <div class="det-exo" key={i}>
           <div class="det-exo-tete">
-            <span class="det-exo-nom">{e.nom}</span>
+            <span class="det-exo-nom">{nomExo(e.nom)}</span>
             {e.mKey && COULEUR[e.mKey] && (
               <span class="det-exo-mus">
                 <i class="dot" style={{ background: COULEUR[e.mKey] }} />{nomMuscle(e.mKey)}
@@ -78,7 +80,7 @@ export function DetailSeance({ seance }) {
                 {e.sets.map((x, j) => (
                   <span key={j} class={'det-serie' + (s.records.includes(e.nom) ? ' pr' : '')}>
                     {x.w === '' ? '—' : x.w} × {x.r === '' ? '—' : x.r}
-                    {(x.dw || x.dr) ? ` → dégr. ${x.dw || '—'} × ${x.dr || '—'}` : ''}
+                    {(x.dw || x.dr) ? ` → ${tx('dégr.')} ${x.dw || '—'} × ${x.dr || '—'}` : ''}
                   </span>
                 ))}
               </div>

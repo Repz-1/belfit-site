@@ -12,6 +12,7 @@ import { Entete } from './Entete.jsx';
 import { Icone } from './IconesCoach.jsx';
 import { useRetour } from '../services/retour.js';
 import { profilBesoins, poidsCalcul } from '../store/journal.js';
+import { tq } from '../i18n/questionnaire.js';
 import { PREMIER_PLAN, MISE_A_JOUR, CONSENTEMENTS, LIENS_LEGAUX, repondue, lisible, alerteSante, allergieGrave, optionsDe , optionsAliments } from '../data/questionnaire-coach.js';
 import { NOMS_ALIMENTS } from '../data/aliments.js';
 
@@ -79,6 +80,30 @@ export function effacerBrouillon(type) {
   try { localStorage.removeItem(cleBrouillon(type)); } catch (e) { /* rien */ }
 }
 
+// Affichage traduit d'une reponse (la valeur enregistree reste en francais).
+const choisis = (n) => n + ' ' + tq(n > 1 ? 'choisis' : 'choisi');
+function lisibleAff(q, r0) {
+  const r = r0 || {};
+  if (q.type === 'plusieurs') return (r.valeurs || []).map(x => x === 'Autre' ? (r.autre || tq('Autre')) : tq(x)).join(', ') || '—';
+  if (q.type === 'aliments') {
+    const vs = r.valeurs || [];
+    const connus = new Set((q.categories || []).flatMap((c) => c.options));
+    const parties = (q.categories || []).map((c) => {
+      const pris = c.options.filter((o) => vs.includes(o));
+      return pris.length ? tq(c.nom) + ' : ' + pris.map(tq).join(', ') : '';
+    }).filter(Boolean);
+    const autres = vs.filter((x) => !connus.has(x));
+    if (autres.length) parties.push(tq('Autres') + ' : ' + autres.join(', '));
+    return parties.join(' · ') || '—';
+  }
+  if (r.valeur === 'Autre') return r.autre || tq('Autre');
+  const v = String(r.valeur ?? '').trim();
+  if (!v) return '—';
+  if (q.type === 'nombre' && q.unite) return v + ' ' + tq(q.unite);
+  if (q.type === 'echelle') return v + ' / 10';
+  return tq(v);
+}
+
 // ---------- Champs ----------
 
 // Saisie directe d'un nombre (poids, taille…) : clavier numerique.
@@ -87,7 +112,7 @@ function Saisie({ q, r, maj }) {
     <div class="qc-saisie">
       <input inputMode="decimal" value={r.valeur ?? ''} placeholder="—"
         onInput={e => maj({ ...r, valeur: e.currentTarget.value.replace(/[^0-9.,]/g, '') })} />
-      {q.unite && <small>{q.unite}</small>}
+      {q.unite && <small>{tq(q.unite)}</small>}
     </div>
   );
 }
@@ -139,13 +164,13 @@ function Compteur({ q, r, maj }) {
   const bouge = d => maj({ ...r, valeur: String(+(borne((vide ? (q.defaut ?? 0) : n) + d)).toFixed(pas < 1 ? 1 : 0)).replace(/\.0$/, '') });
   return (
     <div class="qc-num">
-      <button type="button" aria-label="Moins" onClick={() => bouge(-pas)}>−</button>
+      <button type="button" aria-label={tq('Moins')} onClick={() => bouge(-pas)}>−</button>
       <span class="qc-num-val">
         <input inputMode="decimal" value={r.valeur ?? ''} placeholder={String(q.defaut ?? '')}
           onInput={e => maj({ ...r, valeur: e.currentTarget.value })} />
-        {q.unite && <small>{q.unite}</small>}
+        {q.unite && <small>{tq(q.unite)}</small>}
       </span>
-      <button type="button" aria-label="Plus" onClick={() => bouge(pas)}>+</button>
+      <button type="button" aria-label={tq('Plus')} onClick={() => bouge(pas)}>+</button>
     </div>
   );
 }
@@ -170,12 +195,12 @@ function ChoixAliments({ q, r, toutes, maj }) {
         const min = Math.min(c.min || 0, opts.length);
         return (
           <div class="qc-alim-cat" data-min={min}>
-            <p class="qc-alim-tete"><b>{c.nom}</b>
-              <em class={pris >= min ? 'ok' : ''}>{min ? (pris >= min ? pris + ' choisi' + (pris > 1 ? 's' : '') : pris + ' / ' + min + ' min.') : (pris ? pris + ' choisi' + (pris > 1 ? 's' : '') : 'facultatif')}</em>
+            <p class="qc-alim-tete"><b>{tq(c.nom)}</b>
+              <em class={pris >= min ? 'ok' : ''}>{min ? (pris >= min ? choisis(pris) : pris + ' / ' + min + ' min.') : (pris ? choisis(pris) : tq('facultatif'))}</em>
             </p>
             <div class="qc-puces">
               {opts.map((o) => (
-                <button type="button" class={'qc-puce' + (vs.includes(o) ? ' on' : '')} aria-pressed={vs.includes(o)} onClick={() => basculer(o)}>{o}</button>
+                <button type="button" class={'qc-puce' + (vs.includes(o) ? ' on' : '')} aria-pressed={vs.includes(o)} onClick={() => basculer(o)}>{tq(o)}</button>
               ))}
             </div>
           </div>
@@ -188,7 +213,7 @@ function ChoixAliments({ q, r, toutes, maj }) {
       )}
       <div class="qc-alim-cherche">
         <Icone nom="search" taille={16} />
-        <input class="qc-champ" placeholder="Ajouter un autre aliment…" value={cherche} onInput={(e) => setCherche(e.currentTarget.value)} />
+        <input class="qc-champ" placeholder={tq('Ajouter un autre aliment…')} value={cherche} onInput={(e) => setCherche(e.currentTarget.value)} />
       </div>
       {props.length > 0 && (
         <div class="qc-alim-props">
@@ -218,19 +243,19 @@ function Question({ q, rep, toutes, maj, erreur }) {
   const autreOuvert = !!q.autre && (q.type === 'plusieurs' ? (r.valeurs || []).includes('Autre') : r.valeur === 'Autre');
   return (
     <div class={'qc-carte' + (erreur ? ' qc-carte--err' : '')} data-facultatif={q.facultatif ? '' : undefined}>
-      <p class="qc-label">{q.label}
+      <p class="qc-label">{tq(q.label)}
         {q.info && (
-          <button type="button" class={'qc-info' + (info ? ' on' : '')} aria-label="Explication" aria-expanded={info} onClick={() => setInfo(!info)}>
+          <button type="button" class={'qc-info' + (info ? ' on' : '')} aria-label={tq('Explication')} aria-expanded={info} onClick={() => setInfo(!info)}>
             <Icone nom="info" taille={16} />
           </button>
         )}
       </p>
-      {q.info && info && <p class="qc-info-txt">{q.info}</p>}
+      {q.info && info && <p class="qc-info-txt">{tq(q.info)}</p>}
       {q.type === 'tuiles' && (
         <div class="qc-tuiles">
           {opts.map(o => (
             <button type="button" class={'qc-tuile' + (actif(o) ? ' on' : '')} aria-pressed={actif(o)} onClick={() => choisir(o)}>
-              {icones[o] && <Icone nom={icones[o]} />}<span>{o}</span>
+              {icones[o] && <Icone nom={icones[o]} />}<span>{tq(o)}</span>
             </button>
           ))}
         </div>
@@ -238,13 +263,13 @@ function Question({ q, rep, toutes, maj, erreur }) {
       {(q.type === 'un' || q.type === 'plusieurs') && (
         <div class="qc-puces">
           {opts.map(o => (
-            <button type="button" class={'qc-puce' + (actif(o) ? ' on' : '')} aria-pressed={actif(o)} onClick={() => choisir(o)}>{o}</button>
+            <button type="button" class={'qc-puce' + (actif(o) ? ' on' : '')} aria-pressed={actif(o)} onClick={() => choisir(o)}>{tq(o)}</button>
           ))}
         </div>
       )}
-      {q.type === 'plusieurs' && <p class="qc-aide">Plusieurs choix possibles</p>}
+      {q.type === 'plusieurs' && <p class="qc-aide">{tq('Plusieurs choix possibles')}</p>}
       {autreOuvert && (
-        <input class="qc-champ" placeholder="Précise…" value={r.autre || ''} onInput={e => maj({ ...r, autre: e.currentTarget.value })} />
+        <input class="qc-champ" placeholder={tq('Précise…')} value={r.autre || ''} onInput={e => maj({ ...r, autre: e.currentTarget.value })} />
       )}
       {q.type === 'aliments' && <ChoixAliments q={q} r={r} toutes={toutes} maj={maj} />}
       {q.type === 'nombre' && (q.saisie ? <Saisie q={q} r={r} maj={maj} /> : <Compteur q={q} r={r} maj={maj} />)}
@@ -256,21 +281,21 @@ function Question({ q, rep, toutes, maj, erreur }) {
               <button type="button" class={+r.valeur === n ? 'on' : ''} aria-pressed={+r.valeur === n} onClick={() => maj({ ...r, valeur: n })}>{n}</button>
             ))}
           </div>
-          <div class="qc-echelle-leg"><span>{q.bas}</span><span>{q.haut}</span></div>
+          <div class="qc-echelle-leg"><span>{tq(q.bas)}</span><span>{tq(q.haut)}</span></div>
         </>
       )}
       {q.type === 'date' && <input class="qc-champ" type="date" value={r.valeur || ''} onInput={e => maj({ ...r, valeur: e.currentTarget.value })} />}
       {q.type === 'texte' && (
         <input class="qc-champ" type={q.clavier === 'email' ? 'email' : q.clavier === 'tel' ? 'tel' : 'text'}
-          placeholder={q.exemple || ''} value={r.valeur || ''} onInput={e => maj({ ...r, valeur: e.currentTarget.value })} />
+          placeholder={tq(q.exemple || '')} value={r.valeur || ''} onInput={e => maj({ ...r, valeur: e.currentTarget.value })} />
       )}
       {q.type === 'long' && (
-        <textarea class="qc-champ" rows={3} placeholder={q.exemple || ''} value={r.valeur || ''} onInput={e => maj({ ...r, valeur: e.currentTarget.value })} />
+        <textarea class="qc-champ" rows={3} placeholder={tq(q.exemple || '')} value={r.valeur || ''} onInput={e => maj({ ...r, valeur: e.currentTarget.value })} />
       )}
       {q.id === 'reaction' && allergieGrave(toutes) && (
-        <div class="qc-alerte-rouge"><Icone nom="shield-check" taille={16} /><span>Gonflement ou malaise&nbsp;: cet aliment sera exclu à 100 % de ton plan, sans substitut risqué.</span></div>
+        <div class="qc-alerte-rouge"><Icone nom="shield-check" taille={16} /><span>{tq('Gonflement ou malaise\u00A0: cet aliment sera exclu à 100 % de ton plan, sans substitut risqué.')}</span></div>
       )}
-      {erreur && <p class="qc-err">Réponds à cette question pour continuer.</p>}
+      {erreur && <p class="qc-err">{tq('Réponds à cette question pour continuer.')}</p>}
     </div>
   );
 }
@@ -353,7 +378,7 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
   const Sauve = () => (
     <span class={'qc-sauve qc-sauve--' + etatSauve}>
       {etatSauve === 'ok' && <Icone nom="cloud-check" taille={15} />}
-      {etatSauve === 'envoi' ? 'Enregistrement…' : etatSauve === 'local' ? 'Gardé sur ce téléphone' : 'Enregistré'}
+      {tq(etatSauve === 'envoi' ? 'Enregistrement…' : etatSauve === 'local' ? 'Gardé sur ce téléphone' : 'Enregistré')}
     </span>
   );
   const Segments = ({ jusque }) => (
@@ -367,39 +392,39 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
     return (
       <div class="pg-coach pg-qc">
         <Entete sansBandeau retour={onFermer} />
-        <div class="qc-haut"><span class="qc-sur">{type === 'maj' ? 'MOIS SUIVANT' : 'PAIEMENT REÇU'}</span><Sauve /></div>
-        <h1 class="qc-titre qc-titre--accueil">{type === 'maj' ? 'Ton bilan du mois' : 'Ton programme commence ici'}</h1>
+        <div class="qc-haut"><span class="qc-sur">{tq(type === 'maj' ? 'MOIS SUIVANT' : 'PAIEMENT REÇU')}</span><Sauve /></div>
+        <h1 class="qc-titre qc-titre--accueil">{tq(type === 'maj' ? 'Ton bilan du mois' : 'Ton programme commence ici')}</h1>
         <div class="qc-carte qc-liste">
           {sections.map((s, k) => {
             const ok = k < i && complete(s);
             const Etat = () => ok ? <span class="qc-ok"><Icone nom="circle-check" taille={18} /></span>
-              : k === courante && !fini && (i > 0 || touche.current || b) ? <span class="qc-encours">En cours</span> : null;
+              : k === courante && !fini && (i > 0 || touche.current || b) ? <span class="qc-encours">{tq('En cours')}</span> : null;
             if (k === ouverte) return (
               <div class="qc-bloc">
                 <button type="button" class="qc-ligne qc-ligne--ouverte" onClick={() => setOuverte(-1)}>
                   <span class="qc-ic"><Icone nom={s.icone} taille={17} /></span>
-                  <span class="qc-ligne-nom">{s.nom}{s.facultative && <em> · facultatif</em>}</span>
+                  <span class="qc-ligne-nom">{tq(s.nom)}{s.facultative && <em> · {tq('facultatif')}</em>}</span>
                   <span class="qc-chev"><Icone nom="chevron-up" taille={18} /></span>
                 </button>
                 <div class="qc-ouvert">
                   {visibles(s).map(q => <Question key={q.id} q={q} rep={rep[q.id]} toutes={rep} maj={maj(q.id)} erreur={erreurs[q.id]} />)}
-                  {Object.values(erreurs).some(Boolean) && <p class="qc-err qc-err--bas">Il manque une réponse plus haut.</p>}
-                  <button class="qc-cta qc-cta--noir" onClick={() => valider(k)}>{k === sections.length - 1 ? 'Voir le récapitulatif' : 'Continuer'}</button>
-                  {s.facultative && <button class="qc-passer" onClick={() => { setErreurs({}); setI(sections.length); setOuverte(-1); setVue('recap'); }}>Passer cette section</button>}
+                  {Object.values(erreurs).some(Boolean) && <p class="qc-err qc-err--bas">{tq('Il manque une réponse plus haut.')}</p>}
+                  <button class="qc-cta qc-cta--noir" onClick={() => valider(k)}>{tq(k === sections.length - 1 ? 'Voir le récapitulatif' : 'Continuer')}</button>
+                  {s.facultative && <button class="qc-passer" onClick={() => { setErreurs({}); setI(sections.length); setOuverte(-1); setVue('recap'); }}>{tq('Passer cette section')}</button>}
                 </div>
               </div>
             );
             return (
               <button type="button" class="qc-ligne" disabled={k > i} onClick={() => ouvrir(k)}>
                 <span class="qc-ic"><Icone nom={s.icone} taille={17} /></span>
-                <span class="qc-ligne-nom">{s.nom}{s.facultative && <em> · facultatif</em>}</span>
+                <span class="qc-ligne-nom">{tq(s.nom)}{s.facultative && <em> · {tq('facultatif')}</em>}</span>
                 <Etat />
               </button>
             );
           })}
         </div>
-        {fini ? <button class="qc-cta" onClick={() => setVue('recap')}>Voir le récapitulatif</button>
-          : ouverte < 0 && <button class="qc-cta" onClick={() => ouvrir(courante)}>Reprendre · {sections[courante].nom}</button>}
+        {fini ? <button class="qc-cta" onClick={() => setVue('recap')}>{tq('Voir le récapitulatif')}</button>
+          : ouverte < 0 && <button class="qc-cta" onClick={() => ouvrir(courante)}>{tq('Reprendre')} · {tq(sections[courante].nom)}</button>}
       </div>
     );
   }
@@ -410,11 +435,11 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
     return (
       <div class="pg-coach pg-qc">
         <Entete sansBandeau retour={() => ouvrir(sections.length - 1)} />
-        <div class="qc-haut"><span>Récapitulatif</span><Sauve /></div>
+        <div class="qc-haut"><span>{tq('Récapitulatif')}</span><Sauve /></div>
         <Segments jusque={sections.length} />
-        <p class="qc-sur">DERNIÈRE ÉTAPE</p>
-        <h1 class="qc-titre">{anciennes ? 'Tes réponses du mois dernier' : 'Tout est bon\u00A0?'}</h1>
-        <p class="qc-sous">{anciennes ? 'On a repris tes réponses précédentes. Vérifie, touche « Modifier » pour ce qui a changé (poids, objectif, horaires…), puis envoie à ton coach.' : 'Vérifie, puis envoie à ton coach.'}</p>
+        <p class="qc-sur">{tq('DERNIÈRE ÉTAPE')}</p>
+        <h1 class="qc-titre">{tq(anciennes ? 'Tes réponses du mois dernier' : 'Tout est bon\u00A0?')}</h1>
+        <p class="qc-sous">{tq(anciennes ? 'On a repris tes réponses précédentes. Vérifie, touche « Modifier » pour ce qui a changé (poids, objectif, horaires…), puis envoie à ton coach.' : 'Vérifie, puis envoie à ton coach.')}</p>
         {sections.map((s, k) => {
           const lignes = visibles(s).filter(q => rep[q.id] && lisible(q, rep[q.id]) !== '—');
           if (!lignes.length) return null;
@@ -422,30 +447,30 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
             <div class="qc-carte qc-recap">
               <div class="qc-recap-tete">
                 <span class="qc-ic"><Icone nom={s.icone} taille={17} /></span>
-                <span class="qc-ligne-nom">{s.nom}</span>
-                <button class="qc-modif" onClick={() => ouvrir(k)}>Modifier</button>
+                <span class="qc-ligne-nom">{tq(s.nom)}</span>
+                <button class="qc-modif" onClick={() => ouvrir(k)}>{tq('Modifier')}</button>
               </div>
-              {lignes.map(q => <p class="qc-rl"><span>{q.label}</span><b>{lisible(q, rep[q.id])}</b></p>)}
+              {lignes.map(q => <p class="qc-rl"><span>{tq(q.label)}</span><b>{lisibleAff(q, rep[q.id])}</b></p>)}
             </div>
           );
         })}
-        {alerteSante(rep) && <p class="qc-alerte">Tu as signalé un point de santé. Montre ton plan à ton médecin avant de le commencer.</p>}
+        {alerteSante(rep) && <p class="qc-alerte">{tq('Tu as signalé un point de santé. Montre ton plan à ton médecin avant de le commencer.')}</p>}
         <div class="qc-carte">
           {CONSENTEMENTS.map(c => {
             const liens = (c.liens || []).filter(([, cle]) => LIENS_LEGAUX[cle]);
             return (
               <label class="qc-consent">
                 <input type="checkbox" checked={!!consent[c.id]} onChange={e => { touche.current = true; setConsent(x => ({ ...x, [c.id]: e.currentTarget.checked })); }} />
-                <span>{c.texte}
-                  {liens.length > 0 && <span class="qc-liens">{liens.map(([nom, cle], n) => <>{n > 0 && ' · '}<a href={LIENS_LEGAUX[cle]} target="_blank" rel="noopener">{nom}</a></>)}</span>}
+                <span>{tq(c.texte)}
+                  {liens.length > 0 && <span class="qc-liens">{liens.map(([nom, cle], n) => <>{n > 0 && ' · '}<a href={LIENS_LEGAUX[cle]} target="_blank" rel="noopener">{tq(nom)}</a></>)}</span>}
                 </span>
               </label>
             );
           })}
         </div>
         <button class={'qc-cta' + (manqueK.length ? ' qc-cta--gris' : '')} disabled={manqueK.length > 0}
-          onClick={() => { if (!manqueK.length) onTermine(nettoyer(), alerteSante(rep), { allergieGrave: allergieGrave(rep), consentements: consent }); }}>Envoyer à mon coach</button>
-        <p class="qc-note">Tu recevras ton plan dans l'app et par e-mail.</p>
+          onClick={() => { if (!manqueK.length) onTermine(nettoyer(), alerteSante(rep), { allergieGrave: allergieGrave(rep), consentements: consent }); }}>{tq('Envoyer à mon coach')}</button>
+        <p class="qc-note">{tq("Tu recevras ton plan dans l'app et par e-mail.")}</p>
       </div>
     );
   }
