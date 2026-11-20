@@ -660,14 +660,14 @@ function JournalEntrainement({ ouvrirJour, ouvrirSeance }) {
         ) : faitAuj ? (
           <>
             <div class="ath2-kicker">✓ {t('ent2_kicker_faite')}</div>
-            <h2 class="ath2-titre">{titreCourt(faitAuj.titre) || t('seance_jour')}</h2>
+            <h2 class="ath2-titre">{tx(titreCourt(faitAuj.titre)) || t('seance_jour')}</h2>
             {recapAuj ? <p class="ath2-meta">{recapAuj}</p> : null}
             <button type="button" class="ath2-go ath2-go--calme" onClick={() => ouvrirSeance && ouvrirSeance(faitAuj)}>
               {t('ent2_voir_seance')}
             </button>
             <button type="button" class="ath2-partager" onClick={() => ouvrirCarte(faitAuj)}>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></svg>
-              Partager ma séance
+              {tx('Partager ma séance')}
             </button>
           </>
         ) : peutLancer ? (

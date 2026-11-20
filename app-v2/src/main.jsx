@@ -224,7 +224,7 @@ export function OngletEntrainer() {
   }
   return (
     <div class="pg-entrainer">
-      <button class="v2-retour v2-retour--mot" onClick={retourEntrainer}>←&nbsp; Retour</button>
+      <button class="v2-retour v2-retour--mot" onClick={retourEntrainer}>←&nbsp; {tx('Retour')}</button>
     </div>
   );
 }

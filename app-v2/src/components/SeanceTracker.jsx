@@ -1,4 +1,6 @@
 import { useState } from 'preact/hooks';
+import { nomExo } from '../i18n/exercices.js';
+import { tx } from '../i18n/ecrans.js';
 import { signal, effect } from '@preact/signals';
 import { identite } from '../services/firebase.js';
 import { chargerDonnees, sauvegarder } from '../services/sync.js';
@@ -74,7 +76,7 @@ export function SeanceTracker() {
       {exos.map((x, i) => (
         <div class="seance-exo" key={i}>
           <div class="seance-exo-tete">
-            <span>{x.ex}</span>
+            <span>{nomExo(x.ex)}</span>
             <button onClick={() => supprExo(i)}>✕</button>
           </div>
           {x.series.map((s, k) => (
@@ -86,7 +88,7 @@ export function SeanceTracker() {
               <button onClick={() => supprSerie(i, k)}>✕</button>
             </div>
           ))}
-          <button class="seance-add-serie" onClick={() => ajouterSerie(i)}>+ Série</button>
+          <button class="seance-add-serie" onClick={() => ajouterSerie(i)}>{tx('+ Série')}</button>
         </div>
       ))}
 

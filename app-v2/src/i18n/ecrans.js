@@ -120,7 +120,7 @@ const X = {
   "jusqu'à l'échec, puis dégressive à 50 % sans repos": ['to failure, then drop set at 50% with no rest', 'tot falen, dan dropset op 50 % zonder rust'],
 
   // ---- seance guidee
-  'Séance': ['Workout', 'Training'], 'Aucun exercice': ['No exercises', 'Geen oefeningen'],
+  'Séance': ['Workout', 'Training'], 'dégr.': ['drop', 'drop'], 'Aucun exercice': ['No exercises', 'Geen oefeningen'],
   "Cette séance n'a pas d'exercices enregistrés.": ['This workout has no saved exercises.', 'Deze training heeft geen opgeslagen oefeningen.'], 'Retour': ['Back', 'Terug'], 'Réglages': ['Settings', 'Instellingen'],
   'Exercice {i} sur {n}': ['Exercise {i} of {n}', 'Oefening {i} van {n}'],
   'Remplacer par un exercice équivalent': ['Replace with an equivalent exercise', 'Vervangen door een gelijkwaardige oefening'], 'Alternative': ['Alternative', 'Alternatief'],

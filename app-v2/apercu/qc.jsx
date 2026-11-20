@@ -10,6 +10,7 @@ import { QuestionnaireCoach } from '../src/components/QuestionnaireCoach.jsx';
 import { PlanEnPreparation } from '../src/components/PlanEnPreparation.jsx';
 import { SuiviClient } from '../src/components/SuiviClient.jsx';
 import { programme } from '../src/components/BelfitPlus.jsx';
+import { DetailSeance } from '../src/components/Seances.jsx';
 
 const q = new URLSearchParams(location.search);
 langue.value = q.get('lang') || 'fr';
@@ -26,6 +27,9 @@ render(
   <div class="pg-coach" style={{ padding: '16px', background: '#F4F3F0', minHeight: '100vh' }}>
     {vue === 'qc' && <QuestionnaireCoach type={q.get('type') || 'plan'} onFermer={() => {}} onTermine={() => {}} />}
     {vue === 'prep' && <PlanEnPreparation payeLe={new Date(Date.now() - 864e5).toISOString()} questionnaire={quest} commande={null} />}
+    {vue === 'detail' && <DetailSeance seance={{ titre: 'Séance', iso: '2026-11-18', ts: Date.now(), duree: 2400, nbSeries: 6, tonnage: 3250, records: [], exos: [
+      { nom: 'Développé Couché (Barre)', mKey: 'pecs', sets: [{ w: 60, r: 10 }, { w: 70, r: 8, dw: 35, dr: 6 }] },
+      { nom: 'Extension Triceps Corde (Poulie)', mKey: 'triceps', sets: [] }] }} />}
     {vue === 'suivi' && <SuiviClient onContinuer={() => {}} onNouveau={() => {}} />}
   </div>,
   document.getElementById('app'));
