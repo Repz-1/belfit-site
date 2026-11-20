@@ -2144,3 +2144,17 @@ Object.assign(window.BELFIT_STRINGS.en, {
 Object.assign(window.BELFIT_STRINGS.nl, {
  "cf_maj": "Versie 2.2 · Laatst bijgewerkt: oktober 2026<br>BELFIT — België · Contact: <a href=\"mailto:contact@belfit.be\">contact@belfit.be</a>"
 });
+
+/* Mesure d'audience (11/2026) : Google Analytics 4, seulement apres accord. */
+Object.assign(window.BELFIT_STRINGS.fr, {
+ "cf_analytics": "<h3>Mesure d'audience (Google Analytics)</h3>\n    <p>Avec ton accord, nous mesurons la fréquentation du site et de l'application avec Google Analytics 4 (Google Ireland Ltd). Cela sert uniquement à comprendre quelles pages sont utilisées, pour améliorer le service. Aucune publicité n'est diffusée, et ces données ne servent pas à te montrer de la publicité.</p>\n    <p>Le traitement repose sur ton consentement. Tant que tu n'as pas appuyé sur « Accepter », aucun cookie de mesure n'est déposé. Tu peux refuser. Pour retirer un accord déjà donné, efface les données de ce site dans ton navigateur : le choix est mémorisé sur cet appareil. Google peut traiter ces mesures hors de l'Union européenne, avec les garanties décrites au point 7.</p>",
+ "cf_maj": "Version 2.3 · Dernière mise à jour : novembre 2026<br>BELFIT — Belgique · Contact : <a href=\"mailto:contact@belfit.be\">contact@belfit.be</a>"
+});
+Object.assign(window.BELFIT_STRINGS.en, {
+ "cf_analytics": "<h3>Audience measurement (Google Analytics)</h3>\n    <p>With your agreement, we measure visits to the site and the app with Google Analytics 4 (Google Ireland Ltd). This is only used to understand which pages are used, so we can improve the service. No advertising is shown, and this data is not used to show you ads.</p>\n    <p>Processing is based on your consent. Until you press “Accept”, no measurement cookie is stored. You can refuse. To withdraw an agreement you already gave, clear this site’s data in your browser: the choice is remembered on this device. Google may process these measurements outside the European Union, with the safeguards described in section 7.</p>",
+ "cf_maj": "Version 2.3 · Last updated: November 2026<br>BELFIT — Belgium · Contact: <a href=\"mailto:contact@belfit.be\">contact@belfit.be</a>"
+});
+Object.assign(window.BELFIT_STRINGS.nl, {
+ "cf_analytics": "<h3>Publieksmeting (Google Analytics)</h3>\n    <p>Met je toestemming meten we het bezoek aan de site en de app met Google Analytics 4 (Google Ireland Ltd). Dat dient enkel om te begrijpen welke pagina’s gebruikt worden, zodat we de dienst kunnen verbeteren. Er wordt geen reclame getoond, en deze gegevens dienen niet om je reclame te tonen.</p>\n    <p>De verwerking steunt op je toestemming. Tot je op « Accepteren » drukt, wordt er geen meetcookie geplaatst. Je kunt weigeren. Om een gegeven toestemming in te trekken, wis je de gegevens van deze site in je browser: de keuze wordt op dit apparaat onthouden. Google kan deze metingen buiten de Europese Unie verwerken, met de waarborgen beschreven in punt 7.</p>",
+ "cf_maj": "Versie 2.3 · Laatst bijgewerkt: november 2026<br>BELFIT — België · Contact: <a href=\"mailto:contact@belfit.be\">contact@belfit.be</a>"
+});
