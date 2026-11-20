@@ -137,13 +137,6 @@ function logout() {
         <p style="font-size:13px;color:var(--text-dim);font-weight:500;margin-bottom:16px;" data-i18n="pl_choose_sub">Le tarif au mois baisse avec la durée. Sans engagement.</p>
 
         <div class="price-cards">
-            <div class="pc" id="pcMensuel" onclick="choisirFormule('mensuel')">
-                <div class="pc-dur">1<small data-i18n="pl_month_w">mois</small></div>
-                <div class="pc-price">7,99 €</div>
-                <div class="pc-permo">7,99 € <span data-i18n="pl_slash_mo">/ mois</span></div>
-                <div class="pc-note" data-i18n="pl_no_commit">Sans engagement</div>
-            </div>
-
             <div class="pc selected" id="pcTrimestriel" onclick="choisirFormule('trimestriel')">
                 <span class="pc-badge" data-i18n="pl_popular">POPULAIRE</span>
                 <div class="pc-dur">3<small data-i18n="pl_month_w">mois</small></div>
@@ -426,27 +419,12 @@ const FORMULES = {
             ['Historique illimité'],
             ['<strong>Meilleur prix — 3,99 €/mois</strong>']
         ]
-    },
-    mensuel: {
-        lien:'https://belfit.lemonsqueezy.com/checkout/buy/390c6785-f085-4452-b43a-6206fbc3c106',
-        features:[
-            ['<strong>Programme alimentaire sur mesure</strong>'],
-            ['Bibliothèque de programmes d\'entraînement'],
-            ['Calculateur de calories avancé'],
-            ['Suggestions « Idées recettes »'],
-            ['Liste de courses automatique'],
-            ['Scan code-barres (ajout auto)'],
-            ['Ajout vocal intelligent (IA)'],
-            ['Historique illimité'],
-            ['<strong>Sans engagement</strong>']
-        ]
     }
 };
 let formuleActive = 'annuel';
 
 function choisirFormule(f){
     formuleActive = f;
-    document.getElementById('pcMensuel').classList.toggle('selected', f==='mensuel');
     document.getElementById('pcTrimestriel').classList.toggle('selected', f==='trimestriel');
     document.getElementById('pcAnnuel').classList.toggle('selected', f==='annuel');
 }

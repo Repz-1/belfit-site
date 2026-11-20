@@ -74,10 +74,6 @@ import '../styles/premium-theme.css';
 
 // Formules — liens LemonSqueezy repris tels quels du v1 (plans.html)
 const FORMULES = {
-  mensuel: {
-    lien: 'https://belfit.lemonsqueezy.com/checkout/buy/390c6785-f085-4452-b43a-6206fbc3c106',
-    duree: '1 mois', parMois: '7,99', total: '7,99 € facturés', eco: null,
-  },
   trimestriel: {
     lien: 'https://belfit.lemonsqueezy.com/checkout/buy/62c379de-5b7e-4a8d-868f-87595f4d7733',
     duree: '3 mois', parMois: '6,66', total: '19,99 € facturés', eco: '\u221217 %',
@@ -236,7 +232,7 @@ export function PremiumPage() {
       ) : (
         <>
           <div class="formules">
-            {['annuel', 'trimestriel', 'mensuel'].map((k) => {
+            {['annuel', 'trimestriel'].map((k) => {
               const f = FORMULES[k];
               return (
                 <div key={k} class={'fo' + (formule === k ? ' sel' : '')} onClick={() => setFormule(k)}>

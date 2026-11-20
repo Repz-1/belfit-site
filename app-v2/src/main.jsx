@@ -1,5 +1,5 @@
 // En premier : detecte le mode app Android (TWA) avant tout nettoyage d'adresse.
-import './services/app-android.js';
+import { APP_ANDROID } from './services/app-android.js';
 // Avant CoachPage, qui efface toute la requete sur un retour Mollie
 // (coach=questionnaire). Le code invitation est memorise ici, seul
 // ce parametre est retire, le reste de l'adresse reste lisible.
@@ -66,6 +66,33 @@ import { etatCadran } from './store/cadran-attente.js';
 import { aujourdhuiBxl } from './store/plans-par-date.js';
 import { AlimentationVerrouillee } from './components/AlimentationVerrouillee.jsx';
 import { commandesOuvertes } from './components/CoachPage.jsx';
+
+// Landing « Acheter un plan » : /v2/?onglet=coach ouvre l'onglet Coach
+// (premium), la ou se trouve « Continuer vers le paiement ».
+// Le parametre est retire de l'adresse des la lecture. S'il faut se
+// connecter, le choix reste en sessionStorage : une redirection Google
+// recharge la page et perdrait l'adresse. Jamais dans l'app Android.
+const CLE_OUVRIR_COACH = 'belfit_ouvrir_coach';
+if (!APP_ANDROID) {
+  try {
+    const params = new URLSearchParams(location.search);
+    if (params.get('onglet') === 'coach') {
+      sessionStorage.setItem(CLE_OUVRIR_COACH, '1');
+      params.delete('onglet');
+      const q = params.toString();
+      history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
+    }
+    if (sessionStorage.getItem(CLE_OUVRIR_COACH) === '1') ongletActif.value = 'premium';
+  } catch (e) { /* adresse ou stockage intouchables */ }
+}
+effetObjectif(() => {
+  if (APP_ANDROID || !authPrete.value || !utilisateur.value) return;
+  let ouvrir = false;
+  try { ouvrir = sessionStorage.getItem(CLE_OUVRIR_COACH) === '1'; } catch (e) { return; }
+  if (!ouvrir) return;
+  ongletActif.value = 'premium';
+  try { sessionStorage.removeItem(CLE_OUVRIR_COACH); } catch (e) { /* deja applique en memoire */ }
+});
 
 // Option B (27/10) : sans acces nutrition actif, le Journal reste visible en
 // LECTURE SEULE (historique), avec la carte d'offre au-dessus. Tout est inactif
