@@ -20,6 +20,12 @@ import { ongletActif } from './BottomNav.jsx';
 import { Icone } from './IconesCoach.jsx';
 import { APP_ANDROID } from '../services/app-android.js';
 import { t } from '../i18n/index.js';
+import { CoachEntrainement, BasculeCoach } from './CoachEntrainement.jsx';
+
+// 21/11 Raci : deux espaces dans l'onglet Coach, bascule tout en haut
+// (Alimentation / Entrainement) plutot qu'un cinquieme onglet. Choix memorise.
+const CLE_ESPACE = 'belfit_coach_espace';
+function espaceMemorise() { try { return localStorage.getItem(CLE_ESPACE) === 'ent' ? 'ent' : 'alim'; } catch (e) { return 'alim'; } }
 
 // Onglets du coaching (20/10, Raci) : visibles seulement pour un client
 // qui a un plan ou une commande. Le choix est memorise sur l'appareil.
@@ -150,6 +156,8 @@ export function CoachPage() {
   const [consent2, setConsent2] = useState(false);
   const [remplir, setRemplir] = useState(() => { const r = retourPaiement.peek(); return r && r.etat === 'paye' ? r.type : null; });  // questionnaire ouvert
   const [vueChoisie, setVueChoisie] = useState(vueMemorisee);
+  const [espace, setEspace] = useState(espaceMemorise);
+  const choisirEspace = (e) => { setEspace(e); try { localStorage.setItem(CLE_ESPACE, e); } catch (x) { /* rien */ } };
   const choisirVue = (v) => { setVueChoisie(v); try { localStorage.setItem(CLE_VUE, v); } catch (e) { /* rien */ } };
   // 24/10 : le serveur dit si CE compte peut payer ; au retour de la page
   // de paiement, il dit ce qu'est devenu le paiement.
@@ -266,11 +274,23 @@ export function CoachPage() {
     </div>
   );
 
+  // Un retour de paiement ou une fenetre d'achat ouverte restent cote Alimentation.
+  if (espace === 'ent' && !retour && !achat) {
+    return (
+      <div class="pg-coach">
+        <Entete />
+        <BasculeCoach espace={espace} choisir={choisirEspace} />
+        <CoachEntrainement />
+      </div>
+    );
+  }
+
   // Questionnaire envoye, plan pas encore livre : ecran dedie (26/09).
   if (enPrep && !pr) {
     return (
       <div class="pg-coach">
         <Entete />
+        <BasculeCoach espace={espace} choisir={choisirEspace} />
         <PlanEnPreparation payeLe={payeLeEtat} questionnaire={dossierCoach.value.questionnaire} commande={dossierCoach.value.commande} />
       </div>
     );
@@ -279,6 +299,7 @@ export function CoachPage() {
   return (
     <div class="pg-coach">
       <Entete />
+      <BasculeCoach espace={espace} choisir={choisirEspace} />
       <h1 class="cp-titre">{t('cp_titre')}</h1>
       {retour && retour.etat !== 'paye' && <RetourPaiement retour={retour} />}
       {aAchat ? (

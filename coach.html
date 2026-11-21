@@ -234,6 +234,51 @@ dialog.confirme::backdrop{background:rgba(22,19,15,.45)}
 .confirme-btns .annuler{background:#F4F3F0;color:var(--tx)}
 .confirme-btns .supprimer{background:#A32D2D;color:#fff}
 .confirme-btns button:disabled{opacity:.5;cursor:default}
+/* ============================================================
+   21/11 Raci : deuxieme espace, ENTRAINEMENT, en bleu. Une bascule en
+   haut (Alimentation / Entrainement) plutot qu'une page de plus.
+   ============================================================ */
+.bascule{display:flex;background:#E9E6E0;border-radius:14px;padding:3px;margin:0 0 16px}
+.bascule button{flex:1;border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:#57514A;
+  padding:10px 0;border-radius:11px;cursor:pointer}
+.bascule button.on{background:#fff;color:#1C5334;box-shadow:0 1px 3px rgba(40,32,22,.08)}
+body.ent .bascule button.on{background:#1F5FD1;color:#fff}
+body.ent{--or:#1F5FD1;--or-lis:#123C86}
+body.ent #zoneAlim,body.ent #aTraiterBloc{display:none}
+#zoneEnt{display:none}
+body.ent #zoneEnt{display:block}
+body.ent .principal{background:#1F5FD1}
+body.ent .chip{background:#EEF3FC;border-color:#DCE6F7}
+body.ent .plus{border-color:rgba(31,95,209,.35);color:#1F5FD1}
+body.ent .av{background:#E3ECFB;color:#123C86}
+body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box-shadow:0 0 0 2.5px rgba(31,95,209,.1)}
+.ent-seance{background:var(--carte);border:1px solid var(--bord);border-radius:18px;box-shadow:var(--omb);
+  margin-bottom:11px;padding:12px 15px}
+.ent-tete{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.ent-tete input{flex:1;font-weight:700;font-size:16px;padding:8px 10px}
+.ent-tete select,.ent-exo select{font:inherit;font-size:13px;border:1px solid #DCE6F7;background:#F5F8FE;
+  color:#123C86;border-radius:10px;padding:7px 6px}
+.ent-x{border:0;background:none;color:#8A8279;font-size:20px;cursor:pointer;padding:4px 6px}
+.ent-exo{display:grid;grid-template-columns:1fr auto;gap:6px 8px;padding:10px 0;border-top:1px solid var(--filet)}
+.ent-exo b{font-size:14.5px;font-weight:600;line-height:1.3}
+.ent-reglages{grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--tx3)}
+.ent-reglages input{width:52px;padding:6px 6px;font-size:14px;text-align:center;font-family:'DM Mono',monospace}
+.ent-reglages input.reps{width:64px}
+.ent-ajout{border:0;background:#EEF3FC;color:#1F5FD1;font:inherit;font-weight:600;font-size:14px;
+  border-radius:12px;padding:10px;width:100%;cursor:pointer;margin-top:6px}
+.ent-choix{margin-top:8px;border:1px solid #DCE6F7;border-radius:14px;padding:10px;background:#FAFCFF}
+.ent-muscles{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.ent-muscles button{border:1px solid #DCE6F7;background:#fff;color:#123C86;font:inherit;font-size:12.5px;
+  border-radius:999px;padding:5px 10px;cursor:pointer}
+.ent-muscles button.on{background:#1F5FD1;border-color:#1F5FD1;color:#fff}
+.ent-res{max-height:300px;overflow:auto}
+.ent-res button{display:flex;width:100%;justify-content:space-between;gap:8px;text-align:left;border:0;
+  border-top:1px solid var(--filet);background:none;font:inherit;font-size:14px;padding:9px 2px;cursor:pointer;color:var(--tx)}
+.ent-tag{font-size:11px;padding:2px 8px;border-radius:999px;background:#E3ECFB;color:#123C86;white-space:nowrap;align-self:center}
+.ent-carnet .lig{display:flex;justify-content:space-between;gap:10px;padding:6px 0;font-size:13.5px;border-top:1px solid var(--filet)}
+.ent-carnet .lig:first-child{border-top:0}
+.ent-carnet .dt{font-size:12px;font-weight:700;color:#123C86;margin:10px 0 2px;letter-spacing:.02em}
+.ent-carnet em{font-style:normal;color:var(--tx3);white-space:nowrap}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:1000;background:#16130F;color:#fff;
   font-size:14px;font-weight:600;padding:11px 18px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 </style>
@@ -259,12 +304,15 @@ dialog.confirme::backdrop{background:rgba(22,19,15,.45)}
   </section>
 
   <section id="ecranTravail">
-    <header><img src="/belfit-logo-bf.png" alt="BELFIT"><b>Espace coach</b><a href="#" class="quitter" id="btnQuitter">Quitter</a></header>
+    <header><img id="logoCoach" src="/belfit-logo-bf.png" alt="BELFIT"><b>Espace coach</b><a href="#" class="quitter" id="btnQuitter">Quitter</a></header>
+    <div class="bascule" role="tablist"><button id="basAlim" class="on" role="tab">Alimentation</button><button id="basEnt" role="tab">Entraînement</button></div>
     <h1>Bonjour Raci</h1>
     <p class="sous" id="resume">Chargement…</p>
 
+    <div id="aTraiterBloc">
     <p class="lb">À traiter</p>
     <div class="carte" id="aTraiter" style="padding:0 15px"></div>
+    </div>
 
     <div id="blocLivres">
       <p class="lb">Tous les clients</p>
@@ -277,6 +325,7 @@ dialog.confirme::backdrop{background:rgba(22,19,15,.45)}
       <button class="second" id="btnAnciens" style="display:none;margin-top:10px">Charger les clients plus anciens</button>
     </div>
 
+    <div id="zoneAlim">
     <p class="lb" id="ancreComposer">Programme</p>
     <div class="carte">
       <label for="client">Destinataire</label>
@@ -326,6 +375,31 @@ dialog.confirme::backdrop{background:rgba(22,19,15,.45)}
     </div>
     <button class="principal" id="btnEnvoi">Envoyer le programme</button>
     <div id="msg" class="msg"></div>
+    </div>
+
+    <!-- 21/11 Raci : programme d'entrainement, meme principe que l'alimentation. -->
+    <div id="zoneEnt">
+      <p class="lb" id="ancreEnt">Programme d'entraînement</p>
+      <div class="carte">
+        <label for="entClient">Destinataire</label>
+        <div id="entChoisi" class="chip" style="display:none"><b id="entChoisiNom"></b><button id="entDeselect" aria-label="Changer de destinataire">×</button></div>
+        <input id="entClient" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" spellcheck="false">
+        <p class="aide">Ou touche un client dans la liste au-dessus. Envoie le programme une fois le paiement reçu.</p>
+      </div>
+      <div id="entCarnetBloc" style="display:none">
+        <p class="lb">Ses poids</p>
+        <div class="carte ent-carnet" id="entCarnet"></div>
+      </div>
+      <p class="lb">Les séances</p>
+      <div id="entSeances"></div>
+      <button class="plus" id="entPlusSeance">+ Ajouter une séance</button>
+      <div class="carte">
+        <label for="entNote">Note pour le client</label>
+        <textarea id="entNote" maxlength="600" placeholder="Facultatif"></textarea>
+      </div>
+      <button class="principal" id="entEnvoi">Envoyer le programme</button>
+      <div id="entMsg" class="msg"></div>
+    </div>
 
     <details class="outils"><summary>Outils (invitations, accès)</summary>
     <p class="lb">Inviter un client</p>
@@ -386,6 +460,8 @@ dialog.confirme::backdrop{background:rgba(22,19,15,.45)}
 import { DB, NOMS_ALIMENTS, macrosOf } from '/app-v2/src/data/aliments.js';
 import { estOffert, badgeHorsFile, prefixeAttente } from '/app-v2/src/services/statut-dossier.js';
 import { jourValide, ajouterJours, dateBruxelles } from '/app-v2/src/store/plans-par-date.js';
+import { EXERCISES, MUSCLES } from '/app-v2/src/data/exercices.js';
+import { TYPES_CHARGE, typeCharge, kgTexte } from '/app-v2/src/data/charge-coach.js';
 
 const URL_COACH = 'https://europe-west1-repz-baf60.cloudfunctions.net/espaceCoach';
 const CLE = 'belfit_espace_coach';
@@ -1013,6 +1089,7 @@ function ligne(d, aTraiter) {
   b.append(el('span', 'av', initiales(d)), txt, el('span', 'tag ' + c, t));
   let ouvert = null;
   b.addEventListener('click', () => {
+    if (modeEnt) { choisirEnt(d); return; }   // 21/11 : espace Entrainement
     if (ouvert) { ouvert.remove(); ouvert = null; return; }
     ouvert = detail(d); bloc.append(ouvert);
     // 01/11 Raci : fiche ouverte = vue ; le badge « Nouveau » disparait (Firestore : coachVuLe).
@@ -1157,6 +1234,7 @@ function chargerEnvoye(d) {
   return true;
 }
 function choisir(d) {
+  if (modeEnt) { choisirEnt(d); return true; }
   if (!choisi || choisi.uid !== d.uid) {
     // Le plan d'un autre client est deja dans SON brouillon : pas de confirmation.
     // Seul un plan saisi sans destinataire serait perdu.
@@ -1495,6 +1573,224 @@ $('btnEnvoi').addEventListener('click', () => {
   }).catch((e) => { if (e.message !== 'code') afficher(msg, 'Réseau indisponible.', false); })
     .finally(() => { b.disabled = false; b.textContent = 'Envoyer le programme'; });
 });
+
+// ============================================================
+// ENTRAINEMENT (21/11, Raci) : deuxieme espace coach, en bleu.
+// Raci choisit les exercices de chaque seance (base de l'app) ; le client
+// ne note que ses poids et coche ses series. Envoye apres paiement recu.
+// ============================================================
+let modeEnt = false;
+const CLE_MODE = 'belfit_coach_mode';
+const JOURS_ENT = [['', 'Sans jour'], ['1', 'Lundi'], ['2', 'Mardi'], ['3', 'Mercredi'], ['4', 'Jeudi'], ['5', 'Vendredi'], ['6', 'Samedi'], ['0', 'Dimanche']];
+const LABEL_TYPE = Object.fromEntries(TYPES_CHARGE.map((x) => [x.k, x.label]));
+// Base a plat : { nom, imgId, muscle, type }
+const BASE_EXOS = MUSCLES.flatMap((m) => (EXERCISES[m.key] || []).map((x) => ({
+  nom: x.nom, imgId: x.imgId || null, muscle: m.key, type: typeCharge(x.nom, x.mat),
+})));
+const repsDe = (meta) => { const m = /×\s*([\d-–]+)/.exec(meta || ''); return m ? m[1].replace('–', '-') : '10'; };
+let entChoisi = null;
+let entSeances = [];
+let entPicker = null;   // index de la seance dont le choix d'exercice est ouvert
+let entMuscle = 'pecs';
+const CLE_BR_ENT = (uid) => 'belfit_coach_ent_' + uid;
+const nouvelId = (p) => p + Math.random().toString(36).slice(2, 8);
+const seanceVide = (i) => ({ id: nouvelId('s'), nom: 'Séance ' + String.fromCharCode(65 + i), jour: '', exos: [] });
+
+function poserMode(ent) {
+  modeEnt = ent;
+  document.body.classList.toggle('ent', ent);
+  $('basEnt').classList.toggle('on', ent);
+  $('basAlim').classList.toggle('on', !ent);
+  $('logoCoach').src = ent ? '/belfit-logo-coach-bleu.png' : '/belfit-logo-bf.png';
+  document.querySelector('meta[name="theme-color"]').content = '#F4F3F0';
+  try { localStorage.setItem(CLE_MODE, ent ? 'ent' : 'alim'); } catch (e) { /* rien */ }
+  if (ent && !entSeances.length) { entSeances = [seanceVide(0)]; }
+  if (ent) dessinerEnt();
+}
+$('basAlim').addEventListener('click', () => poserMode(false));
+$('basEnt').addEventListener('click', () => poserMode(true));
+
+function sauverBrEnt() {
+  if (!entChoisi) return;
+  try { localStorage.setItem(CLE_BR_ENT(entChoisi.uid), JSON.stringify({ le: new Date().toISOString(), seances: entSeances, note: $('entNote').value })); } catch (e) { /* rien */ }
+}
+function lireBrEnt(uid) { try { return JSON.parse(localStorage.getItem(CLE_BR_ENT(uid)) || 'null'); } catch (e) { return null; } }
+
+function depuisEnvoye(ent) {
+  return (ent && Array.isArray(ent.seances) ? ent.seances : []).map((s) => ({
+    id: s.id || nouvelId('s'), nom: s.nom || 'Séance', jour: s.jour === null || s.jour === undefined ? '' : String(s.jour),
+    exos: (s.exos || []).map((x) => ({ ...x, id: x.id || nouvelId('e') })),
+  }));
+}
+
+function choisirEnt(d) {
+  if (entChoisi && entChoisi.uid !== d.uid) sauverBrEnt();
+  entChoisi = d;
+  const br = lireBrEnt(d.uid);
+  const env = d.entrainement;
+  if (br && br.seances && br.seances.length && !(env && env.livreLe && new Date(br.le) < new Date(env.livreLe))) {
+    entSeances = br.seances; $('entNote').value = br.note || '';
+  } else if (env) {
+    entSeances = depuisEnvoye(env); $('entNote').value = env.note || '';
+  } else {
+    entSeances = [seanceVide(0)]; $('entNote').value = '';
+  }
+  entPicker = null;
+  $('entChoisiNom').textContent = nomDe(d) + (d.email && d.email !== nomDe(d) ? ' · ' + d.email : '') + (env && env.livreLe ? ' · programme du ' + jourCourt(env.livreLe) : '');
+  $('entChoisi').style.display = 'flex';
+  $('entClient').style.display = 'none';
+  dessinerCarnet();
+  dessinerEnt();
+  $('ancreEnt').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+$('entDeselect').addEventListener('click', () => {
+  sauverBrEnt();
+  entChoisi = null; entSeances = [seanceVide(0)]; $('entNote').value = '';
+  $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entCarnetBloc').style.display = 'none';
+  dessinerEnt();
+});
+$('entClient').addEventListener('change', () => {
+  const t = $('entClient').value.trim().toLowerCase();
+  const d = tousDossiers.find((x) => (x.email || '').toLowerCase() === t || ((x.prenom + ' ' + x.nom).trim().toLowerCase() === t));
+  if (d) { $('entClient').value = ''; choisirEnt(d); }
+});
+$('entNote').addEventListener('input', sauverBrEnt);
+
+/** Poids notes par le client : les 6 dernieres seances. */
+function dessinerCarnet() {
+  const c = entChoisi && Array.isArray(entChoisi.carnet) ? entChoisi.carnet : [];
+  const box = $('entCarnet'); box.innerHTML = '';
+  $('entCarnetBloc').style.display = entChoisi ? 'block' : 'none';
+  if (!entChoisi) return;
+  if (!c.length) { box.append(el('p', 'vide', 'Rien de noté pour le moment.')); return; }
+  c.slice(0, 6).forEach((s) => {
+    box.append(el('div', 'dt', new Date(s.date + 'T12:00:00Z').toLocaleDateString('fr-BE', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) + (s.seance ? ' · ' + s.seance : '')));
+    s.exos.forEach((x) => {
+      const l = el('div', 'lig');
+      const v = x.kg !== null && x.kg !== undefined ? kgTexte(x.kg) + ' kg' + (x.detail ? ' (' + x.detail + ')' : '') : (x.detail || '—');
+      l.append(el('span', '', x.nom || x.id), el('em', '', v + ' · ' + x.faites + '/' + x.series + ' séries'));
+      box.append(l);
+    });
+  });
+}
+
+function selectJours(val, onChange) {
+  const s = document.createElement('select');
+  JOURS_ENT.forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; if (String(val) === v) o.selected = true; s.append(o); });
+  s.addEventListener('change', () => onChange(s.value));
+  return s;
+}
+function champNum(val, min, max, cls, onChange) {
+  const i = document.createElement('input');
+  i.type = cls === 'reps' ? 'text' : 'number'; if (cls) i.className = cls;
+  if (i.type === 'number') { i.min = min; i.max = max; i.inputMode = 'numeric'; }
+  i.value = val;
+  i.addEventListener('change', () => onChange(i.value));
+  return i;
+}
+
+function dessinerEnt() {
+  const box = $('entSeances'); box.innerHTML = '';
+  entSeances.forEach((s, si) => {
+    const c = el('div', 'ent-seance');
+    const tete = el('div', 'ent-tete');
+    const nom = document.createElement('input'); nom.type = 'text'; nom.maxLength = 40; nom.value = s.nom;
+    nom.addEventListener('input', () => { s.nom = nom.value; sauverBrEnt(); });
+    const sup = el('button', 'ent-x', '×'); sup.setAttribute('aria-label', 'Supprimer la séance');
+    sup.addEventListener('click', () => {
+      if (s.exos.length && !confirm('Supprimer « ' + s.nom + ' » ?')) return;
+      entSeances.splice(si, 1); if (!entSeances.length) entSeances.push(seanceVide(0));
+      entPicker = null; sauverBrEnt(); dessinerEnt();
+    });
+    tete.append(nom, selectJours(s.jour, (v) => { s.jour = v; sauverBrEnt(); }), sup);
+    c.append(tete);
+    s.exos.forEach((x, xi) => {
+      const r = el('div', 'ent-exo');
+      r.append(el('b', '', x.nom));
+      const xx = el('button', 'ent-x', '×'); xx.setAttribute('aria-label', 'Retirer');
+      xx.addEventListener('click', () => { s.exos.splice(xi, 1); sauverBrEnt(); dessinerEnt(); });
+      r.append(xx);
+      const reg = el('div', 'ent-reglages');
+      const type = document.createElement('select');
+      TYPES_CHARGE.forEach((t) => { const o = document.createElement('option'); o.value = t.k; o.textContent = t.label; if (x.type === t.k) o.selected = true; type.append(o); });
+      type.addEventListener('change', () => { x.type = type.value; sauverBrEnt(); });
+      reg.append(champNum(x.series, 1, 10, '', (v) => { x.series = Math.max(1, Math.min(10, +v || 3)); sauverBrEnt(); }), el('span', '', 'séries ×'),
+        champNum(x.reps, 0, 0, 'reps', (v) => { x.reps = String(v).slice(0, 12) || '10'; sauverBrEnt(); }), el('span', '', 'reps'), type);
+      r.append(reg);
+      c.append(r);
+    });
+    const aj = el('button', 'ent-ajout', entPicker === si ? 'Fermer' : '+ Ajouter un exercice');
+    aj.addEventListener('click', () => { entPicker = entPicker === si ? null : si; dessinerEnt(); });
+    c.append(aj);
+    if (entPicker === si) c.append(choixExo(s));
+    box.append(c);
+  });
+}
+
+function choixExo(s) {
+  const w = el('div', 'ent-choix');
+  const q = document.createElement('input'); q.type = 'search'; q.placeholder = 'Chercher un exercice'; q.autocomplete = 'off';
+  const mus = el('div', 'ent-muscles');
+  const res = el('div', 'ent-res');
+  const remplir = () => {
+    const t = sansAccent(q.value.trim());
+    const liste = BASE_EXOS.filter((x) => t ? sansAccent(x.nom).includes(t) : x.muscle === entMuscle).slice(0, 40);
+    res.innerHTML = '';
+    if (!liste.length) res.append(el('p', 'vide', 'Aucun exercice.'));
+    liste.forEach((x) => {
+      const b = document.createElement('button');
+      b.append(el('span', '', x.nom), el('span', 'ent-tag', LABEL_TYPE[x.type]));
+      b.addEventListener('click', () => {
+        const src = (EXERCISES[x.muscle] || []).find((e) => e.nom === x.nom);
+        s.exos.push({ id: nouvelId('e'), nom: x.nom, imgId: x.imgId, type: x.type, series: 3, reps: repsDe(src && src.meta), repos: 90 });
+        sauverBrEnt(); dessinerEnt();
+        const zone = document.querySelectorAll('.ent-choix input')[0]; if (zone) zone.focus({ preventScroll: true });
+      });
+      res.append(b);
+    });
+  };
+  MUSCLES.filter((m) => m.key !== 'etirements').forEach((m) => {
+    const b = el('button', m.key === entMuscle ? 'on' : '', m.label);
+    b.addEventListener('click', () => { entMuscle = m.key; q.value = ''; mus.querySelectorAll('button').forEach((y) => y.classList.toggle('on', y === b)); remplir(); });
+    mus.append(b);
+  });
+  q.addEventListener('input', remplir);
+  w.append(q, mus, res);
+  remplir();
+  return w;
+}
+
+$('entPlusSeance').addEventListener('click', () => {
+  if (entSeances.length >= 7) { alert('7 séances au maximum.'); return; }
+  entSeances.push(seanceVide(entSeances.length)); entPicker = entSeances.length - 1;
+  sauverBrEnt(); dessinerEnt();
+});
+
+$('entEnvoi').addEventListener('click', () => {
+  const b = $('entEnvoi'), msg = $('entMsg');
+  msg.className = 'msg';
+  const client = entChoisi ? 'uid:' + entChoisi.uid : $('entClient').value.trim();
+  if (!client) { afficher(msg, 'Indique le destinataire.', false); return; }
+  const seances = entSeances.filter((s) => s.exos.length).map((s) => ({
+    id: s.id, nom: (s.nom || '').trim(), jour: s.jour === '' ? null : +s.jour,
+    exos: s.exos.map((x) => ({ id: x.id, nom: x.nom, imgId: x.imgId || null, type: x.type, series: +x.series || 3, reps: String(x.reps || '10'), repos: +x.repos || 90 })),
+  }));
+  if (!seances.length) { afficher(msg, 'Le programme est vide : ajoute au moins un exercice.', false); return; }
+  b.disabled = true; b.textContent = 'Envoi…';
+  appel('deposerEntrainement', { client, seances, note: $('entNote').value.trim() }).then((d) => {
+    if (d && d.ok) {
+      afficher(msg, d.mailEnvoye ? 'Programme envoyé : dans l\'app et par e-mail.' : 'Programme déposé dans l\'app. L\'e-mail n\'a pas pu partir, le client le voit quand même.', true);
+      if (entChoisi) { try { localStorage.removeItem(CLE_BR_ENT(entChoisi.uid)); } catch (e) { /* rien */ } entChoisi.entrainement = { seances, note: $('entNote').value.trim(), livreLe: d.livreLe }; }
+      chargerDossiers();
+    } else {
+      const m = d && d.motif;
+      afficher(msg, m === 'introuvable' ? 'Aucun compte BELFIT avec cet e-mail ou ce pseudo.' : m === 'seances' ? 'Le programme est vide.' : 'L\'envoi a échoué. Réessaie.', false);
+    }
+  }).catch((e) => { if (e.message !== 'code') afficher(msg, 'Réseau indisponible.', false); })
+    .finally(() => { b.disabled = false; b.textContent = 'Envoyer le programme'; });
+});
+
+try { if (localStorage.getItem(CLE_MODE) === 'ent') poserMode(true); } catch (e) { /* rien */ }
 
 if (code) ouvrir(); else ecran('code');
 </script>

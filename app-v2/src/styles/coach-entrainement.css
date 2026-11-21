@@ -1,0 +1,77 @@
+/* ============================================================
+   COACHING ENTRAINEMENT (21/11, Raci) : meme matiere que l'onglet
+   Coach (creme, cartes blanches), accent BLEU pour l'entrainement.
+   ============================================================ */
+.ce-bascule { display: flex; background: #E9E6E0; border-radius: 14px; padding: 3px; margin: 6px 0 14px; }
+.ce-bascule button { flex: 1; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 600;
+  color: #57514A; padding: 10px 0; border-radius: 11px; -webkit-tap-highlight-color: transparent; }
+.ce-bascule button.on-alim { background: #fff; color: #1C5334; box-shadow: 0 1px 3px rgba(40,32,22,.08); }
+.ce-bascule button.on-ent { background: #1F5FD1; color: #fff; }
+
+.ce-page, .ce-indispo { padding-bottom: 110px; }
+.ce-h { font-size: 32px; font-weight: 800; letter-spacing: -.03em; color: #16130F; margin: 4px 0 2px; }
+.ce-h::after { content: ''; display: block; width: 44px; height: 5px; border-radius: 9px; margin-top: 6px; background: #1F5FD1; }
+.ce-sous { font-size: 13.5px; color: #8A8279; margin: 8px 0 14px; }
+
+.ce-seances { display: flex; gap: 8px; overflow-x: auto; margin: 0 -2px 14px; padding: 2px; scrollbar-width: none; }
+.ce-seances::-webkit-scrollbar { display: none; }
+.ce-seances button { flex: none; border: 1px solid #DCE6F7; background: #fff; border-radius: 14px; padding: 9px 14px;
+  font: inherit; text-align: left; color: #123C86; }
+.ce-seances button b { display: block; font-size: 14px; font-weight: 700; }
+.ce-seances button span { display: block; font-size: 12px; color: #5B7BB5; margin-top: 1px; }
+.ce-seances button.on { background: #1F5FD1; border-color: #1F5FD1; color: #fff; }
+.ce-seances button.on span { color: #D6E4FB; }
+
+.ce-carte { background: #fff; border-radius: 20px; padding: 14px 15px; margin-bottom: 10px;
+  border: 1px solid rgba(28,24,18,.05); box-shadow: 0 1px 2px rgba(60,48,30,.04), 0 6px 18px rgba(60,48,30,.05); }
+.ce-carte header { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
+.ce-carte header b { display: block; font-size: 16px; font-weight: 700; color: #16130F; line-height: 1.25; }
+.ce-carte header span { display: block; font-size: 12.5px; color: #8A8279; margin-top: 3px; }
+.ce-tag { flex: none; font-style: normal; font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 99px;
+  background: #E3ECFB; color: #123C86; }
+
+.ce-saisie { margin-top: 12px; }
+.ce-lib { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8A8279; margin: 0 0 8px; }
+.ce-corps { margin: 12px 0 0; text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 13px; }
+.ce-pile { display: flex; flex-wrap: wrap; gap: 6px; min-height: 40px; align-items: center; }
+.ce-disque { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(0,0,0,.12); font: 600 12px 'DM Mono', monospace; }
+.ce-vide { font-size: 14px; color: #57514A; }
+.ce-ajouts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.ce-plus-disque { border: 1px solid #DCE6F7; background: #F5F8FE; color: #123C86; border-radius: 10px; padding: 8px 10px;
+  font: 600 13px 'DM Mono', monospace; }
+.ce-total { font-size: 13px; color: #123C86; font-weight: 600; margin: 10px 0 0; }
+
+.ce-ligne { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ce-ligne .ce-lib { margin: 0; }
+.ce-pas { display: flex; align-items: center; gap: 6px; }
+.ce-pas button { width: 40px; height: 40px; border-radius: 12px; border: 0; background: #EEF3FC; color: #1F5FD1; font-size: 22px; line-height: 1; }
+.ce-pas input { width: 66px; height: 40px; border: 1px solid #DCE6F7; border-radius: 12px; text-align: center;
+  font: 500 16px 'DM Mono', monospace; color: #16130F; background: #fff; -moz-appearance: textfield; }
+.ce-pas input::-webkit-inner-spin-button, .ce-pas input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.ce-pas span { font-size: 13px; color: #8A8279; }
+
+.ce-faites { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+.ce-faites button { width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid #DCE6F7; background: #fff;
+  color: #5B7BB5; font: 600 13px 'DM Mono', monospace; }
+.ce-faites button.on { background: #1F5FD1; border-color: #1F5FD1; color: #fff; font-family: inherit; font-size: 16px; }
+
+.ce-note { background: #EEF3FC; border-radius: 18px; padding: 13px 15px; margin: 4px 0 10px; color: #123C86; }
+.ce-note b { font-size: 13px; }
+.ce-note p { margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #16130F; white-space: pre-wrap; }
+
+.ce-enregistrer { display: block; width: 100%; border: 0; border-radius: 16px; padding: 15px; margin-top: 6px;
+  background: #1F5FD1; color: #fff; font: inherit; font-size: 15px; font-weight: 700; }
+.ce-enregistrer.ok { background: #E3ECFB; color: #123C86; }
+
+/* Sans programme : la page se voit, floutee, avec le message par-dessus. */
+.ce-indispo { position: relative; }
+.ce-flou { filter: blur(4px); opacity: .7; pointer-events: none; user-select: none; }
+.ce-flou .ce-carte b { display: block; font-size: 16px; }
+.ce-flou .ce-carte span { font-size: 13px; color: #8A8279; }
+.ce-voile { position: absolute; inset: 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 90px; }
+.ce-voile-carte { background: #fff; border-radius: 20px; padding: 20px 20px 18px; max-width: 290px; text-align: center;
+  box-shadow: 0 10px 30px rgba(40,32,22,.12); border: 1px solid rgba(28,24,18,.06); }
+.ce-cadenas { display: inline-flex; width: 44px; height: 44px; border-radius: 50%; background: #EEF3FC; align-items: center; justify-content: center; }
+.ce-cadenas svg { width: 22px; height: 22px; fill: none; stroke: #1F5FD1; stroke-width: 2; stroke-linecap: round; }
+.ce-voile-t { font-size: 16px; font-weight: 700; color: #16130F; margin: 10px 0 4px; }
+.ce-voile-txt { font-size: 13.5px; line-height: 1.45; color: #57514A; margin: 0; }

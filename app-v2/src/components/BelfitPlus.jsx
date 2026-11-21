@@ -71,6 +71,8 @@ export const programme = {
   subscribe(f) { return programmeResolu.subscribe(f); },
 };
 export const programmeCharge = signal(false);
+/** 21/11 : programme d'entrainement envoye par le coach (users/{uid}.entrainementCoach), ou null. */
+export const entrainementCoach = signal(null);
 /** 21/11 : date a laquelle le coach a retire ce client (users/{uid}.coachRetireLe),
  *  seulement si aucun programme n'a ete livre depuis. null sinon. */
 export const planRetireLe = signal(null);
@@ -112,6 +114,7 @@ effect(() => {
   if (chargePour === uid && uid) return; // chargement deja en cours
   if (programmeCharge.peek()) {
     programmeBrut.value = null;
+    entrainementCoach.value = null;
     planRetireLe.value = null;
     dossierCoach.value = { questionnaire: null, commande: null };
     ajustements.value = { restants: null, quota: null };
@@ -187,6 +190,8 @@ export function chargerProgramme() {
     if (faux || dos) {
       programmeBrut.value = faux ? JSON.parse(faux) : null;
       if (dos) dossierCoach.value = JSON.parse(dos);
+      const fe = localStorage.getItem('belfit_v2_apercu_entrainement_coach');
+      entrainementCoach.value = fe ? JSON.parse(fe) : null;
       const q = localStorage.getItem('belfit_v2_apercu_ajust');
       ajustements.value = q ? JSON.parse(q) : {restants: null, quota: null};
       programmeCharge.value = true;
@@ -207,6 +212,7 @@ export function chargerProgramme() {
       // Lu un peu apres le demarrage : la copie locale sert en attendant, et le chargement du journal n'est pas ralenti.
       setTimeout(() => { lireBlocageDistant().then(v => { if (v !== null) poserBlocageDistant(v); }); }, 4000);
       programmeBrut.value = (d && d.programme) || null;
+      entrainementCoach.value = (d && d.entrainementCoach) || null;
       planRetireLe.value = retireDe(d);
       dossierCoach.value = { questionnaire: (d && d.questionnaireCoach) || null, commande: (d && d.commandeCoach) || null, brouillon: (d && d.brouillonCoach) || null, accesPro: (d && d.accesPro) || null, retireLe: retireDe(d) };
       // 21/10 Raci : ajustements illimites pendant le mois de coaching,
@@ -249,6 +255,8 @@ export function relireProgramme() {
       poserAcces(uid, d.accesNutritionJusqu);   // un paiement/code recu pendant que l'appli etait ouverte
       const neuf = d.programme || null;
       if (!memeContenu(programmeBrut.peek(), neuf)) programmeBrut.value = neuf;
+      const ent = d.entrainementCoach || null;
+      if (!memeContenu(entrainementCoach.peek(), ent)) entrainementCoach.value = ent;
       if (planRetireLe.peek() !== retireDe(d)) planRetireLe.value = retireDe(d);
       const avant = dossierCoach.peek();
       const dos = { questionnaire: d.questionnaireCoach || null, commande: d.commandeCoach || null, accesPro: d.accesPro || null, retireLe: retireDe(d) };

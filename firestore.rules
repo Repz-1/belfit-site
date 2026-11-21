@@ -25,7 +25,9 @@ service cloud.firestore {
               'lsStatus', 'lsEvent', 'formule', 'abonnement', 'credits', 'creditsIA',
               'dernierMailVerif', 'dernierMailVerifId',
               // 21/11 : anciens programmes et suppression par le coach (espaceCoach).
-              'programmesHistorique', 'coachRetireLe'];
+              'programmesHistorique', 'coachRetireLe',
+              // 21/11 : programme d'entrainement envoye par le coach.
+              'entrainementCoach'];
     }
     function nutriCles() {
       return ['repas', 'objectifs', 'calculBaseFait', 'poidsCalcul', 'profilBesoins',

@@ -1,6 +1,7 @@
 import { STRINGS_V1 } from '../legacy/strings.js';
 import { signal } from '@preact/signals';
 import { ACHAT } from './achat.js';
+import { ENT_COACH } from './entrainement-coach.js';
 
 // ============================================================
 // I18N v2 — FR (canonique) / EN / NL.
@@ -510,6 +511,7 @@ const T = {
 
 // Achat du plan coach, paiement, connexion (20/11) : fusionnes ici.
 for (const l of ['fr', 'en', 'nl']) Object.assign(T[l], ACHAT[l]);
+for (const l of ['fr', 'en', 'nl']) Object.assign(T[l], ENT_COACH[l]);
 
 export function t(cle, vars) {
   const l = langue.value;
