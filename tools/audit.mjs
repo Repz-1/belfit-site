@@ -3412,6 +3412,9 @@ const DECALAGE_SW_V2 = 232;
       if (!/programme: FV\.delete\(\)/.test(act) || !/programmesHistorique: FV\.delete\(\)/.test(act)) soucis.push('supprimerClient ne retire plus le programme et les anciens');
     }
   }
+  const bp = lire('app-v2/src/components/BelfitPlus.jsx'), etat = lire('app-v2/src/store/coach.js');
+  if (bp && !/retirerRepasDuPlan\(\)/.test(bp)) soucis.push('l\'app ne retire plus les repas « Prévu » du plan supprime par le coach');
+  if (etat && !/dossier\.retireLe/.test(etat)) soucis.push('etatCoach ignore le retrait par le coach (« plan en preparation » afficherait a tort)');
   if (regles && !/'programmesHistorique', 'coachRetireLe'/.test(regles)) soucis.push('programmesHistorique / coachRetireLe ne sont plus reserves au serveur dans firestore.rules');
   if (soucis.length) faute('R92 supprimer un client (coach)', soucis.join(' ; '));
   else passe('R92 supprimer un client (coach)');

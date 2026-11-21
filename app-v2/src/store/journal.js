@@ -601,6 +601,21 @@ export function completerMacros(o, poids) {
   return { ...o, kcal, prot, carbs, lip };
 }
 
+/** 21/11 : le coach a supprime ce client (espaceCoach, supprimerClient).
+ *  Les repas du plan encore « Prévu » du jour quittent le journal ; ce qui a
+ *  ete mange, saute, remplace ou ajoute par le client reste (historique). */
+export function retirerRepasDuPlan() {
+  if (lectureSeule.peek()) return false;
+  const avant = repas.value;
+  const duPlanPrevu = (r) => r.duPlan && r.prevu && !r.remplace && !r.saute;
+  if (!avant.some(duPlanPrevu)) return false;
+  // Repas fixe (Petit dejeuner, Dejeuner...) : la case reste, vide. Les autres partent.
+  repas.value = avant.filter(r => !duPlanPrevu(r) || r.fixe)
+    .map(r => { if (!duPlanPrevu(r)) return r; const { idee, ingsPlan, ...vide } = r; return { ...vide, ings: [], prevu: false, duPlan: false }; });
+  recaler();
+  return true;
+}
+
 export function setObjectifs(nouveaux, opts) {
   // Acces ferme : rien. Encodage coupe : seul le semis du plan coach
   // (opts.depuisPlan) peut poser les objectifs (05/11 Raci).

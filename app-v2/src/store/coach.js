@@ -54,7 +54,11 @@ const avant = (a, b) => !a || (b && new Date(a) < new Date(b));
 export function etatCoach(dossier, pr) {
   const { commande: cmd, questionnaire: q } = dossier || {};
   const local = payeLocal();
-  const payeLe = (cmd && cmd.payeLe) || (local && local.le) || null;
+  let payeLe = (cmd && cmd.payeLe) || (local && local.le) || null;
+  // 21/11 : client supprime par le coach (retireLe) sans paiement ni questionnaire
+  // depuis : plus de suivi en cours (ni « plan en preparation », ni « a remplir »).
+  const r = Date.parse((dossier && dossier.retireLe) || '');
+  if (r && [payeLe, q && q.envoyeLe].every((x) => !x || Date.parse(x) <= r)) payeLe = null;
   const type = (cmd && cmd.type) || (local && local.type) || 'plan';
   const aRemplir = !!payeLe && avant(q && q.envoyeLe, payeLe);
   const enPrep = !!payeLe && !aRemplir && avant(pr && pr.livreLe, q.envoyeLe);
