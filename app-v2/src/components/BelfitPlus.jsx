@@ -4,7 +4,7 @@ import { signal, effect, computed } from '@preact/signals';
 import { Icone } from './IconesCoach.jsx';
 import { getApps } from 'firebase/app';
 import { utilisateur } from '../services/firebase.js';
-import { setObjectifs, objectifs, repas, cleDuNom, semerPlan, dateJour, donneesPretes, clotures } from '../store/journal.js';
+import { setObjectifs, objectifs, repas, cleDuNom, semerPlan, dateJour, donneesPretes, clotures, retirerRepasDuPlan } from '../store/journal.js';
 import { macrosOf, DB } from '../data/aliments.js';
 import { ongletActif, allerOnglet } from './BottomNav.jsx';
 import { statsAvOuvertes } from './StatsAvancees.jsx';
@@ -71,6 +71,10 @@ export const programme = {
   subscribe(f) { return programmeResolu.subscribe(f); },
 };
 export const programmeCharge = signal(false);
+/** 21/11 : date a laquelle le coach a retire ce client (users/{uid}.coachRetireLe),
+ *  seulement si aucun programme n'a ete livre depuis. null sinon. */
+export const planRetireLe = signal(null);
+const retireDe = (d) => (d && !d.programme && typeof d.coachRetireLe === 'string') ? d.coachRetireLe : null;
 // Dossier coaching (26/09) : dernier questionnaire envoye et derniere
 // commande payee. La commande est ecrite par le webhook LemonSqueezy.
 export const dossierCoach = signal({ questionnaire: null, commande: null });
@@ -108,6 +112,7 @@ effect(() => {
   if (chargePour === uid && uid) return; // chargement deja en cours
   if (programmeCharge.peek()) {
     programmeBrut.value = null;
+    planRetireLe.value = null;
     dossierCoach.value = { questionnaire: null, commande: null };
     ajustements.value = { restants: null, quota: null };
     programmeCharge.value = false;
@@ -154,6 +159,22 @@ effect(() => {
   try { localStorage.setItem(cle, marque); } catch (e) {}
 });
 
+// 21/11 Raci : plan retire par le coach (page coach, « Supprimer le client »).
+// Les repas du plan encore « Prévu » aujourd'hui disparaissent du journal,
+// une seule fois par retrait. Seulement sur une lecture reussie du serveur
+// (planRetireLe vient du document lu, jamais d'une erreur reseau).
+const CLE_RETRAIT = 'belfit_v2_plan_retire';
+effect(() => {
+  const le = planRetireLe.value;
+  if (!le || programme.value) return;
+  if (!donneesPretes.value || lectureSeule.value) return;
+  const u = utilisateur.peek();
+  const cle = CLE_RETRAIT + '_' + (u ? u.uid : 'local');
+  try { if (localStorage.getItem(cle) === le) return; } catch (e) {}
+  retirerRepasDuPlan();
+  try { localStorage.setItem(cle, le); localStorage.removeItem(CLE_SEME + '_' + (u ? u.uid : 'local')); } catch (e) {}
+});
+
 let lectureGeneration = 0;
 export function chargerProgramme() {
   const gen = ++lectureGeneration;
@@ -186,7 +207,8 @@ export function chargerProgramme() {
       // Lu un peu apres le demarrage : la copie locale sert en attendant, et le chargement du journal n'est pas ralenti.
       setTimeout(() => { lireBlocageDistant().then(v => { if (v !== null) poserBlocageDistant(v); }); }, 4000);
       programmeBrut.value = (d && d.programme) || null;
-      dossierCoach.value = { questionnaire: (d && d.questionnaireCoach) || null, commande: (d && d.commandeCoach) || null, brouillon: (d && d.brouillonCoach) || null, accesPro: (d && d.accesPro) || null };
+      planRetireLe.value = retireDe(d);
+      dossierCoach.value = { questionnaire: (d && d.questionnaireCoach) || null, commande: (d && d.commandeCoach) || null, brouillon: (d && d.brouillonCoach) || null, accesPro: (d && d.accesPro) || null, retireLe: retireDe(d) };
       // 21/10 Raci : ajustements illimites pendant le mois de coaching,
       // plus de compteur affiche.
       ajustements.value = {restants: null, quota: null};
@@ -227,10 +249,11 @@ export function relireProgramme() {
       poserAcces(uid, d.accesNutritionJusqu);   // un paiement/code recu pendant que l'appli etait ouverte
       const neuf = d.programme || null;
       if (!memeContenu(programmeBrut.peek(), neuf)) programmeBrut.value = neuf;
+      if (planRetireLe.peek() !== retireDe(d)) planRetireLe.value = retireDe(d);
       const avant = dossierCoach.peek();
-      const dos = { questionnaire: d.questionnaireCoach || null, commande: d.commandeCoach || null, accesPro: d.accesPro || null };
+      const dos = { questionnaire: d.questionnaireCoach || null, commande: d.commandeCoach || null, accesPro: d.accesPro || null, retireLe: retireDe(d) };
       // `brouillon` reste celui de la memoire : il s'ecrit en differe depuis ce telephone.
-      if (!['questionnaire', 'commande', 'accesPro'].every(k => memeContenu(avant[k] || null, dos[k]))) dossierCoach.value = { ...avant, ...dos };
+      if (!['questionnaire', 'commande', 'accesPro', 'retireLe'].every(k => memeContenu(avant[k] || null, dos[k]))) dossierCoach.value = { ...avant, ...dos };
     })
     .catch(() => { /* hors ligne ou erreur : on garde le plan deja charge */ })
     .finally(() => { relectureEnCours = false; });
