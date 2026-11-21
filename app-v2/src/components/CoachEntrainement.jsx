@@ -8,6 +8,7 @@
 // « Non disponible pour ton compte ».
 // ============================================================
 import { useState, useEffect } from 'preact/hooks';
+import { signal } from '@preact/signals';
 import { entrainementCoach } from './BelfitPlus.jsx';
 import { carnetCoach, carnetCharge, noterSeance, dernierPour } from '../store/carnet-coach.js';
 import { DISQUES, totalBarre, texteDisques, pasCharge, kgTexte } from '../data/charge-coach.js';
@@ -191,8 +192,19 @@ export function CoachEntrainement() {
   );
 }
 
-/** Bascule Alimentation / Entrainement, tout en haut de l'onglet Coach. */
-export function BasculeCoach({ espace, choisir }) {
+// 21/11 Raci : la bascule vit en haut de la page Aujourd'hui (l'alimentation),
+// pas dans l'onglet Coach, et pas de cinquieme onglet. Choix memorise.
+const CLE_ESPACE = 'belfit_jour_espace';
+let espaceInitial = 'alim';
+try { if (localStorage.getItem(CLE_ESPACE) === 'ent') espaceInitial = 'ent'; } catch (e) { /* rien */ }
+export const espaceJour = signal(espaceInitial);
+export function choisirEspaceJour(e) {
+  espaceJour.value = e;
+  try { localStorage.setItem(CLE_ESPACE, e); } catch (x) { /* rien */ }
+}
+
+/** Bascule Alimentation / Entrainement, tout en haut de la page Aujourd'hui. */
+export function BasculeCoach({ espace = espaceJour.value, choisir = choisirEspaceJour }) {
   return (
     <div class="ce-bascule" role="tablist">
       <button type="button" role="tab" aria-selected={espace === 'alim'} class={espace === 'alim' ? 'on-alim' : ''} onClick={() => choisir('alim')}>{t('ce_alim')}</button>
