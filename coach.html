@@ -1083,7 +1083,8 @@ function ligne(d, aTraiter) {
   const txt = el('span', 'dos-txt');
   txt.append(el('div', 'dos-nom', nomDe(d)),
     el('div', 'dos-sous', (d.objectif ? d.objectif + ' · ' : '') + (aTraiter ? 'reçu ' + quand(d.envoyeLe)
-      : d.livreLe ? 'livré ' + quand(d.livreLe) : d.payeLe ? prefixeAttente(d) + quand(d.payeLe) + ' · questionnaire pas encore envoyé' : '')));
+      : d.livreLe ? 'livré ' + quand(d.livreLe) : d.payeLe ? prefixeAttente(d) + quand(d.payeLe) + ' · questionnaire pas encore envoyé'
+      : d.entrainement && d.entrainement.livreLe ? 'entraînement envoyé ' + quand(d.entrainement.livreLe) : '')));
   // 01/11 : aussi les clients payes sans questionnaire, ou avec un programme sans questionnaire.
   // Plan offert : badge Offert, jamais Payé. Les autres dossiers ne changent pas.
   const [t, c] = aTraiter ? echeance(d) : badgeHorsFile(d);
@@ -1700,10 +1701,22 @@ $('entDeselect').addEventListener('click', () => {
   $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entCarnetBloc').style.display = 'none';
   dessinerEnt();
 });
+// 21/11 Raci : un e-mail ou un pseudo tape a la main retrouve le client au
+// serveur (meme hors de la liste) et rouvre son programme pour le modifier.
+function trouverClientEnt(t) {
+  t = String(t || '').trim();
+  if (!t) return Promise.resolve(null);
+  const bas = t.toLowerCase();
+  const d = tousDossiers.find((x) => (x.email || '').toLowerCase() === bas || ((x.prenom + ' ' + x.nom).trim().toLowerCase() === bas));
+  if (d) return Promise.resolve(d);
+  return appel('chercher', { q: t }).then((r) => (r && r.ok && r.dossiers && r.dossiers[0]) || null).catch(() => null);
+}
 $('entClient').addEventListener('change', () => {
-  const t = $('entClient').value.trim().toLowerCase();
-  const d = tousDossiers.find((x) => (x.email || '').toLowerCase() === t || ((x.prenom + ' ' + x.nom).trim().toLowerCase() === t));
-  if (d) { $('entClient').value = ''; choisirEnt(d); }
+  const t = $('entClient').value.trim();
+  trouverClientEnt(t).then((d) => {
+    if (!d || $('entClient').value.trim() !== t || entChoisi) return;
+    $('entClient').value = ''; choisirEnt(d);
+  });
 });
 $('entNote').addEventListener('input', sauverBrEnt);
 $('entClient').addEventListener('input', sauverBrEnt);
@@ -1841,6 +1854,13 @@ $('entEnvoi').addEventListener('click', () => {
     if (d && d.ok) {
       afficher(msg, d.mailEnvoye ? 'Programme envoyé : dans l\'app et par e-mail.' : 'Programme déposé dans l\'app. L\'e-mail n\'a pas pu partir, le client le voit quand même.', true);
       try { localStorage.removeItem(CLE_ENT_COURANT); } catch (e) { /* rien */ }
+      if (!entChoisi && d.client && d.client.uid) {
+        const livre = { seances, note: $('entNote').value.trim(), livreLe: d.livreLe };
+        appel('chercher', { q: d.client.email || client }).then((r) => {
+          const dd = r && r.ok && r.dossiers && r.dossiers[0];
+          if (dd && !entChoisi) { dd.entrainement = dd.entrainement || livre; $('entClient').value = ''; poserClientEnt(dd); }
+        }).catch(() => {});
+      }
       if (entChoisi) { try { localStorage.removeItem(CLE_BR_ENT(entChoisi.uid)); } catch (e) { /* rien */ } entChoisi.entrainement = { seances, note: $('entNote').value.trim(), livreLe: d.livreLe }; }
       chargerDossiers();
     } else {
