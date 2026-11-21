@@ -1307,10 +1307,10 @@ function modeleEntrainement(ent, maj) {
   return `<!doctype html><html><body style="margin:0;background:#F4F3F0"><table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:28px 14px">
   <table width="100%" style="max-width:520px;background:#fff;border-radius:18px" cellpadding="0" cellspacing="0"><tr><td style="padding:26px">
     <p style="font:700 22px Helvetica,Arial,sans-serif;color:#16130F;margin:0 0 6px">${maj ? "Ton programme d'entraînement a changé" : "Ton programme d'entraînement est prêt"}</p>
-    <p style="font:400 14px/1.5 Helvetica,Arial,sans-serif;color:#57514A;margin:0 0 14px">Ouvre BELFIT, onglet Coach, puis « Entraînement ». À chaque séance, note seulement tes poids.</p>
+    <p style="font:400 14px/1.5 Helvetica,Arial,sans-serif;color:#57514A;margin:0 0 14px">Ouvre BELFIT, page Aujourd'hui, puis « Entraînement » tout en haut. À chaque séance, note seulement tes poids.</p>
     <table width="100%" cellpadding="0" cellspacing="0">${lignes}</table>
     ${ent.note ? `<p style="font:400 14px/1.5 Helvetica,Arial,sans-serif;color:#16130F;background:#EEF3FC;border-radius:12px;padding:12px 14px;margin:16px 0 0">${e(ent.note)}</p>` : ""}
-    <p style="margin:20px 0 0"><a href="https://www.belfit.be/v2/?onglet=premium" style="display:inline-block;background:#1F5FD1;color:#fff;text-decoration:none;font:600 14px Helvetica,Arial,sans-serif;padding:12px 20px;border-radius:12px">Ouvrir mon programme</a></p>
+    <p style="margin:20px 0 0"><a href="https://www.belfit.be/v2/?onglet=journal" style="display:inline-block;background:#1F5FD1;color:#fff;text-decoration:none;font:600 14px Helvetica,Arial,sans-serif;padding:12px 20px;border-radius:12px">Ouvrir mon programme</a></p>
   </td></tr></table></td></tr></table></body></html>`;
 }
 

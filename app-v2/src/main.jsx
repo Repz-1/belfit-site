@@ -51,6 +51,7 @@ import { weightLog } from './store/stats.js';
 
 import { PremiumPage, estPremium } from './components/PremiumPage.jsx';
 import { CoachPage } from './components/CoachPage.jsx';
+import { CoachEntrainement, BasculeCoach, espaceJour } from './components/CoachEntrainement.jsx';
 import { Besoins, besoinsRequis, besoinsOuverts } from './components/Besoins.jsx';
 import { origineCalc, planCoachActif, programme, dossierCoach } from './components/BelfitPlus.jsx';
 import { finAcces } from './store/coach.js';
@@ -112,7 +113,8 @@ export function OngletJournal() {
   const [modale, setModale] = useState(false);
   // Le rappel de recalcul (carte Calories) demande l'ouverture par signal :
   // le composant ne possede pas l'etat de la modale, main.jsx si.
-  useEffect(() => { animerGoutte(); return arreterGoutte; }, []);
+  const esp = espaceJour.value;
+  useEffect(() => { if (esp !== 'ent') animerGoutte(); return arreterGoutte; }, [esp]);
 
   // Colonne unique, ordre de lecture descendant :
   // logo -> calories -> actions rapides -> idees recettes -> repas.
@@ -121,6 +123,9 @@ export function OngletJournal() {
     <div class="pg-journal">
       <div class="colonne">
         <Entete />
+        {/* 21/11 Raci : Alimentation / Entrainement tout en haut d'Aujourd'hui. */}
+        <BasculeCoach />
+        {espaceJour.value === 'ent' ? <CoachEntrainement /> : (<>
         <CarteOffreAlimentation />
         <DayDashboard />
         {/* La pilule vit dans la carte Calories ; ici, uniquement le
@@ -165,11 +170,12 @@ export function OngletJournal() {
             L'unique acces est desormais la carte de BelFit+. */}
         {/* 22/10 Raci : la barre de saisie libre, tout en bas, masquee. */}
         {BARRE_REPAS_VISIBLE && <CoachBar />}
+        </>)}
       </div>
 
-      <div class="fab-rangee">
+      {espaceJour.value !== 'ent' && <div class="fab-rangee">
         <WaterTracker />
-      </div>
+      </div>}
 
       {modale && !lectureSeule.value && !encodageFerme.value && <AddMealModal montre={true} fermer={() => setModale(false)} />}
       {/* Ouvert depuis Mon programme, le calculateur y ramene : sa
