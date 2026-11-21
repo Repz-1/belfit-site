@@ -23,7 +23,9 @@ service cloud.firestore {
       return ['pseudo', 'programme', 'ajustements', 'commandeCoach', 'accesNutritionJusqu',
               'premium', 'premiumJusqu', 'accesPro', 'source', 'codeUtilise',
               'lsStatus', 'lsEvent', 'formule', 'abonnement', 'credits', 'creditsIA',
-              'dernierMailVerif', 'dernierMailVerifId'];
+              'dernierMailVerif', 'dernierMailVerifId',
+              // 21/11 : anciens programmes et suppression par le coach (espaceCoach).
+              'programmesHistorique', 'coachRetireLe'];
     }
     function nutriCles() {
       return ['repas', 'objectifs', 'calculBaseFait', 'poidsCalcul', 'profilBesoins',

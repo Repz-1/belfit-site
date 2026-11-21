@@ -3381,6 +3381,43 @@ const DECALAGE_SW_V2 = 232;
 }
 
 // ------------------------------------------------------------
+// R92 — Supprimer un client de l'espace coach (21/11).
+// Le bouton est en bas de la FICHE (detail), jamais dans la liste (ligne),
+// et ne fait rien sans la fenetre de confirmation (Annuler par defaut).
+// Le serveur passe par espaceCoach (code coach) et ne touche ni au compte
+// Auth, ni au document entier, ni au paiement.
+// ------------------------------------------------------------
+{
+  const soucis = [];
+  const coach = lire('coach.html');
+  const srv = lire('functions/index.js');
+  const regles = lire('firestore.rules');
+  if (coach) {
+    const bloc = (nom) => (coach.split('function ' + nom + '(')[1] || '').split('\nfunction ')[0];
+    const det = bloc('detail'), lig = bloc('ligne'), conf = bloc('confirmerSuppression');
+    if (!/'suppr-client', 'Supprimer le client'/.test(det)) soucis.push('le bouton « Supprimer le client » n\'est plus dans la fiche (detail)');
+    if (/suppr-client|supprimerClient/.test(lig)) soucis.push('la suppression est atteignable depuis la liste (ligne)');
+    if (!/addEventListener\('click', \(\) => confirmerSuppression\(d, sup\)\)/.test(det)) soucis.push('le bouton ne passe plus par confirmerSuppression');
+    if ((coach.match(/appel\('supprimerClient'/g) || []).length !== 1 || !/appel\('supprimerClient'/.test(conf)) soucis.push('l\'appel supprimerClient doit exister une seule fois, dans confirmerSuppression');
+    if (!/showModal\(\)/.test(conf) || !/non\.focus\(\)/.test(conf)) soucis.push('la confirmation n\'est plus une fenetre modale avec « Annuler » par defaut');
+    if (!/oui\.addEventListener\('click'[\s\S]*appel\('supprimerClient'/.test(conf)) soucis.push('supprimerClient est appele hors du bouton « Supprimer » de la confirmation');
+  } else soucis.push('coach.html introuvable');
+  if (srv) {
+    const act = (srv.split('if (action === "supprimerClient")')[1] || '').split('\n      }\n')[0];
+    if (!act) soucis.push('action supprimerClient absente d\'espaceCoach');
+    else {
+      const avant = srv.split('if (action === "supprimerClient")')[0];
+      if (!/codeCoachValide\(corps\.code\)/.test(avant.split('exports.espaceCoach')[1] || '')) soucis.push('supprimerClient n\'est pas derriere codeCoachValide');
+      if (/deleteUser|ref\.delete\(|recursiveDelete|commandeCoach|codesPremium|codeUtilise|accesNutrition/.test(act)) soucis.push('supprimerClient touche au compte, au document entier, au paiement ou aux codes');
+      if (!/programme: FV\.delete\(\)/.test(act) || !/programmesHistorique: FV\.delete\(\)/.test(act)) soucis.push('supprimerClient ne retire plus le programme et les anciens');
+    }
+  }
+  if (regles && !/'programmesHistorique', 'coachRetireLe'/.test(regles)) soucis.push('programmesHistorique / coachRetireLe ne sont plus reserves au serveur dans firestore.rules');
+  if (soucis.length) faute('R92 supprimer un client (coach)', soucis.join(' ; '));
+  else passe('R92 supprimer un client (coach)');
+}
+
+// ------------------------------------------------------------
 // Rapport
 // ------------------------------------------------------------
 for (const r of ok) console.log(`  ok    ${r}`);

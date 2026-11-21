@@ -1739,6 +1739,12 @@ function ajusterALaCible(repas, table, kcalCible) {
   return r;
 }
 
+/** 21/11 : client supprime par le coach et sans activite depuis (voir supprimerClient). */
+function retireDeLaListe(d, derniereActiviteMs) {
+  const r = Date.parse((d && d.coachRetireLe) || "");
+  return !!r && r >= derniereActiviteMs;
+}
+
 /** Fiche client pour la page coach (liste et recherche). */
 function dossierDe(uid, d, email) {
   const q = d.questionnaireCoach || {};
@@ -1838,8 +1844,12 @@ exports.espaceCoach = onRequest(
           const r = await admin.auth().getUsers(lot);
           r.users.forEach((u) => { emails[u.uid] = u.email || null; });
         }
-        const dossiers = docs.map(({uid, d}) => dossierDe(uid, d, emails[uid]));
         const recent = (x) => Math.max(0, ...[x.envoyeLe, x.payeLe, x.livreLe].map((v) => Date.parse(v) || 0));
+        // 21/11 : client supprime par le coach (supprimerClient) = absent de la
+        // liste, jusqu'a une activite plus recente (nouveau programme, paiement
+        // ou questionnaire) : il reapparait alors normalement.
+        const dossiers = docs.map(({uid, d}) => dossierDe(uid, d, emails[uid]))
+            .filter((x) => !retireDeLaListe(parUid.get(x.uid), recent(x)));
         dossiers.sort((x, y) => recent(y) - recent(x));
         res.json({ok: true, dossiers, complet, limite});
         return;
@@ -1944,6 +1954,24 @@ exports.espaceCoach = onRequest(
               note: d.data().note || "", montant: d.data().montant || null,
               cree: d.data().cree, utiliseLe: d.data().utiliseLe || null, email: d.data().email || null}));
         res.json({ok: true, invitations: liste});
+        return;
+      }
+
+      // 21/11 Raci : supprimer un client de l'espace coach. Retire le
+      // programme envoye et les anciens (l'app ne les montre plus) et le note
+      // retire de la liste. Ne touche NI au compte Firebase Auth, NI au reste
+      // du document (journal, poids, seances, questionnaire), NI au paiement
+      // (commandeCoach), NI aux codes deja utilises. Atteint seulement apres
+      // codeCoachValide, plus haut.
+      if (action === "supprimerClient") {
+        const uid = String(corps.uid || "");
+        if (!uid || uid.length > 128 || uid.includes("/")) { res.status(400).json({ok: false, motif: "uid"}); return; }
+        const ref = db.collection("users").doc(uid);
+        if (!(await ref.get()).exists) { res.status(404).json({ok: false, motif: "uid"}); return; }
+        const FV = admin.firestore.FieldValue;
+        const le = new Date().toISOString();
+        await ref.update({programme: FV.delete(), programmesHistorique: FV.delete(), coachRetireLe: le});
+        res.json({ok: true, retireLe: le});
         return;
       }
 
