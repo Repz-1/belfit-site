@@ -24,8 +24,9 @@ export const TYPES_CHARGE = [
 export function typeCharge(nom, mat) {
   const n = String(nom || '').toLowerCase();
   if (/poulie|câble|cable|vis-à-vis/.test(n)) return 'poulie';
-  if (/haltère|haltere/.test(n) || mat === 'halteres') return 'halteres';
+  // Kettlebell AVANT haltere : dans la base, les kettlebells portent mat 'halteres'.
   if (/kettlebell/.test(n) || mat === 'kettlebell') return 'kettlebell';
+  if (/haltère|haltere/.test(n) || mat === 'halteres') return 'halteres';
   if (/\(barre|barre ez|smith/.test(n) || mat === 'barre') return /smith/.test(n) ? 'machine' : 'barre';
   if (/machine|presse|leg curl|leg extension|pec deck/.test(n) || mat === 'machine') return 'machine';
   if (mat === 'rien' || mat === 'traction' || mat === 'elastique') return 'corps';
