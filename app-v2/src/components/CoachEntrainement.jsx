@@ -16,9 +16,19 @@ import { t } from '../i18n/index.js';
 import { PhotoExo } from './PhotoExo.jsx';
 import { createPortal } from 'preact/compat';
 
-/** 21/11 Raci : toucher une photo l'ouvre en grand, plein ecran. Toucher
- *  l'autre vignette ou les fleches passe depart <-> arrivee ; toucher ailleurs ferme. */
-function PhotoGrande({ imgId, n, nom, changer, fermer }) {
+/** 21/11 Raci : le mouvement s'explique mieux en boucle. Les deux photos
+ *  (depart / arrivee) s'enchainent toutes seules, comme une petite video. */
+function AnimExo({ imgId, alt = '' }) {
+  return (
+    <div class="ce-anim">
+      <PhotoExo imgId={imgId} n={0} taille={640} prioritaire alt={alt} />
+      <PhotoExo imgId={imgId} n={1} taille={640} prioritaire alt="" class="ce-anim-b" />
+    </div>
+  );
+}
+
+/** Le meme mouvement en grand, plein ecran ; toucher ferme. */
+function PhotoGrande({ imgId, nom, fermer }) {
   useEffect(() => {
     const k = (e) => { if (e.key === 'Escape') fermer(); };
     document.addEventListener('keydown', k);
@@ -27,12 +37,8 @@ function PhotoGrande({ imgId, n, nom, changer, fermer }) {
   return createPortal(
     <div class="ce-plein" role="dialog" aria-label={nom} onClick={fermer}>
       <button type="button" class="ce-plein-x" aria-label="Fermer" onClick={fermer}>×</button>
-      <PhotoExo imgId={imgId} n={n} taille={640} prioritaire alt={nom} />
-      <div class="ce-plein-bas" onClick={(e) => e.stopPropagation()}>
-        <button type="button" class={n === 0 ? 'on' : ''} onClick={() => changer(0)}>1</button>
-        <span>{nom}</span>
-        <button type="button" class={n === 1 ? 'on' : ''} onClick={() => changer(1)}>2</button>
-      </div>
+      <AnimExo imgId={imgId} alt={nom} />
+      <p class="ce-plein-nom">{nom}</p>
     </div>,
     document.body,
   );
@@ -236,15 +242,12 @@ export function CoachEntrainement() {
               </div>
               <em class="ce-tag">{t('ce_type_' + x.type)}</em>
             </header>
+            {x.note && <p class="ce-consigne">{x.note}</p>}
             {photo === x.id && imgDe(x) && (
-              <div class="ce-photos">
-                {[0, 1].map((n) => (
-                  <button type="button" class="ce-vignette" aria-label={x.nom + ' ' + (n + 1)}
-                    onClick={() => setGrande({ imgId: imgDe(x), n, nom: x.nom })}>
-                    <PhotoExo imgId={imgDe(x)} n={n} taille={640} prioritaire alt="" />
-                  </button>
-                ))}
-              </div>
+              <button type="button" class="ce-vignette" aria-label={x.nom}
+                onClick={() => setGrande({ imgId: imgDe(x), nom: x.nom })}>
+                <AnimExo imgId={imgDe(x)} alt={x.nom} />
+              </button>
             )}
             <ol class="ce-liste">
               {e.series.map((y, i) => (
@@ -274,7 +277,7 @@ export function CoachEntrainement() {
         );
       })}
 
-      {grande && <PhotoGrande {...grande} changer={(n) => setGrande({ ...grande, n })} fermer={() => setGrande(null)} />}
+      {grande && <PhotoGrande {...grande} fermer={() => setGrande(null)} />}
 
       {ent.note && (
         <section class="ce-note"><b>{t('ce_mot')}</b><p>{ent.note}</p></section>

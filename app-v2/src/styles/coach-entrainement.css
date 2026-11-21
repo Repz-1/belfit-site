@@ -115,3 +115,15 @@
 .ce-plein-bas button { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.4);
   background: none; color: #fff; font: 600 14px 'DM Mono', monospace; }
 .ce-plein-bas button.on { background: #1F5FD1; border-color: #1F5FD1; }
+
+/* 21/11 : mouvement en boucle (depart -> arrivee), et consigne du coach. */
+.ce-anim { position: relative; aspect-ratio: 3 / 2; border-radius: 14px; overflow: hidden; background: #fff; }
+.ce-anim .photo-exo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ce-anim .ce-anim-b { animation: ce-boucle 2.4s ease-in-out infinite; }
+@keyframes ce-boucle { 0%, 38% { opacity: 0; } 50%, 88% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ce-anim .ce-anim-b { animation-duration: 5s; } }
+.ce-vignette { width: 100%; margin-top: 10px; }
+.ce-plein .ce-anim { width: 100%; max-width: 900px; border-radius: 14px; }
+.ce-plein-nom { color: #fff; font-size: 15px; font-weight: 600; margin: 14px 0 0; text-align: center; }
+.ce-consigne { margin: 8px 0 0; padding: 9px 12px; border-radius: 12px; background: #EEF3FC; color: #123C86;
+  font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; }
