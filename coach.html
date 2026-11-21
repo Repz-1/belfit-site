@@ -215,6 +215,23 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
 .red-code button:disabled{opacity:.45;cursor:default}
 .red-nouveau{background:#E9F5EE;border-radius:12px;padding:10px 12px;margin-top:12px;font-size:13.5px;line-height:1.5;color:#1C5334;display:none}
 .red-nouveau b{font-family:'DM Mono',monospace;font-size:15px}
+
+/* Supprimer un client (21/11) : bouton discret en bas de la fiche, confirmation obligatoire */
+button.suppr-client{display:block;margin:18px auto 2px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  color:#A32D2D;background:none;border:0;padding:8px 10px;text-decoration:underline;text-underline-offset:3px}
+button.suppr-client:disabled{opacity:.45;cursor:default}
+dialog.confirme{border:0;border-radius:18px;padding:20px;max-width:340px;width:calc(100% - 40px);color:var(--tx);
+  box-shadow:0 18px 50px rgba(22,19,15,.25)}
+dialog.confirme::backdrop{background:rgba(22,19,15,.45)}
+.confirme-titre{font-size:16.5px;font-weight:700;line-height:1.35;margin:0;overflow-wrap:anywhere}
+.confirme-txt{font-size:14px;line-height:1.5;margin:10px 0 0;color:var(--tx2)}
+.confirme-btns{display:flex;gap:10px;margin-top:18px}
+.confirme-btns button{flex:1;font:inherit;font-size:14px;font-weight:600;cursor:pointer;border:0;border-radius:12px;padding:12px}
+.confirme-btns .annuler{background:#F4F3F0;color:var(--tx)}
+.confirme-btns .supprimer{background:#A32D2D;color:#fff}
+.confirme-btns button:disabled{opacity:.5;cursor:default}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:1000;background:#16130F;color:#fff;
+  font-size:14px;font-weight:600;padding:11px 18px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 </style>
 </head>
 <body>
@@ -921,7 +938,60 @@ function detail(d) {
   const b = el('button', 'second', brouillonNonVide(br) ? 'Reprendre le brouillon' : 'Composer moi-même');
   b.addEventListener('click', () => choisir(d));
   box.append(ia, etat, btnBilan, b);
+  // 21/11 Raci : supprimer le client, en bas de la fiche seulement (jamais dans la
+  // liste), et toujours apres la fenetre de confirmation.
+  const sup = el('button', 'suppr-client', 'Supprimer le client');
+  sup.type = 'button';
+  sup.addEventListener('click', () => confirmerSuppression(d, sup));
+  box.append(sup);
   return box;
+}
+
+// ---------- Supprimer un client (21/11) ----------
+// Passe par espaceCoach (action supprimerClient, code coach verifie au serveur).
+// Retire le programme envoye et les anciens ; le compte BelFit, le journal,
+// le paiement et les codes restent. Un nouveau programme le fait revenir.
+function confirmerSuppression(d, btn) {
+  const qui = nomDe(d) + (d.email && d.email !== nomDe(d) ? ' (' + d.email + ')' : '');
+  const dlg = el('dialog', 'confirme');
+  dlg.setAttribute('aria-labelledby', 'confirmeTitre');
+  const titre = el('p', 'confirme-titre', 'Supprimer ' + qui + ' de ton espace coach ?');
+  titre.id = 'confirmeTitre';
+  const txt = el('p', 'confirme-txt', 'Son programme actuel sera retiré de son application. Son compte BelFit n\'est pas supprimé.');
+  const msg = el('div', 'msg');
+  const non = el('button', 'annuler', 'Annuler'); non.type = 'button';
+  const oui = el('button', 'supprimer', 'Supprimer'); oui.type = 'button';
+  const btns = el('div', 'confirme-btns'); btns.append(non, oui);
+  dlg.append(titre, txt, msg, btns);
+  document.body.append(dlg);
+  const fermer = () => { dlg.close(); dlg.remove(); };
+  non.addEventListener('click', fermer);
+  dlg.addEventListener('cancel', (e) => { e.preventDefault(); if (!oui.disabled) fermer(); });   // Echap = Annuler
+  oui.addEventListener('click', () => {
+    oui.disabled = true; non.disabled = true; btn.disabled = true;
+    appel('supprimerClient', { uid: d.uid }).then((r) => {
+      if (!r || !r.ok) throw new Error('refus');
+      fermer();
+      clientSupprime(d);
+    }).catch((e) => {
+      if (e && e.message === 'code') { fermer(); return; }
+      oui.disabled = false; non.disabled = false; btn.disabled = false;
+      afficher(msg, 'Suppression impossible. Réessaie.', false);
+    });
+  });
+  dlg.showModal();
+  non.focus();   // « Annuler » par defaut
+}
+
+function clientSupprime(d) {
+  tousDossiers = (tousDossiers || []).filter((x) => x.uid !== d.uid);
+  listeLivres = listeLivres.filter((x) => x.uid !== d.uid);
+  if (choisi && choisi.uid === d.uid) $('btnDeselect').click();   // plus de destinataire supprime dans le compositeur
+  const t = el('div', 'toast', 'Client supprimé');
+  t.setAttribute('role', 'status');
+  document.body.append(t);
+  setTimeout(() => t.remove(), 2600);
+  chargerDossiers().finally(() => { ($('blocLivres').style.display !== 'none' ? $('blocLivres') : $('resume')).scrollIntoView({ behavior: 'smooth', block: 'start' }); });
 }
 
 function ligne(d, aTraiter) {
