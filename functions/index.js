@@ -9,6 +9,7 @@ const crypto = require("crypto");
 const plansVersions = require("./plans-versions");
 const accesNutrition = require("./acces-nutrition");
 const invitationOfferte = require("./invitation-offerte");
+const entrainementCoach = require("./entrainement-coach");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -1298,6 +1299,21 @@ function modeleProgramme(prog, langue, maj) {
 </td></tr></table></body></html>`;
 }
 
+/** Courriel « programme d'entrainement » (21/11) : court, renvoie vers l'app. */
+function modeleEntrainement(ent, maj) {
+  const e = (x) => String(x || "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"})[c]);
+  const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+  const lignes = ent.seances.map((s) => `<tr><td style="padding:10px 0;border-top:1px solid #EDE5D8;font:500 15px Helvetica,Arial,sans-serif;color:#16130F">${e(s.nom)}${s.jour !== null ? ` <span style="color:#1F5FD1;font-weight:400">· ${JOURS[s.jour]}</span>` : ""}<br><span style="font:400 13px Helvetica,Arial,sans-serif;color:#57514A">${s.exos.map((x) => e(x.nom)).join(" · ")}</span></td></tr>`).join("");
+  return `<!doctype html><html><body style="margin:0;background:#F4F3F0"><table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:28px 14px">
+  <table width="100%" style="max-width:520px;background:#fff;border-radius:18px" cellpadding="0" cellspacing="0"><tr><td style="padding:26px">
+    <p style="font:700 22px Helvetica,Arial,sans-serif;color:#16130F;margin:0 0 6px">${maj ? "Ton programme d'entraînement a changé" : "Ton programme d'entraînement est prêt"}</p>
+    <p style="font:400 14px/1.5 Helvetica,Arial,sans-serif;color:#57514A;margin:0 0 14px">Ouvre BELFIT, onglet Coach, puis « Entraînement ». À chaque séance, note seulement tes poids.</p>
+    <table width="100%" cellpadding="0" cellspacing="0">${lignes}</table>
+    ${ent.note ? `<p style="font:400 14px/1.5 Helvetica,Arial,sans-serif;color:#16130F;background:#EEF3FC;border-radius:12px;padding:12px 14px;margin:16px 0 0">${e(ent.note)}</p>` : ""}
+    <p style="margin:20px 0 0"><a href="https://www.belfit.be/v2/?onglet=premium" style="display:inline-block;background:#1F5FD1;color:#fff;text-decoration:none;font:600 14px Helvetica,Arial,sans-serif;padding:12px 20px;border-radius:12px">Ouvrir mon programme</a></p>
+  </td></tr></table></td></tr></table></body></html>`;
+}
+
 /** Nombre fini et positif, borne — un plan a 90 000 kcal est une
  *  faute de frappe, pas un objectif. */
 function nombreValide(v, min, max) {
@@ -1779,6 +1795,9 @@ function dossierDe(uid, d, email) {
     programmesHistorique: histo,
     alerteSante: !!q.alerteSante,
     allergieGrave: !!q.allergieGrave,
+    // 21/11 : programme d'entrainement envoye et poids notes par le client.
+    entrainement: d.entrainementCoach || null,
+    carnet: entrainementCoach.resumeCarnet(d.v2Data && d.v2Data.carnetCoach),
     reponses: rep,
   };
 }
@@ -1831,7 +1850,7 @@ exports.espaceCoach = onRequest(
         // envoye un questionnaire (avant : questionnaire seulement, 60 max).
         // orderBy exclut les comptes sans le champ : 3 requetes, union par uid.
         const limite = Math.max(50, Math.min(5000, parseInt(corps.limite, 10) || 300));
-        const champs = ["questionnaireCoach.envoyeLe", "commandeCoach.payeLe", "programme.livreLe"];
+        const champs = ["questionnaireCoach.envoyeLe", "commandeCoach.payeLe", "programme.livreLe", "entrainementCoach.livreLe"];
         const snaps = await Promise.all(champs.map((c) => db.collection("users").orderBy(c, "desc").limit(limite).get()));
         const parUid = new Map();
         snaps.forEach((sn) => sn.docs.forEach((d) => { if (!parUid.has(d.id)) parUid.set(d.id, d.data()); }));
@@ -1844,7 +1863,7 @@ exports.espaceCoach = onRequest(
           const r = await admin.auth().getUsers(lot);
           r.users.forEach((u) => { emails[u.uid] = u.email || null; });
         }
-        const recent = (x) => Math.max(0, ...[x.envoyeLe, x.payeLe, x.livreLe].map((v) => Date.parse(v) || 0));
+        const recent = (x) => Math.max(0, ...[x.envoyeLe, x.payeLe, x.livreLe, x.entrainement && x.entrainement.livreLe].map((v) => Date.parse(v) || 0));
         // 21/11 : client supprime par le coach (supprimerClient) = absent de la
         // liste, jusqu'a une activite plus recente (nouveau programme, paiement
         // ou questionnaire) : il reapparait alors normalement.
@@ -1970,7 +1989,7 @@ exports.espaceCoach = onRequest(
         if (!(await ref.get()).exists) { res.status(404).json({ok: false, motif: "uid"}); return; }
         const FV = admin.firestore.FieldValue;
         const le = new Date().toISOString();
-        await ref.update({programme: FV.delete(), programmesHistorique: FV.delete(), coachRetireLe: le});
+        await ref.update({programme: FV.delete(), programmesHistorique: FV.delete(), entrainementCoach: FV.delete(), coachRetireLe: le});
         res.json({ok: true, retireLe: le});
         return;
       }
@@ -1989,6 +2008,39 @@ exports.espaceCoach = onRequest(
       if (action === "proposer") {
         const [statut, rep] = await proposerPlan(corps);
         res.status(statut).json(rep);
+        return;
+      }
+
+      // 21/11 Raci : programme d'entrainement (espace coach, mode bleu).
+      // Envoye apres paiement recu hors app ; aucun achat dans l'app.
+      if (action === "deposerEntrainement") {
+        const cible = String(corps.client || "").trim();
+        if (!cible) { res.status(400).json({ok: false, motif: "client"}); return; }
+        const client = await trouverCompte(cible);
+        if (!client) { res.status(404).json({ok: false, motif: "introuvable"}); return; }
+        const n = entrainementCoach.normaliserEntrainement(corps);
+        if (!n.ok) { res.status(400).json({ok: false, motif: n.motif}); return; }
+        const ref = db.collection("users").doc(client.uid);
+        const avant = await ref.get();
+        const deja = avant.exists && avant.data().entrainementCoach && avant.data().entrainementCoach.livreLe;
+        await ref.set({entrainementCoach: n.entrainement}, {merge: true});
+        let mailEnvoye = false;
+        if (client.email) {
+          try {
+            const envoi = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {"Authorization": `Bearer ${RESEND_API_KEY.value()}`, "Content-Type": "application/json"},
+              body: JSON.stringify({
+                from: EXPEDITEUR, reply_to: "coach@belfit.be", to: [client.email],
+                subject: deja ? "Ton programme d'entraînement est mis à jour" : "Ton programme d'entraînement est prêt",
+                html: modeleEntrainement(n.entrainement, !!deja),
+              }),
+            });
+            mailEnvoye = envoi.ok;
+            if (!envoi.ok) console.error("Resend (entrainement) :", await envoi.text());
+          } catch (e) { console.error("Envoi entrainement :", e); }
+        }
+        res.json({ok: true, client: {uid: client.uid, email: client.email || null}, mailEnvoye, livreLe: n.entrainement.livreLe});
         return;
       }
 
