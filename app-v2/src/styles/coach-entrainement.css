@@ -96,3 +96,9 @@
   font-size: 13px; font-weight: 700; color: #1F5FD1; }
 .ce-reprendre { border: 0; background: #EEF3FC; color: #1F5FD1; font: inherit; font-size: 12.5px; font-weight: 600;
   border-radius: 99px; padding: 6px 11px; }
+
+/* 21/11 : photos de l'exercice au toucher du nom. */
+.ce-tete-exo { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ce-oeil { font-style: normal; color: #1F5FD1; font-size: 12px; margin-left: 6px; }
+.ce-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+.ce-photos img { width: 100%; height: auto; border-radius: 12px; background: #fff; }
