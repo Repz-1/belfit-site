@@ -277,6 +277,11 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
 .ent-plein-bas span{flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ent-plein-bas button{width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);background:none;color:#fff;font:600 14px 'DM Mono',monospace;cursor:pointer}
 .ent-plein-bas button.on{background:#1F5FD1;border-color:#1F5FD1}
+.ent-consigne{grid-column:1/-1;font-size:13.5px;padding:8px 10px;margin-top:2px;background:#F5F8FE;border-color:#DCE6F7}
+.ent-anim{position:relative;width:100%;max-width:900px;aspect-ratio:3/2;border-radius:14px;overflow:hidden;background:#fff}
+.ent-anim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ent-anim img.b{animation:ent-boucle 2.4s ease-in-out infinite}
+@keyframes ent-boucle{0%,38%{opacity:0}50%,88%{opacity:1}100%{opacity:0}}
 .ent-ajout{border:0;background:#EEF3FC;color:#1F5FD1;font:inherit;font-weight:600;font-size:14px;
   border-radius:12px;padding:10px;width:100%;cursor:pointer;margin-top:6px}
 .ent-choix{margin-top:8px;border:1px solid #DCE6F7;border-radius:14px;padding:10px;background:#FAFCFF}
@@ -1618,20 +1623,16 @@ const seanceVide = (i) => ({ id: nouvelId('s'), nom: 'Séance ' + String.fromCha
 
 // 21/11 Raci : photo en grand au toucher ; toucher ailleurs ferme.
 function photoGrandeEnt(img, n, nom) {
+  // Le mouvement en boucle : depart puis arrivee, en grand ; toucher ferme.
   const v = el('div', 'ent-plein');
-  const im = document.createElement('img'); im.alt = nom;
-  const poser = (k) => { n = k; im.src = '/img/exercices/' + img + '/' + k + '-640.webp?v=1';
+  const anim = el('div', 'ent-anim');
+  [0, 1].forEach((k) => { const im = document.createElement('img'); im.alt = k ? '' : nom; if (k) im.className = 'b';
+    im.src = '/img/exercices/' + img + '/' + k + '-640.webp?v=1';
     im.onerror = () => { im.onerror = null; im.src = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/' + img + '/' + k + '.jpg'; };
-    b1.classList.toggle('on', k === 0); b2.classList.toggle('on', k === 1); };
-  const bas = el('div', 'ent-plein-bas');
-  const b1 = el('button', '', '1'), b2 = el('button', '', '2');
-  b1.addEventListener('click', (e) => { e.stopPropagation(); poser(0); });
-  b2.addEventListener('click', (e) => { e.stopPropagation(); poser(1); });
-  bas.append(b1, el('span', '', nom), b2);
-  v.append(im, bas);
+    anim.append(im); });
+  v.append(anim, el('div', 'ent-plein-bas', nom));
   v.addEventListener('click', () => v.remove());
   document.body.append(v);
-  poser(n);
 }
 function poserMode(ent) {
   modeEnt = ent;
@@ -1833,6 +1834,13 @@ function dessinerEnt() {
       reg.append(pas, lib,
         champNum(x.reps, 0, 0, 'reps', (v) => { x.reps = String(v).slice(0, 12) || '10'; sauverBrEnt(); }), el('span', '', 'reps'), type);
       r.append(reg);
+      // 21/11 Raci : consigne par exercice, lue par le client sous le nom.
+      const cons = document.createElement('input');
+      cons.type = 'text'; cons.className = 'ent-consigne'; cons.maxLength = 200;
+      cons.placeholder = 'Consigne (ex. torse collé au banc, coudes à 45°)';
+      cons.value = x.note || '';
+      cons.addEventListener('input', () => { x.note = cons.value; sauverBrEnt(); });
+      r.append(cons);
       c.append(r);
     });
     const aj = el('button', 'ent-ajout', entPicker === si ? 'Fermer' : '+ Ajouter un exercice');
@@ -1889,7 +1897,7 @@ $('entEnvoi').addEventListener('click', () => {
   if (!client) { afficher(msg, 'Indique le destinataire.', false); return; }
   const seances = entSeances.filter((s) => s.exos.length).map((s) => ({
     id: s.id, nom: (s.nom || '').trim(), jour: s.jour === '' ? null : +s.jour,
-    exos: s.exos.map((x) => ({ id: x.id, nom: x.nom, imgId: x.imgId || null, type: x.type, series: +x.series || 3, reps: String(x.reps || '10'), repos: +x.repos || 90 })),
+    exos: s.exos.map((x) => ({ id: x.id, nom: x.nom, imgId: x.imgId || null, type: x.type, series: +x.series || 3, reps: String(x.reps || '10'), repos: +x.repos || 90, note: String(x.note || '').trim().slice(0, 200) })),
   }));
   if (!seances.length) { afficher(msg, 'Le programme est vide : ajoute au moins un exercice.', false); return; }
   b.disabled = true; b.textContent = 'Envoi…';

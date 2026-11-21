@@ -46,7 +46,7 @@ function normaliserEntrainement(b) {
         series: entier(e && e.series, 1, 10, 3),
         reps: texte(e && e.reps, 12) || "10",
         repos: entier(e && e.repos, 0, 600, 90),
-        note: texte(e && e.note, 140),
+        note: texte(e && e.note, 200),
       };
     }).filter((e) => e.nom);
     return {id, nom: texte(s && s.nom, 40) || ("Séance " + String.fromCharCode(65 + i)), jour, exos};
