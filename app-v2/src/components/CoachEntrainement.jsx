@@ -14,6 +14,29 @@ import { carnetCoach, carnetCharge, noterSeance, dernierPour } from '../store/ca
 import { DISQUES, totalBarre, texteDisques, pasCharge, kgTexte } from '../data/charge-coach.js';
 import { t } from '../i18n/index.js';
 import { PhotoExo } from './PhotoExo.jsx';
+import { createPortal } from 'preact/compat';
+
+/** 21/11 Raci : toucher une photo l'ouvre en grand, plein ecran. Toucher
+ *  l'autre vignette ou les fleches passe depart <-> arrivee ; toucher ailleurs ferme. */
+function PhotoGrande({ imgId, n, nom, changer, fermer }) {
+  useEffect(() => {
+    const k = (e) => { if (e.key === 'Escape') fermer(); };
+    document.addEventListener('keydown', k);
+    return () => document.removeEventListener('keydown', k);
+  }, []);
+  return createPortal(
+    <div class="ce-plein" role="dialog" aria-label={nom} onClick={fermer}>
+      <button type="button" class="ce-plein-x" aria-label="Fermer" onClick={fermer}>×</button>
+      <PhotoExo imgId={imgId} n={n} taille={640} prioritaire alt={nom} />
+      <div class="ce-plein-bas" onClick={(e) => e.stopPropagation()}>
+        <button type="button" class={n === 0 ? 'on' : ''} onClick={() => changer(0)}>1</button>
+        <span>{nom}</span>
+        <button type="button" class={n === 1 ? 'on' : ''} onClick={() => changer(1)}>2</button>
+      </div>
+    </div>,
+    document.body,
+  );
+}
 import { EXERCISES } from '../data/exercices.js';
 import '../styles/coach-entrainement.css';
 
@@ -141,6 +164,7 @@ export function CoachEntrainement() {
   const [saisie, setSaisie] = useState(() => etatInitial(seance, cle));
   const [enregistre, setEnregistre] = useState(false);
   const [photo, setPhoto] = useState(null);
+  const [grande, setGrande] = useState(null); // { imgId, n, nom }
   // Changement de seance, nouveau programme, ou carnet charge apres coup : on repart du carnet.
   const livre = ent && ent.livreLe;
   const charge = carnetCharge.value;
@@ -214,8 +238,12 @@ export function CoachEntrainement() {
             </header>
             {photo === x.id && imgDe(x) && (
               <div class="ce-photos">
-                <PhotoExo imgId={imgDe(x)} n={0} taille={640} prioritaire alt={x.nom} />
-                <PhotoExo imgId={imgDe(x)} n={1} taille={640} prioritaire alt="" />
+                {[0, 1].map((n) => (
+                  <button type="button" class="ce-vignette" aria-label={x.nom + ' ' + (n + 1)}
+                    onClick={() => setGrande({ imgId: imgDe(x), n, nom: x.nom })}>
+                    <PhotoExo imgId={imgDe(x)} n={n} taille={640} prioritaire alt="" />
+                  </button>
+                ))}
               </div>
             )}
             <ol class="ce-liste">
@@ -245,6 +273,8 @@ export function CoachEntrainement() {
           </section>
         );
       })}
+
+      {grande && <PhotoGrande {...grande} changer={(n) => setGrande({ ...grande, n })} fermer={() => setGrande(null)} />}
 
       {ent.note && (
         <section class="ce-note"><b>{t('ce_mot')}</b><p>{ent.note}</p></section>
