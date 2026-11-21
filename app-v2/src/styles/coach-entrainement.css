@@ -75,3 +75,24 @@
 .ce-cadenas svg { width: 22px; height: 22px; fill: none; stroke: #1F5FD1; stroke-width: 2; stroke-linecap: round; }
 .ce-voile-t { font-size: 16px; font-weight: 700; color: #16130F; margin: 10px 0 4px; }
 .ce-voile-txt { font-size: 13.5px; line-height: 1.45; color: #57514A; margin: 0; }
+
+/* 21/11 Raci : un poids par serie. Liste des series, puis l'edition de la
+   serie en cours (bordure bleue). Une serie cochee passe a la suivante. */
+.ce-liste { list-style: none; margin: 12px 0 0; padding: 0; }
+.ce-liste li { display: flex; align-items: center; gap: 8px; border: 1.5px solid transparent; border-radius: 14px; padding: 2px 2px 2px 0; }
+.ce-liste li + li { margin-top: 4px; }
+.ce-liste li.actif { border-color: #1F5FD1; background: #F5F8FE; }
+.ce-ligne-serie { flex: 1; display: flex; align-items: baseline; gap: 10px; border: 0; background: none; font: inherit;
+  text-align: left; padding: 9px 10px; color: #16130F; min-width: 0; }
+.ce-num { flex: none; font-size: 13px; font-weight: 700; color: #123C86; }
+.ce-val { font: 500 13.5px 'DM Mono', monospace; color: #57514A; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ce-liste li.fait .ce-val { color: #16130F; }
+.ce-coche { flex: none; width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid #DCE6F7; background: #fff;
+  color: transparent; font-size: 16px; }
+.ce-coche.on { background: #1F5FD1; border-color: #1F5FD1; color: #fff; }
+.ce-edition { margin-top: 10px; border-top: 1px solid rgba(28,24,18,.07); padding-top: 10px; }
+.ce-edition .ce-saisie { margin-top: 6px; }
+.ce-edition-t { display: flex; align-items: center; justify-content: space-between; margin: 0;
+  font-size: 13px; font-weight: 700; color: #1F5FD1; }
+.ce-reprendre { border: 0; background: #EEF3FC; color: #1F5FD1; font: inherit; font-size: 12.5px; font-weight: 600;
+  border-radius: 99px; padding: 6px 11px; }
