@@ -1,0 +1,17 @@
+{
+  "id": "/coach.html",
+  "name": "BELFIT Coach",
+  "short_name": "BF Coach",
+  "description": "Espace coach BELFIT",
+  "start_url": "/coach.html",
+  "scope": "/coach.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F3F0",
+  "theme_color": "#F4F3F0",
+  "lang": "fr-BE",
+  "icons": [
+    { "src": "/icon-coach-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-coach-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
