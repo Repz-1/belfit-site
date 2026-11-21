@@ -270,6 +270,13 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
 .ent-nom{cursor:pointer;text-decoration:underline dotted rgba(31,95,209,.45);text-underline-offset:3px}
 .ent-photos{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .ent-photos img{width:100%;height:auto;border-radius:10px;background:#fff;border:1px solid var(--filet)}
+.ent-photos img{cursor:zoom-in}
+.ent-plein{position:fixed;inset:0;z-index:9999;background:rgba(12,10,8,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px}
+.ent-plein img{width:100%;height:auto;max-width:900px;max-height:78vh;object-fit:contain;border-radius:14px}
+.ent-plein-bas{display:flex;align-items:center;gap:12px;margin-top:14px;color:#fff;font-size:14px;max-width:100%}
+.ent-plein-bas span{flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ent-plein-bas button{width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);background:none;color:#fff;font:600 14px 'DM Mono',monospace;cursor:pointer}
+.ent-plein-bas button.on{background:#1F5FD1;border-color:#1F5FD1}
 .ent-ajout{border:0;background:#EEF3FC;color:#1F5FD1;font:inherit;font-weight:600;font-size:14px;
   border-radius:12px;padding:10px;width:100%;cursor:pointer;margin-top:6px}
 .ent-choix{margin-top:8px;border:1px solid #DCE6F7;border-radius:14px;padding:10px;background:#FAFCFF}
@@ -1609,6 +1616,23 @@ const CLE_BR_ENT = (uid) => 'belfit_coach_ent_' + uid;
 const nouvelId = (p) => p + Math.random().toString(36).slice(2, 8);
 const seanceVide = (i) => ({ id: nouvelId('s'), nom: 'Séance ' + String.fromCharCode(65 + i), jour: '', exos: [] });
 
+// 21/11 Raci : photo en grand au toucher ; toucher ailleurs ferme.
+function photoGrandeEnt(img, n, nom) {
+  const v = el('div', 'ent-plein');
+  const im = document.createElement('img'); im.alt = nom;
+  const poser = (k) => { n = k; im.src = '/img/exercices/' + img + '/' + k + '-640.webp?v=1';
+    im.onerror = () => { im.onerror = null; im.src = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/' + img + '/' + k + '.jpg'; };
+    b1.classList.toggle('on', k === 0); b2.classList.toggle('on', k === 1); };
+  const bas = el('div', 'ent-plein-bas');
+  const b1 = el('button', '', '1'), b2 = el('button', '', '2');
+  b1.addEventListener('click', (e) => { e.stopPropagation(); poser(0); });
+  b2.addEventListener('click', (e) => { e.stopPropagation(); poser(1); });
+  bas.append(b1, el('span', '', nom), b2);
+  v.append(im, bas);
+  v.addEventListener('click', () => v.remove());
+  document.body.append(v);
+  poser(n);
+}
 function poserMode(ent) {
   modeEnt = ent;
   document.body.classList.toggle('ent', ent);
@@ -1784,6 +1808,7 @@ function dessinerEnt() {
           if (deja) { deja.remove(); return; }
           const ph = el('div', 'ent-photos');
           [0, 1].forEach((n) => { const im = document.createElement('img'); im.loading = 'lazy'; im.alt = n ? '' : x.nom;
+            im.addEventListener('click', () => photoGrandeEnt(img, n, x.nom));
             im.src = '/img/exercices/' + img + '/' + n + '-240.webp?v=1';
             im.onerror = () => { im.onerror = null; im.src = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/' + img + '/' + n + '.jpg'; };
             ph.append(im); });

@@ -102,3 +102,16 @@
 .ce-oeil { font-style: normal; color: #1F5FD1; font-size: 12px; margin-left: 6px; }
 .ce-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
 .ce-photos img { width: 100%; height: auto; border-radius: 12px; background: #fff; }
+
+/* 21/11 : photo en grand au toucher (portail sur body). */
+.ce-vignette { border: 0; padding: 0; background: none; display: block; cursor: zoom-in; }
+.ce-plein { position: fixed; inset: 0; z-index: 9999; background: rgba(12,10,8,.94); display: flex;
+  flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+.ce-plein .photo-exo { width: 100%; height: auto !important; aspect-ratio: auto !important; max-width: 900px; max-height: 78vh; object-fit: contain; border-radius: 14px; background: none !important; }
+.ce-plein-x { position: absolute; top: max(14px, env(safe-area-inset-top)); right: 14px; width: 44px; height: 44px;
+  border-radius: 50%; border: 0; background: rgba(255,255,255,.14); color: #fff; font-size: 26px; line-height: 1; }
+.ce-plein-bas { display: flex; align-items: center; gap: 12px; margin-top: 14px; color: #fff; font-size: 14px; max-width: 100%; }
+.ce-plein-bas span { flex: 1; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ce-plein-bas button { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.4);
+  background: none; color: #fff; font: 600 14px 'DM Mono', monospace; }
+.ce-plein-bas button.on { background: #1F5FD1; border-color: #1F5FD1; }
