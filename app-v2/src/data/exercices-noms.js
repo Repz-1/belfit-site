@@ -58,6 +58,7 @@ export const NOMS_EXOS = {
   "Tirage Menton (Machine Smith)": ["Upright Row (Smith Machine)","Upright Row (Smith-machine)"],
   "Tirage Menton (Élastique)": ["Upright Row (Band)","Upright Row (Weerstandsband)"],
   "Rowing Incliné (Haltère)": ["Incline Row (Dumbbell)","Schuin Roeien (Dumbbell)"],
+  "Rowing Incliné (Machine Smith)": ["Incline Row (Smith Machine)","Schuin Roeien (Smith Machine)"],
   "Rowing Penché (Barre)": ["Bent-Over Row (Barbell)","Voorovergebogen Roeien (Halterstang)"],
   "Rowing Penché (Haltère)": ["Bent-Over Row (Dumbbell)","Voorovergebogen Roeien (Dumbbell)"],
   "Rowing Penché (Machine Smith)": ["Bent-Over Row (Smith Machine)","Voorovergebogen Roeien (Smith-machine)"],
