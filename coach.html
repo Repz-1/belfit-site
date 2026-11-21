@@ -1187,6 +1187,7 @@ function chargerDossiers() {
   return appel('dossiers', { limite: limiteDossiers }).then((r) => {
     if (!r || !r.ok) { $('resume').textContent = 'Impossible de charger les questionnaires.'; return; }
     tousDossiers = r.dossiers;
+    if (typeof entUidAttendu !== 'undefined' && entUidAttendu) { const de = tousDossiers.find((x) => x.uid === entUidAttendu); if (de) poserClientEnt(de); }
     const a = r.dossiers.filter((d) => d.aTraiter);
     const l = r.dossiers.filter((d) => !d.aTraiter);   // 01/11 : plus de coupe a 10, affichage par 20
     // 01/11 : compteur des nouveaux clients (payes ou questionnaire recu, non traites), en premier.
@@ -1618,10 +1619,45 @@ function poserMode(ent) {
 $('basAlim').addEventListener('click', () => poserMode(false));
 $('basEnt').addEventListener('click', () => poserMode(true));
 
+// 21/11 Raci : programme perdu en revenant sur l'ecran du telephone (la page
+// est rechargee par Android). Le travail en cours est TOUJOURS garde, meme sans
+// client choisi ou avec un e-mail tape, et revient a l'ouverture.
+const CLE_ENT_COURANT = 'belfit_coach_ent_courant';
 function sauverBrEnt() {
-  if (!entChoisi) return;
-  try { localStorage.setItem(CLE_BR_ENT(entChoisi.uid), JSON.stringify({ le: new Date().toISOString(), seances: entSeances, note: $('entNote').value })); } catch (e) { /* rien */ }
+  const le = new Date().toISOString();
+  try {
+    localStorage.setItem(CLE_ENT_COURANT, JSON.stringify({ le, uid: entChoisi ? entChoisi.uid : null,
+      clientTxt: $('entClient').value, seances: entSeances, note: $('entNote').value, picker: entPicker }));
+    if (entChoisi) localStorage.setItem(CLE_BR_ENT(entChoisi.uid), JSON.stringify({ le, seances: entSeances, note: $('entNote').value }));
+  } catch (e) { /* rien */ }
 }
+function lireCourantEnt() { try { return JSON.parse(localStorage.getItem(CLE_ENT_COURANT) || 'null'); } catch (e) { return null; } }
+const aDesExos = (l) => Array.isArray(l) && l.some((x) => x && Array.isArray(x.exos) && x.exos.length);
+/** A l'ouverture : on remet le travail en cours tel quel. */
+function restaurerCourantEnt() {
+  const c = lireCourantEnt();
+  if (!c || !aDesExos(c.seances)) return;
+  entSeances = c.seances; $('entNote').value = c.note || ''; $('entClient').value = c.clientTxt || '';
+  if (c.uid) {
+    // Le client revient des que la liste est chargee, SANS recharger son programme envoye.
+    const d = tousDossiers.find((x) => x.uid === c.uid);
+    if (d) poserClientEnt(d);
+    else entUidAttendu = c.uid;
+  }
+  dessinerEnt();
+}
+let entUidAttendu = null;
+function poserClientEnt(d) {
+  entChoisi = d; entUidAttendu = null;
+  const env = d.entrainement;
+  $('entChoisiNom').textContent = nomDe(d) + (d.email && d.email !== nomDe(d) ? ' · ' + d.email : '') + (env && env.livreLe ? ' · programme du ' + jourCourt(env.livreLe) : '');
+  $('entChoisi').style.display = 'flex';
+  $('entClient').style.display = 'none';
+  dessinerCarnet();
+}
+// Sauvegarde aussi au moment ou l'on quitte l'ecran (appli en arriere-plan).
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && modeEnt) sauverBrEnt(); });
+window.addEventListener('pagehide', () => { if (modeEnt) sauverBrEnt(); });
 function lireBrEnt(uid) { try { return JSON.parse(localStorage.getItem(CLE_BR_ENT(uid)) || 'null'); } catch (e) { return null; } }
 
 function depuisEnvoye(ent) {
@@ -1633,6 +1669,12 @@ function depuisEnvoye(ent) {
 
 function choisirEnt(d) {
   if (entChoisi && entChoisi.uid !== d.uid) sauverBrEnt();
+  // Programme commence sans destinataire : il part chez ce client, rien n'est efface.
+  if (!entChoisi && aDesExos(entSeances) && !aDesExos((lireBrEnt(d.uid) || {}).seances)) {
+    poserClientEnt(d); sauverBrEnt(); dessinerEnt();
+    $('ancreEnt').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
   entChoisi = d;
   const br = lireBrEnt(d.uid);
   const env = d.entrainement;
@@ -1654,6 +1696,7 @@ function choisirEnt(d) {
 $('entDeselect').addEventListener('click', () => {
   sauverBrEnt();
   entChoisi = null; entSeances = [seanceVide(0)]; $('entNote').value = '';
+  try { localStorage.removeItem(CLE_ENT_COURANT); } catch (e) { /* rien */ }
   $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entCarnetBloc').style.display = 'none';
   dessinerEnt();
 });
@@ -1663,6 +1706,7 @@ $('entClient').addEventListener('change', () => {
   if (d) { $('entClient').value = ''; choisirEnt(d); }
 });
 $('entNote').addEventListener('input', sauverBrEnt);
+$('entClient').addEventListener('input', sauverBrEnt);
 
 /** Poids notes par le client : les 6 dernieres seances. */
 function dessinerCarnet() {
@@ -1796,6 +1840,7 @@ $('entEnvoi').addEventListener('click', () => {
   appel('deposerEntrainement', { client, seances, note: $('entNote').value.trim() }).then((d) => {
     if (d && d.ok) {
       afficher(msg, d.mailEnvoye ? 'Programme envoyé : dans l\'app et par e-mail.' : 'Programme déposé dans l\'app. L\'e-mail n\'a pas pu partir, le client le voit quand même.', true);
+      try { localStorage.removeItem(CLE_ENT_COURANT); } catch (e) { /* rien */ }
       if (entChoisi) { try { localStorage.removeItem(CLE_BR_ENT(entChoisi.uid)); } catch (e) { /* rien */ } entChoisi.entrainement = { seances, note: $('entNote').value.trim(), livreLe: d.livreLe }; }
       chargerDossiers();
     } else {
@@ -1806,7 +1851,8 @@ $('entEnvoi').addEventListener('click', () => {
     .finally(() => { b.disabled = false; b.textContent = 'Envoyer le programme'; });
 });
 
-try { if (localStorage.getItem(CLE_MODE) === 'ent') poserMode(true); } catch (e) { /* rien */ }
+restaurerCourantEnt();
+try { if (localStorage.getItem(CLE_MODE) === 'ent' || aDesExos((lireCourantEnt() || {}).seances)) poserMode(true); } catch (e) { /* rien */ }
 
 if (code) ouvrir(); else ecran('code');
 </script>
