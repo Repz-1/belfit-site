@@ -13,7 +13,18 @@ import { entrainementCoach } from './BelfitPlus.jsx';
 import { carnetCoach, carnetCharge, noterSeance, dernierPour } from '../store/carnet-coach.js';
 import { DISQUES, totalBarre, texteDisques, pasCharge, kgTexte } from '../data/charge-coach.js';
 import { t } from '../i18n/index.js';
+import { PhotoExo } from './PhotoExo.jsx';
+import { EXERCISES } from '../data/exercices.js';
 import '../styles/coach-entrainement.css';
+
+// 21/11 Raci : toucher un exercice montre ses photos (depart / arrivee).
+// Programmes plus anciens sans imgId : on le retrouve par le nom.
+let IMG_PAR_NOM = null;
+function imgDe(x) {
+  if (x.imgId) return x.imgId;
+  if (!IMG_PAR_NOM) { IMG_PAR_NOM = {}; Object.values(EXERCISES).forEach((l) => l.forEach((e) => { IMG_PAR_NOM[e.nom] = e.imgId; })); }
+  return IMG_PAR_NOM[x.nom] || null;
+}
 
 const isoJour = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 
@@ -129,6 +140,7 @@ export function CoachEntrainement() {
   const cle = seance ? isoJour(auj) + '|' + seance.id : '';
   const [saisie, setSaisie] = useState(() => etatInitial(seance, cle));
   const [enregistre, setEnregistre] = useState(false);
+  const [photo, setPhoto] = useState(null);
   // Changement de seance, nouveau programme, ou carnet charge apres coup : on repart du carnet.
   const livre = ent && ent.livreLe;
   const charge = carnetCharge.value;
@@ -192,13 +204,20 @@ export function CoachEntrainement() {
         const avantPlein = avant && (x.type === 'barre' ? avant.disques.length : avant.kg > 0);
         return (
           <section class="ce-carte" key={x.id}>
-            <header>
+            <header class="ce-tete-exo" role="button" tabIndex={0} aria-expanded={photo === x.id}
+              onClick={() => setPhoto(photo === x.id ? null : x.id)}>
               <div>
-                <b>{x.nom}</b>
+                <b>{x.nom}{imgDe(x) && <i class="ce-oeil" aria-hidden="true">{photo === x.id ? '▴' : '▾'}</i>}</b>
                 <span>{t('ce_series', { n: x.series, r: x.reps })}{prec ? ' · ' + t('ce_derniere', { v: valeurTxt(prec) }) : ''}</span>
               </div>
               <em class="ce-tag">{t('ce_type_' + x.type)}</em>
             </header>
+            {photo === x.id && imgDe(x) && (
+              <div class="ce-photos">
+                <PhotoExo imgId={imgDe(x)} n={0} taille={640} prioritaire alt={x.nom} />
+                <PhotoExo imgId={imgDe(x)} n={1} taille={640} prioritaire alt="" />
+              </div>
+            )}
             <ol class="ce-liste">
               {e.series.map((y, i) => (
                 <li class={(i === a && x.type !== 'corps' ? 'actif ' : '') + (y.fait ? 'fait' : '')}>
