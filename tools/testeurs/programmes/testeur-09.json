@@ -1,0 +1,94 @@
+{
+  "kcal": 2629,
+  "prot": 186,
+  "carbs": 346,
+  "lip": 55,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Flocons avoine",
+          "portion": 90
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "portion": 335
+        },
+        {
+          "name": "Dattes",
+          "portion": 35
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Cabillaud cuit",
+          "portion": 200
+        },
+        {
+          "name": "Riz cuit",
+          "portion": 275
+        },
+        {
+          "name": "Carotte",
+          "portion": 165
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 10
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Galette de riz",
+          "portion": 45
+        },
+        {
+          "name": "Miel",
+          "portion": 20
+        },
+        {
+          "name": "Fromage blanc 3%",
+          "portion": 220
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Escalope de dinde (cuite)",
+          "portion": 175
+        },
+        {
+          "name": "Pâtes blanches cuites",
+          "portion": 245
+        },
+        {
+          "name": "Courgette",
+          "portion": 165
+        }
+      ]
+    },
+    {
+      "nom": "Avant coucher",
+      "ings": [
+        {
+          "name": "Cottage cheese",
+          "portion": 165
+        },
+        {
+          "name": "Noix",
+          "portion": 15
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°9 — Endurance)"
+}

@@ -1,0 +1,62 @@
+name: Programmes de test (testeurs Play)
+
+# Depose un programme alimentaire FICTIF (tools/testeurs/programmes/testeur-NN.json)
+# chez chaque compte liste, dans l'ordre. Sans confirme=OUI : SIMULATION (lecture seule).
+# Jamais d'e-mail au client, jamais de changement d'acces nutrition.
+# Depot public : journal = numeros et oui/non (garde anti-adresse).
+
+on:
+  workflow_dispatch:
+    inputs:
+      comptes:
+        description: "Adresses des comptes (virgules), max 13, dans l'ordre des programmes 01..13"
+        required: true
+      confirme:
+        description: "OUI pour ecrire reellement (sinon simulation)"
+        required: false
+        default: "NON"
+      ecraser:
+        description: "OUI pour remplacer un programme deja present (sinon il est conserve)"
+        required: false
+        default: "NON"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: programmes-testeurs
+  cancel-in-progress: false
+
+jobs:
+  programmes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Garde-fou (pas d'envoi d'e-mail, pas d'acces)
+        run: |
+          if grep -nE "resend|accesNutritionJusqu\s*:|listUsers\(|\.delete\(\)\s*;" tools/diagnostic/programmes-testeurs.mjs; then
+            echo "Operation interdite detectee : arret."; exit 1
+          fi
+      - name: Cle du compte de service
+        env:
+          CLE: ${{ secrets.FIREBASE_SA_KEY }}
+        run: |
+          umask 077
+          printf '%s' "$CLE" > "$RUNNER_TEMP/cle.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/cle.json" >> "$GITHUB_ENV"
+      - name: Dependances
+        run: npm ci --prefix functions --no-audit --no-fund --ignore-scripts
+      - name: Programmes (journal = numeros seulement)
+        run: |
+          set -e
+          node tools/diagnostic/programmes-testeurs.mjs > "$RUNNER_TEMP/journal.txt" 2>&1 || { st=$?; grep -qE '@' "$RUNNER_TEMP/journal.txt" || cat "$RUNNER_TEMP/journal.txt"; exit $st; }
+          if grep -qE '@' "$RUNNER_TEMP/journal.txt"; then
+            echo "Une adresse est apparue dans le journal : masque."; exit 1
+          fi
+          cat "$RUNNER_TEMP/journal.txt"
+      - name: Nettoyage
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cle.json" "$RUNNER_TEMP/journal.txt"

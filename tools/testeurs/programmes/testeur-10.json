@@ -1,0 +1,85 @@
+{
+  "kcal": 2798,
+  "prot": 197,
+  "carbs": 320,
+  "lip": 81,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Crème de riz",
+          "portion": 90
+        },
+        {
+          "name": "Whey",
+          "portion": 40
+        },
+        {
+          "name": "Banane",
+          "portion": 135
+        },
+        {
+          "name": "Beurre de cacahuète",
+          "portion": 15
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Haché de boeuf 5% cuit",
+          "portion": 200
+        },
+        {
+          "name": "Riz cuit",
+          "portion": 275
+        },
+        {
+          "name": "Haricots verts",
+          "portion": 165
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 10
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Bagel",
+          "portion": 100
+        },
+        {
+          "name": "Jambon de dinde",
+          "portion": 65
+        },
+        {
+          "name": "Comté",
+          "portion": 30
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Saumon cuit",
+          "portion": 175
+        },
+        {
+          "name": "Quinoa cru",
+          "portion": 90
+        },
+        {
+          "name": "Brocoli (cuit)",
+          "portion": 165
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°10 — Force)"
+}

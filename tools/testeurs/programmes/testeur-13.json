@@ -1,0 +1,98 @@
+{
+  "kcal": 3182,
+  "prot": 207,
+  "carbs": 351,
+  "lip": 107,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Flocons avoine",
+          "portion": 95
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "portion": 285
+        },
+        {
+          "name": "Whey",
+          "portion": 30
+        },
+        {
+          "name": "Banane",
+          "portion": 115
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Haché de boeuf 5% cuit",
+          "portion": 190
+        },
+        {
+          "name": "Riz cuit",
+          "portion": 285
+        },
+        {
+          "name": "Brocoli (cuit)",
+          "portion": 145
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 10
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Bagel",
+          "portion": 95
+        },
+        {
+          "name": "Mozzarella light",
+          "portion": 75
+        },
+        {
+          "name": "Avocat",
+          "portion": 55
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Saumon cuit",
+          "portion": 170
+        },
+        {
+          "name": "Gnocchi",
+          "portion": 240
+        },
+        {
+          "name": "Haricots verts",
+          "portion": 145
+        }
+      ]
+    },
+    {
+      "nom": "Avant coucher",
+      "ings": [
+        {
+          "name": "Fromage blanc 3%",
+          "portion": 240
+        },
+        {
+          "name": "Noix",
+          "portion": 20
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°13 — Gros appetit)"
+}

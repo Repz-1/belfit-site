@@ -1,0 +1,81 @@
+{
+  "kcal": 2102,
+  "prot": 179,
+  "carbs": 248,
+  "lip": 43,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Pain complet",
+          "portion": 90
+        },
+        {
+          "name": "Jambon de dinde",
+          "portion": 70
+        },
+        {
+          "name": "Orange",
+          "portion": 175
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Blanc de poulet (cuit)",
+          "portion": 175
+        },
+        {
+          "name": "Pâtes blanches cuites",
+          "portion": 230
+        },
+        {
+          "name": "Sauce tomate",
+          "portion": 90
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Galette de riz",
+          "portion": 35
+        },
+        {
+          "name": "Beurre de cacahuète",
+          "portion": 25
+        },
+        {
+          "name": "Whey",
+          "portion": 35
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Cabillaud cuit",
+          "portion": 175
+        },
+        {
+          "name": "Semoule",
+          "portion": 80
+        },
+        {
+          "name": "Carotte",
+          "portion": 175
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 10
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°5 — Sportif leger)"
+}

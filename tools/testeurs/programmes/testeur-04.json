@@ -1,0 +1,77 @@
+{
+  "kcal": 2016,
+  "prot": 156,
+  "carbs": 215,
+  "lip": 62,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Flocons avoine",
+          "portion": 70
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "portion": 290
+        },
+        {
+          "name": "Banane",
+          "portion": 115
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Escalope de dinde (cuite)",
+          "portion": 175
+        },
+        {
+          "name": "Riz cuit",
+          "portion": 210
+        },
+        {
+          "name": "Haricots verts",
+          "portion": 175
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 10
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Skyr",
+          "portion": 175
+        },
+        {
+          "name": "Amandes",
+          "portion": 25
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Saumon cuit",
+          "portion": 150
+        },
+        {
+          "name": "Quinoa cru",
+          "portion": 60
+        },
+        {
+          "name": "Épinards cuits",
+          "portion": 175
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°4 — Classique 4 repas)"
+}
