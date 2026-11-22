@@ -3,6 +3,10 @@
 // ============================================================
 export const ENT_COACH = {
   fr: {
+    ce_st_sub: 'Ton programme coach · 8 dernières semaines', ce_st_semaine: 'séances cette semaine', ce_st_kg: 'soulevés cette semaine',
+    ce_st_histo: 'Historique par séance', ce_st_vide: 'Note ta première séance dans Aujourd\'hui → Entraînement : elle apparaîtra ici.',
+    ce_st_cta: 'Ouvrir mon entraînement', ce_st_indispo: 'Les stats d\'entraînement suivent le programme envoyé par ton coach.',
+    ce_histo_vide: 'Cette séance n\'a pas encore été notée.', ce_retour: 'Retour',
     ce_alim: 'Alimentation', ce_ent: 'Entraînement',
     ce_titre: 'Ton entraînement', ce_recu: 'Programme reçu {q}',
     ce_mot: 'Le mot de ton coach',
@@ -20,6 +24,10 @@ export const ENT_COACH = {
     ce_type_barre: 'Barre', ce_type_halteres: 'Haltères', ce_type_poulie: 'Poulie', ce_type_machine: 'Machine', ce_type_kettlebell: 'Kettlebell', ce_type_corps: 'Poids du corps',
   },
   en: {
+    ce_st_sub: 'Your coach programme · last 8 weeks', ce_st_semaine: 'sessions this week', ce_st_kg: 'lifted this week',
+    ce_st_histo: 'History by session', ce_st_vide: 'Log your first session in Today → Training: it will show up here.',
+    ce_st_cta: 'Open my training', ce_st_indispo: 'Training stats follow the programme sent by your coach.',
+    ce_histo_vide: 'This session has not been logged yet.', ce_retour: 'Back',
     ce_alim: 'Nutrition', ce_ent: 'Training',
     ce_titre: 'Your training', ce_recu: 'Programme received {q}',
     ce_mot: 'A word from your coach',
@@ -37,6 +45,10 @@ export const ENT_COACH = {
     ce_type_barre: 'Barbell', ce_type_halteres: 'Dumbbells', ce_type_poulie: 'Cable', ce_type_machine: 'Machine', ce_type_kettlebell: 'Kettlebell', ce_type_corps: 'Bodyweight',
   },
   nl: {
+    ce_st_sub: 'Je coachprogramma · laatste 8 weken', ce_st_semaine: 'trainingen deze week', ce_st_kg: 'getild deze week',
+    ce_st_histo: 'Geschiedenis per training', ce_st_vide: 'Noteer je eerste training in Vandaag → Training: ze verschijnt hier.',
+    ce_st_cta: 'Mijn training openen', ce_st_indispo: 'Trainingsstatistieken volgen het programma van je coach.',
+    ce_histo_vide: 'Deze training is nog niet genoteerd.', ce_retour: 'Terug',
     ce_alim: 'Voeding', ce_ent: 'Training',
     ce_titre: 'Je training', ce_recu: 'Programma ontvangen {q}',
     ce_mot: 'Een woordje van je coach',

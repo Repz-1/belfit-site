@@ -15,6 +15,8 @@ import { aujourdhuiBxl, ajouterJours } from '../store/plans-par-date.js';
 import { etatCadran } from '../store/cadran-attente.js';
 import { lectureSeule, calculReserveCoach } from '../store/acces-nutrition.js';
 import { planCoachActif, programme } from './BelfitPlus.jsx';
+import { CarteEntrainementCoach, joursCoach } from './StatsCoachEntrainement.jsx';
+import { choisirEspaceJour } from './CoachEntrainement.jsx';
 import '../legacy/stats.scoped.css';
 
 // ==========================================================
@@ -353,22 +355,21 @@ export function Stats() {
       (setLogAll[e.ex] = setLogAll[e.ex] || []).push({ iso, sets });
     });
   });
-  // « Seance faite ce jour » (remplace le sessionLog v1) : au moins une serie notee
-  const seanceFaite = (iso) => (setLogJours[iso] || []).some(e => (e.series || []).length);
+  // 22/11 Raci : l'entrainement des Stats = UNIQUEMENT les seances du programme
+  // du coach (carnet). Les seances libres et le marquage des muscles n'y comptent plus.
+  const jc = joursCoach();
+  const seanceFaite = (iso) => jc.has(iso);
 
   // ================= Score global sur 7 jours (v1 calcScores) =================
   const j7 = Array.from({ length: 7 }, (_, i) => isoNDaysAgo(i));
   const jourActif = (iso) =>
     histoire.some(e => e.iso === iso) ||
-    (mLog[iso] && mLog[iso].length && !(mLog[iso].length === 1 && mLog[iso][0] === 'repos')) ||
     seanceFaite(iso) ||
     poidsData.some(w => w.iso === iso);
 
   const joursEncodes = j7.filter(iso => histoire.some(e => e.iso === iso)).length;
   const nutrition = Math.round(joursEncodes / 7 * 100);
-  const trainJours = j7.filter(iso =>
-    (mLog[iso] && mLog[iso].length && !(mLog[iso].length === 1 && mLog[iso][0] === 'repos')) ||
-    seanceFaite(iso)).length;
+  const trainJours = j7.filter(iso => seanceFaite(iso)).length;
   const entrainement = Math.min(100, Math.round(trainJours / 4 * 100));
 
   const p14 = poidsData.filter(w => w.iso >= isoNDaysAgo(14)).sort((a, b) => a.iso.localeCompare(b.iso));
@@ -537,7 +538,7 @@ export function Stats() {
             <div class="score-rows">
               {/* Chaque barre mene la ou on l'ameliore (23/09). */}
               {[[t('st_row_nutrition'), nutrition, `${joursEncodes}/7 ${t('st_det_jours')}`, () => allerOnglet('journal')],
-                [t('st_row_training'), entrainement, `${trainJours} ${trainJours === 1 ? t('st_det_seances').replace(/s$/, '') : t('st_det_seances')}`, () => allerOnglet('entrainer')],
+                [t('st_row_training'), entrainement, `${trainJours} ${trainJours === 1 ? t('st_det_seances').replace(/s$/, '') : t('st_det_seances')}`, () => { choisirEspaceJour('ent'); allerOnglet('journal'); }],
                 [t('st_row_weight'), scorePoids, `${pesees14} ${pesees14 === 1 ? t('st_det_pesees').replace(/^(\S+?)s\b/, '$1') : t('st_det_pesees')}`, () => setModalePoids(true)],
                 [t('st_row_regularity'), regularite, `${joursActifs}/7 ${t('st_det_actifs')}`, () => allerOnglet('journal')]].map(([l, v, d, aller]) => (
                 <button type="button" class="score-bloc score-bloc--lien" key={l} onClick={aller}>
@@ -689,44 +690,7 @@ export function Stats() {
         {/* ENTRAINEMENT (23/09) : une courbe de volume par semaine, pas
             le detail par exercice retire le 16/08. Le tonnage est fiable
             depuis v546 (les seances guidees s'enregistraient a 0 kg). */}
-        {(() => {
-          const lundiDe = (d) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
-          const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-          const l0 = lundiDe(new Date());
-          const sem = Array.from({ length: 8 }, (_, k) => {
-            const debut = new Date(l0); debut.setDate(l0.getDate() - 7 * (7 - k));
-            const fin = new Date(debut); fin.setDate(debut.getDate() + 7);
-            const liste = seances.value.filter(s => s.iso >= iso(debut) && s.iso < iso(fin));
-            return { cle: iso(debut), lb: debut.getDate() + '/' + (debut.getMonth() + 1), n: liste.length,
-              kg: liste.reduce((a, s) => a + (s.tonnage || 0), 0) };
-          });
-          const cette = sem[7];
-          const maxKg = Math.max(1, ...sem.map(x => x.kg));
-          return (
-            <div class="stat-card acc-blue">
-              <h2><span>{t('st_train')}</span></h2>
-              <div class="card-sub">{t('st_train_sub')}</div>
-              {seances.value.length ? (
-                <>
-                  <div class="stat-summary">
-                    <div class="stat-box"><div class="sb-val">{cette.n}</div><div class="sb-lbl">{t('st_train_semaine')}</div></div>
-                    <div class="stat-box"><div class="sb-val">{Math.round(cette.kg).toLocaleString('fr-BE')} kg</div><div class="sb-lbl">{t('st_train_tonnage')}</div></div>
-                  </div>
-                  <div class="chart-zone">
-                    <div class="chart">
-                      {sem.map(x => (
-                        <div class="chart-bar-wrap" key={x.cle}>
-                          <div class="chart-bar charge" style={{ height: Math.max(3, Math.round((x.kg / maxKg) * 88)) + 'px' }} />
-                          <div class="chart-day">{x.lb}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              ) : <Vide texte={t('st_train_vide')} cta={t('st_train_cta')} onCta={() => allerOnglet('entrainer')} />}
-            </div>
-          );
-        })()}
+        <CarteEntrainementCoach />
 
         {prem && (
           <button type="button" class="st-avancees" onClick={() => { statsAvOuvertes.value = true; }}>
