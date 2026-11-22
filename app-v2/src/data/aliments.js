@@ -1231,6 +1231,10 @@ export const DB = {
     'Nutrimuscle Isolat de caseine micellaire chocolat':{kcal:359,prot:78.6,carbs:5.25,lip:2.06,sucres:3.24,satures:1.24,sel:0.23},
     'Nutrimuscle Isolat de caseine micellaire vanille':{kcal:360,prot:78.2,carbs:8.33,lip:1.4,sucres:5.31,satures:0.84,sel:0.24},
     'Nutrimuscle Isolat de caseine micellaire (dose 40g)':{kcal:359,prot:78.6,carbs:5.25,lip:2.06,sucres:3.24,satures:1.24,sel:0.23,unit:40,unitLabel:'dose'},
+    // ===== DELHAIZE =====
+    // Valeurs pour 100 g relevees sur l'etiquette officielle (22/11, Raci).
+    'Muesli fruits secs et à coque Delhaize':{kcal:387,prot:10,carbs:58,lip:11,fibres:8.6,sucres:20,satures:2,sel:0.05},
+    'Muesli fruits secs et à coque Delhaize (portion 30g)':{kcal:387,prot:10,carbs:58,lip:11,fibres:8.6,sucres:20,satures:2,sel:0.05,unit:30,unitLabel:'portion'},
 };
 
 // Macros d'un ingredient {name, portion} a partir de la DB

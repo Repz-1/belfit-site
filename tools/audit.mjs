@@ -1166,7 +1166,7 @@ const DECALAGE_SW_V2 = 232;
     for (const m of bloc.matchAll(/^ {4}'([^']+)':\{([^}]*)\},/gm)) {
       const [, nom, val] = m;
       if (/huile|oméga|krill|mct/i.test(nom)) continue;   // profil lipidique : releve
-      if (/nutrimuscle/i.test(nom)) continue;             // detail lu sur l'etiquette officielle de la marque
+      if (/nutrimuscle|delhaize/i.test(nom)) continue;    // detail lu sur l'etiquette officielle de la marque
       if (/créatine|multivitamines|vitamine|magnésium|zinc|fer |probiotiques|caféine|électrolytes/i.test(nom)) continue; // zeros vrais
       if (/fibres:|sucres:|satures:|sel:/.test(val)) fautifs.push(nom);
     }
