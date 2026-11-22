@@ -65,7 +65,9 @@ import { absenceLongue, decider } from './services/accueil-frequence.js';
 import { objectifEnPreparation } from './store/journal.js';
 import { effect as effetObjectif } from '@preact/signals';
 effetObjectif(() => { objectifEnPreparation.value = !lectureSeule.value && calculReserveCoach.value && !planCoachActif.value; });
-import { commandesSimulees, lectureSeule, encodageFerme, calculReserveCoach, offreVisible, causeFermeture, finAccesMs } from './store/acces-nutrition.js';
+import { commandesSimulees, lectureSeule, encodageFerme, calculReserveCoach, offreVisible, causeFermeture, finAccesMs, emailConnecte } from './store/acces-nutrition.js';
+// 22/11 : la saisie alimentaire n'est rouverte que pour le compte de Raci (par e-mail).
+effetObjectif(() => { const u = utilisateur.value; emailConnecte.value = u && u.email ? u.email : null; });
 import { etatCadran } from './store/cadran-attente.js';
 import { aujourdhuiBxl } from './store/plans-par-date.js';
 import { AlimentationVerrouillee } from './components/AlimentationVerrouillee.jsx';
