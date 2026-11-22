@@ -122,8 +122,17 @@ export function encodageFermePour(encodageActif) {
   return encodageActif !== true;
 }
 
+/** 22/11 Raci : il veut continuer a encoder ses repas, LUI SEUL. La saisie
+ *  reste coupee pour tous les autres comptes (clients, coachs, PRO). */
+export const SAISIE_PERSONNELLE = ['sh.raci@hotmail.com'];
+/** E-mail du compte connecte (pose par main.jsx depuis utilisateur). */
+export const emailConnecte = signal(null);
+export function saisiePersonnelle(email) {
+  return !!email && SAISIE_PERSONNELLE.includes(String(email).trim().toLowerCase());
+}
+
 /** Saisie alimentaire fermee. Independant de lectureSeule et du role. */
-export const encodageFerme = computed(() => encodageFermePour(ENCODAGE_ACTIF));
+export const encodageFerme = computed(() => encodageFermePour(ENCODAGE_ACTIF || saisiePersonnelle(emailConnecte.value)));
 
 /** Non reactif : a appeler dans les actions (mutateurs) du store.
  *  Bloque aussi quand ENCODAGE_ACTIF est coupe, pour tous les comptes. */
