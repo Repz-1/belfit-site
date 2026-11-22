@@ -127,3 +127,17 @@
 .ce-plein-nom { color: #fff; font-size: 15px; font-weight: 600; margin: 14px 0 0; text-align: center; }
 .ce-consigne { margin: 8px 0 0; padding: 9px 12px; border-radius: 12px; background: #EEF3FC; color: #123C86;
   font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; }
+
+/* 22/11 : Stats entrainement (coach) et historique par seance. */
+.ce-st-bloque { position: relative; overflow: hidden; }
+.ce-voile-st { padding-top: 16px; align-items: center; }
+.ce-st-lien { border: 0; background: none; font: inherit; font-size: 14px; font-weight: 700; color: #1F5FD1; padding: 12px 0 2px; }
+.ce-st-vide p { font-size: 14px; color: #57514A; margin: 8px 0 0; line-height: 1.45; }
+.ce-histo { position: fixed; inset: 0; z-index: 9000; background: #F4F3F0; overflow-y: auto; padding: max(14px, env(safe-area-inset-top)) 16px 40px; }
+.ce-histo-tete { margin-bottom: 8px; }
+.ce-histo-retour { border: 0; background: none; font: inherit; font-size: 15px; font-weight: 600; color: #1F5FD1; padding: 6px 0; }
+.ce-tab { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
+.ce-tab th { font-size: 12px; font-weight: 600; color: #8A8279; text-align: left; padding: 4px 0; }
+.ce-tab th:first-child, .ce-tab td.ce-tab-s { width: 70px; }
+.ce-tab td { font: 500 14px 'DM Mono', monospace; color: #16130F; padding: 7px 0; border-top: 1px solid rgba(28,24,18,.07); }
+.ce-tab td.ce-tab-s { font: 600 13px inherit; font-family: inherit; color: #123C86; }

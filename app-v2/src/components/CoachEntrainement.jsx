@@ -200,7 +200,7 @@ export function CoachEntrainement() {
         ? { kg: totalBarre(y.disques), disques: y.disques, fait: y.fait }
         : { kg: x.type === 'corps' ? null : y.kg, fait: y.fait }));
       const kgs = series.map((y) => y.kg).filter((k) => k !== null && k > 0);
-      exos[x.id] = { nom: x.nom, series, faites: series.map((y) => y.fait),
+      exos[x.id] = { nom: x.nom, reps: String(x.reps || ''), series, faites: series.map((y) => y.fait),
         kg: kgs.length ? Math.max(...kgs) : null,
         detail: kgs.length ? series.map((y) => (y.kg ? kgTexte(y.kg) : '–')).join(' / ') : '' };
     });
