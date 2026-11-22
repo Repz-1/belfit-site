@@ -1608,7 +1608,9 @@ const BASE_EXOS = MUSCLES.flatMap((m) => (EXERCISES[m.key] || []).map((x) => ({
   nom: x.nom, imgId: x.imgId || null, muscle: m.key, type: typeCharge(x.nom, x.mat),
   // 21/11 Raci : « shrug » doit trouver les Haussements d'epaules -> on cherche
   // aussi dans le nom anglais de la base (Barbell_Shrug...).
-  cle: sansAccentEnt(x.nom + ' ' + String(x.imgId || '').replace(/[_-]/g, ' ')),
+  cle: sansAccentEnt(x.nom + ' ' + String(x.imgId || '').replace(/[_-]/g, ' ')
+    + (/invers/i.test(x.nom) ? ' reverse paume vers le haut supination' : '')
+    + (/haltère/i.test(x.nom) ? ' haltere halteres' : '')),
 })));
 function sansAccentEnt(x) { return String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[’‘`]/g, "'").toLowerCase(); }
 const seriesDe = (meta) => { const m = /(\d+)\s*séries?/.exec(meta || ''); return m ? Math.min(10, Math.max(1, +m[1])) : 3; };
@@ -1857,9 +1859,17 @@ function choixExo(s) {
   const mus = el('div', 'ent-muscles');
   const res = el('div', 'ent-res');
   const remplir = () => {
-    const t = sansAccentEnt(q.value.trim());
-    const liste = BASE_EXOS.filter((x) => t ? x.cle.includes(t) : x.muscle === entMuscle).slice(0, 40);
+    // 22/11 Raci : la recherche reste dans le muscle choisi (Triceps + « haltère »
+    // = les triceps aux halteres). Tous les mots comptent, dans n'importe quel ordre.
+    // Rien dans ce muscle : on cherche partout, en le disant.
+    const mots = sansAccentEnt(q.value.trim()).split(/\s+/).filter(Boolean);
+    const ok = (x) => mots.every((m) => x.cle.includes(m) || x.cle.includes(m.replace(/s$/, '')));
+    let liste = BASE_EXOS.filter((x) => x.muscle === entMuscle && (!mots.length || ok(x)));
+    let partout = false;
+    if (mots.length && !liste.length) { liste = BASE_EXOS.filter(ok); partout = liste.length > 0; }
+    liste = liste.slice(0, 60);
     res.innerHTML = '';
+    if (partout) res.append(el('p', 'vide', 'Rien dans ce muscle — résultats de tous les muscles :'));
     if (!liste.length) res.append(el('p', 'vide', 'Aucun exercice.'));
     liste.forEach((x) => {
       const b = document.createElement('button');
@@ -1875,7 +1885,7 @@ function choixExo(s) {
   };
   MUSCLES.filter((m) => m.key !== 'etirements').forEach((m) => {
     const b = el('button', m.key === entMuscle ? 'on' : '', m.label);
-    b.addEventListener('click', () => { entMuscle = m.key; q.value = ''; mus.querySelectorAll('button').forEach((y) => y.classList.toggle('on', y === b)); remplir(); });
+    b.addEventListener('click', () => { entMuscle = m.key; mus.querySelectorAll('button').forEach((y) => y.classList.toggle('on', y === b)); remplir(); });
     mus.append(b);
   });
   q.addEventListener('input', remplir);

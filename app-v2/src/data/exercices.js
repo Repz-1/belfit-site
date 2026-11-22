@@ -223,6 +223,9 @@ export const EXERCISES = {
     {nom:'Développé JM (Barre)', meta:'4 séries × 8-10 reps', imgId:'JM_Press', lvl:1, mat:'barre'},
     {nom:'Extension Triceps (Machine)', meta:'3 séries × 12 reps', imgId:'Machine_Triceps_Extension', lvl:1, mat:'machine'},
     {nom:'Extension Triceps Allongé (Poulie)', meta:'3 séries × 12 reps', imgId:'Cable_Lying_Triceps_Extension', lvl:1, mat:'machine'},
+    // 22/11 Raci : allonge, une haltere par bras, et la version un bras.
+    {nom:'Extension Triceps Allongé (Haltères)', meta:'3 séries × 12 reps', imgId:'Lying_Dumbbell_Tricep_Extension', lvl:1, mat:'halteres'},
+    {nom:'Extension Triceps Allongé Un Bras (Haltère)', meta:'3 séries × 12 reps', imgId:'One_Arm_Supinated_Dumbbell_Triceps_Extension', lvl:1, mat:'halteres'},
     {nom:'Extension Triceps Assis Penché (Haltère)', meta:'3 séries × 12 reps', imgId:'Seated_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension', lvl:2, mat:'halteres'},
     {nom:'Extension Triceps Assis Penché Un Bras (Haltère)', meta:'3 séries × 12 reps', imgId:'Seated_Bent-Over_One-Arm_Dumbbell_Triceps_Extension', lvl:1, mat:'halteres'},
     {nom:'Extension Triceps Corde (Poulie)', meta:'3 séries × 12 reps', imgId:'Triceps_Pushdown_-_Rope_Attachment', lvl:1, mat:'machine'},
