@@ -282,6 +282,7 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
 .ent-anim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .ent-anim img.b{animation:ent-boucle 2.4s ease-in-out infinite}
 @keyframes ent-boucle{0%,38%{opacity:0}50%,88%{opacity:1}100%{opacity:0}}
+.ent-vider{border:0;background:none;color:#B42318;font:inherit;font-size:12.5px;font-weight:600;letter-spacing:0;text-transform:none;cursor:pointer;padding:4px 0}
 .ent-ajout{border:0;background:#EEF3FC;color:#1F5FD1;font:inherit;font-weight:600;font-size:14px;
   border-radius:12px;padding:10px;width:100%;cursor:pointer;margin-top:6px}
 .ent-choix{margin-top:8px;border:1px solid #DCE6F7;border-radius:14px;padding:10px;background:#FAFCFF}
@@ -408,7 +409,7 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
         <p class="lb">Ses poids</p>
         <div class="carte ent-carnet" id="entCarnet"></div>
       </div>
-      <p class="lb">Les séances</p>
+      <p class="lb" style="display:flex;justify-content:space-between;align-items:baseline">Les séances <button id="entVider" class="ent-vider">Tout effacer</button></p>
       <div id="entSeances"></div>
       <button class="plus" id="entPlusSeance">+ Ajouter une séance</button>
       <div class="carte">
@@ -1895,6 +1896,15 @@ function choixExo(s) {
   return w;
 }
 
+// 22/11 Raci : repartir d'une page blanche en un geste (plus besoin de tout fermer).
+$('entVider').addEventListener('click', () => {
+  if (aDesExos(entSeances) && !confirm('Effacer toutes les séances affichées ? Le programme déjà envoyé au client ne change pas.')) return;
+  if (entChoisi) { try { localStorage.removeItem(CLE_BR_ENT(entChoisi.uid)); } catch (e) { /* rien */ } }
+  try { localStorage.removeItem(CLE_ENT_COURANT); } catch (e) { /* rien */ }
+  entChoisi = null; entSeances = [seanceVide(0)]; entPicker = null; $('entNote').value = ''; $('entMsg').className = 'msg';
+  $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entClient').value = ''; $('entCarnetBloc').style.display = 'none';
+  dessinerEnt();
+});
 $('entPlusSeance').addEventListener('click', () => {
   if (entSeances.length >= 7) { alert('7 séances au maximum.'); return; }
   entSeances.push(seanceVide(entSeances.length)); entPicker = entSeances.length - 1;
@@ -1916,11 +1926,16 @@ $('entEnvoi').addEventListener('click', () => {
     if (d && d.ok) {
       afficher(msg, d.mailEnvoye ? 'Programme envoyé : dans l\'app et par e-mail.' : 'Programme déposé dans l\'app. L\'e-mail n\'a pas pu partir, le client le voit quand même.', true);
       try { localStorage.removeItem(CLE_ENT_COURANT); } catch (e) { /* rien */ }
+      // 22/11 Raci : apres un envoi a un e-mail tape, le client est rattache TOUT DE
+      // SUITE (sinon le programme restait a l'ecran sans destinataire et passait au
+      // client touche ensuite). Sa fiche complete arrive juste apres.
       if (!entChoisi && d.client && d.client.uid) {
         const livre = { seances, note: $('entNote').value.trim(), livreLe: d.livreLe };
+        const mini = { uid: d.client.uid, email: d.client.email || client, prenom: '', nom: '', entrainement: livre, carnet: [] };
+        $('entClient').value = ''; poserClientEnt(mini); sauverBrEnt();
         appel('chercher', { q: d.client.email || client }).then((r) => {
           const dd = r && r.ok && r.dossiers && r.dossiers[0];
-          if (dd && !entChoisi) { dd.entrainement = dd.entrainement || livre; $('entClient').value = ''; poserClientEnt(dd); }
+          if (dd && entChoisi && entChoisi.uid === dd.uid) { dd.entrainement = dd.entrainement || livre; poserClientEnt(dd); }
         }).catch(() => {});
       }
       if (entChoisi) { try { localStorage.removeItem(CLE_BR_ENT(entChoisi.uid)); } catch (e) { /* rien */ } entChoisi.entrainement = { seances, note: $('entNote').value.trim(), livreLe: d.livreLe }; }
