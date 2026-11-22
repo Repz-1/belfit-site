@@ -1610,7 +1610,8 @@ const BASE_EXOS = MUSCLES.flatMap((m) => (EXERCISES[m.key] || []).map((x) => ({
   // aussi dans le nom anglais de la base (Barbell_Shrug...).
   cle: sansAccentEnt(x.nom + ' ' + String(x.imgId || '').replace(/[_-]/g, ' ')
     + (/invers/i.test(x.nom) ? ' reverse paume vers le haut supination' : '')
-    + (/haltère/i.test(x.nom) ? ' haltere halteres' : '')),
+    + (/haltère/i.test(x.nom) ? ' haltere halteres' : '')
+    + (/marteau/i.test(x.nom) ? ' hammer neutre paumes face a face' : '')),
 })));
 function sansAccentEnt(x) { return String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[’‘`]/g, "'").toLowerCase(); }
 const seriesDe = (meta) => { const m = /(\d+)\s*séries?/.exec(meta || ''); return m ? Math.min(10, Math.max(1, +m[1])) : 3; };

@@ -193,7 +193,7 @@ export const NOMS_EXOS = {
   "Développé JM (Barre)": ["JM Press (Barbell)","JM Press (Halterstang)"],
   "Extension Triceps (Machine)": ["Triceps Extension (Machine)","Tricepsextensie (Machine)"],
   "Extension Triceps Allongé (Poulie)": ["Lying Triceps Extension (Cable)","Liggende Tricepsextensie (Kabel)"],
-  "Extension Triceps Allongé (Haltères)": ["Lying Triceps Extension (Dumbbells)","Liggende Triceps Extensie (Dumbbells)"],
+  "Extension Triceps Allongé Prise Marteau (Haltères)": ["Lying Neutral-Grip Triceps Extension (Dumbbells)","Liggende Triceps Extensie Hamergreep (Dumbbells)"],
   "Extension Triceps Allongé Un Bras (Haltère)": ["Lying One-Arm Triceps Extension (Dumbbell)","Liggende Triceps Extensie Eén Arm (Dumbbell)"],
   "Extension Triceps Assis Penché (Haltère)": ["Seated Bent-Over Triceps Extension (Dumbbell)","Zittende Voorovergebogen Tricepsextensie (Dumbbell)"],
   "Extension Triceps Assis Penché Un Bras (Haltère)": ["Seated Bent-Over Single-Arm Triceps Extension (Dumbbell)","Zittende Voorovergebogen Eenarmige Tricepsextensie (Dumbbell)"],

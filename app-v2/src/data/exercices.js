@@ -224,7 +224,9 @@ export const EXERCISES = {
     {nom:'Extension Triceps (Machine)', meta:'3 séries × 12 reps', imgId:'Machine_Triceps_Extension', lvl:1, mat:'machine'},
     {nom:'Extension Triceps Allongé (Poulie)', meta:'3 séries × 12 reps', imgId:'Cable_Lying_Triceps_Extension', lvl:1, mat:'machine'},
     // 22/11 Raci : allonge, une haltere par bras, et la version un bras.
-    {nom:'Extension Triceps Allongé (Haltères)', meta:'3 séries × 12 reps', imgId:'Lying_Dumbbell_Tricep_Extension', lvl:1, mat:'halteres'},
+    // 22/11 Raci : prise MARTEAU (paumes face a face), une haltere par bras. Aucune
+    // photo a plat ne montre bien la prise : on prend celle du banc decline, ou elle se voit.
+    {nom:'Extension Triceps Allongé Prise Marteau (Haltères)', meta:'3 séries × 12 reps', imgId:'Decline_Dumbbell_Triceps_Extension', lvl:1, mat:'halteres'},
     {nom:'Extension Triceps Allongé Un Bras (Haltère)', meta:'3 séries × 12 reps', imgId:'One_Arm_Supinated_Dumbbell_Triceps_Extension', lvl:1, mat:'halteres'},
     {nom:'Extension Triceps Assis Penché (Haltère)', meta:'3 séries × 12 reps', imgId:'Seated_Bent-Over_Two-Arm_Dumbbell_Triceps_Extension', lvl:2, mat:'halteres'},
     {nom:'Extension Triceps Assis Penché Un Bras (Haltère)', meta:'3 séries × 12 reps', imgId:'Seated_Bent-Over_One-Arm_Dumbbell_Triceps_Extension', lvl:1, mat:'halteres'},
