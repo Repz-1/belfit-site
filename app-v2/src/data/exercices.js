@@ -59,6 +59,7 @@ export const EXERCISES = {
     {nom:'Élévation Frontale et Pull-Over (Barre)', meta:'4 séries × 8-10 reps', imgId:'Front_Raise_And_Pullover', lvl:1, mat:'barre'},
   ],
   dos: [
+    {nom:'Tirage Vertical Prise Neutre Large (Poulie)', meta:'3 séries × 10 reps', imgId:'V-Bar_Pulldown', lvl:1, mat:'machine'},
     {nom:'Extension Dos', meta:'4 séries × 8-10 reps', imgId:'Hyperextensions_With_No_Hyperextension_Bench', lvl:2, mat:'rien'},
     {nom:'Tirage Bras Tendus Incliné (Poulie)', meta:'3 séries × 12 reps', imgId:'Cable_Incline_Pushdown', lvl:1, mat:'machine'},
     {nom:'Flexion Buste Avant Assis (Barre)', meta:'4 séries × 8-10 reps', imgId:'Seated_Good_Mornings', lvl:2, mat:'barre'},
