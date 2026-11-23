@@ -1,0 +1,85 @@
+{
+  "kcal": 1743,
+  "prot": 105,
+  "carbs": 203,
+  "lip": 61,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Yaourt grec",
+          "portion": 190
+        },
+        {
+          "name": "Granola",
+          "portion": 50
+        },
+        {
+          "name": "Fraises",
+          "portion": 125
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Lentilles cuites",
+          "portion": 255
+        },
+        {
+          "name": "Feta",
+          "portion": 50
+        },
+        {
+          "name": "Tomate",
+          "portion": 190
+        },
+        {
+          "name": "Concombre",
+          "portion": 125
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 10
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Cottage cheese",
+          "portion": 190
+        },
+        {
+          "name": "Kiwi",
+          "portion": 125
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Tofu",
+          "portion": 190
+        },
+        {
+          "name": "Semoule",
+          "portion": 65
+        },
+        {
+          "name": "Courgette",
+          "portion": 255
+        },
+        {
+          "name": "Poivron",
+          "portion": 125
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°2 — Equilibre vegetarien)"
+}

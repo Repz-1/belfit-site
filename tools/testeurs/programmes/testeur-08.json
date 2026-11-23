@@ -1,0 +1,81 @@
+{
+  "kcal": 2476,
+  "prot": 181,
+  "carbs": 297,
+  "lip": 63,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Pain complet",
+          "portion": 110
+        },
+        {
+          "name": "Avocat",
+          "portion": 80
+        },
+        {
+          "name": "Jambon de dinde",
+          "portion": 65
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Blanc de poulet (cuit)",
+          "portion": 175
+        },
+        {
+          "name": "Gnocchi",
+          "portion": 275
+        },
+        {
+          "name": "Sauce tomate",
+          "portion": 110
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Skyr",
+          "portion": 220
+        },
+        {
+          "name": "Granola",
+          "portion": 55
+        },
+        {
+          "name": "Banane",
+          "portion": 135
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Haché de boeuf 5% cuit",
+          "portion": 165
+        },
+        {
+          "name": "Pâtes blanches cuites",
+          "portion": 220
+        },
+        {
+          "name": "Épinards cuits",
+          "portion": 165
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 10
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°8 — Prise de masse douce)"
+}

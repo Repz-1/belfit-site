@@ -1,0 +1,77 @@
+{
+  "kcal": 2227,
+  "prot": 191,
+  "carbs": 251,
+  "lip": 49,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Crème de riz",
+          "portion": 75
+        },
+        {
+          "name": "Whey",
+          "portion": 35
+        },
+        {
+          "name": "Myrtilles",
+          "portion": 125
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Haché de boeuf 5% cuit",
+          "portion": 185
+        },
+        {
+          "name": "Riz cuit",
+          "portion": 245
+        },
+        {
+          "name": "Brocoli (cuit)",
+          "portion": 185
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Cottage cheese",
+          "portion": 245
+        },
+        {
+          "name": "Pomme",
+          "portion": 185
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Blanc de poulet (cuit)",
+          "portion": 185
+        },
+        {
+          "name": "Quinoa cru",
+          "portion": 75
+        },
+        {
+          "name": "Courgette",
+          "portion": 185
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 10
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°6 — Riche en proteines)"
+}

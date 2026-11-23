@@ -1,0 +1,94 @@
+{
+  "kcal": 2385,
+  "prot": 165,
+  "carbs": 269,
+  "lip": 73,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Flocons avoine",
+          "portion": 80
+        },
+        {
+          "name": "Lait d'amande",
+          "portion": 280
+        },
+        {
+          "name": "Beurre de cacahuète",
+          "portion": 15
+        }
+      ]
+    },
+    {
+      "nom": "Collation matin",
+      "ings": [
+        {
+          "name": "Yaourt grec",
+          "portion": 170
+        },
+        {
+          "name": "Fraises",
+          "portion": 170
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Escalope de dinde (cuite)",
+          "portion": 170
+        },
+        {
+          "name": "Boulgour cuit",
+          "portion": 245
+        },
+        {
+          "name": "Poivron",
+          "portion": 170
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 10
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Bagel",
+          "portion": 100
+        },
+        {
+          "name": "Mozzarella light",
+          "portion": 65
+        },
+        {
+          "name": "Tomate",
+          "portion": 110
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Saumon cuit",
+          "portion": 155
+        },
+        {
+          "name": "Riz cuit",
+          "portion": 170
+        },
+        {
+          "name": "Haricots verts",
+          "portion": 170
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°7 — Cinq repas)"
+}

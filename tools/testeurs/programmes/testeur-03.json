@@ -1,0 +1,77 @@
+{
+  "kcal": 1855,
+  "prot": 146,
+  "carbs": 184,
+  "lip": 61,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Pain complet",
+          "portion": 90
+        },
+        {
+          "name": "Ricotta",
+          "portion": 75
+        },
+        {
+          "name": "Miel",
+          "portion": 15
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Saumon cuit",
+          "portion": 150
+        },
+        {
+          "name": "Boulgour cuit",
+          "portion": 190
+        },
+        {
+          "name": "Tomate",
+          "portion": 190
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 10
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Fromage blanc 0%",
+          "portion": 255
+        },
+        {
+          "name": "Noix",
+          "portion": 20
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Crevettes (cuites)",
+          "portion": 190
+        },
+        {
+          "name": "Pâtes blanches cuites",
+          "portion": 190
+        },
+        {
+          "name": "Courgette",
+          "portion": 190
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°3 — Mediterraneen)"
+}

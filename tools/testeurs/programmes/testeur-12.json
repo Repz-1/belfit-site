@@ -1,0 +1,98 @@
+{
+  "kcal": 3088,
+  "prot": 243,
+  "carbs": 383,
+  "lip": 65,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Pain complet",
+          "portion": 145
+        },
+        {
+          "name": "Ricotta",
+          "portion": 95
+        },
+        {
+          "name": "Miel",
+          "portion": 20
+        },
+        {
+          "name": "Orange",
+          "portion": 180
+        }
+      ]
+    },
+    {
+      "nom": "Collation matin",
+      "ings": [
+        {
+          "name": "Skyr",
+          "portion": 240
+        },
+        {
+          "name": "Banane",
+          "portion": 145
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Blanc de poulet (cuit)",
+          "portion": 215
+        },
+        {
+          "name": "Pâtes blanches cuites",
+          "portion": 335
+        },
+        {
+          "name": "Sauce tomate",
+          "portion": 120
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Galette de riz",
+          "portion": 50
+        },
+        {
+          "name": "Beurre de cacahuète",
+          "portion": 30
+        },
+        {
+          "name": "Whey",
+          "portion": 35
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Crevettes (cuites)",
+          "portion": 215
+        },
+        {
+          "name": "Riz cuit",
+          "portion": 260
+        },
+        {
+          "name": "Épinards cuits",
+          "portion": 180
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 15
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°12 — Cinq repas costaud)"
+}

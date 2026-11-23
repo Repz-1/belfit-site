@@ -1,0 +1,77 @@
+{
+  "kcal": 1584,
+  "prot": 150,
+  "carbs": 182,
+  "lip": 31,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Skyr",
+          "portion": 250
+        },
+        {
+          "name": "Myrtilles",
+          "portion": 100
+        },
+        {
+          "name": "Flocons avoine",
+          "portion": 35
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Blanc de poulet (cuit)",
+          "portion": 160
+        },
+        {
+          "name": "Riz cuit",
+          "portion": 150
+        },
+        {
+          "name": "Brocoli (cuit)",
+          "portion": 185
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 5
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Pomme",
+          "portion": 185
+        },
+        {
+          "name": "Amandes",
+          "portion": 20
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Cabillaud cuit",
+          "portion": 185
+        },
+        {
+          "name": "Haricots verts",
+          "portion": 250
+        },
+        {
+          "name": "Quinoa cru",
+          "portion": 50
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°1 — Seche douce)"
+}

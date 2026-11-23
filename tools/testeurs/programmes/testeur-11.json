@@ -1,0 +1,85 @@
+{
+  "kcal": 2963,
+  "prot": 131,
+  "carbs": 407,
+  "lip": 94,
+  "repas": [
+    {
+      "nom": "Petit-déjeuner",
+      "ings": [
+        {
+          "name": "Flocons avoine",
+          "portion": 110
+        },
+        {
+          "name": "Lait d'amande",
+          "portion": 370
+        },
+        {
+          "name": "Myrtilles",
+          "portion": 125
+        },
+        {
+          "name": "Amandes",
+          "portion": 25
+        }
+      ]
+    },
+    {
+      "nom": "Déjeuner",
+      "ings": [
+        {
+          "name": "Tofu",
+          "portion": 245
+        },
+        {
+          "name": "Riz cuit",
+          "portion": 310
+        },
+        {
+          "name": "Poivron",
+          "portion": 185
+        },
+        {
+          "name": "Huile d'olive",
+          "portion": 15
+        }
+      ]
+    },
+    {
+      "nom": "Collation",
+      "ings": [
+        {
+          "name": "Yaourt grec",
+          "portion": 245
+        },
+        {
+          "name": "Granola",
+          "portion": 75
+        }
+      ]
+    },
+    {
+      "nom": "Dîner",
+      "ings": [
+        {
+          "name": "Lentilles cuites",
+          "portion": 310
+        },
+        {
+          "name": "Semoule",
+          "portion": 100
+        },
+        {
+          "name": "Courgette",
+          "portion": 185
+        },
+        {
+          "name": "Feta",
+          "portion": 50
+        }
+      ]
+    }
+  ],
+  "note": "Programme de TEST BelFit (testeurs Google Play) — plan fictif, pas un vrai plan nutritionnel. Merci de tester l'app ! (Test n°11 — Volume vegetal)"
+}
