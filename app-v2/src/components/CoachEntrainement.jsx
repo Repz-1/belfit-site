@@ -219,6 +219,53 @@ function SaisieBarre({ v, maj }) {
   );
 }
 
+/** Version A (23/11) : grande case Charge. Barre = total + par cote, les disques
+ *  se montrent au toucher ; autres types = − / + avec le pas de l'app. */
+function CaseCharge({ type, v, ouvert, basculer, maj }) {
+  if (type === 'barre') {
+    const tot = totalBarre(v.disques);
+    const cote = v.disques.reduce((a, d) => a + d, 0);
+    return (
+      <button type="button" class={'ce-a-case ce-a-case-bt' + (ouvert ? ' ouvert' : '')} onClick={basculer} aria-expanded={ouvert}>
+        <span class="ce-a-lib">{t('ce_charge')}</span>
+        <b class="ce-a-gros">{kgTexte(tot)} kg</b>
+        <span class="ce-a-aide">{cote ? t('ce_par_cote', { kg: kgTexte(cote) }) : t('ce_barre_seule')} · {ouvert ? t('ce_fermer_disques') : t('ce_disques_bt')}</span>
+      </button>
+    );
+  }
+  const pas = pasCharge(type, v.kg);
+  return (
+    <div class="ce-a-case">
+      <span class="ce-a-lib">{t(type === 'halteres' ? 'ce_haltere' : type === 'kettlebell' ? 'ce_kettlebell' : 'ce_poids')}</span>
+      <div class="ce-a-pm">
+        <button type="button" aria-label="−" onClick={() => maj({ kg: Math.max(0, Math.round((v.kg - pas) * 100) / 100) })}>−</button>
+        <input type="number" inputMode="decimal" min="0" max="500" step="0.5" value={v.kg || ''} placeholder="0"
+          onChange={(ev) => maj({ kg: Math.max(0, Math.min(500, +String(ev.target.value).replace(',', '.') || 0)) })} />
+        <button type="button" aria-label="+" onClick={() => maj({ kg: Math.round((v.kg + pas) * 100) / 100 })}>+</button>
+      </div>
+      <span class="ce-a-aide">kg</span>
+    </div>
+  );
+}
+function CaseReps({ v, cible, maj }) {
+  const base = parseInt(String(cible || ''), 10);
+  const val = v.reps !== null && v.reps !== undefined ? v.reps : null;
+  const poser = (n) => maj({ reps: Math.max(0, Math.min(200, n)) });
+  return (
+    <div class="ce-a-case">
+      <span class="ce-a-lib">{t('ce_reps_faites')}</span>
+      <div class="ce-a-pm">
+        <button type="button" aria-label="−" onClick={() => poser((val === null ? (base || 1) : val) - 1)}>−</button>
+        <input type="number" inputMode="numeric" min="0" max="200" step="1" value={val === null ? '' : val}
+          placeholder={Number.isFinite(base) ? String(base) : '—'}
+          onChange={(ev) => { const z = String(ev.target.value).trim(); maj({ reps: z === '' ? null : Math.max(0, Math.min(200, Math.round(+z) || 0)) }); }} />
+        <button type="button" aria-label="+" onClick={() => poser((val === null ? (base || 0) - 1 : val) + 1)}>+</button>
+      </div>
+      <span class="ce-a-aide">{t('ce_objectif', { r: cible })}</span>
+    </div>
+  );
+}
+
 /** Repetitions faites sur la serie : − / + ; part des reps visees (premier nombre). */
 function SaisieReps({ v, cible, maj }) {
   const base = parseInt(String(cible || ''), 10);
@@ -274,6 +321,7 @@ export function CoachEntrainement() {
   const charge = carnetCharge.value;
   useEffect(() => { setSaisie(etatInitial(seance, cle)); setEnregistre(false); }, [cle, livre, charge]);
   const [remplir, setRemplir] = useState(false);
+  const [disques, setDisques] = useState(null);   // exercice dont les disques sont ouverts
   const etatQ = etatQuestEnt();
 
   if (remplir) return (
@@ -349,53 +397,54 @@ export function CoachEntrainement() {
         const avantPlein = avant && (x.type === 'barre' ? avant.disques.length : avant.kg > 0);
         const rs = repsParSerie(x.reps, e.series.length);
         return (
-          <section class="ce-carte" key={x.id}>
-            <header class="ce-tete-exo" role="button" tabIndex={0} aria-expanded={photo === x.id}
-              onClick={() => setPhoto(photo === x.id ? null : x.id)}>
-              <div>
-                <b>{x.nom}{imgDe(x) && <i class="ce-oeil" aria-hidden="true">{photo === x.id ? '▴' : '▾'}</i>}</b>
-                <span>{t('ce_series', { n: x.series, r: repsTexte(x.reps, x.series) })}{prec ? ' · ' + t('ce_derniere', { v: valeurTxt(prec) }) : ''}</span>
-              </div>
-              <em class="ce-tag">{t('ce_type_' + x.type)}</em>
+          <section class="ce-carte ce-a" key={x.id}>
+            {/* 23/11 Raci (version A) : tableau des series + saisie de la serie en cours. */}
+            <header class="ce-a-tete">
+              <b class="ce-a-nom">{x.nom}</b>
+              <span class="ce-a-sous">{t('ce_n_series', { n: e.series.length })} · {t('ce_type_' + x.type)}
+                {imgDe(x) && <button type="button" class="ce-a-voir" aria-expanded={photo === x.id}
+                  onClick={() => setPhoto(photo === x.id ? null : x.id)}>{t('ce_voir')} {photo === x.id ? '▴' : '▾'}</button>}
+              </span>
+              {prec && <span class="ce-a-sous">{t('ce_derniere', { v: valeurTxt(prec) })}</span>}
             </header>
-            {x.note && <p class="ce-consigne">{x.note}</p>}
             {photo === x.id && imgDe(x) && (
               <button type="button" class="ce-vignette" aria-label={x.nom}
                 onClick={() => setGrande({ imgId: imgDe(x), nom: x.nom })}>
                 <AnimExo imgId={imgDe(x)} alt={x.nom} />
               </button>
             )}
-            <ol class="ce-liste">
+            {x.note && <p class="ce-consigne">{x.note}</p>}
+            <div class="ce-a-tab" role="table">
+              <div class="ce-a-ligne ce-a-hd" role="row">
+                <span>{t('ce_col_serie')}</span><span>{t('ce_col_obj')}</span><span>{x.type === 'corps' ? '' : t('ce_col_charge')}</span><span>{t('ce_col_reps')}</span><span />
+              </div>
               {e.series.map((y, i) => (
-                <li class={(i === a ? 'actif ' : '') + (y.fait ? 'fait' : '')}>
-                  <button type="button" class="ce-ligne-serie" onClick={() => activer(x.id, i)} aria-current={i === a}>
-                    <span class="ce-num">{t('ce_serie_n', { n: i + 1 })}<small class="ce-cible">{rs[i]}</small></span>
-                    <span class="ce-val">{chargeSerie(x.type, y)}</span>
-                  </button>
+                <div role="row" class={'ce-a-ligne' + (i === a ? ' on' : '') + (y.fait ? ' fait' : '')} onClick={() => activer(x.id, i)}>
+                  <span class="ce-a-num">{i + 1}</span>
+                  <span><i class="ce-a-obj">{rs[i]}</i></span>
+                  <span class="ce-a-val">{x.type === 'corps' ? '' : (x.type === 'barre' ? (y.disques.length || y.fait) : kgSerie(x.type, y) > 0) ? kgTexte(kgSerie(x.type, y)) + ' kg' : '—'}</span>
+                  <span class="ce-a-val">{y.reps > 0 ? y.reps : '—'}</span>
                   <button type="button" class={'ce-coche' + (y.fait ? ' on' : '')} aria-pressed={y.fait}
-                    aria-label={t('ce_serie_n', { n: i + 1 })} onClick={() => cocher(x.id, i)}>✓</button>
-                </li>
+                    aria-label={t('ce_serie_n', { n: i + 1 })} onClick={(ev) => { ev.stopPropagation(); cocher(x.id, i); }}>✓</button>
+                </div>
               ))}
-            </ol>
-            {x.type !== 'corps' && (
-              <div class="ce-edition">
-                <p class="ce-edition-t">{t('ce_serie_n', { n: a + 1 })}
-                  {vide && avantPlein && <button type="button" class="ce-reprendre"
-                    onClick={() => majSerie(x.id, a, x.type === 'barre' ? { disques: avant.disques.slice() } : { kg: avant.kg })}>{t('ce_comme', { n: a })}</button>}
-                </p>
-                {x.type === 'barre'
-                  ? <SaisieBarre v={v} maj={(c) => majSerie(x.id, a, c)} />
-                  : <SaisieKg type={x.type} v={v} maj={(c) => majSerie(x.id, a, c)} />}
-                <SaisieReps v={v} cible={rs[a]} maj={(c) => majSerie(x.id, a, c)} />
+            </div>
+            <div class="ce-a-saisie">
+              <p class="ce-a-encours">{t('ce_en_cours', { n: a + 1 })}
+                {vide && avantPlein && <button type="button" class="ce-reprendre"
+                  onClick={() => majSerie(x.id, a, x.type === 'barre' ? { disques: avant.disques.slice(), reps: avant.reps } : { kg: avant.kg, reps: avant.reps })}>{t('ce_comme', { n: a })}</button>}
+              </p>
+              <div class={'ce-a-cases' + (x.type === 'corps' ? ' seule' : '')}>
+                {x.type !== 'corps' && <CaseCharge type={x.type} v={v} ouvert={disques === x.id}
+                  basculer={() => setDisques(disques === x.id ? null : x.id)} maj={(c) => majSerie(x.id, a, c)} />}
+                <CaseReps v={v} cible={rs[a]} maj={(c) => majSerie(x.id, a, c)} />
               </div>
-            )}
-            {x.type === 'corps' && (
-              <div class="ce-edition">
-                <p class="ce-edition-t">{t('ce_serie_n', { n: a + 1 })}</p>
-                <SaisieReps v={v} cible={rs[a]} maj={(c) => majSerie(x.id, a, c)} />
-              </div>
-            )}
-            <NoteExo valeur={e.note || ''} avant={derniereNote(x.id, cle)} maj={(v) => majNote(x.id, v)} />
+              {x.type === 'barre' && disques === x.id && <SaisieBarre v={v} maj={(c) => majSerie(x.id, a, c)} />}
+              <button type="button" class={'ce-a-valider' + (v.fait ? ' ok' : '')} onClick={() => { if (!v.fait) { cocher(x.id, a); setDisques(null); } }}>
+                {v.fait ? t('ce_validee', { n: a + 1 }) : t('ce_valider', { n: a + 1 })}
+              </button>
+              <NoteExo valeur={e.note || ''} avant={derniereNote(x.id, cle)} maj={(nv) => majNote(x.id, nv)} />
+            </div>
           </section>
         );
       })}

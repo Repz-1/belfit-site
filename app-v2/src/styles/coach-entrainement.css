@@ -164,3 +164,39 @@
 
 /* 23/11 : repetitions faites par serie. */
 .ce-reps-faites { margin-top: 10px; }
+
+/* 23/11 Raci : carte exercice version A (tableau + saisie de la serie en cours). */
+.ce-a { padding: 16px; }
+.ce-a-tete { display: flex; flex-direction: column; gap: 3px; }
+.ce-a-nom { font-size: 17px; font-weight: 700; color: #16130F; line-height: 1.25; }
+.ce-a-sous { font-size: 13px; color: #57514A; }
+.ce-a-voir { border: 0; background: none; color: #1F5FD1; font: inherit; font-weight: 600; padding: 0 0 0 6px; }
+.ce-a-tab { margin-top: 12px; }
+.ce-a-ligne { display: grid; grid-template-columns: 40px 74px minmax(0, 1fr) 44px 36px; align-items: center; gap: 6px;
+  padding: 8px 8px; border-radius: 12px; border: 1.5px solid transparent; font-size: 15px; color: #16130F; }
+.ce-a-ligne + .ce-a-ligne { margin-top: 2px; }
+.ce-a-hd { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: #8A8279; padding-top: 0; padding-bottom: 2px; }
+.ce-a-ligne.on { border-color: #1F5FD1; background: #F5F8FE; }
+.ce-a-ligne.fait .ce-a-val, .ce-a-ligne.fait .ce-a-num { color: #57514A; }
+.ce-a-num { font-weight: 700; }
+.ce-a-ligne.on .ce-a-num { color: #1F5FD1; }
+.ce-a-obj { font-style: normal; font-size: 12.5px; font-weight: 700; color: #123C86; background: #EEF3FC; border-radius: 99px; padding: 3px 8px; white-space: nowrap; }
+.ce-a-val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ce-a-ligne .ce-coche { width: 32px; height: 32px; }
+.ce-a-saisie { border-top: 1px solid rgba(28,24,18,.08); margin-top: 10px; padding-top: 12px; }
+.ce-a-encours { display: flex; align-items: center; justify-content: space-between; margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #1F5FD1; }
+.ce-a-cases { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ce-a-cases.seule { grid-template-columns: 1fr; }
+.ce-a-case { background: #F4F6FB; border-radius: 14px; padding: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.ce-a-case-bt { border: 1.5px solid transparent; font: inherit; color: inherit; }
+.ce-a-case-bt.ouvert { border-color: #1F5FD1; }
+.ce-a-lib { font-size: 12.5px; color: #57514A; }
+.ce-a-gros { font-size: 24px; font-weight: 700; color: #16130F; }
+.ce-a-aide { font-size: 12px; color: #8A8279; }
+.ce-a-pm { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 4px; }
+.ce-a-pm button { flex: none; width: 38px; height: 38px; border-radius: 10px; background: #fff; border: 1px solid #DCE6F7; color: #1F5FD1; font-size: 20px; }
+.ce-a-pm input { width: 100%; min-width: 0; border: 0; background: none; text-align: center; font: 700 22px inherit; font-family: inherit; color: #16130F; -moz-appearance: textfield; }
+.ce-a-pm input::-webkit-outer-spin-button, .ce-a-pm input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.ce-a .ce-saisie { margin-top: 10px; }
+.ce-a-valider { margin-top: 12px; width: 100%; border: 0; border-radius: 14px; background: #1F5FD1; color: #fff; font: inherit; font-size: 16px; font-weight: 700; padding: 14px; }
+.ce-a-valider.ok { background: #EEF3FC; color: #123C86; }
