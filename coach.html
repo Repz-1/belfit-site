@@ -425,6 +425,8 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
         <p class="lb">Questionnaire entraînement</p>
         <div class="carte ent-quest" id="entQuest"></div>
       </div>
+      <!-- 23/11 Raci : le brouillon a l'ecran n'est pas le programme envoye -> on le dit, et on peut y revenir. -->
+      <div id="entBrBarre" class="brouillon" style="display:none"><span id="entBrTxt"></span><button id="entReprendre" class="mini">Reprendre le programme envoyé</button></div>
       <div id="entCarnetBloc" style="display:none">
         <p class="lb">Ses poids</p>
         <div class="carte ent-carnet" id="entCarnet"></div>
@@ -1685,6 +1687,7 @@ function sauverBrEnt() {
       clientTxt: $('entClient').value, seances: entSeances, note: $('entNote').value, picker: entPicker }));
     if (entChoisi) localStorage.setItem(CLE_BR_ENT(entChoisi.uid), JSON.stringify({ le, seances: entSeances, note: $('entNote').value }));
   } catch (e) { /* rien */ }
+  try { if (entChoisi) dessinerBrBarre(); } catch (e) { /* rien */ }
 }
 function lireCourantEnt() { try { return JSON.parse(localStorage.getItem(CLE_ENT_COURANT) || 'null'); } catch (e) { return null; } }
 const aDesExos = (l) => Array.isArray(l) && l.some((x) => x && Array.isArray(x.exos) && x.exos.length);
@@ -1724,7 +1727,7 @@ function poserClientEnt(d) {
   $('entChoisiNom').textContent = nomDe(d) + (d.email && d.email !== nomDe(d) ? ' · ' + d.email : '') + (env && env.livreLe ? ' · programme du ' + jourCourt(env.livreLe) : '');
   $('entChoisi').style.display = 'flex';
   $('entClient').style.display = 'none';
-  dessinerCarnet(); dessinerQuestEnt();
+  dessinerCarnet(); dessinerQuestEnt(); dessinerBrBarre();
 }
 // Sauvegarde aussi au moment ou l'on quitte l'ecran (appli en arriere-plan).
 // 23/11 : pas de sauvegarde pendant le rechargement qui suit un lien court
@@ -1772,14 +1775,14 @@ function choisirEnt(d) {
   $('entChoisi').style.display = 'flex';
   $('entClient').style.display = 'none';
   dessinerCarnet(); dessinerQuestEnt();
-  dessinerEnt();
+  dessinerEnt(); dessinerBrBarre();
   $('ancreEnt').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 $('entDeselect').addEventListener('click', () => {
   sauverBrEnt();
   entChoisi = null; entSeances = [seanceVide(0)]; $('entNote').value = '';
   try { localStorage.removeItem(CLE_ENT_COURANT); } catch (e) { /* rien */ }
-  $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entCarnetBloc').style.display = 'none'; $('entQuestBloc').style.display = 'none';
+  $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entCarnetBloc').style.display = 'none'; $('entQuestBloc').style.display = 'none'; $('entBrBarre').style.display = 'none';
   dessinerEnt();
 });
 // 21/11 Raci : un e-mail ou un pseudo tape a la main retrouve le client au
@@ -1808,6 +1811,14 @@ $('entClient').addEventListener('input', sauverBrEnt);
 const dateFr = (iso) => { try { return new Date(iso).toLocaleString('fr-BE', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; } };
 const MOIS_Q = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 const texteRep = (v) => { const s = String((v && (v.texte || v.valeur)) || '—'); const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); return m ? (+m[3]) + ' ' + MOIS_Q[+m[2] - 1] + ' ' + m[1] : s; };
+// Bandeau « brouillon different du programme envoye » (23/11).
+function dessinerBrBarre() {
+  const env = entChoisi && entChoisi.entrainement;
+  const diff = !!(env && env.livreLe && JSON.stringify(depuisEnvoye(env).map((s) => [s.nom, s.jour, s.exos.map((x) => [x.nom, x.series, x.reps])]))
+    !== JSON.stringify(entSeances.map((s) => [s.nom, s.jour, s.exos.map((x) => [x.nom, x.series, x.reps])])));
+  $('entBrBarre').style.display = diff ? 'flex' : 'none';
+  if (diff) $('entBrTxt').textContent = 'Brouillon pas encore envoyé (programme envoyé le ' + jourCourt(env.livreLe) + ').';
+}
 function dessinerQuestEnt() {
   const box = $('entQuest'); box.innerHTML = '';
   $('entQuestBloc').style.display = entChoisi ? 'block' : 'none';
@@ -2031,12 +2042,18 @@ function choixExo(s) {
 // 22/11 Raci : repartir d'une page blanche en un geste (plus besoin de tout fermer).
 // 23/11 Raci : envoyer le meme programme a un autre client. Le programme a
 // l'ecran est garde ; le prochain client choisi le recoit (son brouillon est remplace).
+$('entReprendre').addEventListener('click', () => {
+  const env = entChoisi && entChoisi.entrainement;
+  if (!env || !confirm('Remplacer le brouillon par le programme envoyé le ' + jourCourt(env.livreLe) + ' ?')) return;
+  entSeances = depuisEnvoye(env); $('entNote').value = env.note || ''; entPicker = null;
+  sauverBrEnt(); dessinerEnt(); dessinerBrBarre();
+});
 $('entCopier').addEventListener('click', () => {
   if (!aDesExos(entSeances)) return;
   sauverBrEnt();
   entChoisi = null; entUidAttendu = null; entCopie = true;
   $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entClient').value = '';
-  $('entCarnetBloc').style.display = 'none'; $('entQuestBloc').style.display = 'none';
+  $('entCarnetBloc').style.display = 'none'; $('entQuestBloc').style.display = 'none'; $('entBrBarre').style.display = 'none';
   sauverBrEnt();
   $('entClient').focus();
   $('ancreEnt').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2046,7 +2063,7 @@ $('entVider').addEventListener('click', () => {
   if (entChoisi) { try { localStorage.removeItem(CLE_BR_ENT(entChoisi.uid)); } catch (e) { /* rien */ } }
   try { localStorage.removeItem(CLE_ENT_COURANT); } catch (e) { /* rien */ }
   entChoisi = null; entSeances = [seanceVide(0)]; entPicker = null; $('entNote').value = ''; $('entMsg').className = 'msg';
-  $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entClient').value = ''; $('entCarnetBloc').style.display = 'none'; $('entQuestBloc').style.display = 'none';
+  $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entClient').value = ''; $('entCarnetBloc').style.display = 'none'; $('entQuestBloc').style.display = 'none'; $('entBrBarre').style.display = 'none';
   dessinerEnt();
 });
 $('entPlusSeance').addEventListener('click', () => {
