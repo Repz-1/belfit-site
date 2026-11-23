@@ -1694,8 +1694,11 @@ function poserClientEnt(d) {
   dessinerCarnet();
 }
 // Sauvegarde aussi au moment ou l'on quitte l'ecran (appli en arriere-plan).
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && modeEnt) sauverBrEnt(); });
-window.addEventListener('pagehide', () => { if (modeEnt) sauverBrEnt(); });
+// 23/11 : pas de sauvegarde pendant le rechargement qui suit un lien court
+// (sinon l'ancien brouillon a l'ecran ecrasait celui qui venait d'arriver).
+let entRecharge = false;
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && modeEnt && !entRecharge) sauverBrEnt(); });
+window.addEventListener('pagehide', () => { if (modeEnt && !entRecharge) sauverBrEnt(); });
 function lireBrEnt(uid) { try { return JSON.parse(localStorage.getItem(CLE_BR_ENT(uid)) || 'null'); } catch (e) { return null; } }
 
 function depuisEnvoye(ent) {
@@ -2004,6 +2007,7 @@ $('entEnvoi').addEventListener('click', () => {
     if (d.uid) localStorage.setItem(CLE_BR_ENT(d.uid), JSON.stringify({ le, seances: d.seances, note: d.note || '' }));
     localStorage.setItem(CLE_ENT_COURANT, JSON.stringify({ le, uid: d.uid || null, clientTxt: '', seances: d.seances, note: d.note || '', picker: null }));
     localStorage.setItem(CLE_MODE, 'ent');
+    entRecharge = true;
     location.reload();
   }).catch(() => { /* lien inconnu : on ignore */ });
 })();
