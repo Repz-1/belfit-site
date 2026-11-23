@@ -200,3 +200,17 @@
 .ce-a .ce-saisie { margin-top: 10px; }
 .ce-a-valider { margin-top: 12px; width: 100%; border: 0; border-radius: 14px; background: #1F5FD1; color: #fff; font: inherit; font-size: 16px; font-weight: 700; padding: 14px; }
 .ce-a-valider.ok { background: #EEF3FC; color: #123C86; }
+
+/* 23/11 Raci (« les 2 bulles se melangent ») : Charge en BLEU, Repetitions en VERT,
+   jusque dans les colonnes du tableau, pour les distinguer d'un coup d'oeil. */
+.ce-a-charge { background: #EEF3FC; border: 1.5px solid #C9D8F4; }
+.ce-a-charge .ce-a-lib { color: #1F5FD1; font-weight: 700; }
+.ce-a-charge.ouvert { border-color: #1F5FD1; }
+.ce-a-reps { background: #EAF6EE; border: 1.5px solid #BFE3CB; }
+.ce-a-reps .ce-a-lib { color: #1E7A4A; font-weight: 700; }
+.ce-a-reps .ce-a-pm button { color: #1E7A4A; border-color: #BFE3CB; }
+.ce-a-pm input::placeholder { color: #A9A39B; }
+.ce-a-hd .ce-a-c-charge { color: #1F5FD1; }
+.ce-a-hd .ce-a-c-reps { color: #1E7A4A; }
+.ce-a-ligne .ce-a-val.ce-a-c-charge { color: #123C86; font-weight: 600; }
+.ce-a-ligne .ce-a-val.ce-a-c-reps { color: #1E7A4A; font-weight: 600; }
