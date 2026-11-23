@@ -14,7 +14,7 @@ import { QuestionnaireCoach, effacerBrouillon } from './QuestionnaireCoach.jsx';
 import { getApps } from 'firebase/app';
 import { utilisateur } from '../services/firebase.js';
 import { signalerQuestionnaire } from '../services/mollie.js';
-import { carnetCoach, carnetCharge, noterSeance, dernierPour } from '../store/carnet-coach.js';
+import { carnetCoach, carnetCharge, noterSeance, dernierPour, derniereNote } from '../store/carnet-coach.js';
 import { DISQUES, totalBarre, texteDisques, pasCharge, kgTexte, repsParSerie, repsTexte } from '../data/charge-coach.js';
 import { t } from '../i18n/index.js';
 import { PhotoExo } from './PhotoExo.jsx';
@@ -77,10 +77,26 @@ function valeurTxt(x) {
   return kgTexte(x.kg) + ' kg' + (x.detail ? ' (' + x.detail + ')' : '');
 }
 
+/** 23/11 Raci : note du client sur l'exercice, pendant ou apres (ressenti,
+ *  douleur, reglage de la machine). Repliee par defaut ; la note de la seance
+ *  precedente reste visible pour s'en souvenir. Le coach la lit dans son carnet. */
+function NoteExo({ valeur, avant, maj }) {
+  const [ouvert, setOuvert] = useState(!!valeur);
+  return (
+    <div class="ce-note-exo">
+      {avant && !valeur && <p class="ce-note-avant">{t('ce_note_avant', { n: avant })}</p>}
+      {ouvert || valeur
+        ? <textarea class="ce-note-champ" rows={2} maxLength={300} value={valeur} placeholder={t('ce_note_ph')}
+            onInput={(ev) => maj(ev.currentTarget.value)} />
+        : <button type="button" class="ce-note-bt" onClick={() => setOuvert(true)}>{t('ce_note_bt')}</button>}
+    </div>
+  );
+}
+
 /** Etat de saisie d'une seance. 21/11 Raci : un poids PAR SERIE (serie 1 a
  *  10+5, serie 2 a 25...). Une serie neuve part de zero ; on peut reprendre la
  *  precedente d'un geste. Seule la seance deja notee aujourd'hui est rechargee. */
-const serieVide = () => ({ disques: [], kg: 0, fait: false });
+const serieVide = () => ({ disques: [], kg: 0, reps: null, fait: false });
 function etatInitial(seance, cle) {
   const jour = carnetCoach.peek()[cle];
   const e = {};
@@ -89,16 +105,24 @@ function etatInitial(seance, cle) {
     const n = Math.max(1, +x.series || 3);
     const series = Array.from({ length: n }, (_, i) => {
       const d = deja && Array.isArray(deja.series) ? deja.series[i] : null;
-      return d ? { disques: Array.isArray(d.disques) ? d.disques.slice() : [], kg: +d.kg || 0, fait: !!d.fait } : serieVide();
+      return d ? { disques: Array.isArray(d.disques) ? d.disques.slice() : [], kg: +d.kg || 0, reps: Number.isFinite(+d.reps) && d.reps !== null ? +d.reps : null, fait: !!d.fait } : serieVide();
     });
     const actif = Math.max(0, series.findIndex((y) => !y.fait));
-    e[x.id] = { series, actif: actif === -1 ? 0 : actif };
+    // 23/11 Raci : une note du client par exercice (ressenti, douleur, reglage machine).
+    e[x.id] = { series, actif: actif === -1 ? 0 : actif, note: (deja && typeof deja.note === 'string') ? deja.note : '' };
   });
   return e;
 }
 
 /** Charge d'une serie, lisible : « 50 kg · 1 × 10 + 1 × 5 » ou « — ». */
+// 23/11 Raci : le client note aussi les REPETITIONS faites a chaque serie.
+const repsFaites = (v) => (v.reps !== null && v.reps !== undefined && v.reps > 0 ? v.reps + ' reps' : '');
 function chargeSerie(type, v) {
+  const r = repsFaites(v);
+  const c = chargeSeule(type, v);
+  return r && c ? c + ' · ' + r : r || c;
+}
+function chargeSeule(type, v) {
   if (type === 'corps') return '';
   if (type === 'barre') return v.disques.length ? kgTexte(totalBarre(v.disques)) + ' kg · ' + texteDisques(v.disques) : t('ce_barre_seule') + ' · 20 kg';
   return v.kg > 0 ? kgTexte(v.kg) + ' kg' : '—';
@@ -195,6 +219,26 @@ function SaisieBarre({ v, maj }) {
   );
 }
 
+/** Repetitions faites sur la serie : − / + ; part des reps visees (premier nombre). */
+function SaisieReps({ v, cible, maj }) {
+  const base = parseInt(String(cible || ''), 10);
+  const val = v.reps !== null && v.reps !== undefined ? v.reps : null;
+  const poser = (n) => maj({ reps: Math.max(0, Math.min(200, n)) });
+  return (
+    <div class="ce-saisie ce-ligne ce-reps-faites">
+      <p class="ce-lib">{t('ce_reps_faites')}</p>
+      <div class="ce-pas">
+        <button type="button" aria-label="−" onClick={() => poser((val === null ? (base || 1) : val) - 1)}>−</button>
+        <input type="number" inputMode="numeric" min="0" max="200" step="1" value={val === null ? '' : val}
+          placeholder={Number.isFinite(base) ? String(base) : '—'}
+          onChange={(e) => { const s = String(e.target.value).trim(); maj({ reps: s === '' ? null : Math.max(0, Math.min(200, Math.round(+s) || 0)) }); }} />
+        <span>reps</span>
+        <button type="button" aria-label="+" onClick={() => poser((val === null ? (base || 0) - 1 : val) + 1)}>+</button>
+      </div>
+    </div>
+  );
+}
+
 function SaisieKg({ type, v, maj }) {
   const pas = pasCharge(type, v.kg);
   const lib = type === 'halteres' ? 'ce_haltere' : type === 'kettlebell' ? 'ce_kettlebell' : 'ce_poids';
@@ -251,19 +295,23 @@ export function CoachEntrainement() {
     const series = e.series.map((y, k) => (k === i ? { ...y, fait } : y));
     // Serie cochee : on passe a la suivante, qui part de zero.
     const actif = fait && i === e.actif && i + 1 < series.length ? i + 1 : e.actif;
-    return { ...s, [id]: { series, actif } };
+    return { ...s, [id]: { ...e, series, actif } };
   }); };
+  const majNote = (id, note) => { setEnregistre(false); setSaisie((s) => ({ ...s, [id]: { ...s[id], note: note.slice(0, 300) } })); };
   const enregistrer = () => {
     const exos = {};
     seance.exos.forEach((x) => {
       const e = saisie[x.id] || { series: [] };
-      const series = e.series.map((y) => (x.type === 'barre'
+      const series = e.series.map((y) => ({ ...(x.type === 'barre'
         ? { kg: totalBarre(y.disques), disques: y.disques, fait: y.fait }
-        : { kg: x.type === 'corps' ? null : y.kg, fait: y.fait }));
+        : { kg: x.type === 'corps' ? null : y.kg, fait: y.fait }), ...(y.reps > 0 ? { reps: y.reps } : {}) }));
       const kgs = series.map((y) => y.kg).filter((k) => k !== null && k > 0);
-      exos[x.id] = { nom: x.nom, reps: String(x.reps || ''), series, faites: series.map((y) => y.fait),
+      const avecReps = series.some((y) => y.reps > 0);
+      const note = String(e.note || '').trim();
+      exos[x.id] = { nom: x.nom, reps: String(x.reps || ''), series, faites: series.map((y) => y.fait), ...(note ? { note } : {}),
         kg: kgs.length ? Math.max(...kgs) : null,
-        detail: kgs.length ? series.map((y) => (y.kg ? kgTexte(y.kg) : '–')).join(' / ') : '' };
+        // « 20×10 / 25×8 » (kg × reps) ; reps seules pour le poids du corps.
+        detail: kgs.length || avecReps ? series.map((y) => (y.kg ? kgTexte(y.kg) : (x.type === 'corps' ? '' : '–')) + (y.reps > 0 ? (y.kg ? '×' : '') + y.reps : '')).join(' / ') : '' };
     });
     noterSeance(cle, { date: isoJour(auj), seance: seance.nom, le: new Date().toISOString(), exos });
     setEnregistre(true);
@@ -319,7 +367,7 @@ export function CoachEntrainement() {
             )}
             <ol class="ce-liste">
               {e.series.map((y, i) => (
-                <li class={(i === a && x.type !== 'corps' ? 'actif ' : '') + (y.fait ? 'fait' : '')}>
+                <li class={(i === a ? 'actif ' : '') + (y.fait ? 'fait' : '')}>
                   <button type="button" class="ce-ligne-serie" onClick={() => activer(x.id, i)} aria-current={i === a}>
                     <span class="ce-num">{t('ce_serie_n', { n: i + 1 })}<small class="ce-cible">{rs[i]}</small></span>
                     <span class="ce-val">{chargeSerie(x.type, y)}</span>
@@ -338,9 +386,16 @@ export function CoachEntrainement() {
                 {x.type === 'barre'
                   ? <SaisieBarre v={v} maj={(c) => majSerie(x.id, a, c)} />
                   : <SaisieKg type={x.type} v={v} maj={(c) => majSerie(x.id, a, c)} />}
+                <SaisieReps v={v} cible={rs[a]} maj={(c) => majSerie(x.id, a, c)} />
               </div>
             )}
-            {x.type === 'corps' && <p class="ce-lib ce-corps">{t('ce_corps')}</p>}
+            {x.type === 'corps' && (
+              <div class="ce-edition">
+                <p class="ce-edition-t">{t('ce_serie_n', { n: a + 1 })}</p>
+                <SaisieReps v={v} cible={rs[a]} maj={(c) => majSerie(x.id, a, c)} />
+              </div>
+            )}
+            <NoteExo valeur={e.note || ''} avant={derniereNote(x.id, cle)} maj={(v) => majNote(x.id, v)} />
           </section>
         );
       })}

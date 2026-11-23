@@ -265,6 +265,8 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
 .ent-q-sec{margin:14px 0 4px;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8A8279}
 .ent-q-ligne{display:flex;justify-content:space-between;gap:12px;margin:0;padding:6px 0;border-top:1px solid var(--filet);font-size:13.5px;color:#57514A}
 .ent-q-ligne b{color:#16130F;text-align:right;font-weight:600;white-space:pre-wrap}
+.ent-carnet-note{display:block;width:100%;margin-top:3px;font-size:12.5px;color:#1F5FD1;font-style:italic}
+.ent-carnet-note::before,.ent-carnet-note::after{content:'"'}
 .ent-muscle{margin:16px 0 0;padding:6px 12px;border-radius:10px;background:#1F5FD1;color:#fff;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .ent-actions{display:flex;align-items:flex-start;gap:2px}
 .ent-fl{border:1px solid #DCE6F7;background:#fff;color:#1F5FD1;font-size:16px;width:32px;height:32px;border-radius:9px;cursor:pointer;line-height:1}
@@ -499,11 +501,11 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
 <script type="module">
 // Base d'aliments de l'app (meme fichier) : memes calories chez le client.
 // 23/11 Raci : modules versionnes (?v=) pour que le telephone prenne les corrections tout de suite, sans 10 min de cache. Monter le numero a chaque version.
-import { DB, NOMS_ALIMENTS, macrosOf } from '/app-v2/src/data/aliments.js?v=739';
-import { estOffert, badgeHorsFile, prefixeAttente } from '/app-v2/src/services/statut-dossier.js?v=739';
-import { jourValide, ajouterJours, dateBruxelles } from '/app-v2/src/store/plans-par-date.js?v=739';
-import { EXERCISES, MUSCLES } from '/app-v2/src/data/exercices.js?v=739';
-import { TYPES_CHARGE, typeCharge, kgTexte, repsParSerie } from '/app-v2/src/data/charge-coach.js?v=739';
+import { DB, NOMS_ALIMENTS, macrosOf } from '/app-v2/src/data/aliments.js?v=740';
+import { estOffert, badgeHorsFile, prefixeAttente } from '/app-v2/src/services/statut-dossier.js?v=740';
+import { jourValide, ajouterJours, dateBruxelles } from '/app-v2/src/store/plans-par-date.js?v=740';
+import { EXERCISES, MUSCLES } from '/app-v2/src/data/exercices.js?v=740';
+import { TYPES_CHARGE, typeCharge, kgTexte, repsParSerie } from '/app-v2/src/data/charge-coach.js?v=740';
 
 const URL_COACH = 'https://europe-west1-repz-baf60.cloudfunctions.net/espaceCoach';
 const CLE = 'belfit_espace_coach';
@@ -1872,6 +1874,7 @@ function dessinerCarnet() {
       const l = el('div', 'lig');
       const v = x.kg !== null && x.kg !== undefined ? kgTexte(x.kg) + ' kg' + (x.detail ? ' (' + x.detail + ')' : '') : (x.detail || '—');
       l.append(el('span', '', x.nom || x.id), el('em', '', v + ' · ' + x.faites + '/' + x.series + ' séries'));
+      if (x.note) l.append(el('q', 'ent-carnet-note', x.note));   // 23/11 : note du client
       box.append(l);
     });
   });
