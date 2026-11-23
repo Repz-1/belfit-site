@@ -1948,6 +1948,25 @@ $('entEnvoi').addEventListener('click', () => {
     .finally(() => { b.disabled = false; b.textContent = 'Envoyer le programme'; });
 });
 
+// 23/11 Raci : un programme d'entrainement prepare ailleurs (par Claude) arrive
+// par un lien #ent=... (base64url du JSON { uid, seances, note }). Le fragment
+// ne part jamais au serveur ; il devient le brouillon du client, rien n'est envoye.
+(function chargerLienEnt() {
+  const m = /[#&]ent=([A-Za-z0-9_-]+)/.exec(location.hash || '');
+  if (!m) return;
+  try {
+    const b64 = m[1].replace(/-/g, '+').replace(/_/g, '/');
+    const txt = new TextDecoder().decode(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)));
+    const d = JSON.parse(txt);
+    if (d && aDesExos(d.seances)) {
+      const le = new Date().toISOString();
+      if (d.uid) localStorage.setItem(CLE_BR_ENT(d.uid), JSON.stringify({ le, seances: d.seances, note: d.note || '' }));
+      localStorage.setItem(CLE_ENT_COURANT, JSON.stringify({ le, uid: d.uid || null, clientTxt: '', seances: d.seances, note: d.note || '', picker: null }));
+      localStorage.setItem(CLE_MODE, 'ent');
+    }
+  } catch (e) { /* lien abime : on ignore */ }
+  history.replaceState(null, '', location.pathname + location.search);
+})();
 restaurerCourantEnt();
 try { if (localStorage.getItem(CLE_MODE) === 'ent' || aDesExos((lireCourantEnt() || {}).seances)) poserMode(true); } catch (e) { /* rien */ }
 
