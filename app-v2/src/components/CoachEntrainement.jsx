@@ -226,7 +226,7 @@ function CaseCharge({ type, v, ouvert, basculer, maj }) {
     const tot = totalBarre(v.disques);
     const cote = v.disques.reduce((a, d) => a + d, 0);
     return (
-      <button type="button" class={'ce-a-case ce-a-charge ce-a-case-bt' + (ouvert ? ' ouvert' : '')} onClick={basculer} aria-expanded={ouvert}>
+      <button type="button" class={'ce-a-case ce-a-case-bt' + (ouvert ? ' ouvert' : '')} onClick={basculer} aria-expanded={ouvert}>
         <span class="ce-a-lib">{t('ce_charge')}</span>
         <b class="ce-a-gros">{kgTexte(tot)} kg</b>
         <span class="ce-a-aide">{cote ? t('ce_par_cote', { kg: kgTexte(cote) }) : t('ce_barre_seule')} · {ouvert ? t('ce_fermer_disques') : t('ce_disques_bt')}</span>
@@ -235,7 +235,7 @@ function CaseCharge({ type, v, ouvert, basculer, maj }) {
   }
   const pas = pasCharge(type, v.kg);
   return (
-    <div class="ce-a-case ce-a-charge">
+    <div class="ce-a-case">
       <span class="ce-a-lib">{t(type === 'halteres' ? 'ce_haltere' : type === 'kettlebell' ? 'ce_kettlebell' : 'ce_poids')}</span>
       <div class="ce-a-pm">
         <button type="button" aria-label="−" onClick={() => maj({ kg: Math.max(0, Math.round((v.kg - pas) * 100) / 100) })}>−</button>
@@ -252,7 +252,7 @@ function CaseReps({ v, cible, maj }) {
   const val = v.reps !== null && v.reps !== undefined ? v.reps : null;
   const poser = (n) => maj({ reps: Math.max(0, Math.min(200, n)) });
   return (
-    <div class="ce-a-case ce-a-reps">
+    <div class="ce-a-case">
       <span class="ce-a-lib">{t('ce_reps_faites')}</span>
       <div class="ce-a-pm">
         <button type="button" aria-label="−" onClick={() => poser((val === null ? (base || 1) : val) - 1)}>−</button>
@@ -416,14 +416,14 @@ export function CoachEntrainement() {
             {x.note && <p class="ce-consigne">{x.note}</p>}
             <div class="ce-a-tab" role="table">
               <div class="ce-a-ligne ce-a-hd" role="row">
-                <span>{t('ce_col_serie')}</span><span>{t('ce_col_obj')}</span><span class="ce-a-c-charge">{x.type === 'corps' ? '' : t('ce_col_charge')}</span><span class="ce-a-c-reps">{t('ce_col_reps')}</span><span />
+                <span>{t('ce_col_serie')}</span><span>{t('ce_col_obj')}</span><span>{x.type === 'corps' ? '' : t('ce_col_charge')}</span><span>{t('ce_col_reps')}</span><span />
               </div>
               {e.series.map((y, i) => (
                 <div role="row" class={'ce-a-ligne' + (i === a ? ' on' : '') + (y.fait ? ' fait' : '')} onClick={() => activer(x.id, i)}>
                   <span class="ce-a-num">{i + 1}</span>
                   <span><i class="ce-a-obj">{rs[i]}</i></span>
-                  <span class="ce-a-val ce-a-c-charge">{x.type === 'corps' ? '' : (x.type === 'barre' ? (y.disques.length || y.fait) : kgSerie(x.type, y) > 0) ? kgTexte(kgSerie(x.type, y)) + ' kg' : '—'}</span>
-                  <span class="ce-a-val ce-a-c-reps">{y.reps > 0 ? y.reps : '—'}</span>
+                  <span class="ce-a-val">{x.type === 'corps' ? '' : (x.type === 'barre' ? (y.disques.length || y.fait) : kgSerie(x.type, y) > 0) ? kgTexte(kgSerie(x.type, y)) + ' kg' : '—'}</span>
+                  <span class="ce-a-val">{y.reps > 0 ? y.reps : '—'}</span>
                   <button type="button" class={'ce-coche' + (y.fait ? ' on' : '')} aria-pressed={y.fait}
                     aria-label={t('ce_serie_n', { n: i + 1 })} onClick={(ev) => { ev.stopPropagation(); cocher(x.id, i); }}>✓</button>
                 </div>
