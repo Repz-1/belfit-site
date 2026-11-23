@@ -296,6 +296,7 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
 .ent-anim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .ent-anim img.b{animation:ent-boucle 2.4s ease-in-out infinite}
 @keyframes ent-boucle{0%,38%{opacity:0}50%,88%{opacity:1}100%{opacity:0}}
+.ent-copier{color:#1F5FD1;margin-right:12px}
 .ent-vider{border:0;background:none;color:#B42318;font:inherit;font-size:12.5px;font-weight:600;letter-spacing:0;text-transform:none;cursor:pointer;padding:4px 0}
 .ent-ajout{border:0;background:#EEF3FC;color:#1F5FD1;font:inherit;font-weight:600;font-size:14px;
   border-radius:12px;padding:10px;width:100%;cursor:pointer;margin-top:6px}
@@ -428,7 +429,7 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
         <p class="lb">Ses poids</p>
         <div class="carte ent-carnet" id="entCarnet"></div>
       </div>
-      <p class="lb" style="display:flex;justify-content:space-between;align-items:baseline">Les séances <button id="entVider" class="ent-vider">Tout effacer</button></p>
+      <p class="lb" style="display:flex;justify-content:space-between;align-items:baseline">Les séances <span><button id="entCopier" class="ent-vider ent-copier">Copier vers un autre client</button> <button id="entVider" class="ent-vider">Tout effacer</button></span></p>
       <div id="entSeances"></div>
       <button class="plus" id="entPlusSeance">+ Ajouter une séance</button>
       <div class="carte">
@@ -1716,6 +1717,7 @@ function restaurerCourantEnt() {
   dessinerEnt();
 }
 let entUidAttendu = null;
+let entCopie = false;   // 23/11 : « Copier vers un autre client » en cours
 function poserClientEnt(d) {
   entChoisi = d; entUidAttendu = null;
   const env = d.entrainement;
@@ -1749,7 +1751,8 @@ function choisirEnt(d) {
     entUidAttendu = null; entSeances = [seanceVide(0)];
   }
   // Programme commence sans destinataire : il part chez ce client, rien n'est efface.
-  if (!entChoisi && !entUidAttendu && aDesExos(entSeances) && !aDesExos((lireBrEnt(d.uid) || {}).seances)) {
+  if (!entChoisi && !entUidAttendu && aDesExos(entSeances) && (entCopie || !aDesExos((lireBrEnt(d.uid) || {}).seances))) {
+    entCopie = false;
     poserClientEnt(d); sauverBrEnt(); dessinerEnt();
     $('ancreEnt').scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
@@ -2026,6 +2029,18 @@ function choixExo(s) {
 }
 
 // 22/11 Raci : repartir d'une page blanche en un geste (plus besoin de tout fermer).
+// 23/11 Raci : envoyer le meme programme a un autre client. Le programme a
+// l'ecran est garde ; le prochain client choisi le recoit (son brouillon est remplace).
+$('entCopier').addEventListener('click', () => {
+  if (!aDesExos(entSeances)) return;
+  sauverBrEnt();
+  entChoisi = null; entUidAttendu = null; entCopie = true;
+  $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entClient').value = '';
+  $('entCarnetBloc').style.display = 'none'; $('entQuestBloc').style.display = 'none';
+  sauverBrEnt();
+  $('entClient').focus();
+  $('ancreEnt').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 $('entVider').addEventListener('click', () => {
   if (aDesExos(entSeances) && !confirm('Effacer toutes les séances affichées ? Le programme déjà envoyé au client ne change pas.')) return;
   if (entChoisi) { try { localStorage.removeItem(CLE_BR_ENT(entChoisi.uid)); } catch (e) { /* rien */ } }
