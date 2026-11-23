@@ -259,7 +259,11 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
 .ent-tete select,.ent-exo select{font:inherit;font-size:13px;border:1px solid #DCE6F7;background:#F5F8FE;
   color:#123C86;border-radius:10px;padding:7px 6px}
 .ent-x{border:0;background:none;color:#8A8279;font-size:20px;cursor:pointer;padding:4px 6px}
-.ent-exo{display:grid;grid-template-columns:1fr auto;gap:6px 8px;padding:10px 0;border-top:1px solid var(--filet)}
+.ent-exo{display:grid;grid-template-columns:1fr auto;gap:6px 8px;padding:12px;margin-top:8px;background:#FBFCFF;border:1px solid #DCE6F7;border-radius:14px}
+.ent-muscle{margin:16px 0 0;padding:6px 12px;border-radius:10px;background:#1F5FD1;color:#fff;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.ent-actions{display:flex;align-items:flex-start;gap:2px}
+.ent-fl{border:1px solid #DCE6F7;background:#fff;color:#1F5FD1;font-size:16px;width:32px;height:32px;border-radius:9px;cursor:pointer;line-height:1}
+.ent-fl:disabled{opacity:.3;cursor:default}
 .ent-exo b{font-size:14.5px;font-weight:600;line-height:1.3}
 .ent-reglages{grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--tx3)}
 .ent-reglages input{width:52px;padding:6px 6px;font-size:14px;text-align:center;font-family:'DM Mono',monospace}
@@ -1809,7 +1813,17 @@ function dessinerEnt() {
     });
     tete.append(nom, selectJours(s.jour, (v) => { s.jour = v; sauverBrEnt(); }), sup);
     c.append(tete);
+    // 23/11 Raci : separation nette par muscle (un titre a chaque changement de
+    // muscle) et entre chaque exercice (carte) ; fleches pour monter / descendre.
+    const muscleDe = (x) => (BASE_EXOS.find((y) => y.nom === x.nom) || {}).muscle || '';
+    let musclePrec = null;
     s.exos.forEach((x, xi) => {
+      const mu = muscleDe(x);
+      if (mu !== musclePrec) {
+        const lab = (MUSCLES.find((m) => m.key === mu) || {}).label || 'Autre';
+        c.append(el('div', 'ent-muscle', lab));
+        musclePrec = mu;
+      }
       const r = el('div', 'ent-exo');
       // 21/11 Raci : toucher le nom montre les photos de l'exercice.
       const nomB = el('b', 'ent-nom', x.nom);
@@ -1830,7 +1844,14 @@ function dessinerEnt() {
       }
       const xx = el('button', 'ent-x', '×'); xx.setAttribute('aria-label', 'Retirer');
       xx.addEventListener('click', () => { s.exos.splice(xi, 1); sauverBrEnt(); dessinerEnt(); });
-      r.append(xx);
+      const deplacer = (d) => { const j = xi + d; if (j < 0 || j >= s.exos.length) return;
+        [s.exos[xi], s.exos[j]] = [s.exos[j], s.exos[xi]]; sauverBrEnt(); dessinerEnt(); };
+      const haut = el('button', 'ent-fl', '↑'), bas = el('button', 'ent-fl', '↓');
+      haut.setAttribute('aria-label', 'Monter l\'exercice'); bas.setAttribute('aria-label', 'Descendre l\'exercice');
+      haut.disabled = xi === 0; bas.disabled = xi === s.exos.length - 1;
+      haut.addEventListener('click', () => deplacer(-1)); bas.addEventListener('click', () => deplacer(1));
+      const act = el('div', 'ent-actions'); act.append(haut, bas, xx);
+      r.append(act);
       const reg = el('div', 'ent-reglages');
       const type = document.createElement('select');
       TYPES_CHARGE.forEach((t) => { const o = document.createElement('option'); o.value = t.k; o.textContent = t.label; if (x.type === t.k) o.selected = true; type.append(o); });
