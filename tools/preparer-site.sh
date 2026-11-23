@@ -14,6 +14,8 @@ for f in index.html cgv.html confidentialite.html mentions-legales.html \
 done
 cp *.png sw.js analytics.js i18n.js i18n-strings.js manifest.json coach.webmanifest CNAME robots.txt sitemap.xml _site/
 cp -r img fonts v2 .well-known _site/
+# 23/11 : brouillons d'entrainement prepares pour l'espace coach (lien court #b=)
+[ -d b ] && cp -r b _site/
 [ -d __ ] && cp -r __ _site/
 # coach.html importe ces deux modules a l'execution (sans dependances)
 mkdir -p _site/app-v2/src/data _site/app-v2/src/store _site/app-v2/src/services
