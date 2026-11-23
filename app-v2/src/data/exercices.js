@@ -74,7 +74,7 @@ export const EXERCISES = {
     {nom:'Rowing Alterné (Kettlebell)', meta:'3 séries × 12 reps', imgId:'Alternating_Kettlebell_Row', lvl:2, mat:'halteres'},
     {nom:'Rowing Assis (Poulie)', meta:'4 séries × 8-10 reps', imgId:'Seated_Cable_Rows', lvl:1, mat:'machine'},
     {nom:'Rowing Assis Un Bras (Poulie)', meta:'4 séries × 8-10 reps', imgId:'Seated_One-arm_Cable_Pulley_Rows', lvl:2, mat:'machine'},
-    {nom:'Rowing Assis Prise Large Supination (Poulie)', meta:'3 séries × 10 reps', imgId:'Seated_Cable_Rows', lvl:1, mat:'machine'},
+    {nom:'Rowing Assis Prise Large Supination (Poulie)', meta:'3 séries × 10 reps', imgId:'Elevated_Cable_Rows', lvl:1, mat:'machine'},
     {nom:'Tirage Menton (Haltère)', meta:'4 séries × 8-10 reps', imgId:'Standing_Dumbbell_Upright_Row', lvl:1, mat:'halteres'},
     {nom:'Tirage Menton (Machine Smith)', meta:'4 séries × 8-10 reps', imgId:'Smith_Machine_Upright_Row', lvl:1, mat:'machine'},
     {nom:'Tirage Menton (Élastique)', meta:'4 séries × 8-10 reps', imgId:'Upright_Row_-_With_Bands', lvl:1, mat:'halteres'},
