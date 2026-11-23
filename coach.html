@@ -1679,7 +1679,8 @@ const CLE_ENT_COURANT = 'belfit_coach_ent_courant';
 function sauverBrEnt() {
   const le = new Date().toISOString();
   try {
-    localStorage.setItem(CLE_ENT_COURANT, JSON.stringify({ le, uid: entChoisi ? entChoisi.uid : null,
+    // 23/11 : client pas encore revenu de la liste (entUidAttendu) = toujours SON brouillon.
+    localStorage.setItem(CLE_ENT_COURANT, JSON.stringify({ le, uid: entChoisi ? entChoisi.uid : entUidAttendu,
       clientTxt: $('entClient').value, seances: entSeances, note: $('entNote').value, picker: entPicker }));
     if (entChoisi) localStorage.setItem(CLE_BR_ENT(entChoisi.uid), JSON.stringify({ le, seances: entSeances, note: $('entNote').value }));
   } catch (e) { /* rien */ }
@@ -1687,6 +1688,21 @@ function sauverBrEnt() {
 function lireCourantEnt() { try { return JSON.parse(localStorage.getItem(CLE_ENT_COURANT) || 'null'); } catch (e) { return null; } }
 const aDesExos = (l) => Array.isArray(l) && l.some((x) => x && Array.isArray(x.exos) && x.exos.length);
 /** A l'ouverture : on remet le travail en cours tel quel. */
+// 23/11 : nettoyage unique des brouillons ou le programme de Kosta avait ete
+// recopie par erreur chez d'autres clients (exercices marques « ekkkk »).
+(function nettoyerCopiesKosta() {
+  const KOSTA = 'LeWM83Fi4oNTylbfCCnZz3BRH4d2';
+  const copie = (b) => !!b && JSON.stringify(b.seances || []).includes('"ekkkk2"');
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith('belfit_coach_ent_') || k === 'belfit_coach_ent_courant' || k === 'belfit_coach_ent_' + KOSTA) continue;
+      if (copie(JSON.parse(localStorage.getItem(k) || 'null'))) localStorage.removeItem(k);
+    }
+    const c = JSON.parse(localStorage.getItem(CLE_ENT_COURANT) || 'null');
+    if (c && copie(c) && c.uid !== KOSTA) localStorage.removeItem(CLE_ENT_COURANT);
+  } catch (e) { /* rien */ }
+})();
 function restaurerCourantEnt() {
   const c = lireCourantEnt();
   if (!c || !aDesExos(c.seances)) return;
@@ -1725,8 +1741,15 @@ function depuisEnvoye(ent) {
 
 function choisirEnt(d) {
   if (entChoisi && entChoisi.uid !== d.uid) sauverBrEnt();
+  // 23/11 Raci (« le programme de Kosta s'affiche partout ») : le brouillon a l'ecran
+  // appartient deja a un client dont la liste n'etait pas encore chargee -> on le
+  // range chez LUI, et on ouvre le client touche normalement.
+  if (!entChoisi && entUidAttendu && entUidAttendu !== d.uid) {
+    try { localStorage.setItem(CLE_BR_ENT(entUidAttendu), JSON.stringify({ le: new Date().toISOString(), seances: entSeances, note: $('entNote').value })); } catch (e) { /* rien */ }
+    entUidAttendu = null; entSeances = [seanceVide(0)];
+  }
   // Programme commence sans destinataire : il part chez ce client, rien n'est efface.
-  if (!entChoisi && aDesExos(entSeances) && !aDesExos((lireBrEnt(d.uid) || {}).seances)) {
+  if (!entChoisi && !entUidAttendu && aDesExos(entSeances) && !aDesExos((lireBrEnt(d.uid) || {}).seances)) {
     poserClientEnt(d); sauverBrEnt(); dessinerEnt();
     $('ancreEnt').scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
