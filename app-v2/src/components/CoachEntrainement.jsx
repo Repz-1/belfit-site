@@ -11,7 +11,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { signal } from '@preact/signals';
 import { entrainementCoach } from './BelfitPlus.jsx';
 import { carnetCoach, carnetCharge, noterSeance, dernierPour } from '../store/carnet-coach.js';
-import { DISQUES, totalBarre, texteDisques, pasCharge, kgTexte } from '../data/charge-coach.js';
+import { DISQUES, totalBarre, texteDisques, pasCharge, kgTexte, repsParSerie, repsTexte } from '../data/charge-coach.js';
 import { t } from '../i18n/index.js';
 import { PhotoExo } from './PhotoExo.jsx';
 import { createPortal } from 'preact/compat';
@@ -232,13 +232,14 @@ export function CoachEntrainement() {
         const avant = a > 0 ? e.series[a - 1] : null;
         const vide = x.type === 'barre' ? !v.disques.length : !(v.kg > 0);
         const avantPlein = avant && (x.type === 'barre' ? avant.disques.length : avant.kg > 0);
+        const rs = repsParSerie(x.reps, e.series.length);
         return (
           <section class="ce-carte" key={x.id}>
             <header class="ce-tete-exo" role="button" tabIndex={0} aria-expanded={photo === x.id}
               onClick={() => setPhoto(photo === x.id ? null : x.id)}>
               <div>
                 <b>{x.nom}{imgDe(x) && <i class="ce-oeil" aria-hidden="true">{photo === x.id ? '▴' : '▾'}</i>}</b>
-                <span>{t('ce_series', { n: x.series, r: x.reps })}{prec ? ' · ' + t('ce_derniere', { v: valeurTxt(prec) }) : ''}</span>
+                <span>{t('ce_series', { n: x.series, r: repsTexte(x.reps, x.series) })}{prec ? ' · ' + t('ce_derniere', { v: valeurTxt(prec) }) : ''}</span>
               </div>
               <em class="ce-tag">{t('ce_type_' + x.type)}</em>
             </header>
@@ -253,7 +254,7 @@ export function CoachEntrainement() {
               {e.series.map((y, i) => (
                 <li class={(i === a && x.type !== 'corps' ? 'actif ' : '') + (y.fait ? 'fait' : '')}>
                   <button type="button" class="ce-ligne-serie" onClick={() => activer(x.id, i)} aria-current={i === a}>
-                    <span class="ce-num">{t('ce_serie_n', { n: i + 1 })}</span>
+                    <span class="ce-num">{t('ce_serie_n', { n: i + 1 })}<small class="ce-cible">{rs[i]}</small></span>
                     <span class="ce-val">{chargeSerie(x.type, y)}</span>
                   </button>
                   <button type="button" class={'ce-coche' + (y.fait ? ' on' : '')} aria-pressed={y.fait}

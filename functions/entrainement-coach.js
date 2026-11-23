@@ -44,7 +44,7 @@ function normaliserEntrainement(b) {
         imgId: texte(e && e.imgId, 80) || null,
         type: TYPES.includes(e && e.type) ? e.type : "machine",
         series: entier(e && e.series, 1, 10, 3),
-        reps: texte(e && e.reps, 12) || "10",
+        reps: texte(e && e.reps, 60) || "10",
         repos: entier(e && e.repos, 0, 600, 90),
         note: texte(e && e.note, 200),
       };

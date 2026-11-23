@@ -13,7 +13,7 @@ import { entrainementCoach } from './BelfitPlus.jsx';
 import { carnetCoach } from '../store/carnet-coach.js';
 import { choisirEspaceJour } from './CoachEntrainement.jsx';
 import { allerOnglet } from './BottomNav.jsx';
-import { kgTexte } from '../data/charge-coach.js';
+import { kgTexte, repsTexte } from '../data/charge-coach.js';
 import { t } from '../i18n/index.js';
 import '../styles/coach-entrainement.css';
 
@@ -156,7 +156,7 @@ function HistoriqueSeances({ fermer }) {
         const n = Math.max(+x.series || 1, ...fois.map((e) => (e.exos && e.exos[x.id] && e.exos[x.id].series || []).length));
         return (
           <section class="ce-carte" key={x.id}>
-            <header><div><b>{x.nom}</b><span>{t('ce_series', { n: x.series, r: x.reps })}{x.type !== 'corps' ? ' · kg' : ''}</span></div></header>
+            <header><div><b>{x.nom}</b><span>{t('ce_series', { n: x.series, r: repsTexte(x.reps, x.series) })}{x.type !== 'corps' ? ' · kg' : ''}</span></div></header>
             <table class="ce-tab">
               <thead><tr><th />{fois.map((e) => <th key={e.date}>{dateCourte(e.date)}</th>)}</tr></thead>
               <tbody>

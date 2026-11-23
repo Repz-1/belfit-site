@@ -141,3 +141,6 @@
 .ce-tab th:first-child, .ce-tab td.ce-tab-s { width: 70px; }
 .ce-tab td { font: 500 14px 'DM Mono', monospace; color: #16130F; padding: 7px 0; border-top: 1px solid rgba(28,24,18,.07); }
 .ce-tab td.ce-tab-s { font: 600 13px inherit; font-family: inherit; color: #123C86; }
+
+/* 23/11 : repetitions visees de chaque serie, a cote de « Serie n ». */
+.ce-cible { margin-left: 6px; font: 600 11.5px 'DM Mono', monospace; color: #1F5FD1; background: #EEF3FC; border-radius: 99px; padding: 2px 7px; }

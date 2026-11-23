@@ -264,6 +264,11 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
 .ent-reglages{grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--tx3)}
 .ent-reglages input{width:52px;padding:6px 6px;font-size:14px;text-align:center;font-family:'DM Mono',monospace}
 .ent-reglages input.reps{width:64px}
+.ent-reps{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--tx3);margin-top:6px}
+.ent-reps-t{font-weight:600;margin-right:2px}
+.ent-rep{display:inline-flex;align-items:center;gap:3px}
+.ent-rep small{font-size:11px;color:#1F5FD1;font-weight:700}
+.ent-rep input{width:56px;padding:6px 4px;font-size:14px;text-align:center;font-family:'DM Mono',monospace}
 .ent-pas{display:inline-flex;align-items:center;gap:2px;background:#F5F8FE;border:1px solid #DCE6F7;border-radius:10px;padding:2px}
 .ent-pas button{border:0;background:none;color:#1F5FD1;font-size:20px;width:32px;height:32px;cursor:pointer;line-height:1}
 .ent-pas b{min-width:22px;text-align:center;font-family:'DM Mono',monospace;font-size:15px;color:var(--tx)}
@@ -480,7 +485,7 @@ import { DB, NOMS_ALIMENTS, macrosOf } from '/app-v2/src/data/aliments.js';
 import { estOffert, badgeHorsFile, prefixeAttente } from '/app-v2/src/services/statut-dossier.js';
 import { jourValide, ajouterJours, dateBruxelles } from '/app-v2/src/store/plans-par-date.js';
 import { EXERCISES, MUSCLES } from '/app-v2/src/data/exercices.js';
-import { TYPES_CHARGE, typeCharge, kgTexte } from '/app-v2/src/data/charge-coach.js';
+import { TYPES_CHARGE, typeCharge, kgTexte, repsParSerie } from '/app-v2/src/data/charge-coach.js';
 
 const URL_COACH = 'https://europe-west1-repz-baf60.cloudfunctions.net/espaceCoach';
 const CLE = 'belfit_espace_coach';
@@ -1831,13 +1836,33 @@ function dessinerEnt() {
       const pas = el('span', 'ent-pas');
       const moins = el('button', '', '−'), nb = el('b', '', String(x.series)), plus = el('button', '', '+');
       moins.setAttribute('aria-label', 'Une série de moins'); plus.setAttribute('aria-label', 'Une série de plus');
-      const regler = (d) => { x.series = Math.max(1, Math.min(10, (+x.series || 3) + d)); nb.textContent = x.series; lib.textContent = x.series > 1 ? 'séries ×' : 'série ×'; sauverBrEnt(); };
+      const regler = (d) => { x.series = Math.max(1, Math.min(10, (+x.series || 3) + d)); nb.textContent = x.series; lib.textContent = x.series > 1 ? 'séries' : 'série'; dessinerReps(); sauverBrEnt(); };
       moins.addEventListener('click', () => regler(-1)); plus.addEventListener('click', () => regler(1));
       pas.append(moins, nb, plus);
-      const lib = el('span', '', x.series > 1 ? 'séries ×' : 'série ×');
-      reg.append(pas, lib,
-        champNum(x.reps, 0, 0, 'reps', (v) => { x.reps = String(v).slice(0, 12) || '10'; sauverBrEnt(); }), el('span', '', 'reps'), type);
+      const lib = el('span', '', x.series > 1 ? 'séries' : 'série');
+      reg.append(pas, lib, type);
       r.append(reg);
+      // 23/11 Raci : les repetitions se donnent SERIE PAR SERIE (S1 20, S2 10, S3 6).
+      // Toutes pareilles = une seule valeur gardee ; sinon « 20/10/6 ».
+      const repsBox = el('div', 'ent-reps');
+      function dessinerReps() {
+        repsBox.innerHTML = '';
+        repsBox.append(el('span', 'ent-reps-t', 'Reps'));
+        const l = repsParSerie(x.reps, x.series);
+        l.forEach((v, k) => {
+          const lab = el('label', 'ent-rep');
+          const i = champNum(v, 0, 0, 'reps', (val) => {
+            l[k] = String(val).trim().replace(/\//g, '-').slice(0, 8) || '10';
+            x.reps = l.every((y) => y === l[0]) ? l[0] : l.join('/');
+            sauverBrEnt();
+          });
+          i.setAttribute('aria-label', 'Répétitions série ' + (k + 1));
+          lab.append(el('small', '', 'S' + (k + 1)), i);
+          repsBox.append(lab);
+        });
+      }
+      dessinerReps();
+      r.append(repsBox);
       // 21/11 Raci : consigne par exercice, lue par le client sous le nom.
       const cons = document.createElement('input');
       cons.type = 'text'; cons.className = 'ent-consigne'; cons.maxLength = 200;

@@ -65,3 +65,16 @@ export function pasCharge(type, v) {
 }
 
 export { kg as kgTexte };
+
+// 23/11 Raci : des repetitions par serie (« 20 / 10 / 6 »). Une seule valeur =
+// toutes les series pareilles. Il manque des valeurs ? la derniere se repete.
+export function repsParSerie(reps, n) {
+  const l = String(reps || '').split('/').map((x) => x.trim()).filter(Boolean);
+  if (!l.length) l.push('10');
+  return Array.from({ length: Math.max(1, +n || 1) }, (_, i) => l[Math.min(i, l.length - 1)]);
+}
+/** Texte court : « 10 » si toutes pareilles, sinon « 20 / 10 / 6 ». */
+export function repsTexte(reps, n) {
+  const l = repsParSerie(reps, n);
+  return l.every((x) => x === l[0]) ? l[0] : l.join(' / ');
+}
