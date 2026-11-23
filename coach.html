@@ -1970,7 +1970,7 @@ function dessinerEnt() {
         l.forEach((v, k) => {
           const lab = el('label', 'ent-rep');
           const i = champNum(v, 0, 0, 'reps', (val) => {
-            l[k] = String(val).trim().replace(/\//g, '-').slice(0, 8) || '10';
+            l[k] = String(val).trim().replace(/\//g, '-').slice(0, 24) || '10';
             x.reps = l.every((y) => y === l[0]) ? l[0] : l.join('/');
             sauverBrEnt();
           });
