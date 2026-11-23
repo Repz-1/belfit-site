@@ -261,5 +261,14 @@ export function lisible(q, rep) {
   if (!v) return '—';
   if (q.type === 'nombre' && q.unite) return v + ' ' + q.unite;
   if (q.type === 'echelle') return v + ' / 10';
+  if (q.type === 'date') return dateLisible(v);
   return v;
+}
+
+/** 23/11 : « 2026-12-07 » -> « 7 décembre 2026 » (recapitulatif, coach, e-mail). */
+export function dateLisible(v) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || ''));
+  if (!m) return v;
+  const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  return (+m[3]) + ' ' + MOIS[+m[2] - 1] + ' ' + m[1];
 }

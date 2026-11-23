@@ -13,8 +13,18 @@ import { Icone } from './IconesCoach.jsx';
 import { useRetour } from '../services/retour.js';
 import { profilBesoins, poidsCalcul } from '../store/journal.js';
 import { tq } from '../i18n/questionnaire.js';
-import { PREMIER_PLAN, MISE_A_JOUR, CONSENTEMENTS, LIENS_LEGAUX, repondue, lisible, alerteSante, allergieGrave, optionsDe , optionsAliments } from '../data/questionnaire-coach.js';
+import { PREMIER_PLAN, MISE_A_JOUR, CONSENTEMENTS, LIENS_LEGAUX, repondue, lisible, dateLisible, alerteSante, allergieGrave, optionsDe , optionsAliments } from '../data/questionnaire-coach.js';
 import { NOMS_ALIMENTS } from '../data/aliments.js';
+import { QUESTIONNAIRE_ENTRAINEMENT, CONSENTEMENTS_ENTRAINEMENT, alerteSanteEntrainement } from '../data/questionnaire-entrainement.js';
+
+// 23/11 : meme moteur pour le coaching ENTRAINEMENT (type 'entrainement') :
+// ses questions, ses accords, son alerte sante et ses textes. Brouillon distant
+// dans un champ a part (brouillonEnt) pour ne pas ecraser celui de l'alimentation.
+const ENT = (type) => type === 'entrainement';
+const sectionsDe = (type) => ENT(type) ? QUESTIONNAIRE_ENTRAINEMENT : type === 'maj' ? MISE_A_JOUR : PREMIER_PLAN;
+const accordsDe = (type) => ENT(type) ? CONSENTEMENTS_ENTRAINEMENT : CONSENTEMENTS;
+const alerteDe = (type, r) => ENT(type) ? alerteSanteEntrainement(r) : alerteSante(r);
+const champBrouillon = (type) => ENT(type) ? 'brouillonEnt' : 'brouillonCoach';
 
 // Par compte (27/09) : un autre compte sur le meme appareil ne reprend
 // pas le brouillon du precedent.
@@ -32,6 +42,15 @@ function prerempli(type) {
     if (p.taille) r.taille = { valeur: String(p.taille) };
     if (p.age) r.age = { valeur: String(p.age) };
     if (p.sexe) r.sexe = { valeur: p.sexe === 'f' ? 'Femme' : 'Homme' };
+  }
+  if (ENT(type)) {
+    // Repris du profil, puis des reponses du questionnaire alimentation s'il existe.
+    const qa = (dossierCoach.peek().questionnaire || {}).reponses || {};
+    const de = (id) => qa[id] && qa[id].valeur !== undefined ? { valeur: String(qa[id].valeur) } : null;
+    const age = p.age ? { valeur: String(p.age) } : de('age');
+    const taille = p.taille ? { valeur: String(p.taille) } : de('taille');
+    const sexe = p.sexe ? { valeur: p.sexe === 'f' ? 'Femme' : 'Homme' } : de('sexe');
+    if (age) r.age = age; if (taille) r.taille = taille; if (sexe) r.sexe = sexe;
   }
   return r;
 }
@@ -57,7 +76,7 @@ function lireBrouillon(type) {
   let local = null;
   try { const b = JSON.parse(localStorage.getItem(cleBrouillon(type))); if (b && b.rep) local = b; }
   catch (e) { /* brouillon illisible : on repart de zero */ }
-  const d = dossierCoach.value.brouillon;
+  const d = ENT(type) ? null : dossierCoach.value.brouillon;   // entrainement : copie de l'appareil + Firestore (brouillonEnt)
   const distant = d && d.type === type && d.rep ? d : null;
   if (local && distant) return (distant.majLe || '') > (local.majLe || '') ? distant : local;
   return local || distant;
@@ -67,7 +86,7 @@ function sauverDistant(type, b) {
   const u = utilisateur.value;
   if (!u || !getApps().length) return Promise.resolve(false);
   return import('firebase/firestore').then(({ getFirestore, doc, setDoc }) =>
-    setDoc(doc(getFirestore(getApps()[0]), 'users', u.uid), { brouillonCoach: { type, ...b } }, { merge: true }))
+    setDoc(doc(getFirestore(getApps()[0]), 'users', u.uid), { [champBrouillon(type)]: { type, ...b } }, { merge: true }))
     .then(() => true);
 }
 // Hors reseau, la promesse Firestore attend le serveur : au bout de
@@ -101,6 +120,7 @@ function lisibleAff(q, r0) {
   if (!v) return '—';
   if (q.type === 'nombre' && q.unite) return v + ' ' + tq(q.unite);
   if (q.type === 'echelle') return v + ' / 10';
+  if (q.type === 'date') return dateLisible(v);
   return tq(v);
 }
 
@@ -302,11 +322,12 @@ function Question({ q, rep, toutes, maj, erreur }) {
 
 // ---------- Questionnaire ----------
 
-export function QuestionnaireCoach({ type, onFermer, onTermine }) {
-  const sections = type === 'maj' ? MISE_A_JOUR : PREMIER_PLAN;
+export function QuestionnaireCoach({ type, onFermer, onTermine, precedentes = null }) {
+  const sections = sectionsDe(type);
+  const CONSENTS = accordsDe(type);
   const b = lireBrouillon(type);
   // Pas de brouillon en cours + reponses precedentes : on part du recapitulatif pre-rempli.
-  const [anciennes] = useState(() => (b ? null : reponsesPrecedentes((utilisateur.peek() || {}).uid)));
+  const [anciennes] = useState(() => (b ? null : ENT(type) ? precedentes : reponsesPrecedentes((utilisateur.peek() || {}).uid)));
   const [rep, setRep] = useState(() => {
     if (b && b.rep) return b.rep;
     const p = prerempli(type);
@@ -339,7 +360,7 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
   }, [rep, i, consent]);
 
   // Brouillon Firestore arrive apres l'ouverture (2e appareil).
-  const distant = dossierCoach.value.brouillon;
+  const distant = ENT(type) ? null : dossierCoach.value.brouillon;
   const ouvertLe = useRef((b && b.majLe) || '');
   useEffect(() => {
     if (touche.current || !distant || distant.type !== type || !distant.rep) return;
@@ -392,8 +413,8 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
     return (
       <div class="pg-coach pg-qc">
         <Entete sansBandeau retour={onFermer} />
-        <div class="qc-haut"><span class="qc-sur">{tq(type === 'maj' ? 'MOIS SUIVANT' : 'PAIEMENT REÇU')}</span><Sauve /></div>
-        <h1 class="qc-titre qc-titre--accueil">{tq(type === 'maj' ? 'Ton bilan du mois' : 'Ton programme commence ici')}</h1>
+        <div class="qc-haut"><span class="qc-sur">{tq(ENT(type) ? 'COACHING ENTRAÎNEMENT' : type === 'maj' ? 'MOIS SUIVANT' : 'PAIEMENT REÇU')}</span><Sauve /></div>
+        <h1 class="qc-titre qc-titre--accueil">{tq(ENT(type) ? 'Ton programme d\u2019entraînement commence ici' : type === 'maj' ? 'Ton bilan du mois' : 'Ton programme commence ici')}</h1>
         <div class="qc-carte qc-liste">
           {sections.map((s, k) => {
             const ok = k < i && complete(s);
@@ -431,7 +452,7 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
 
   // ----- Recapitulatif + consentements K -----
   if (vue === 'recap') {
-    const manqueK = CONSENTEMENTS.filter(c => c.requis && !consent[c.id]);
+    const manqueK = CONSENTS.filter(c => c.requis && !consent[c.id]);
     return (
       <div class="pg-coach pg-qc">
         <Entete sansBandeau retour={() => ouvrir(sections.length - 1)} />
@@ -454,9 +475,9 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
             </div>
           );
         })}
-        {alerteSante(rep) && <p class="qc-alerte">{tq('Tu as signalé un point de santé. Montre ton plan à ton médecin avant de le commencer.')}</p>}
+        {alerteDe(type, rep) && <p class="qc-alerte">{tq(ENT(type) ? 'Tu as signalé un point de santé. Demande l\u2019accord de ton médecin avant de commencer ton programme.' : 'Tu as signalé un point de santé. Montre ton plan à ton médecin avant de le commencer.')}</p>}
         <div class="qc-carte">
-          {CONSENTEMENTS.map(c => {
+          {CONSENTS.map(c => {
             const liens = (c.liens || []).filter(([, cle]) => LIENS_LEGAUX[cle]);
             return (
               <label class="qc-consent">
@@ -469,8 +490,8 @@ export function QuestionnaireCoach({ type, onFermer, onTermine }) {
           })}
         </div>
         <button class={'qc-cta' + (manqueK.length ? ' qc-cta--gris' : '')} disabled={manqueK.length > 0}
-          onClick={() => { if (!manqueK.length) onTermine(nettoyer(), alerteSante(rep), { allergieGrave: allergieGrave(rep), consentements: consent }); }}>{tq('Envoyer à mon coach')}</button>
-        <p class="qc-note">{tq("Tu recevras ton plan dans l'app et par e-mail.")}</p>
+          onClick={() => { if (!manqueK.length) onTermine(nettoyer(), alerteDe(type, rep), { allergieGrave: ENT(type) ? false : allergieGrave(rep), consentements: consent }); }}>{tq('Envoyer à mon coach')}</button>
+        <p class="qc-note">{tq(ENT(type) ? "Ton coach te renverra ton programme d'entraînement dans l'app." : "Tu recevras ton plan dans l'app et par e-mail.")}</p>
       </div>
     );
   }
