@@ -223,14 +223,22 @@ function SaisieBarre({ v, maj }) {
  *  se montrent au toucher ; autres types = − / + avec le pas de l'app. */
 function CaseCharge({ type, v, ouvert, basculer, maj }) {
   if (type === 'barre') {
+    // Comme la maquette A : − / + autour du total (± 1,25 kg par cote), et les
+    // disques detailles au toucher du lien « disques ».
     const tot = totalBarre(v.disques);
     const cote = v.disques.reduce((a, d) => a + d, 0);
+    const plus = () => maj({ disques: [...v.disques, 1.25].sort((a, b) => b - a) });
+    const moins = () => { if (!v.disques.length) return; const l = v.disques.slice(); l.pop(); maj({ disques: l }); };
     return (
-      <button type="button" class={'ce-a-case ce-a-case-bt' + (ouvert ? ' ouvert' : '')} onClick={basculer} aria-expanded={ouvert}>
+      <div class={'ce-a-case' + (ouvert ? ' ouvert' : '')}>
         <span class="ce-a-lib">{t('ce_charge')}</span>
-        <b class="ce-a-gros">{kgTexte(tot)} kg</b>
-        <span class="ce-a-aide">{cote ? t('ce_par_cote', { kg: kgTexte(cote) }) : t('ce_barre_seule')} · {ouvert ? t('ce_fermer_disques') : t('ce_disques_bt')}</span>
-      </button>
+        <div class="ce-a-pm">
+          <button type="button" aria-label="−" onClick={moins}>−</button>
+          <b class="ce-a-gros">{kgTexte(tot)} kg</b>
+          <button type="button" aria-label="+" onClick={plus}>+</button>
+        </div>
+        <span class="ce-a-aide">{cote ? t('ce_par_cote', { kg: kgTexte(cote) }) : t('ce_barre_seule')} · <button type="button" class="ce-a-lien" aria-expanded={ouvert} onClick={basculer}>{t('ce_disques_lien')}</button></span>
+      </div>
     );
   }
   const pas = pasCharge(type, v.kg);
@@ -253,7 +261,7 @@ function CaseReps({ v, cible, maj }) {
   const poser = (n) => maj({ reps: Math.max(0, Math.min(200, n)) });
   return (
     <div class="ce-a-case">
-      <span class="ce-a-lib">{t('ce_reps_faites')}</span>
+      <span class="ce-a-lib">{t('ce_reps_court')}</span>
       <div class="ce-a-pm">
         <button type="button" aria-label="−" onClick={() => poser((val === null ? (base || 1) : val) - 1)}>−</button>
         <input type="number" inputMode="numeric" min="0" max="200" step="1" value={val === null ? '' : val}
@@ -440,7 +448,11 @@ export function CoachEntrainement() {
                 <CaseReps v={v} cible={rs[a]} maj={(c) => majSerie(x.id, a, c)} />
               </div>
               {x.type === 'barre' && disques === x.id && <SaisieBarre v={v} maj={(c) => majSerie(x.id, a, c)} />}
-              <button type="button" class={'ce-a-valider' + (v.fait ? ' ok' : '')} onClick={() => { if (!v.fait) { cocher(x.id, a); setDisques(null); } }}>
+              <button type="button" class={'ce-a-valider' + (v.fait ? ' ok' : '')} onClick={() => { if (v.fait) return;
+                  // Rien tape : les reps visees (le chiffre affiche) sont retenues.
+                  const base = parseInt(String(rs[a] || ''), 10);
+                  if ((v.reps === null || v.reps === undefined) && Number.isFinite(base)) majSerie(x.id, a, { reps: base });
+                  cocher(x.id, a); setDisques(null); }}>
                 {v.fait ? t('ce_validee', { n: a + 1 }) : t('ce_valider', { n: a + 1 })}
               </button>
               <NoteExo valeur={e.note || ''} avant={derniereNote(x.id, cle)} maj={(nv) => majNote(x.id, nv)} />
