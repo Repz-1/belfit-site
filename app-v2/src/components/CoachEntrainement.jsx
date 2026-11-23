@@ -53,7 +53,8 @@ let IMG_PAR_NOM = null;
 // qu'une photo corrigee dans la base le soit aussi dans les programmes deja envoyes.
 function imgDe(x) {
   if (!IMG_PAR_NOM) { IMG_PAR_NOM = {}; Object.values(EXERCISES).forEach((l) => l.forEach((e) => { IMG_PAR_NOM[e.nom] = e.imgId; })); }
-  return IMG_PAR_NOM[x.nom] || x.imgId || null;
+  // Exercice connu de la base : sa photo (ou son absence voulue) fait foi.
+  return x.nom in IMG_PAR_NOM ? (IMG_PAR_NOM[x.nom] || null) : (x.imgId || null);
 }
 
 const isoJour = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
