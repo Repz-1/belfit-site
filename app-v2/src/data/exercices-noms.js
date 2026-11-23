@@ -197,6 +197,7 @@ export const NOMS_EXOS = {
   "Extension Triceps Allongé Un Bras (Haltère)": ["Lying One-Arm Triceps Extension (Dumbbell)","Liggende Triceps Extensie Eén Arm (Dumbbell)"],
   "Extension Triceps Assis Penché (Haltère)": ["Seated Bent-Over Triceps Extension (Dumbbell)","Zittende Voorovergebogen Tricepsextensie (Dumbbell)"],
   "Extension Triceps Assis Penché Un Bras (Haltère)": ["Seated Bent-Over Single-Arm Triceps Extension (Dumbbell)","Zittende Voorovergebogen Eenarmige Tricepsextensie (Dumbbell)"],
+  "Tirage Vertical Prise Neutre Large (Poulie)": ["Wide Neutral-Grip Lat Pulldown (Cable)","Lat Pulldown Brede Neutrale Greep (Kabel)"],
   "Extension Triceps Triangle ou Barre EZ (Poulie)": ["Triceps Pushdown V-Bar or EZ-Bar (Cable)","Tricepsextensie V-greep of EZ-stang (Kabel)"],
   "Extension Triceps Corde (Poulie)": ["Rope Triceps Extension (Cable)","Tricepsextensie met Touw (Kabel)"],
   "Extension Triceps Debout": ["Standing Triceps Extension","Staande Tricepsextensie"],
