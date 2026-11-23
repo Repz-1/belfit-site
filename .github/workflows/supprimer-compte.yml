@@ -1,0 +1,61 @@
+name: Supprimer un compte (admin)
+
+# Supprime UN compte par adresse exacte (saisie deux fois) : Firebase Auth,
+# users/{uid} + sous-collections, quotasIA/{uid}, pseudo reserve.
+# Sans confirme=OUI : SIMULATION. Comptes proprietaire/coach refuses.
+# Depot public : journal sans adresse ni uid (garde anti-adresse).
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Adresse exacte du compte a supprimer (une seule)"
+        required: true
+      email_confirmation:
+        description: "Retaper la meme adresse"
+        required: true
+      confirme:
+        description: "OUI pour supprimer reellement (sinon simulation)"
+        required: false
+        default: "NON"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supprimer-compte
+  cancel-in-progress: false
+
+jobs:
+  supprimer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Garde-fou (jamais de suppression en masse)
+        run: |
+          if grep -nE "listUsers\(|deleteUsers\(|collection\('users'\)\.get\(|\.where\(" tools/diagnostic/supprimer-compte.mjs; then
+            echo "Operation de masse detectee : arret."; exit 1
+          fi
+      - name: Cle du compte de service
+        env:
+          CLE: ${{ secrets.FIREBASE_SA_KEY }}
+        run: |
+          umask 077
+          printf '%s' "$CLE" > "$RUNNER_TEMP/cle.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/cle.json" >> "$GITHUB_ENV"
+      - name: Dependances
+        run: npm ci --prefix functions --no-audit --no-fund --ignore-scripts
+      - name: Suppression (journal sans adresse ni uid)
+        run: |
+          set -e
+          node tools/diagnostic/supprimer-compte.mjs > "$RUNNER_TEMP/journal.txt" 2>&1 || { st=$?; grep -qE '@' "$RUNNER_TEMP/journal.txt" || cat "$RUNNER_TEMP/journal.txt"; exit $st; }
+          if grep -qE '@' "$RUNNER_TEMP/journal.txt"; then
+            echo "Une adresse est apparue dans le journal : masque."; exit 1
+          fi
+          cat "$RUNNER_TEMP/journal.txt"
+      - name: Nettoyage
+        if: always()
+        run: rm -f "$RUNNER_TEMP/cle.json" "$RUNNER_TEMP/journal.txt"
