@@ -49,10 +49,11 @@ import '../styles/coach-entrainement.css';
 // 21/11 Raci : toucher un exercice montre ses photos (depart / arrivee).
 // Programmes plus anciens sans imgId : on le retrouve par le nom.
 let IMG_PAR_NOM = null;
+// 23/11 : la photo de la BASE passe avant celle gardee dans le programme, pour
+// qu'une photo corrigee dans la base le soit aussi dans les programmes deja envoyes.
 function imgDe(x) {
-  if (x.imgId) return x.imgId;
   if (!IMG_PAR_NOM) { IMG_PAR_NOM = {}; Object.values(EXERCISES).forEach((l) => l.forEach((e) => { IMG_PAR_NOM[e.nom] = e.imgId; })); }
-  return IMG_PAR_NOM[x.nom] || null;
+  return IMG_PAR_NOM[x.nom] || x.imgId || null;
 }
 
 const isoJour = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');

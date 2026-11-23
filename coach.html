@@ -1810,7 +1810,7 @@ function dessinerEnt() {
       const r = el('div', 'ent-exo');
       // 21/11 Raci : toucher le nom montre les photos de l'exercice.
       const nomB = el('b', 'ent-nom', x.nom);
-      const img = x.imgId || (BASE_EXOS.find((y) => y.nom === x.nom) || {}).imgId;
+      const img = (BASE_EXOS.find((y) => y.nom === x.nom) || {}).imgId || x.imgId;   // 23/11 : la base corrigee passe avant
       r.append(nomB);
       if (img) {
         nomB.addEventListener('click', () => {

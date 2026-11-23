@@ -80,7 +80,7 @@ export const EXERCISES = {
     {nom:'Rowing Incliné (Haltère)', meta:'4 séries × 8-10 reps', imgId:'Dumbbell_Incline_Row', lvl:1, mat:'halteres'},
     // 21/11 Raci : banc a 45°, torse contre le banc, barre guidee en dessous. Absent de
     // Free Exercise DB : photo du rowing incline aux halteres (meme position).
-    {nom:'Rowing Incliné (Machine Smith)', meta:'4 séries × 8-10 reps', imgId:'Dumbbell_Incline_Row', lvl:1, mat:'machine'},
+    {nom:'Rowing Incliné (Machine Smith)', meta:'4 séries × 8-10 reps', imgId:'Smith_Machine_Bent_Over_Row', lvl:1, mat:'machine'},
     {nom:'Rowing Penché (Barre)', meta:'4 séries × 8-10 reps', imgId:'Bent_Over_Barbell_Row', lvl:1, mat:'barre'},
     {nom:'Rowing Penché (Haltère)', meta:'4 séries × 8-10 reps', imgId:'Bent_Over_Two-Dumbbell_Row', lvl:1, mat:'halteres'},
     {nom:'Rowing Penché (Machine Smith)', meta:'4 séries × 8-10 reps', imgId:'Smith_Machine_Bent_Over_Row', lvl:1, mat:'machine'},
