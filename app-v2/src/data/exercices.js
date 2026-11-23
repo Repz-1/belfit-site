@@ -178,7 +178,7 @@ export const EXERCISES = {
     {nom:'Curl Biceps Debout (Haltère)', meta:'3 séries × 12 reps', imgId:'Standing_Inner-Biceps_Curl', lvl:2, mat:'halteres'},
     {nom:'Curl Biceps Debout (Poulie)', meta:'3 séries × 12 reps', imgId:'Standing_Biceps_Cable_Curl', lvl:1, mat:'machine'},
     {nom:'Curl Biceps Debout Un Bras (Poulie)', meta:'3 séries × 12 reps', imgId:'Standing_One-Arm_Cable_Curl', lvl:2, mat:'machine'},
-    {nom:'Curl Biceps Incliné (Haltère)', meta:'3 séries × 12 reps', imgId:'Dumbbell_Prone_Incline_Curl', lvl:2, mat:'halteres'},
+    {nom:'Curl Biceps Incliné (Haltère)', meta:'3 séries × 12 reps', imgId:'Incline_Dumbbell_Curl', lvl:2, mat:'halteres'},
     {nom:'Curl Biceps Incliné Allongé (Barre)', meta:'3 séries × 12 reps', imgId:'Barbell_Curls_Lying_Against_An_Incline', lvl:1, mat:'barre'},
     {nom:'Curl Biceps Incliné Alterné (Haltère)', meta:'3 séries × 12 reps', imgId:'Alternate_Incline_Dumbbell_Curl', lvl:1, mat:'halteres'},
     {nom:'Curl Biceps Incliné Debout Un Bras (Haltère)', meta:'3 séries × 12 reps', imgId:'Standing_One-Arm_Dumbbell_Curl_Over_Incline_Bench', lvl:1, mat:'halteres'},
