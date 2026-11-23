@@ -1992,6 +1992,21 @@ $('entEnvoi').addEventListener('click', () => {
   } catch (e) { /* lien abime : on ignore */ }
   history.replaceState(null, '', location.pathname + location.search);
 })();
+// 23/11 Raci (« c'est quoi ce lien de 3 km ») : lien COURT #b=<code>. Le programme
+// est un fichier /b/<code>.json publie avec le site ; il devient le brouillon.
+(function chargerLienCourt() {
+  const m = /[#&]b=([a-z0-9]{6,32})/.exec(location.hash || '');
+  if (!m) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  fetch('/b/' + m[1] + '.json', { cache: 'no-store' }).then((r) => r.json()).then((d) => {
+    if (!d || !aDesExos(d.seances)) return;
+    const le = new Date().toISOString();
+    if (d.uid) localStorage.setItem(CLE_BR_ENT(d.uid), JSON.stringify({ le, seances: d.seances, note: d.note || '' }));
+    localStorage.setItem(CLE_ENT_COURANT, JSON.stringify({ le, uid: d.uid || null, clientTxt: '', seances: d.seances, note: d.note || '', picker: null }));
+    localStorage.setItem(CLE_MODE, 'ent');
+    location.reload();
+  }).catch(() => { /* lien inconnu : on ignore */ });
+})();
 restaurerCourantEnt();
 try { if (localStorage.getItem(CLE_MODE) === 'ent' || aDesExos((lireCourantEnt() || {}).seances)) poserMode(true); } catch (e) { /* rien */ }
 
