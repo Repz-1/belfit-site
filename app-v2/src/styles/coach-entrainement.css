@@ -153,3 +153,14 @@
   padding: 12px 14px; margin: 0 0 12px; }
 .ce-bandeau-quest p { flex: 1; margin: 0; font-size: 13.5px; line-height: 1.4; color: #123C86; font-weight: 600; }
 .ce-bandeau-quest button { border: 0; border-radius: 12px; background: #1F5FD1; color: #fff; font: inherit; font-size: 13px; font-weight: 700; padding: 9px 12px; }
+
+/* 23/11 : note du client par exercice. */
+.ce-note-exo { margin-top: 10px; }
+.ce-note-bt { border: 0; background: none; color: #1F5FD1; font: inherit; font-size: 13px; font-weight: 600; padding: 4px 0; }
+.ce-note-champ { width: 100%; box-sizing: border-box; border: 1.5px solid #DCE6F7; border-radius: 12px; padding: 9px 11px;
+  font: inherit; font-size: 14px; color: #16130F; background: #FBFCFF; resize: vertical; }
+.ce-note-champ:focus { outline: none; border-color: #1F5FD1; }
+.ce-note-avant { margin: 0 0 4px; font-size: 12.5px; color: #8A8279; font-style: italic; }
+
+/* 23/11 : repetitions faites par serie. */
+.ce-reps-faites { margin-top: 10px; }

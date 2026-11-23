@@ -42,6 +42,17 @@ export function noterSeance(cle, entree) {
   if (u) sauvegarder(u, { carnetCoach: tout });
 }
 
+/** 23/11 : derniere note du client sur cet exercice (hors cle exclue). */
+export function derniereNote(idExo, exclure) {
+  const c = carnetCoach.value;
+  for (const k of Object.keys(c).sort().reverse()) {
+    if (k === exclure) continue;
+    const x = c[k] && c[k].exos && c[k].exos[idExo];
+    if (x && x.note) return x.note;
+  }
+  return '';
+}
+
 /** Derniere valeur notee pour cet exercice (hors cle exclue). */
 export function dernierPour(idExo, exclure) {
   const c = carnetCoach.value;

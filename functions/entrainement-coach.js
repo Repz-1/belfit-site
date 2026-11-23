@@ -82,6 +82,7 @@ function resumeCarnet(carnet) {
               detail: texte(x.detail, 80),
               faites: Array.isArray(x.faites) ? x.faites.filter(Boolean).length : 0,
               series: Array.isArray(x.faites) ? x.faites.length : 0,
+              note: texte(x.note, 300),   // 23/11 : note du client sur l'exercice
             };
           }),
         };
