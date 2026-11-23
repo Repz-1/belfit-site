@@ -212,6 +212,7 @@ export const EXERCISES = {
     {nom:'Épaulé (Kettlebell)', meta:'4 séries × 8-10 reps', imgId:'Bottoms-Up_Clean_From_The_Hang_Position', lvl:2, mat:'halteres'},
   ],
   triceps: [
+    {nom:'Extension Triceps Triangle ou Barre EZ (Poulie)', meta:'3 séries × 12 reps', imgId:'Triceps_Pushdown_-_V-Bar_Attachment', lvl:1, mat:'machine'},
     {nom:'Barre au Front Allongé (Barre EZ)', meta:'3 séries × 12 reps', imgId:'Lying_Triceps_Press', lvl:2, mat:'barre'},
     {nom:'Extension Triceps Assis au-dessus de la Tête (Haltère)', meta:'3 séries × 12 reps', imgId:'Seated_Triceps_Press', lvl:1, mat:'halteres'},
     {nom:'Barre au Front Prise Serrée Allongé (Barre EZ)', meta:'3 séries × 12 reps', imgId:'Lying_Close-Grip_Barbell_Triceps_Press_To_Chin', lvl:2, mat:'barre'},
