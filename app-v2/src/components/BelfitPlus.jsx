@@ -214,7 +214,9 @@ export function chargerProgramme() {
       programmeBrut.value = (d && d.programme) || null;
       entrainementCoach.value = (d && d.entrainementCoach) || null;
       planRetireLe.value = retireDe(d);
-      dossierCoach.value = { questionnaire: (d && d.questionnaireCoach) || null, commande: (d && d.commandeCoach) || null, brouillon: (d && d.brouillonCoach) || null, accesPro: (d && d.accesPro) || null, retireLe: retireDe(d) };
+      dossierCoach.value = { questionnaire: (d && d.questionnaireCoach) || null, commande: (d && d.commandeCoach) || null, brouillon: (d && d.brouillonCoach) || null, accesPro: (d && d.accesPro) || null, retireLe: retireDe(d),
+        // 23/11 : questionnaire entrainement (ouvert par le coach apres virement, puis rempli).
+        questEntOuvert: (d && d.questEntOuvert) || null, questEnt: (d && d.questionnaireEntrainement) || null };
       // 21/10 Raci : ajustements illimites pendant le mois de coaching,
       // plus de compteur affiche.
       ajustements.value = {restants: null, quota: null};
@@ -259,9 +261,10 @@ export function relireProgramme() {
       if (!memeContenu(entrainementCoach.peek(), ent)) entrainementCoach.value = ent;
       if (planRetireLe.peek() !== retireDe(d)) planRetireLe.value = retireDe(d);
       const avant = dossierCoach.peek();
-      const dos = { questionnaire: d.questionnaireCoach || null, commande: d.commandeCoach || null, accesPro: d.accesPro || null, retireLe: retireDe(d) };
+      const dos = { questionnaire: d.questionnaireCoach || null, commande: d.commandeCoach || null, accesPro: d.accesPro || null, retireLe: retireDe(d),
+        questEntOuvert: d.questEntOuvert || null, questEnt: d.questionnaireEntrainement || null };
       // `brouillon` reste celui de la memoire : il s'ecrit en differe depuis ce telephone.
-      if (!['questionnaire', 'commande', 'accesPro', 'retireLe'].every(k => memeContenu(avant[k] || null, dos[k]))) dossierCoach.value = { ...avant, ...dos };
+      if (!['questionnaire', 'commande', 'accesPro', 'retireLe', 'questEntOuvert', 'questEnt'].every(k => memeContenu(avant[k] || null, dos[k]))) dossierCoach.value = { ...avant, ...dos };
     })
     .catch(() => { /* hors ligne ou erreur : on garde le plan deja charge */ })
     .finally(() => { relectureEnCours = false; });

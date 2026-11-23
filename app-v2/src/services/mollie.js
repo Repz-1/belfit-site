@@ -43,8 +43,8 @@ async function appeler(nom, corps) {
 
 /** 01/11 (Raci) : previent le coach par e-mail qu'un questionnaire est arrive.
  *  Le serveur relit le questionnaire et n'envoie qu'une fois par envoi. Jamais bloquant. */
-export function signalerQuestionnaire() {
-  return appeler('signalerQuestionnaire', {}).catch(() => null);
+export function signalerQuestionnaire(type) {
+  return appeler('signalerQuestionnaire', type === 'entrainement' ? { type } : {}).catch(() => null);
 }
 
 let dejaDemande = null;   // uid pour lequel on a deja demande

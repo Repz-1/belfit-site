@@ -96,11 +96,14 @@ function gestionnaireQuestionnaire(deps = {}) {
     } catch (e) { res.status(401).json({ok: false}); return; }
     try {
       const s = await (deps.db || db()).collection("users").doc(jeton.uid).get();
-      const q = s.exists ? (s.data() || {}).questionnaireCoach : null;
+      // 23/11 : { type: "entrainement" } -> questionnaire du coaching entrainement.
+      const ent = !!(req.body && req.body.type === "entrainement");
+      const q = s.exists ? (s.data() || {})[ent ? "questionnaireEntrainement" : "questionnaireCoach"] : null;
       if (!q || !q.envoyeLe) { res.json({ok: true, envoye: false}); return; }
       const id = await identite(jeton.uid, {email: jeton.email, reponses: q.reponses});
-      const envoye = await alerterUneFois("questionnaire_" + jeton.uid + "_" + q.envoyeLe, {
-        sujet: "Questionnaire reçu – programme à préparer" + (q.alerteSante || q.allergieGrave ? " (⚠ santé/allergie)" : ""),
+      const envoye = await alerterUneFois((ent ? "questEnt_" : "questionnaire_") + jeton.uid + "_" + q.envoyeLe, {
+        sujet: (ent ? "Questionnaire ENTRAÎNEMENT reçu – programme à préparer" : "Questionnaire reçu – programme à préparer") +
+          (q.alerteSante || q.allergieGrave ? " (⚠ santé" + (ent ? "" : "/allergie") + ")" : ""),
         lignes: [["Client", id.nom], ["E-mail", id.email], ["Envoyé le", q.envoyeLe],
           ["Alerte santé", q.alerteSante ? "oui" : "non"], ["Allergie grave", q.allergieGrave ? "oui" : "non"]],
       }, deps);

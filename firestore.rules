@@ -27,7 +27,9 @@ service cloud.firestore {
               // 21/11 : anciens programmes et suppression par le coach (espaceCoach).
               'programmesHistorique', 'coachRetireLe',
               // 21/11 : programme d'entrainement envoye par le coach.
-              'entrainementCoach'];
+              'entrainementCoach',
+              // 23/11 : questionnaire entrainement ouvert par le coach (apres virement).
+              'questEntOuvert'];
     }
     function nutriCles() {
       return ['repas', 'objectifs', 'calculBaseFait', 'poidsCalcul', 'profilBesoins',

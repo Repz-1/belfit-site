@@ -9,7 +9,11 @@
 // ============================================================
 import { useState, useEffect } from 'preact/hooks';
 import { signal } from '@preact/signals';
-import { entrainementCoach } from './BelfitPlus.jsx';
+import { entrainementCoach, dossierCoach } from './BelfitPlus.jsx';
+import { QuestionnaireCoach, effacerBrouillon } from './QuestionnaireCoach.jsx';
+import { getApps } from 'firebase/app';
+import { utilisateur } from '../services/firebase.js';
+import { signalerQuestionnaire } from '../services/mollie.js';
 import { carnetCoach, carnetCharge, noterSeance, dernierPour } from '../store/carnet-coach.js';
 import { DISQUES, totalBarre, texteDisques, pasCharge, kgTexte, repsParSerie, repsTexte } from '../data/charge-coach.js';
 import { t } from '../i18n/index.js';
@@ -101,7 +105,53 @@ function chargeSerie(type, v) {
 }
 const kgSerie = (type, v) => (type === 'barre' ? totalBarre(v.disques) : type === 'corps' ? null : v.kg);
 
-function Indisponible() {
+// 23/11 : questionnaire entrainement. Le coach l'ouvre apres reception du virement
+// (questEntOuvert, champ serveur) ; le client le remplit ici. Rien sur le paiement.
+function etatQuestEnt() {
+  const d = dossierCoach.value || {};
+  const ouvert = d.questEntOuvert && d.questEntOuvert.le;
+  const q = d.questEnt;
+  const envoye = q && q.envoyeLe;
+  return { ouvert: !!ouvert, aRemplir: !!ouvert && (!envoye || envoye < ouvert), envoye: !!ouvert && !!envoye && envoye >= ouvert, q };
+}
+function precedentesEnt(q) {
+  if (!q || !q.reponses) return null;
+  const r = {};
+  Object.entries(q.reponses).forEach(([id, v]) => {
+    if (!v || typeof v !== 'object') return;
+    const { texte, section, question, ...brut } = v;
+    if (Object.keys(brut).length) r[id] = brut;
+  });
+  return Object.keys(r).length ? r : null;
+}
+function envoyerQuestEnt(reponses, alerte, extra = {}) {
+  const q = { type: 'entrainement', reponses, alerteSante: !!alerte, consentements: extra.consentements || {}, envoyeLe: new Date().toISOString() };
+  dossierCoach.value = { ...dossierCoach.value, questEnt: q };
+  const u = utilisateur.value;
+  if (!u || !getApps().length) return Promise.resolve();
+  return import('firebase/firestore').then(({ getFirestore, doc, setDoc, deleteField }) =>
+    setDoc(doc(getFirestore(getApps()[0]), 'users', u.uid), { questionnaireEntrainement: q, brouillonEnt: deleteField() }, { merge: true }))
+    .then(() => { signalerQuestionnaire('entrainement'); })   // e-mail au coach (serveur, une fois)
+    .catch((e) => console.warn('questionnaire entrainement non envoye', e));
+}
+function CarteQuestEnt({ etat, ouvrir }) {
+  if (etat.aRemplir) return (
+    <div class="ce-voile-carte ce-quest" role="status">
+      <p class="ce-voile-t">{t('ce_quest_t')}</p>
+      <p class="ce-voile-txt">{t('ce_quest_txt')}</p>
+      <button type="button" class="ce-quest-bt" onClick={ouvrir}>{t('ce_quest_bt')}</button>
+    </div>
+  );
+  return (
+    <div class="ce-voile-carte ce-quest" role="status">
+      <p class="ce-voile-t">{t('ce_quest_ok_t')}</p>
+      <p class="ce-voile-txt">{t('ce_quest_ok_txt')}</p>
+    </div>
+  );
+}
+
+function Indisponible({ ouvrir }) {
+  const etat = etatQuestEnt();
   return (
     <div class="ce-indispo">
       <div class="ce-flou" aria-hidden="true">
@@ -111,6 +161,7 @@ function Indisponible() {
         ))}
       </div>
       <div class="ce-voile">
+        {etat.ouvert ? <CarteQuestEnt etat={etat} ouvrir={ouvrir} /> : (
         <div class="ce-voile-carte" role="status">
           <span class="ce-cadenas" aria-hidden="true">
             <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" /></svg>
@@ -118,6 +169,7 @@ function Indisponible() {
           <p class="ce-voile-t">{t('ce_indispo_t')}</p>
           <p class="ce-voile-txt">{t('ce_indispo_txt')}</p>
         </div>
+        )}
       </div>
     </div>
   );
@@ -177,8 +229,15 @@ export function CoachEntrainement() {
   const livre = ent && ent.livreLe;
   const charge = carnetCharge.value;
   useEffect(() => { setSaisie(etatInitial(seance, cle)); setEnregistre(false); }, [cle, livre, charge]);
+  const [remplir, setRemplir] = useState(false);
+  const etatQ = etatQuestEnt();
 
-  if (!ent || !seances.length) return <Indisponible />;
+  if (remplir) return (
+    <QuestionnaireCoach type="entrainement" precedentes={precedentesEnt(etatQ.q)}
+      onFermer={() => setRemplir(false)}
+      onTermine={(reponses, alerte, extra) => { envoyerQuestEnt(reponses, alerte, extra); effacerBrouillon('entrainement'); setRemplir(false); }} />
+  );
+  if (!ent || !seances.length) return <Indisponible ouvrir={() => setRemplir(true)} />;
 
   const jours = t('ce_jours').split(',');
   // Modifie la serie i de l'exercice id ; `actif` change la serie en cours.
@@ -214,6 +273,12 @@ export function CoachEntrainement() {
     <div class="ce-page">
       <p class="ce-h">{t('ce_titre')}</p>
       <p class="ce-sous">{t('ce_recu', { q: depuisTxt(ent.livreLe) })}</p>
+      {etatQ.aRemplir && (
+        <div class="ce-bandeau-quest" role="status">
+          <p>{t('ce_quest_bandeau')}</p>
+          <button type="button" onClick={() => setRemplir(true)}>{t('ce_quest_bt')}</button>
+        </div>
+      )}
 
       {seances.length > 1 && (
         <div class="ce-seances" role="tablist">

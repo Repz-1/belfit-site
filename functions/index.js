@@ -1797,6 +1797,10 @@ function dossierDe(uid, d, email) {
     allergieGrave: !!q.allergieGrave,
     // 21/11 : programme d'entrainement envoye et poids notes par le client.
     entrainement: d.entrainementCoach || null,
+    // 23/11 : questionnaire entrainement (ouvert apres virement, puis rempli par le client).
+    questEntOuvert: (d.questEntOuvert && d.questEntOuvert.le) || null,
+    questEnt: d.questionnaireEntrainement ? {envoyeLe: d.questionnaireEntrainement.envoyeLe || null,
+      alerteSante: !!d.questionnaireEntrainement.alerteSante, reponses: d.questionnaireEntrainement.reponses || {}} : null,
     carnet: entrainementCoach.resumeCarnet(d.v2Data && d.v2Data.carnetCoach),
     reponses: rep,
   };
@@ -2041,6 +2045,41 @@ exports.espaceCoach = onRequest(
           } catch (e) { console.error("Envoi entrainement :", e); }
         }
         res.json({ok: true, client: {uid: client.uid, email: client.email || null}, mailEnvoye, livreLe: n.entrainement.livreLe});
+        return;
+      }
+
+      // 23/11 Raci : virement de 50 EUR recu -> le coach ouvre le questionnaire
+      // entrainement du client. Aucun paiement dans l'app ; le client est
+      // prevenu par e-mail (lien vers l'app).
+      if (action === "ouvrirQuestEnt") {
+        const cible = String(corps.client || "").trim();
+        if (!cible) { res.status(400).json({ok: false, motif: "client"}); return; }
+        const client = await trouverCompte(cible);
+        if (!client) { res.status(404).json({ok: false, motif: "introuvable"}); return; }
+        const le = new Date().toISOString();
+        await db.collection("users").doc(client.uid).set({questEntOuvert: {le, par: "espace-coach"}}, {merge: true});
+        let mailEnvoye = false;
+        if (client.email) {
+          try {
+            const envoi = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {"Authorization": `Bearer ${RESEND_API_KEY.value()}`, "Content-Type": "application/json"},
+              body: JSON.stringify({
+                from: EXPEDITEUR, reply_to: "coach@belfit.be", to: [client.email],
+                subject: "Ton questionnaire entraînement t'attend",
+                html: `<!doctype html><html><body style="margin:0;background:#F4F3F0"><table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:28px 14px">
+  <table width="100%" style="max-width:520px;background:#fff;border-radius:18px" cellpadding="0" cellspacing="0"><tr><td style="padding:26px">
+    <p style="font:700 22px Helvetica,Arial,sans-serif;color:#16130F;margin:0 0 8px">Ton questionnaire entraînement t'attend</p>
+    <p style="font:400 14px/1.5 Helvetica,Arial,sans-serif;color:#57514A;margin:0 0 16px">Ton coach a ouvert ton questionnaire. Réponds-y en 8 minutes environ : il construit ton programme à partir de tes réponses. Ouvre BELFIT, page Aujourd'hui, puis « Entraînement » tout en haut.</p>
+    <p style="margin:0"><a href="https://www.belfit.be/v2/?onglet=journal" style="display:inline-block;background:#1F5FD1;color:#fff;text-decoration:none;font:600 14px Helvetica,Arial,sans-serif;padding:12px 20px;border-radius:12px">Remplir mon questionnaire</a></p>
+  </td></tr></table></td></tr></table></body></html>`,
+              }),
+            });
+            mailEnvoye = envoi.ok;
+            if (!envoi.ok) console.error("Resend (questionnaire entrainement) :", await envoi.text());
+          } catch (e) { console.error("Envoi questionnaire entrainement :", e); }
+        }
+        res.json({ok: true, client: {uid: client.uid, email: client.email || null}, mailEnvoye, ouvertLe: le});
         return;
       }
 
