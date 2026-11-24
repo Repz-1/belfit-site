@@ -207,3 +207,10 @@
 .ce-a-pm input { font-weight: 700; font-size: 24px; }
 .ce-a-pm input::placeholder { color: #16130F; opacity: 1; }
 .ce-a-case.ouvert { box-shadow: inset 0 0 0 1.5px #1F5FD1; }
+
+/* 24/11 Raci : plus de separation entre les exercices. En mode Entrainement, le
+   fond de la page s'assombrit legerement pour faire ressortir les cartes blanches,
+   et l'ecart entre deux cartes grandit. */
+.pg-journal:has(.ce-page) { --fond: #E7E2DA; }
+.ce-page .ce-carte { margin-bottom: 18px; border-color: rgba(28,24,18,.07);
+  box-shadow: 0 1px 2px rgba(60,48,30,.06), 0 8px 22px rgba(60,48,30,.08); }
