@@ -214,3 +214,10 @@
 .pg-journal:has(.ce-page) { --fond: #E7E2DA; }
 .ce-page .ce-carte { margin-bottom: 18px; border-color: rgba(28,24,18,.07);
   box-shadow: 0 1px 2px rgba(60,48,30,.06), 0 8px 22px rgba(60,48,30,.08); }
+
+/* 24/11 Raci : une serie faite reste en VERT (ligne + coche). */
+.ce-a-ligne.fait { background: #EAF6EE; border-color: #BFE3CB; }
+.ce-a-ligne.fait.on { border-color: #1E9E5A; }
+.ce-a-ligne.fait .ce-a-num, .ce-a-ligne.fait .ce-a-val { color: #17603A; }
+.ce-a-ligne.fait .ce-coche.on { background: #1E9E5A; border-color: #1E9E5A; color: #fff; }
+.ce-a-valider.ok { background: #EAF6EE; color: #17603A; }
