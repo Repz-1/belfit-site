@@ -221,3 +221,6 @@
 .ce-a-ligne.fait .ce-a-num, .ce-a-ligne.fait .ce-a-val { color: #17603A; }
 .ce-a-ligne.fait .ce-coche.on { background: #1E9E5A; border-color: #1E9E5A; color: #fff; }
 .ce-a-valider.ok { background: #EAF6EE; color: #17603A; }
+
+/* 24/11 : annonce « programme d'entrainement recu » (reprend .ap-*). */
+.ae-txt { margin: 4px 0 18px; text-align: center; color: #5B554C; font-size: 15px; }

@@ -3,6 +3,7 @@
 // ============================================================
 export const ENT_COACH = {
   fr: {
+    ae_nouveau: 'Ton programme d\'entraînement est arrivé', ae_maj: 'Ton programme d\'entraînement a été mis à jour', ae_seance: '{n} séance préparée par ton coach.', ae_seances: '{n} séances préparées par ton coach.', ae_voir: 'Voir mon programme', ae_plus_tard: 'Plus tard',
     ce_st_sub: 'Ton programme coach · 8 dernières semaines', ce_st_semaine: 'séances cette semaine', ce_st_kg: 'soulevés cette semaine',
     ce_st_histo: 'Historique par séance', ce_st_vide: 'Note ta première séance dans Aujourd\'hui → Entraînement : elle apparaîtra ici.',
     ce_st_cta: 'Ouvrir mon entraînement', ce_st_indispo: 'Les stats d\'entraînement suivent le programme envoyé par ton coach.',
@@ -28,6 +29,7 @@ export const ENT_COACH = {
     ce_type_barre: 'Barre', ce_type_halteres: 'Haltères', ce_type_poulie: 'Poulie', ce_type_machine: 'Machine', ce_type_kettlebell: 'Kettlebell', ce_type_corps: 'Poids du corps',
   },
   en: {
+    ae_nouveau: 'Your training programme has arrived', ae_maj: 'Your training programme has been updated', ae_seance: '{n} session prepared by your coach.', ae_seances: '{n} sessions prepared by your coach.', ae_voir: 'See my programme', ae_plus_tard: 'Later',
     ce_st_sub: 'Your coach programme · last 8 weeks', ce_st_semaine: 'sessions this week', ce_st_kg: 'lifted this week',
     ce_st_histo: 'History by session', ce_st_vide: 'Log your first session in Today → Training: it will show up here.',
     ce_st_cta: 'Open my training', ce_st_indispo: 'Training stats follow the programme sent by your coach.',
@@ -53,6 +55,7 @@ export const ENT_COACH = {
     ce_type_barre: 'Barbell', ce_type_halteres: 'Dumbbells', ce_type_poulie: 'Cable', ce_type_machine: 'Machine', ce_type_kettlebell: 'Kettlebell', ce_type_corps: 'Bodyweight',
   },
   nl: {
+    ae_nouveau: 'Je trainingsprogramma is aangekomen', ae_maj: 'Je trainingsprogramma is bijgewerkt', ae_seance: '{n} sessie voorbereid door je coach.', ae_seances: '{n} sessies voorbereid door je coach.', ae_voir: 'Mijn programma bekijken', ae_plus_tard: 'Later',
     ce_st_sub: 'Je coachprogramma · laatste 8 weken', ce_st_semaine: 'trainingen deze week', ce_st_kg: 'getild deze week',
     ce_st_histo: 'Geschiedenis per training', ce_st_vide: 'Noteer je eerste training in Vandaag → Training: ze verschijnt hier.',
     ce_st_cta: 'Mijn training openen', ce_st_indispo: 'Trainingsstatistieken volgen het programma van je coach.',
