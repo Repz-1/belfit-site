@@ -24,6 +24,7 @@ import { ACCES_INVITE, ONGLET_VITRINE, demanderConnexion } from './acces-invite.
 import { VERSION_APP } from './version.js';
 import { BandeauConfirmation } from './components/BandeauConfirmation.jsx';
 import { AnnoncePlan } from './components/AnnoncePlan.jsx';
+import { AnnonceEntrainement } from './components/AnnonceEntrainement.jsx';
 import { repas, objectifs, donneesPretes, calculBaseFait, totauxJourAff, repasAffiches } from './store/journal.js';
 import { DayDashboard, ouvrirCalcDemande } from './components/DayDashboard.jsx';
 import { CoachBar } from './components/CoachBar.jsx';
@@ -841,6 +842,8 @@ export function App() {
       <BottomNav />
       {/* 9/11 : prevenir le client qu'un plan coach vient d'arriver. */}
       <AnnoncePlan />
+      {/* 24/11 : programme d'entrainement recu, revient tant qu'il n'est pas ouvert. */}
+      <AnnonceEntrainement />
     </>
   );
 }
