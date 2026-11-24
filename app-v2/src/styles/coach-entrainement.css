@@ -170,7 +170,7 @@
 .ce-a-tete { display: flex; flex-direction: column; gap: 3px; }
 .ce-a-nom { font-size: 17px; font-weight: 700; color: #16130F; line-height: 1.25; }
 .ce-a-sous { font-size: 13px; color: #57514A; }
-.ce-a-voir { border: 0; background: none; color: #1F5FD1; font: inherit; font-weight: 600; padding: 0 0 0 6px; }
+.ce-a-voir { border: 0; background: none; color: #E8603C; font: inherit; font-weight: 600; padding: 0 0 0 6px; }
 .ce-a-tab { margin-top: 12px; }
 .ce-a-ligne { display: grid; grid-template-columns: 40px 74px minmax(0, 1fr) 44px 36px; align-items: center; gap: 6px;
   padding: 8px 8px; border-radius: 12px; border: 1.5px solid transparent; font-size: 15px; color: #16130F; }
@@ -211,7 +211,7 @@
 /* 24/11 Raci : plus de separation entre les exercices. En mode Entrainement, le
    fond de la page s'assombrit legerement pour faire ressortir les cartes blanches,
    et l'ecart entre deux cartes grandit. */
-.pg-journal:has(.ce-page) { --fond: #E7E2DA; }
+.pg-journal:has(.ce-page) { --fond: #E9E6E1; } /* 24/11 Raci : gris clair beige */
 .ce-page .ce-carte { margin-bottom: 18px; border-color: rgba(28,24,18,.07);
   box-shadow: 0 1px 2px rgba(60,48,30,.06), 0 8px 22px rgba(60,48,30,.08); }
 
