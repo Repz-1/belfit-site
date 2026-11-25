@@ -23,7 +23,7 @@
 .ma-tag--req{background:#FDE7D6;color:#B34700}
 .ma-tag--ok{background:#DFF3E6;color:#2C7A4B}
 .ma-chips{display:flex;flex-wrap:wrap;gap:8px}
-.ma-ch{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 12px 8px 9px;border-radius:14px;background:#F4F3F0;border:none;font:500 14.5px 'Satoshi',system-ui,sans-serif;color:#151515;margin-bottom:6px;cursor:pointer}
+.ma-ch{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;outline:none;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 12px 8px 9px;border-radius:14px;background:#F4F3F0;border:none;font:500 14.5px 'Satoshi',system-ui,sans-serif;color:#151515;margin-bottom:6px;cursor:pointer}
 .ma-ch--on{background:#1E222B;color:#fff}
 .ma-ic{font-size:19px;line-height:1}
 .ma-alerte{color:#B34700;font-size:14px;font-weight:600;margin:4px 2px 0}
