@@ -50,6 +50,7 @@ import {
 import { totalPlanJour, totalJourPrevu } from '../services/recalage-jour.js';
 import { dossierCoach } from './BelfitPlus.jsx';
 import { preferencesDe, prochaineIdee, kcalIngs, lignesIdee } from '../services/autre-idee.js';
+import { MesAliments } from './MesAliments.jsx';
 
 /** Illustration d'un repas : cle posee, sinon deduite du nom (cleDuNom), sinon type. */
 export function illustration(r) {
@@ -520,8 +521,11 @@ export function Recherche({ repasId, phCourt }) {
 // repeter tant qu'il en reste), oubliees au rechargement.
 const ideesVues = new Map();
 
-export function MealCard({ r, aSuivre, fait, puce }) {
+export function MealCard({ r, aSuivre, fait, puce, heure }) {
   const tot = totauxRepas(r);
+  // 25/11 « Tu as quoi a portee de main ? »
+  const [frigo, setFrigo] = useState(false);
+  const prefsCoach = () => { const d = dossierCoach.value || {}; return preferencesDe((d.questionnaire && d.questionnaire.reponses) || (d.brouillon && d.brouillon.rep) || null); };
   const [msgIdee, setMsgIdee] = useState(null);
   const [tour, setTour] = useState(0);   // relance la petite rotation de l'icone a chaque clic
   const autreIdee = () => {
@@ -651,8 +655,15 @@ export function MealCard({ r, aSuivre, fait, puce }) {
             </svg>
             <span>Idée</span>
           </button>
+          {/* 25/11 Raci : « Tu as quoi à portée de main ? » — refaire ce repas avec ses aliments. */}
+          <button class="mc-idee-btn mc-idee-btn--pastille mc-frigo-btn" aria-label="Tu as quoi à portée de main ?" onClick={e => { e.stopPropagation(); setFrigo(true); }}>
+            <svg class="mc-frigo-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1.6 9.2a2 2 0 01-2 1.8H7.6a2 2 0 01-2-1.8z" /><path d="M8 9l3-5M16 9l-3-5" /><path d="M9.5 13v3M14.5 13v3" /></svg>
+            <span>Mes aliments</span>
+          </button>
         </div>
       )}
+      {frigo && <MesAliments r={r} prefs={prefsCoach()} heure={heure} fermer={() => setFrigo(false)}
+        apresChoix={(res) => { if (res && res.mode) { const tp = Math.round(totalPlanJour(repasJour.value)), tj = Math.round(totalJourPrevu(repasJour.value)); setMsgIdee(`Repas refait avec tes aliments. Total du jour : ${tj} kcal (plan ${tp}).`); } }} />}
 
       {/* 25/10 « Autre idee » : un autre repas aux calories proches, pour aujourd'hui
           seulement. Le plan d'origine reste de cote (ingsPlan) : « Revenir au plan ».
@@ -745,7 +756,7 @@ export function RepasTimeline({ r, aSuivre, fait }) {
           petite pastille grise en haut a droite de la carte, pleine largeur. */}
       {choix && <SelecteurHeure heure={heure} titre={'Heure du ' + String(r.nom).toLowerCase()}
         fermer={() => setChoix(false)} valider={(v) => { setHeureRepas(r.id, v); setChoix(false); }} />}
-      <MealCard r={r} aSuivre={aSuivre} fait={fait} puce={mange && !lectureSeule.value ? (
+      <MealCard r={r} aSuivre={aSuivre} fait={fait} heure={heure} puce={mange && !lectureSeule.value ? (
         <button class={'tl-puce tl-puce--reelle' + (choix ? ' tl-puce--edition' : '')}
           aria-label={`Heure du repas ${r.nom} : ${heure}. Modifier`} onClick={e => { e.stopPropagation(); setChoix(!choix); }}>
           ✓ {heure.replace(':', 'h')}

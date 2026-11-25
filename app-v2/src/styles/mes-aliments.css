@@ -1,0 +1,46 @@
+/* 25/11 « Tu as quoi a portee de main ? » — maquette validee par Raci. */
+.ma{position:fixed;inset:0;z-index:2000;background:#F4F3F0;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:'Satoshi',system-ui,sans-serif;color:#151515}
+.ma-page{position:relative;max-width:520px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom))}
+.ma:before{content:"";position:fixed;left:0;right:0;top:0;height:200px;background:radial-gradient(120% 100% at 50% 0,#FCEBD3 0,rgba(244,243,240,0) 70%);pointer-events:none}
+.ma-haut{display:flex;align-items:center;justify-content:space-between;margin:4px 0 18px}
+.ma-retour{width:44px;height:44px;border-radius:50%;background:#fff;border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.07);cursor:pointer}
+.ma-retour svg{width:20px;height:20px;fill:none;stroke:#151515;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ma-heure{font-family:'DM Mono',monospace;font-size:13px;border:1px solid #D7D3CB;border-radius:999px;padding:4px 10px;background:#fff}
+.ma-titre{font-size:25px;line-height:1.15;margin:0 0 6px;font-weight:700;letter-spacing:-.4px}
+.ma-sous{font-size:15px;color:#6E6A63;margin:0 0 18px}
+.ma-cible{background:#1E222B;border-radius:22px;padding:16px 18px;color:#F2F3F5;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.ma-cible small{display:block;font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:#A9AFBC;margin-bottom:4px}
+.ma-cible b{font-family:'DM Mono',monospace;font-weight:400;font-size:24px}
+.ma-cible i{font-style:normal;color:#A9AFBC}
+.ma-cible-d{text-align:right}
+.ma-cible .ma-vert{color:#6CC98E}
+.ma-carte{background:#fff;border-radius:22px;padding:16px 16px 10px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.ma-carte--req{box-shadow:0 0 0 2px #F86A0C inset}
+.ma-carte--ok{box-shadow:0 0 0 2px #6CC98E inset}
+.ma-lb{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.ma-lb span{font-size:17px;font-weight:700}
+.ma-tag{font-style:normal;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:#F1EFEA;color:#6E6A63}
+.ma-tag--req{background:#FDE7D6;color:#B34700}
+.ma-tag--ok{background:#DFF3E6;color:#2C7A4B}
+.ma-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ma-ch{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 12px 8px 9px;border-radius:14px;background:#F4F3F0;border:none;font:500 14.5px 'Satoshi',system-ui,sans-serif;color:#151515;margin-bottom:6px;cursor:pointer}
+.ma-ch--on{background:#1E222B;color:#fff}
+.ma-ic{font-size:19px;line-height:1}
+.ma-alerte{color:#B34700;font-size:14px;font-weight:600;margin:4px 2px 0}
+.ma-bt{display:flex;width:100%;height:56px;border-radius:999px;border:none;align-items:center;justify-content:center;font:700 17px 'Satoshi',system-ui,sans-serif;margin-top:16px;cursor:pointer}
+.ma-bt--off{background:#E4E1DA;color:#8F8A81}
+.ma-bt--noir{background:#1E222B;color:#fff}
+.ma-bt--vert{background:linear-gradient(135deg,#A7E3B9,#6CC98E);color:#0E2A18;margin-top:22px}
+.ma-lien{display:block;margin:14px auto 0;background:none;border:none;font:400 14px 'Satoshi',system-ui,sans-serif;color:#6E6A63;text-decoration:underline;padding:8px;cursor:pointer}
+.ma-res{padding:4px 16px}
+.ma-ligne{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #EFEDE8}
+.ma-ligne:last-child{border-bottom:none}
+.ma-ic-g{width:44px;height:44px;flex:0 0 44px;border-radius:14px;background:#F4F3F0;display:flex;align-items:center;justify-content:center;font-size:24px}
+.ma-n{flex:1;font-size:16px;font-weight:600}
+.ma-q{font-family:'DM Mono',monospace;font-size:15px;white-space:nowrap}
+.ma-tot{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:14px;color:#6E6A63;padding:12px 2px 2px}
+.ma-note{font-size:14px;color:#B34700;background:#FDF1E7;border-radius:14px;padding:10px 12px;margin:14px 0 0}
+/* Pastille sur le repas du plan (a cote de « Idee ») */
+.mc-frigo-ic{width:18px;height:18px;fill:none;stroke:#6B7A70;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ma-u{font-family:'Satoshi',system-ui,sans-serif}
+.ma-tot b{font-weight:400}
