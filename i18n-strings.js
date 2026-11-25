@@ -2291,7 +2291,7 @@ Object.assign(window.BELFIT_STRINGS.fr, {
  "ix_footer_liens": "\n<a href=\"/cgv.html\">Conditions générales (CGV)</a>\n<a href=\"/confidentialite.html\">Confidentialité</a>\n<a href=\"/mentions-legales.html\">Mentions légales</a>\n<a href=\"mailto:contact@belfit.be\">contact@belfit.be</a>\n",
  "ix_footer_meta": "\n<span>© 2026 BelFit · BCE/TVA BE 0767.899.411</span>\n<span>Coaching nutrition · Belgique</span>\n",
  "ix_rgpd": "J’accepte que BelFit utilise ces informations pour me répondre. <a href=\"/confidentialite.html\" rel=\"noopener\" target=\"_blank\">Politique de confidentialité</a>",
- "ix_title": "BelFit — Coaching nutrition personnalisé",
+ "ix_title": "BelFit — Coaching nutrition et entraînement personnalisé",
  "ix_nav1": "Offre",
  "ix_nav2": "Processus",
  "ix_eyebrow": "Coaching nutrition",
@@ -2328,7 +2328,7 @@ Object.assign(window.BELFIT_STRINGS.fr, {
  "ix_err_trop": "Trop de messages envoyés. Réessayez plus tard ou écrivez à contact@belfit.be."
 });
 Object.assign(window.BELFIT_STRINGS.en, {
- "ix_title": "BelFit — Personalised nutrition coaching",
+ "ix_title": "BelFit — Personalised nutrition and training coaching",
  "ix_nav_aria": "Main navigation",
  "ix_nav1": "Offer",
  "ix_nav2": "How it works",
@@ -2373,7 +2373,7 @@ Object.assign(window.BELFIT_STRINGS.en, {
  "ix_err_trop": "Too many messages sent. Try again later or write to contact@belfit.be."
 });
 Object.assign(window.BELFIT_STRINGS.nl, {
- "ix_title": "BelFit — Persoonlijke voedingscoaching",
+ "ix_title": "BelFit — Persoonlijke voedings- en trainingscoaching",
  "ix_nav_aria": "Hoofdnavigatie",
  "ix_nav1": "Aanbod",
  "ix_nav2": "Werkwijze",
