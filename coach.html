@@ -144,6 +144,7 @@ header a.quitter{margin-left:auto;font-size:12px;color:var(--tx3);text-decoratio
 .rl b{color:var(--tx);font-weight:600;text-align:right;max-width:55%}
 .chip{display:flex;align-items:center;gap:10px;background:#FFF8E1;border-radius:12px;padding:10px 12px;font-size:14px}
 .chip b{flex:1}
+.chip button.copier-alim{font-size:13px;font-weight:600;color:#1F5FD1;white-space:nowrap}
 .chip button{border:0;background:none;font-size:18px;color:var(--tx3);cursor:pointer}
 .vide{font-size:13.5px;color:var(--tx3);padding:10px 0;margin:0}
 .ia{background:#1E232D;color:#F4F6F8;border-radius:18px;padding:15px;margin-bottom:11px}
@@ -365,7 +366,7 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
     <p class="lb" id="ancreComposer">Programme</p>
     <div class="carte">
       <label for="client">Destinataire</label>
-      <div id="choisi" class="chip" style="display:none"><b id="choisiNom"></b><button id="btnDeselect" aria-label="Changer de destinataire">×</button></div>
+      <div id="choisi" class="chip" style="display:none"><b id="choisiNom"></b><button id="btnCopierAlim" class="copier-alim">Copier vers un autre client</button><button id="btnDeselect" aria-label="Changer de destinataire">×</button></div>
       <div id="brouillonBarre" class="brouillon" style="display:none"><span id="brouillonTxt"></span><button id="btnReprendreEnvoye" class="mini">Reprendre le plan envoyé</button><button id="btnJeterBrouillon" class="mini">Jeter le brouillon</button></div>
       <input id="client" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" spellcheck="false">
     </div>
@@ -1284,7 +1285,13 @@ function choisir(d) {
   if (!choisi || choisi.uid !== d.uid) {
     // Le plan d'un autre client est deja dans SON brouillon : pas de confirmation.
     // Seul un plan saisi sans destinataire serait perdu.
-    if (!choisi && !planVide() && !confirm('Repartir d\'un plan vide pour ' + nomDe(d) + ' ? Le plan en cours de saisie sera effacé.')) return false;
+    // 25/11 Raci : « Copier vers un autre client » -> le plan copie devient le brouillon de ce client.
+    const deCopie = !!(copieAlim && !choisi);
+    if (deCopie) {
+      try { localStorage.setItem(CLE_BROUILLON(d.uid), JSON.stringify({ ...copieAlim, le: new Date().toISOString() })); } catch (e) { /* rien */ }
+      copieAlim = null; $('client').placeholder = 'e-mail ou pseudo';
+    }
+    if (!deCopie && !choisi && !planVide() && !confirm('Repartir d\'un plan vide pour ' + nomDe(d) + ' ? Le plan en cours de saisie sera effacé.')) return false;
     if (choisi) sauverBrouillon();
     const b = lireBrouillon(d.uid);   // AVANT etatPropre : le plan vide ne doit pas l'ecraser
     choisi = null; etatPropre(); choisi = d;
@@ -1333,6 +1340,16 @@ function clientTape() {
   return null;
 }
 $('client').addEventListener('change', clientTape);
+let copieAlim = null;   // 25/11 : plan alimentaire en cours de copie vers un autre client
+$('btnCopierAlim').addEventListener('click', () => {
+  if (!choisi || planVide()) { alert('Le plan est vide : rien à copier.'); return; }
+  sauverBrouillon();
+  copieAlim = { versions: JSON.parse(JSON.stringify(versions)), cur, note: $('note').value, cible: cibleCourante };
+  $('btnDeselect').click();
+  copieAlim && ($('client').placeholder = 'Copier vers : e-mail ou pseudo');
+  $('client').value = ''; $('client').focus();
+  $('ancreComposer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 $('btnDeselect').addEventListener('click', () => {
   sauverBrouillon();
   $('brouillonBarre').style.display = 'none';
