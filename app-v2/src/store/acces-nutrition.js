@@ -122,9 +122,10 @@ export function encodageFermePour(encodageActif) {
   return encodageActif !== true;
 }
 
-/** 22/11 Raci : il veut continuer a encoder ses repas, LUI SEUL. La saisie
- *  reste coupee pour tous les autres comptes (clients, coachs, PRO). */
-export const SAISIE_PERSONNELLE = ['sh.raci@hotmail.com'];
+/** 22/11 Raci : il veut continuer a encoder ses repas.
+ *  25/11 : saisie + scan rouverts aussi pour Veronique De Paepe.
+ *  La saisie reste coupee pour tous les autres comptes (clients, coachs, PRO). */
+export const SAISIE_PERSONNELLE = ['sh.raci@hotmail.com', 'veronique.coppens09@gmail.com'];
 /** E-mail du compte connecte (pose par main.jsx depuis utilisateur). */
 export const emailConnecte = signal(null);
 export function saisiePersonnelle(email) {
