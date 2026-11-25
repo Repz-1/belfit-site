@@ -144,7 +144,10 @@ header a.quitter{margin-left:auto;font-size:12px;color:var(--tx3);text-decoratio
 .rl b{color:var(--tx);font-weight:600;text-align:right;max-width:55%}
 .chip{display:flex;align-items:center;gap:10px;background:#FFF8E1;border-radius:12px;padding:10px 12px;font-size:14px}
 .chip b{flex:1}
-.chip button.copier-alim{font-size:13px;font-weight:600;color:#1F5FD1;white-space:nowrap}
+/* 25/11 : sur telephone, le bouton passe sur sa propre ligne sous le nom (il sortait de l'ecran). */
+#choisi{flex-wrap:wrap}
+#choisi b{min-width:0;overflow-wrap:anywhere}
+.chip button.copier-alim{order:3;flex-basis:100%;text-align:left;padding:6px 0 0;font-size:14px;font-weight:600;color:#1F5FD1}
 .chip button{border:0;background:none;font-size:18px;color:var(--tx3);cursor:pointer}
 .vide{font-size:13.5px;color:var(--tx3);padding:10px 0;margin:0}
 .ia{background:#1E232D;color:#F4F6F8;border-radius:18px;padding:15px;margin-bottom:11px}
