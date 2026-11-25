@@ -1066,6 +1066,20 @@ function detail(d) {
   const b = el('button', 'second', brouillonNonVide(br) ? 'Reprendre le brouillon' : 'Composer moi-même');
   b.addEventListener('click', () => choisir(d));
   box.append(ia, etat, btnBilan, b);
+  // 25/11 Raci : copier le plan envoye de ce client vers un autre, depuis sa fiche.
+  const env = planEnvoye(d);
+  if (env) {
+    const cp = el('button', 'second', 'Copier ce plan vers un autre client');
+    cp.addEventListener('click', () => {
+      if (choisi) $('btnDeselect').click();
+      copieAlim = { versions: JSON.parse(JSON.stringify(env.versions)), cur: 0, note: env.note || '', cible: null };
+      $('client').placeholder = 'Copier vers : e-mail ou pseudo';
+      $('client').value = '';
+      $('ancreComposer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      $('client').focus({ preventScroll: true });
+    });
+    box.append(cp);
+  }
   // 21/11 Raci : supprimer le client, en bas de la fiche seulement (jamais dans la
   // liste), et toujours apres la fenetre de confirmation.
   const sup = el('button', 'suppr-client', 'Supprimer le client');
