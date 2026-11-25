@@ -1714,21 +1714,10 @@ function sauverBrEnt() {
 function lireCourantEnt() { try { return JSON.parse(localStorage.getItem(CLE_ENT_COURANT) || 'null'); } catch (e) { return null; } }
 const aDesExos = (l) => Array.isArray(l) && l.some((x) => x && Array.isArray(x.exos) && x.exos.length);
 /** A l'ouverture : on remet le travail en cours tel quel. */
-// 23/11 : nettoyage unique des brouillons ou le programme de Kosta avait ete
-// recopie par erreur chez d'autres clients (exercices marques « ekkkk »).
-(function nettoyerCopiesKosta() {
-  const KOSTA = 'LeWM83Fi4oNTylbfCCnZz3BRH4d2';
-  const copie = (b) => !!b && JSON.stringify(b.seances || []).includes('"ekkkk2"');
-  try {
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-      const k = localStorage.key(i);
-      if (!k || !k.startsWith('belfit_coach_ent_') || k === 'belfit_coach_ent_courant' || k === 'belfit_coach_ent_' + KOSTA) continue;
-      if (copie(JSON.parse(localStorage.getItem(k) || 'null'))) localStorage.removeItem(k);
-    }
-    const c = JSON.parse(localStorage.getItem(CLE_ENT_COURANT) || 'null');
-    if (c && copie(c) && c.uid !== KOSTA) localStorage.removeItem(CLE_ENT_COURANT);
-  } catch (e) { /* rien */ }
-})();
+// 25/11 Raci (« j'encodais les jambes et tout a disparu ») : le nettoyage du 23/11
+// effacait A CHAQUE OUVERTURE tout brouillon copie du programme de Kosta (ids
+// « ekkkk »), y compris les copies VOULUES (« Copier vers un autre client »).
+// Retire : il avait deja fait son travail le 23/11.
 function restaurerCourantEnt() {
   const c = lireCourantEnt();
   if (!c || !aDesExos(c.seances)) return;
@@ -1912,6 +1901,8 @@ function champNum(val, min, max, cls, onChange) {
   if (i.type === 'number') { i.min = min; i.max = max; i.inputMode = 'numeric'; }
   i.value = val;
   i.addEventListener('change', () => onChange(i.value));
+  // 25/11 : enregistre aussi a chaque chiffre tape (rien de perdu si la page se recharge).
+  i.addEventListener('input', () => onChange(i.value));
   return i;
 }
 
