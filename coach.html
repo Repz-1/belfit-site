@@ -144,6 +144,10 @@ header a.quitter{margin-left:auto;font-size:12px;color:var(--tx3);text-decoratio
 .rl b{color:var(--tx);font-weight:600;text-align:right;max-width:55%}
 .chip{display:flex;align-items:center;gap:10px;background:#FFF8E1;border-radius:12px;padding:10px 12px;font-size:14px}
 .chip b{flex:1}
+.client-sugg{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.client-sugg:empty{display:none}
+.client-sugg button{text-align:left;border:1px solid #E7E1D6;background:#fff;border-radius:12px;padding:10px 12px;font-size:15px;cursor:pointer}
+.client-sugg small{display:block;color:var(--tx3);font-size:12.5px}
 /* 25/11 : sur telephone, le bouton passe sur sa propre ligne sous le nom (il sortait de l'ecran). */
 #choisi{flex-wrap:wrap}
 #choisi b{min-width:0;overflow-wrap:anywhere}
@@ -372,6 +376,7 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
       <div id="choisi" class="chip" style="display:none"><b id="choisiNom"></b><button id="btnCopierAlim" class="copier-alim">Copier vers un autre client</button><button id="btnDeselect" aria-label="Changer de destinataire">×</button></div>
       <div id="brouillonBarre" class="brouillon" style="display:none"><span id="brouillonTxt"></span><button id="btnReprendreEnvoye" class="mini">Reprendre le plan envoyé</button><button id="btnJeterBrouillon" class="mini">Jeter le brouillon</button></div>
       <input id="client" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" spellcheck="false">
+      <div id="clientSugg" class="client-sugg"></div>
     </div>
     <!-- 01/11 v657b Raci : plus de versions ni de dates a l'ecran ; envoi = plan unique, demain 00 h 00. -->
     <div hidden>
@@ -1073,6 +1078,9 @@ function detail(d) {
     cp.addEventListener('click', () => {
       if (choisi) $('btnDeselect').click();
       copieAlim = { versions: JSON.parse(JSON.stringify(env.versions)), cur: 0, note: env.note || '', cible: null };
+      // Le plan copie s'affiche tout de suite (Raci 25/11 : il ne voyait qu'un plan vide).
+      versions = JSON.parse(JSON.stringify(env.versions)); $('note').value = env.note || ''; ouvrirVersion(0);
+      $('iaEtat').className = 'msg ok'; $('iaEtat').textContent = 'Plan de ' + nomDe(d) + ' copié. Choisis maintenant le client qui le recevra.';
       $('client').placeholder = 'Copier vers : e-mail ou pseudo';
       $('client').value = '';
       $('ancreComposer').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1357,6 +1365,18 @@ function clientTape() {
   return null;
 }
 $('client').addEventListener('change', clientTape);
+// 25/11 Raci : il fallait taper l'e-mail exact. On propose les clients qui correspondent.
+$('client').addEventListener('input', () => {
+  const box = $('clientSugg'); box.innerHTML = '';
+  const t = $('client').value.trim().toLowerCase(); if (t.length < 2 || choisi) return;
+  tousDossiers.filter((x) => ((x.email || '') + ' ' + nomDe(x) + ' ' + (x.pseudo || '')).toLowerCase().includes(t)).slice(0, 6).forEach((x) => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.append(document.createTextNode(nomDe(x)));
+    if (x.email && x.email !== nomDe(x)) { const sm = document.createElement('small'); sm.textContent = x.email; b.append(sm); }
+    b.addEventListener('click', () => { box.innerHTML = ''; if (choisir(x)) $('client').value = ''; });
+    box.append(b);
+  });
+});
 let copieAlim = null;   // 25/11 : plan alimentaire en cours de copie vers un autre client
 $('btnCopierAlim').addEventListener('click', () => {
   if (!choisi || planVide()) { alert('Le plan est vide : rien à copier.'); return; }
