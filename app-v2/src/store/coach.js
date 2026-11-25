@@ -60,7 +60,9 @@ export function etatCoach(dossier, pr) {
   const r = Date.parse((dossier && dossier.retireLe) || '');
   if (r && [payeLe, q && q.envoyeLe].every((x) => !x || Date.parse(x) <= r)) payeLe = null;
   const type = (cmd && cmd.type) || (local && local.type) || 'plan';
-  const aRemplir = !!payeLe && avant(q && q.envoyeLe, payeLe);
+  // 25/11 Raci : un plan livre APRES le paiement = le coach a deja fait le travail
+  // (plan envoye sans questionnaire) -> plus de « Ton questionnaire t'attend ».
+  const aRemplir = !!payeLe && avant(q && q.envoyeLe, payeLe) && avant(pr && pr.livreLe, payeLe);
   const enPrep = !!payeLe && !aRemplir && avant(pr && pr.livreLe, q.envoyeLe);
   const fin = payeLe ? finDelaiQuestionnaire(payeLe) : null;
   const finValide = !!fin && !isNaN(fin.getTime());
