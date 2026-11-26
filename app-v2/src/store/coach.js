@@ -63,7 +63,7 @@ export function etatCoach(dossier, pr) {
   // 25/11 Raci : un plan livre APRES le paiement = le coach a deja fait le travail
   // (plan envoye sans questionnaire) -> plus de « Ton questionnaire t'attend ».
   const aRemplir = !!payeLe && avant(q && q.envoyeLe, payeLe) && avant(pr && pr.livreLe, payeLe);
-  const enPrep = !!payeLe && !aRemplir && avant(pr && pr.livreLe, q.envoyeLe);
+  const enPrep = !!payeLe && !aRemplir && !!(q && q.envoyeLe) && avant(pr && pr.livreLe, q.envoyeLe);
   const fin = payeLe ? finDelaiQuestionnaire(payeLe) : null;
   const finValide = !!fin && !isNaN(fin.getTime());
   const resteMs = finValide ? fin.getTime() - Date.now() : 0;
