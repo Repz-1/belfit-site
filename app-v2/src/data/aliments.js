@@ -8,6 +8,8 @@ export const DB = {
     'Riz cuit':{kcal:130,prot:2.7,carbs:28,lip:0.3,fibres:0.8,sucres:0.2,satures:0.08,sel:0.01},
     'Pâtes blanches crues':{kcal:371,prot:13,carbs:75,lip:1.1},
     'Pâtes blanches cuites':{kcal:158,prot:5.8,carbs:31,lip:0.9},
+    'Spaghetti crus':{kcal:371,prot:13,carbs:75,lip:1.1},
+    'Spaghetti cuits':{kcal:158,prot:5.8,carbs:31,lip:0.9},
     'Pain complet':{kcal:247,prot:9,carbs:43,lip:3.4,fibres:6.9,sucres:2.2,satures:0.52,sel:1.12},
     'Pain blanc':{kcal:265,prot:9,carbs:49,lip:3.2,fibres:2.6,satures:0.17,sel:1.45},
     'Pomme de terre':{kcal:77,prot:2,carbs:17,lip:0.1,fibres:1.8,sucres:0.78,satures:0.04,sel:0.02,cache:true},
