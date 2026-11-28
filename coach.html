@@ -375,7 +375,7 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
       <label for="client">Destinataire</label>
       <div id="choisi" class="chip" style="display:none"><b id="choisiNom"></b><button id="btnCopierAlim" class="copier-alim">Copier vers un autre client</button><button id="btnDeselect" aria-label="Changer de destinataire">×</button></div>
       <div id="brouillonBarre" class="brouillon" style="display:none"><span id="brouillonTxt"></span><button id="btnReprendreEnvoye" class="mini">Reprendre le plan envoyé</button><button id="btnJeterBrouillon" class="mini">Jeter le brouillon</button></div>
-      <input id="client" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" spellcheck="false">
+      <input id="client" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" autocomplete="off" spellcheck="false">
       <div id="clientSugg" class="client-sugg"></div>
     </div>
     <!-- 01/11 v657b Raci : plus de versions ni de dates a l'ecran ; envoi = plan unique, demain 00 h 00. -->
@@ -428,7 +428,8 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
       <div class="carte">
         <label for="entClient">Destinataire</label>
         <div id="entChoisi" class="chip" style="display:none"><b id="entChoisiNom"></b><button id="entDeselect" aria-label="Changer de destinataire">×</button></div>
-        <input id="entClient" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" spellcheck="false">
+        <input id="entClient" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" autocomplete="off" spellcheck="false">
+        <div id="entClientSugg" class="client-sugg"></div>
         <p class="aide">Ou touche un client dans la liste au-dessus. Envoie le programme une fois le paiement reçu.</p>
         <div id="entCopieMsg" class="msg"></div>
       </div>
@@ -1797,7 +1798,7 @@ function depuisEnvoye(ent) {
 }
 
 function choisirEnt(d) {
-  $('entCopieMsg').className = 'msg';
+  $('entCopieMsg').className = 'msg'; $('entClientSugg').innerHTML = '';
   if (entChoisi && entChoisi.uid !== d.uid) sauverBrEnt();
   // 23/11 Raci (« le programme de Kosta s'affiche partout ») : le brouillon a l'ecran
   // appartient deja a un client dont la liste n'etait pas encore chargee -> on le
@@ -1858,6 +1859,20 @@ $('entClient').addEventListener('change', () => {
   });
 });
 $('entNote').addEventListener('input', sauverBrEnt);
+// 28/11 Raci (« seule l'adresse du compte A s'affiche, il ne me propose pas le B ») :
+// c'etait la memoire du navigateur. Comme pour l'alimentation, on propose les
+// clients de la liste qui correspondent a ce qui est tape.
+$('entClient').addEventListener('input', () => {
+  const box = $('entClientSugg'); box.innerHTML = '';
+  const t = $('entClient').value.trim().toLowerCase(); if (t.length < 2 || entChoisi) return;
+  tousDossiers.filter((x) => ((x.email || '') + ' ' + nomDe(x) + ' ' + (x.pseudo || '')).toLowerCase().includes(t)).slice(0, 6).forEach((x) => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.append(document.createTextNode(nomDe(x)));
+    if (x.email && x.email !== nomDe(x)) { const sm = document.createElement('small'); sm.textContent = x.email; b.append(sm); }
+    b.addEventListener('click', () => { box.innerHTML = ''; $('entClient').value = ''; choisirEnt(x); });
+    box.append(b);
+  });
+});
 $('entClient').addEventListener('input', sauverBrEnt);
 
 /** Poids notes par le client : les 6 dernieres seances. */
@@ -2110,7 +2125,7 @@ $('entReprendre').addEventListener('click', () => {
 // vide, sans rien dire. Comme pour l'alimentation : message + « Copier vers ».
 function annoncerCopieEnt(nom) {
   $('entClient').placeholder = 'Copier vers : e-mail ou pseudo';
-  afficher($('entCopieMsg'), 'Programme' + (nom ? ' de ' + nom : '') + ' copié. Tape l\'e-mail du client qui le recevra, ou touche-le dans la liste.', true);
+  afficher($('entCopieMsg'), 'Programme' + (nom ? ' de ' + nom : '') + ' copié. Tape le nom ou l\'e-mail du client qui le recevra, puis touche-le.', true);
 }
 function finCopieEnt(d) {
   $('entClient').placeholder = 'e-mail ou pseudo';
