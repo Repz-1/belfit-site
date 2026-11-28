@@ -228,7 +228,7 @@ export function CoachPage() {
   const blocCode = (idChamp) => (
             <div class="cp-code">
               {red ? (
-                <p class="cp-code-ok" role="status">{t('cp_code_ok', { code: red.code, pct: red.pourcent, prix: prixCourt(red.montant) })} <button class="cp-code-lien" onClick={retirerCode}>{t('cp_code_retirer')}</button></p>
+                <p class="cp-code-ok" role="status">{red.pourcent > 0 ? t('cp_code_ok', { code: red.code, pct: red.pourcent, prix: prixCourt(red.montant) }) : t('cp_code_ok0', { code: red.code })}{red.entrainementOffert && <b class="cp-code-ent"> {t('cp_code_ent')}</b>} <button class="cp-code-lien" onClick={retirerCode}>{t('cp_code_retirer')}</button></p>
               ) : (
                 <form class="cp-code-form" onSubmit={(e) => { e.preventDefault(); appliquerCode(); }}>
                   <label class="cp-code-lib" for={idChamp}>{t('cp_code_lib')}</label>

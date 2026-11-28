@@ -73,6 +73,8 @@ export const programme = {
 export const programmeCharge = signal(false);
 /** 21/11 : programme d'entrainement envoye par le coach (users/{uid}.entrainementCoach), ou null. */
 export const entrainementCoach = signal(null);
+// 28/11 : petit mot du coach (espace coach, action « message ») : { texte, le }.
+export const messageCoach = signal(null);
 /** 21/11 : date a laquelle le coach a retire ce client (users/{uid}.coachRetireLe),
  *  seulement si aucun programme n'a ete livre depuis. null sinon. */
 export const planRetireLe = signal(null);
@@ -213,6 +215,7 @@ export function chargerProgramme() {
       setTimeout(() => { lireBlocageDistant().then(v => { if (v !== null) poserBlocageDistant(v); }); }, 4000);
       programmeBrut.value = (d && d.programme) || null;
       entrainementCoach.value = (d && d.entrainementCoach) || null;
+      messageCoach.value = (d && d.messageCoach) || null;
       planRetireLe.value = retireDe(d);
       dossierCoach.value = { questionnaire: (d && d.questionnaireCoach) || null, commande: (d && d.commandeCoach) || null, brouillon: (d && d.brouillonCoach) || null, accesPro: (d && d.accesPro) || null, retireLe: retireDe(d),
         // 23/11 : questionnaire entrainement (ouvert par le coach apres virement, puis rempli).
@@ -259,6 +262,7 @@ export function relireProgramme() {
       if (!memeContenu(programmeBrut.peek(), neuf)) programmeBrut.value = neuf;
       const ent = d.entrainementCoach || null;
       if (!memeContenu(entrainementCoach.peek(), ent)) entrainementCoach.value = ent;
+      if (!memeContenu(messageCoach.peek(), d.messageCoach || null)) messageCoach.value = d.messageCoach || null;
       if (planRetireLe.peek() !== retireDe(d)) planRetireLe.value = retireDe(d);
       const avant = dossierCoach.peek();
       const dos = { questionnaire: d.questionnaireCoach || null, commande: d.commandeCoach || null, accesPro: d.accesPro || null, retireLe: retireDe(d),

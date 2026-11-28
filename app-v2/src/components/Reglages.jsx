@@ -15,6 +15,7 @@ import { PREMIUM_OUVERT } from '../acces-libre.js';
 import { APP_ANDROID } from '../services/app-android.js';
 import '../styles/reglages.css';
 import { sexe } from '../store/perso.js';
+import { etatNotifs, activerNotifs, desactiverNotifs } from '../services/notifications.js';
 
 // ============================================================
 // REGLAGES — portage v2 de parametres.html.
@@ -443,9 +444,26 @@ export function Reglages() {
           </div>
         </div>
 
-        {/* Notifications retirees le 23/09 : les deux bascules
-            enregistraient un choix que rien ne lisait. Elles reviennent
-            avec l'application native et de vrais rappels. */}
+        {/* 28/11 Raci : vraies notifications (plan recu, questionnaire,
+            petit mot du coach). Une seule bascule ; la permission du
+            telephone n'est demandee qu'a ce geste. */}
+        <p class="rg-section">{t('set_sec_notifs')}</p>
+        <div class="rg-carte">
+          <div class="rg-rangee rg-rangee--inerte">
+            <span class="rg-txt">
+              <span class="rg-nom">{t('set_notifs')}</span>
+              <span class="rg-sous">{etatNotifs.value === 'bloque' ? t('set_notifs_bloque') : etatNotifs.value === 'indispo' ? t('set_notifs_indispo') : t('set_notifs_sub')}</span>
+            </span>
+            {etatNotifs.value !== 'indispo' && (
+              <button type="button" role="switch" aria-checked={etatNotifs.value === 'on'} aria-label={t('set_notifs')}
+                class={'rg-bascule' + (etatNotifs.value === 'on' ? ' on' : '')}
+                disabled={etatNotifs.value === 'attente'}
+                onClick={() => { etatNotifs.value === 'on' ? desactiverNotifs() : activerNotifs(); }}>
+                <i aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </div>
 
         <p class="rg-section">{t('set_sec_aide')}</p>
         <div class="rg-carte">

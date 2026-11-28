@@ -39,6 +39,7 @@ try {
   ok(await p.locator('.ce-pp-auj, .ce-pp-jours .ce-pp-tuile small', { hasText: "Aujourd'hui" }).count() >= 1, 'aujourd\'hui marqué');
   ok(await p.locator('.ce-pp-tuile.on').count() === 1 && await p.locator('.ce-pp-tuile.afaire', { hasText: 'Séance B' }).count() === 1, 'séance faite + séance B à faire');
   ok(/✓ 4\/5/.test(txt), 'séries faites 4/5');
+  ok(/Développé couché/.test(txt) && /50 kg × 9/.test(txt) && /25 kg × 12/.test(txt) && /pas faite/.test(txt), 'charges et reps visibles sans toucher');
   const y0 = await p.locator('.ce-pp').boundingBox(); const y1 = await p.locator('.score-card').boundingBox().catch(() => null);
   ok(!y1 || y0.y < y1.y, 'carte en tête de Stats');
   const yp = await p.locator('.stat-card.acc-green').boundingBox(); const yk = await p.locator('.stat-card.acc-orange').boundingBox();

@@ -66,10 +66,12 @@ function texteVersCents(t) {
   return m ? parseInt(m[1], 10) * 100 + parseInt((m[2] || "0").padEnd(2, "0"), 10) : NaN;
 }
 
-/** Prix apres reduction, en centimes entiers (jamais de flottants). */
-function calculerPrix(baseCents, pourcent) {
+/** Prix apres reduction, en centimes entiers (jamais de flottants).
+ *  zeroOk (28/11) : un code qui offre le coaching entrainement peut ne
+ *  rien retirer du prix (0 %) — le cadeau, c'est l'entrainement. */
+function calculerPrix(baseCents, pourcent, zeroOk = false) {
   if (!Number.isInteger(baseCents) || baseCents <= 0) return {ok: false, motif: "serveur"};
-  if (!Number.isInteger(pourcent) || pourcent < 1 || pourcent > POURCENT_MAX) return {ok: false, motif: "minimum"};
+  if (!Number.isInteger(pourcent) || pourcent < (zeroOk ? 0 : 1) || pourcent > POURCENT_MAX) return {ok: false, motif: "minimum"};
   const reductionCents = Math.round(baseCents * pourcent / 100);
   const montantCents = baseCents - reductionCents;
   if (montantCents < MIN_CENTS) return {ok: false, motif: "minimum"};
@@ -130,8 +132,8 @@ async function verifier({uid, code, type, maintenant = Date.now()}) {
   const d = s.exists ? s.data() : null;
   const ev = evaluerCode(d, uid, maintenant);
   if (!ev.ok) return ev;
-  const prix = calculerPrix(PRIX_BASE_CENTS.plan, d.pourcent);
-  return prix.ok ? {...prix, code} : prix;
+  const prix = calculerPrix(PRIX_BASE_CENTS.plan, d.pourcent, !!d.entrainementOffert);
+  return prix.ok ? {...prix, code, entrainementOffert: !!d.entrainementOffert} : prix;
 }
 
 /** Reserve le code pour ce compte (transaction : un seul gagnant). Libere ses autres reservations. */
@@ -144,11 +146,11 @@ async function reserver({uid, code, maintenant = Date.now()}) {
     const d = sC.exists ? sC.data() : null;
     const ev = evaluerCode(d, uid, maintenant);
     if (!ev.ok) return ev;
-    const prix = calculerPrix(PRIX_BASE_CENTS.plan, d.pourcent);
+    const prix = calculerPrix(PRIX_BASE_CENTS.plan, d.pourcent, !!d.entrainementOffert);
     if (!prix.ok) return prix;
     autres.docs.forEach((x) => { if (x.id !== code) tx.update(x.ref || cCodes().doc(x.id), vide); });
     tx.update(refC, {reservePar: uid, reserveJusqu: new Date(maintenant + RESERVATION_MS).toISOString(), reserveCommande: null});
-    return {...prix, code};
+    return {...prix, code, entrainementOffert: !!d.entrainementOffert};
   });
 }
 /** Associe le paiement Mollie cree a la reservation (pour la liberer si le paiement echoue). */
@@ -174,8 +176,11 @@ function montantAttendu(cmd) { return cmd && cmd.montant != null ? texteVersCent
 /* ----------------------- administration (reduction-admin.js) ----------------------- */
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // sans I, O, 0, 1
 const codeAleatoire = (n = 8) => Array.from(crypto.randomBytes(n), (b) => ALPHABET[b % ALPHABET.length]).join("");
-function nouveauDocument({pourcent, note, expire}) {
+function nouveauDocument({pourcent, note, expire, entrainementOffert}) {
   return {pourcent, actif: true, statut: "libre", cree: new Date().toISOString(),
+    // 28/11 Raci : le code offre AUSSI le coaching entrainement (questionnaire
+    // entrainement ouvert au paiement, sans virement de 50 EUR).
+    entrainementOffert: !!entrainementOffert,
     note: String(note || "").slice(0, 80), expire: expire || null,
     ...vide, utilisePar: null, utiliseLe: null, commande: null};
 }

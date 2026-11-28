@@ -12,7 +12,7 @@
   "navigationDividerColor": "#F4F3F0",
   "navigationDividerColorDark": "#F4F3F0",
   "backgroundColor": "#F4F3F0",
-  "enableNotifications": false,
+  "enableNotifications": true,
   "startUrl": "/v2/?source=twa",
   "iconUrl": "https://www.belfit.be/icon-512-v9.png",
   "maskableIconUrl": "https://www.belfit.be/icon-maskable-512-v9.png",

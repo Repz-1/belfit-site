@@ -3,7 +3,7 @@
 // ============================================================
 export const ENT_COACH = {
   fr: {
-    ae_nouveau: 'Ton programme d\'entraînement est arrivé', ae_maj: 'Ton programme d\'entraînement a été mis à jour', ae_seance: '{n} séance préparée par ton coach.', ae_seances: '{n} séances préparées par ton coach.', ae_voir: 'Voir mon programme', ae_plus_tard: 'Plus tard',
+    ae_nouveau: 'Ton programme d\'entraînement est arrivé', ae_maj: 'Ton programme d\'entraînement a été mis à jour', ae_seance: '{n} séance préparée par ton coach.', ae_seances: '{n} séances préparées par ton coach.', ae_voir: 'Voir mon programme', ae_plus_tard: 'Plus tard', am_titre: 'Un petit mot de Raci', am_merci: 'Merci !',
     ce_st_sub: 'Ton programme coach · 8 dernières semaines', ce_st_semaine: 'séances cette semaine', ce_st_kg: 'soulevés cette semaine',
     ce_st_histo: 'Historique par séance', ce_st_vide: 'Note ta première séance dans Aujourd\'hui → Entraînement : elle apparaîtra ici.',
     ce_st_cta: 'Ouvrir mon entraînement', ce_st_indispo: 'Les stats d\'entraînement suivent le programme envoyé par ton coach.',
@@ -17,7 +17,7 @@ export const ENT_COACH = {
     ce_haltere: 'Poids d\'un haltère', ce_poids: 'Poids', ce_kettlebell: 'Poids de la kettlebell',
     ce_corps: 'Au poids du corps : coche tes séries.',
     ce_faites: 'Séries faites', ce_serie_n: 'Série {n}', ce_comme: 'Comme la série {n}',
-    ce_enregistrer: 'Terminer ma séance', ce_enregistre: 'Séance enregistrée · ton coach la voit', ce_passees: 'Mes séances passées', ce_exo_fini: 'Toutes les séries sont faites', ce_pp_titre: 'Mes séances passées', ce_pp_semaine: '{n}/{p} cette semaine', ce_pp_afaire: 'À faire', ce_pp_cette_semaine: 'séances cette semaine', ce_pp_aujourdhui: "Aujourd'hui", ce_pp_rien: "Rien de noté pour l'instant", ce_pp_repos: 'Repos', ce_pp_encore: 'Encore à faire :', ce_pp_tout: 'Toutes mes séances', ce_pp_series: '{f}/{n} séries', ce_pp_serie: 'Série', ce_pp_pasfaite: 'pas faite', ce_pp_faite: 'faite', ce_pp_note: 'Ta note :',
+    ce_enregistrer: 'Terminer ma séance', ce_enregistre: 'Séance enregistrée · ton coach la voit', ce_passees: 'Mes séances passées', ce_exo_fini: 'Toutes les séries sont faites', ce_pp_titre: 'Mes séances passées', ce_pp_semaine: '{n}/{p} cette semaine', ce_pp_afaire: 'À faire', ce_pp_cette_semaine: 'séances cette semaine', ce_pp_aujourdhui: "Aujourd'hui", ce_pp_rien: "Rien de noté pour l'instant", ce_pp_repos: 'Repos', ce_pp_comparer: 'Comparer', ce_pp_encore: 'Encore à faire :', ce_pp_tout: 'Toutes mes séances', ce_pp_series: '{f}/{n} séries', ce_pp_serie: 'Série', ce_pp_pasfaite: 'pas faite', ce_pp_faite: 'faite', ce_pp_note: 'Ta note :',
     ce_indispo_t: 'Non disponible pour ton compte',
     ce_indispo_txt: 'Le programme d\'entraînement est réservé aux clients coaching. Ton coach te l\'envoie ici.',
     ce_reps_faites: 'Répétitions faites', ce_charge: 'Charge', ce_disques_lien: 'disques', ce_reps_court: 'Reps faites', ce_n_series: '{n} séries', ce_voir: 'voir le mouvement', ce_col_serie: 'SÉRIE', ce_col_obj: 'OBJECTIF', ce_col_charge: 'CHARGE', ce_col_reps: 'REPS', ce_en_cours: 'Série {n} en cours', ce_valider: 'Valider la série {n} ✓', ce_validee: 'Série {n} validée ✓', ce_par_cote: '{kg} kg par côté', ce_disques_bt: 'disques ▾', ce_fermer_disques: 'fermer ▴', ce_objectif: 'objectif {r}',
@@ -29,7 +29,7 @@ export const ENT_COACH = {
     ce_type_barre: 'Barre', ce_type_halteres: 'Haltères', ce_type_poulie: 'Poulie', ce_type_machine: 'Machine', ce_type_kettlebell: 'Kettlebell', ce_type_corps: 'Poids du corps',
   },
   en: {
-    ae_nouveau: 'Your training programme has arrived', ae_maj: 'Your training programme has been updated', ae_seance: '{n} session prepared by your coach.', ae_seances: '{n} sessions prepared by your coach.', ae_voir: 'See my programme', ae_plus_tard: 'Later',
+    ae_nouveau: 'Your training programme has arrived', ae_maj: 'Your training programme has been updated', ae_seance: '{n} session prepared by your coach.', ae_seances: '{n} sessions prepared by your coach.', ae_voir: 'See my programme', ae_plus_tard: 'Later', am_titre: 'A note from Raci', am_merci: 'Thanks!',
     ce_st_sub: 'Your coach programme · last 8 weeks', ce_st_semaine: 'sessions this week', ce_st_kg: 'lifted this week',
     ce_st_histo: 'History by session', ce_st_vide: 'Log your first session in Today → Training: it will show up here.',
     ce_st_cta: 'Open my training', ce_st_indispo: 'Training stats follow the programme sent by your coach.',
@@ -43,7 +43,7 @@ export const ENT_COACH = {
     ce_haltere: 'Weight of one dumbbell', ce_poids: 'Weight', ce_kettlebell: 'Kettlebell weight',
     ce_corps: 'Bodyweight: tick your sets.',
     ce_faites: 'Sets done', ce_serie_n: 'Set {n}', ce_comme: 'Same as set {n}',
-    ce_enregistrer: 'Finish my session', ce_enregistre: 'Session saved · your coach can see it', ce_passees: 'My past sessions', ce_exo_fini: 'All sets done', ce_pp_titre: 'My past sessions', ce_pp_semaine: '{n}/{p} this week', ce_pp_afaire: 'To do', ce_pp_cette_semaine: 'sessions this week', ce_pp_aujourdhui: 'Today', ce_pp_rien: 'Nothing logged yet', ce_pp_repos: 'Rest', ce_pp_encore: 'Still to do:', ce_pp_tout: 'All my sessions', ce_pp_series: '{f}/{n} sets', ce_pp_serie: 'Set', ce_pp_pasfaite: 'not done', ce_pp_faite: 'done', ce_pp_note: 'Your note:',
+    ce_enregistrer: 'Finish my session', ce_enregistre: 'Session saved · your coach can see it', ce_passees: 'My past sessions', ce_exo_fini: 'All sets done', ce_pp_titre: 'My past sessions', ce_pp_semaine: '{n}/{p} this week', ce_pp_afaire: 'To do', ce_pp_cette_semaine: 'sessions this week', ce_pp_aujourdhui: 'Today', ce_pp_rien: 'Nothing logged yet', ce_pp_repos: 'Rest', ce_pp_comparer: 'Compare', ce_pp_encore: 'Still to do:', ce_pp_tout: 'All my sessions', ce_pp_series: '{f}/{n} sets', ce_pp_serie: 'Set', ce_pp_pasfaite: 'not done', ce_pp_faite: 'done', ce_pp_note: 'Your note:',
     ce_indispo_t: 'Not available for your account',
     ce_indispo_txt: 'The training programme is for coaching clients. Your coach sends it to you here.',
     ce_reps_faites: 'Reps done', ce_charge: 'Load', ce_disques_lien: 'plates', ce_reps_court: 'Reps done', ce_n_series: '{n} sets', ce_voir: 'see the movement', ce_col_serie: 'SET', ce_col_obj: 'TARGET', ce_col_charge: 'LOAD', ce_col_reps: 'REPS', ce_en_cours: 'Set {n} in progress', ce_valider: 'Confirm set {n} ✓', ce_validee: 'Set {n} done ✓', ce_par_cote: '{kg} kg per side', ce_disques_bt: 'plates ▾', ce_fermer_disques: 'close ▴', ce_objectif: 'target {r}',
@@ -55,7 +55,7 @@ export const ENT_COACH = {
     ce_type_barre: 'Barbell', ce_type_halteres: 'Dumbbells', ce_type_poulie: 'Cable', ce_type_machine: 'Machine', ce_type_kettlebell: 'Kettlebell', ce_type_corps: 'Bodyweight',
   },
   nl: {
-    ae_nouveau: 'Je trainingsprogramma is aangekomen', ae_maj: 'Je trainingsprogramma is bijgewerkt', ae_seance: '{n} sessie voorbereid door je coach.', ae_seances: '{n} sessies voorbereid door je coach.', ae_voir: 'Mijn programma bekijken', ae_plus_tard: 'Later',
+    ae_nouveau: 'Je trainingsprogramma is aangekomen', ae_maj: 'Je trainingsprogramma is bijgewerkt', ae_seance: '{n} sessie voorbereid door je coach.', ae_seances: '{n} sessies voorbereid door je coach.', ae_voir: 'Mijn programma bekijken', ae_plus_tard: 'Later', am_titre: 'Een berichtje van Raci', am_merci: 'Bedankt!',
     ce_st_sub: 'Je coachprogramma · laatste 8 weken', ce_st_semaine: 'trainingen deze week', ce_st_kg: 'getild deze week',
     ce_st_histo: 'Geschiedenis per training', ce_st_vide: 'Noteer je eerste training in Vandaag → Training: ze verschijnt hier.',
     ce_st_cta: 'Mijn training openen', ce_st_indispo: 'Trainingsstatistieken volgen het programma van je coach.',
@@ -69,7 +69,7 @@ export const ENT_COACH = {
     ce_haltere: 'Gewicht van één dumbbell', ce_poids: 'Gewicht', ce_kettlebell: 'Gewicht van de kettlebell',
     ce_corps: 'Lichaamsgewicht: vink je sets aan.',
     ce_faites: 'Sets gedaan', ce_serie_n: 'Set {n}', ce_comme: 'Zoals set {n}',
-    ce_enregistrer: 'Mijn training afronden', ce_enregistre: 'Training opgeslagen · je coach ziet het', ce_passees: 'Mijn vorige trainingen', ce_exo_fini: 'Alle sets gedaan', ce_pp_titre: 'Mijn vorige trainingen', ce_pp_semaine: '{n}/{p} deze week', ce_pp_afaire: 'Te doen', ce_pp_cette_semaine: 'trainingen deze week', ce_pp_aujourdhui: 'Vandaag', ce_pp_rien: 'Nog niets genoteerd', ce_pp_repos: 'Rust', ce_pp_encore: 'Nog te doen:', ce_pp_tout: 'Al mijn trainingen', ce_pp_series: '{f}/{n} sets', ce_pp_serie: 'Set', ce_pp_pasfaite: 'niet gedaan', ce_pp_faite: 'gedaan', ce_pp_note: 'Jouw notitie:',
+    ce_enregistrer: 'Mijn training afronden', ce_enregistre: 'Training opgeslagen · je coach ziet het', ce_passees: 'Mijn vorige trainingen', ce_exo_fini: 'Alle sets gedaan', ce_pp_titre: 'Mijn vorige trainingen', ce_pp_semaine: '{n}/{p} deze week', ce_pp_afaire: 'Te doen', ce_pp_cette_semaine: 'trainingen deze week', ce_pp_aujourdhui: 'Vandaag', ce_pp_rien: 'Nog niets genoteerd', ce_pp_repos: 'Rust', ce_pp_comparer: 'Vergelijken', ce_pp_encore: 'Nog te doen:', ce_pp_tout: 'Al mijn trainingen', ce_pp_series: '{f}/{n} sets', ce_pp_serie: 'Set', ce_pp_pasfaite: 'niet gedaan', ce_pp_faite: 'gedaan', ce_pp_note: 'Jouw notitie:',
     ce_indispo_t: 'Niet beschikbaar voor je account',
     ce_indispo_txt: 'Het trainingsprogramma is voor coachingklanten. Je coach stuurt het je hier.',
     ce_reps_faites: 'Herhalingen gedaan', ce_charge: 'Gewicht', ce_disques_lien: 'schijven', ce_reps_court: 'Herh. gedaan', ce_n_series: '{n} sets', ce_voir: 'beweging bekijken', ce_col_serie: 'SET', ce_col_obj: 'DOEL', ce_col_charge: 'GEWICHT', ce_col_reps: 'HERH.', ce_en_cours: 'Set {n} bezig', ce_valider: 'Set {n} bevestigen ✓', ce_validee: 'Set {n} gedaan ✓', ce_par_cote: '{kg} kg per kant', ce_disques_bt: 'schijven ▾', ce_fermer_disques: 'sluiten ▴', ce_objectif: 'doel {r}',
