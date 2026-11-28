@@ -430,6 +430,7 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
         <div id="entChoisi" class="chip" style="display:none"><b id="entChoisiNom"></b><button id="entDeselect" aria-label="Changer de destinataire">×</button></div>
         <input id="entClient" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" spellcheck="false">
         <p class="aide">Ou touche un client dans la liste au-dessus. Envoie le programme une fois le paiement reçu.</p>
+        <div id="entCopieMsg" class="msg"></div>
       </div>
       <!-- 23/11 Raci : questionnaire entrainement (ouvert apres reception du virement). -->
       <div id="entQuestBloc" style="display:none">
@@ -1761,7 +1762,7 @@ function restaurerCourantEnt() {
   entSeances = c.seances; $('entNote').value = c.note || ''; $('entClient').value = c.clientTxt || '';
   // 28/11 : sans ce drapeau, apres un rechargement, le client touche gardait SON
   // ancien brouillon et la copie disparaissait (puis partait a l'envoi).
-  if (c.copie && !c.uid) entCopie = true;
+  if (c.copie && !c.uid) { entCopie = true; annoncerCopieEnt(''); }
   if (c.uid) {
     // Le client revient des que la liste est chargee, SANS recharger son programme envoye.
     const d = tousDossiers.find((x) => x.uid === c.uid);
@@ -1796,6 +1797,7 @@ function depuisEnvoye(ent) {
 }
 
 function choisirEnt(d) {
+  $('entCopieMsg').className = 'msg';
   if (entChoisi && entChoisi.uid !== d.uid) sauverBrEnt();
   // 23/11 Raci (« le programme de Kosta s'affiche partout ») : le brouillon a l'ecran
   // appartient deja a un client dont la liste n'etait pas encore chargee -> on le
@@ -1806,8 +1808,10 @@ function choisirEnt(d) {
   }
   // Programme commence sans destinataire : il part chez ce client, rien n'est efface.
   if (!entChoisi && !entUidAttendu && aDesExos(entSeances) && (entCopie || !aDesExos((lireBrEnt(d.uid) || {}).seances))) {
+    const etaitCopie = entCopie;
     entCopie = false;
     poserClientEnt(d); sauverBrEnt(); dessinerEnt();
+    if (etaitCopie) finCopieEnt(d);
     $('ancreEnt').scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
   }
@@ -1831,7 +1835,7 @@ function choisirEnt(d) {
 }
 $('entDeselect').addEventListener('click', () => {
   sauverBrEnt();
-  entChoisi = null; entSeances = [seanceVide(0)]; $('entNote').value = '';
+  entChoisi = null; entCopie = false; entSeances = [seanceVide(0)]; $('entNote').value = ''; $('entClient').placeholder = 'e-mail ou pseudo'; $('entCopieMsg').className = 'msg';
   try { localStorage.removeItem(CLE_ENT_COURANT); } catch (e) { /* rien */ }
   $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entCarnetBloc').style.display = 'none'; $('entQuestBloc').style.display = 'none'; $('entBrBarre').style.display = 'none';
   dessinerEnt();
@@ -2102,21 +2106,33 @@ $('entReprendre').addEventListener('click', () => {
   entSeances = depuisEnvoye(env); $('entNote').value = env.note || ''; entPicker = null;
   sauverBrEnt(); dessinerEnt(); dessinerBrBarre();
 });
+// 28/11 Raci (« il ne m'a proposé d'encoder aucune adresse ») : le champ revenait
+// vide, sans rien dire. Comme pour l'alimentation : message + « Copier vers ».
+function annoncerCopieEnt(nom) {
+  $('entClient').placeholder = 'Copier vers : e-mail ou pseudo';
+  afficher($('entCopieMsg'), 'Programme' + (nom ? ' de ' + nom : '') + ' copié. Tape l\'e-mail du client qui le recevra, ou touche-le dans la liste.', true);
+}
+function finCopieEnt(d) {
+  $('entClient').placeholder = 'e-mail ou pseudo';
+  afficher($('entCopieMsg'), 'Programme copié pour ' + nomDe(d) + '. Vérifie-le, puis touche « Envoyer le programme ».', true);
+}
 $('entCopier').addEventListener('click', () => {
-  if (!aDesExos(entSeances)) return;
+  if (!aDesExos(entSeances)) { alert('Le programme est vide : rien à copier.'); return; }
+  const nomSource = entChoisi ? nomDe(entChoisi) : '';
   sauverBrEnt();
   entChoisi = null; entUidAttendu = null; entCopie = true;
   $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entClient').value = '';
   $('entCarnetBloc').style.display = 'none'; $('entQuestBloc').style.display = 'none'; $('entBrBarre').style.display = 'none';
   sauverBrEnt();
-  $('entClient').focus();
+  annoncerCopieEnt(nomSource);
   $('ancreEnt').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('entClient').focus({ preventScroll: true });
 });
 $('entVider').addEventListener('click', () => {
   if (aDesExos(entSeances) && !confirm('Effacer toutes les séances affichées ? Le programme déjà envoyé au client ne change pas.')) return;
   if (entChoisi) { try { localStorage.removeItem(CLE_BR_ENT(entChoisi.uid)); } catch (e) { /* rien */ } }
   try { localStorage.removeItem(CLE_ENT_COURANT); } catch (e) { /* rien */ }
-  entChoisi = null; entSeances = [seanceVide(0)]; entPicker = null; $('entNote').value = ''; $('entMsg').className = 'msg';
+  entChoisi = null; entCopie = false; entSeances = [seanceVide(0)]; entPicker = null; $('entNote').value = ''; $('entMsg').className = 'msg'; $('entCopieMsg').className = 'msg'; $('entClient').placeholder = 'e-mail ou pseudo';
   $('entChoisi').style.display = 'none'; $('entClient').style.display = ''; $('entClient').value = ''; $('entCarnetBloc').style.display = 'none'; $('entQuestBloc').style.display = 'none'; $('entBrBarre').style.display = 'none';
   dessinerEnt();
 });
