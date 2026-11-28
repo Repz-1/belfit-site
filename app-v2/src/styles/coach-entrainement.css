@@ -264,3 +264,7 @@
 .ce-ppp-pas { color: #B4B2A9; font-size: 13px; }
 .ce-ppp-note { margin: 8px 0 0; font-size: 13px; color: #6B655D; }
 .ce-ppp-note b { color: #16130F; font-weight: 600; }
+
+/* 28/11 Raci : exercice termine = saisie repliee (plus de « Serie 1 en cours »).
+   Toucher une ligne du tableau la rouvre. */
+.ce-a-fini-t { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: #1C7C3A; }

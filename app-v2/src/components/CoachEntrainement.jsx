@@ -321,7 +321,7 @@ export function CoachEntrainement() {
   const seance = seances.find((s) => s.id === choix) || seances[0] || null;
   const cle = seance ? isoJour(auj) + '|' + seance.id : '';
   const [saisie, setSaisie] = useState(() => etatInitial(seance, cle));
-  const [enregistre, setEnregistre] = useState(false);
+  const [enregistre, setEnregistre] = useState(() => !!(carnetCoach.peek()[cle] || {}).termine);
   const [photo, setPhoto] = useState(null);
   const [grande, setGrande] = useState(null); // { imgId, n, nom }
   // Changement de seance, nouveau programme, ou carnet charge apres coup : on repart du carnet.
@@ -330,7 +330,9 @@ export function CoachEntrainement() {
   // 28/11 : `aSauver` passe a vrai sur chaque geste du client (serie validee,
   // charge, reps, note) ; le rechargement depuis le carnet ne declenche rien.
   const aSauver = useRef(false);
-  useEffect(() => { aSauver.current = false; setSaisie(etatInitial(seance, cle)); setEnregistre(false); }, [cle, livre, charge]);
+  // 28/11 Raci (« je l'ai enregistree, mais elle reste toujours activee ») : une seance
+  // terminee le reste a la reouverture (drapeau `termine` dans le carnet).
+  useEffect(() => { aSauver.current = false; setSaisie(etatInitial(seance, cle)); setEnregistre(!!(carnetCoach.peek()[cle] || {}).termine); }, [cle, livre, charge]);
   // 28/11 Raci : SAUVEGARDE AUTOMATIQUE. Avant, rien n'etait garde tant que le
   // client ne touchait pas le bouton du bas : il validait ses series, quittait,
   // et la seance etait perdue. On n'ecrit qu'une seance qui a du contenu
@@ -358,17 +360,23 @@ export function CoachEntrainement() {
     const e = s[id]; const series = e.series.map((y, k) => (k === i ? { ...y, ...champ } : y));
     return { ...s, [id]: { ...e, series } };
   }); };
-  const activer = (id, i) => setSaisie((s) => ({ ...s, [id]: { ...s[id], actif: i } }));
+  // Toucher une ligne rouvre la saisie de cette serie (meme si tout est fait).
+  const activer = (id, i) => setSaisie((s) => ({ ...s, [id]: { ...s[id], actif: i, edit: true } }));
   const cocher = (id, i) => { aSauver.current = true; setEnregistre(false); setSaisie((s) => {
     const e = s[id]; const fait = !e.series[i].fait;
-    const series = e.series.map((y, k) => (k === i ? { ...y, fait } : y));
+    // 28/11 : coche par le rond sans reps tapees = les reps visees (comme « Valider la serie »).
+    const base = parseInt(String(repsParSerie(cibleDe(id), e.series.length)[i] || ''), 10);
+    const series = e.series.map((y, k) => (k === i ? { ...y, fait, ...(fait && (y.reps === null || y.reps === undefined) && Number.isFinite(base) ? { reps: base } : {}) } : y));
     // Serie cochee : on passe a la suivante, qui part de zero.
-    const actif = fait && i === e.actif && i + 1 < series.length ? i + 1 : e.actif;
-    return { ...s, [id]: { ...e, series, actif } };
+    // Toutes faites : la saisie se replie (plus de « Serie 1 en cours »).
+    const suivante = series.findIndex((y) => !y.fait);
+    const actif = fait ? (suivante === -1 ? e.actif : (i === e.actif ? suivante : e.actif)) : e.actif;
+    return { ...s, [id]: { ...e, series, actif, edit: suivante === -1 ? false : e.edit } };
   }); };
+  const cibleDe = (id) => { const x = seance && seance.exos.find((y) => y.id === id); return x ? x.reps : ''; };
   const majNote = (id, note) => { aSauver.current = true; setEnregistre(false); setSaisie((s) => ({ ...s, [id]: { ...s[id], note: note.slice(0, 300) } })); };
-  const enregistrer = () => { sauverSaisie(saisie); setEnregistre(true); };
-  function sauverSaisie(saisie) {
+  const enregistrer = () => { sauverSaisie(saisie, true); setEnregistre(true); };
+  function sauverSaisie(saisie, termine = false) {
     const exos = {};
     seance.exos.forEach((x) => {
       const e = saisie[x.id] || { series: [] };
@@ -383,7 +391,7 @@ export function CoachEntrainement() {
         // « 20×10 / 25×8 » (kg × reps) ; reps seules pour le poids du corps.
         detail: kgs.length || avecReps ? series.map((y) => (y.kg ? kgTexte(y.kg) : (x.type === 'corps' ? '' : '–')) + (y.reps > 0 ? (y.kg ? '×' : '') + y.reps : '')).join(' / ') : '' };
     });
-    noterSeance(cle, { date: isoJour(auj), seance: seance.nom, le: new Date().toISOString(), exos });
+    noterSeance(cle, { date: isoJour(auj), seance: seance.nom, le: new Date().toISOString(), exos, ...(termine ? { termine: true } : {}) });
   }
 
   return (
@@ -417,6 +425,7 @@ export function CoachEntrainement() {
         const vide = x.type === 'barre' ? !v.disques.length : !(v.kg > 0);
         const avantPlein = avant && (x.type === 'barre' ? avant.disques.length : avant.kg > 0);
         const rs = repsParSerie(x.reps, e.series.length);
+        const fini = e.series.every((y) => y.fait) && !e.edit;
         return (
           <section class="ce-carte ce-a" key={x.id}>
             {/* 23/11 Raci (version A) : tableau des series + saisie de la serie en cours. */}
@@ -450,7 +459,13 @@ export function CoachEntrainement() {
                 </div>
               ))}
             </div>
-            <div class="ce-a-saisie">
+            {fini && (
+              <div class="ce-a-saisie ce-a-fini">
+                <p class="ce-a-fini-t">✓ {t('ce_exo_fini')}</p>
+                <NoteExo valeur={e.note || ''} avant={derniereNote(x.id, cle)} maj={(nv) => majNote(x.id, nv)} />
+              </div>
+            )}
+            {!fini && <div class="ce-a-saisie">
               <p class="ce-a-encours">{t('ce_en_cours', { n: a + 1 })}
                 {vide && avantPlein && <button type="button" class="ce-reprendre"
                   onClick={() => majSerie(x.id, a, x.type === 'barre' ? { disques: avant.disques.slice(), reps: avant.reps } : { kg: avant.kg, reps: avant.reps })}>{t('ce_comme', { n: a })}</button>}
@@ -469,7 +484,7 @@ export function CoachEntrainement() {
                 {v.fait ? t('ce_validee', { n: a + 1 }) : t('ce_valider', { n: a + 1 })}
               </button>
               <NoteExo valeur={e.note || ''} avant={derniereNote(x.id, cle)} maj={(nv) => majNote(x.id, nv)} />
-            </div>
+            </div>}
           </section>
         );
       })}
