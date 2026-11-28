@@ -441,7 +441,8 @@ export function App() {
   }
 
   const onglet = ongletActif.value;
-  const ordre = ['journal', 'entrainer', 'stats', 'premium'];
+  // 28/11 Raci : Stats en 2e position, avant S'entrainer (meme ordre que la barre du bas).
+  const ordre = ['journal', 'stats', 'entrainer', 'premium'];
   const idx = Math.max(0, ordre.indexOf(onglet === 'courses' ? (origineCourses.value || 'journal') : onglet));
 
   // ============================================================

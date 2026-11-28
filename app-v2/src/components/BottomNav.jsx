@@ -67,13 +67,14 @@ const ONGLETS = [
     k: 'journal', label: 'nav_journal',
     trace: ['M7 3v7a2 2 0 002 2v9', 'M5 3v4', 'M9 3v4', 'M17 3c-1.5 0-3 2-3 5v4h3v9'],
   },
-  {
-    k: 'entrainer', label: 'nav_train',
-    trace: ['M6.5 6.5v11', 'M17.5 6.5v11', 'M3 9v6', 'M21 9v6', 'M6.5 12h11'],
-  },
+  // 28/11 Raci : Stats en 2e position, avant S'entrainer.
   {
     k: 'stats', label: 'nav_stats',
     trace: ['M4 20V10', 'M10 20V4', 'M16 20v-8', 'M22 20H2'],
+  },
+  {
+    k: 'entrainer', label: 'nav_train',
+    trace: ['M6.5 6.5v11', 'M17.5 6.5v11', 'M3 9v6', 'M21 9v6', 'M6.5 12h11'],
   },
   {
     // Une fois l'abonnement actif, l'onglet cesse d'etre une offre

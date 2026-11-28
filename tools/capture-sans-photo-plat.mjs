@@ -33,8 +33,8 @@ for (const [nom, etat, extra, legende, action] of vues) {
   }
   try {
     if (action === 'repas') { await p.locator('.mc-tete').first().click({ timeout: 3000 }); await p.waitForTimeout(800); }
-    if (action === 'train') { await p.locator('.bn-item').nth(1).tap(); await p.waitForTimeout(1200); }
-    if (action === 'stats') { await p.locator('.bn-item').nth(2).tap(); await p.waitForTimeout(1200); }
+    if (action === 'train') { await p.locator('.bn-item--entrainer').tap(); await p.waitForTimeout(1200); }
+    if (action === 'stats') { await p.locator('.bn-item--stats').tap(); await p.waitForTimeout(1200); }
   } catch (e) { console.log('action impossible', nom, e.message.slice(0, 80)); }
   await bandeau(p, legende);
   await p.screenshot({ path: `${SORTIE}${nom}.png` });
