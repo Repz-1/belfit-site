@@ -126,7 +126,8 @@ function PageSeancePassee({ cleDepart, fermer }) {
     if (!y.fait) return { pas: true };
     const kgT = type !== 'corps' && y.kg > 0 ? kgTexte(y.kg) + ' kg' : '';
     const r = y.reps > 0 ? String(y.reps) : '';
-    return { txt: kgT && r ? kgT + ' × ' + r : (kgT || (r ? r + ' reps' : '✓')) };
+    // 28/11 : ni charge ni reps notees -> « faite » (avant : « ✓ ✓ »).
+    return { txt: kgT && r ? kgT + ' × ' + r : (kgT || (r ? r + ' reps' : t('ce_pp_faite'))) };
   };
   return createPortal(
     <div class="ce-histo ce-ppp" role="dialog" aria-label={e.seance}>
