@@ -514,10 +514,8 @@ export function Stats() {
             navigation du bas. */}
         <Entete />
 
-        {/* 28/11 Raci : « Mes seances passees » en tete de Stats (coaching entrainement). */}
-        <CarteSeancesPassees />
 
-        {/* 28/11 Raci : ordre Seances passees, Poids, Note, Calories, Entrainement. */}
+        {/* 28/11 Raci : ordre Poids, Seances passees, Note, Calories, Entrainement. */}
         {/* POIDS */}
         <div class="stat-card acc-green">
           <h2><span>{t('st_weight')}</span></h2>
@@ -581,6 +579,9 @@ export function Stats() {
             <button class="weight-add-btn" onClick={() => setModalePoids(true)}>{t('st_weight_add')}</button>
           )}
         </div>
+
+        {/* 28/11 Raci (soir) : « Mes seances passees » en 2e position, sous le poids. */}
+        <CarteSeancesPassees />
 
         {/* NOTE DE PROGRESSION GLOBALE */}
         {!rienDuTout && (

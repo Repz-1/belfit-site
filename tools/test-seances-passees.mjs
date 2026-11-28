@@ -41,9 +41,8 @@ try {
   ok(/✓ 4\/5/.test(txt), 'séries faites 4/5');
   ok(!/Développé couché/.test(txt) && !/Comparer/.test(txt), 'à l\'ouverture : seulement le jour de séance, pas de « Comparer »');
   const y0 = await p.locator('.ce-pp').boundingBox(); const y1 = await p.locator('.score-card').boundingBox().catch(() => null);
-  ok(!y1 || y0.y < y1.y, 'carte en tête de Stats');
   const yp = await p.locator('.stat-card.acc-green').boundingBox(); const yk = await p.locator('.stat-card.acc-orange').boundingBox();
-  ok(y0.y < yp.y && (!y1 || (yp.y < y1.y && y1.y < yk.y)), 'ordre : séances, poids, note, calories');
+  ok(yp.y < y0.y && (!y1 || (y0.y < y1.y && y1.y < yk.y)), 'ordre : poids, séances, note, calories');
   await p.screenshot({ path: '/tmp/m/stats-pp.png' });
   await p.locator('.ce-pp-jours .ce-pp-tuile.on').first().tap(); await p.waitForTimeout(400);
   const ouvert = await p.locator('.ce-pp').innerText();
