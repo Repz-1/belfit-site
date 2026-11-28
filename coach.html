@@ -1740,7 +1740,10 @@ function sauverBrEnt() {
   try {
     // 23/11 : client pas encore revenu de la liste (entUidAttendu) = toujours SON brouillon.
     localStorage.setItem(CLE_ENT_COURANT, JSON.stringify({ le, uid: entChoisi ? entChoisi.uid : entUidAttendu,
-      clientTxt: $('entClient').value, seances: entSeances, note: $('entNote').value, picker: entPicker }));
+      clientTxt: $('entClient').value, seances: entSeances, note: $('entNote').value, picker: entPicker,
+      // 28/11 Raci (« copier vers un autre ne fonctionne pas ») : la copie en cours
+      // survit au rechargement de la page (Android la recharge quand on quitte l'app).
+      copie: !entChoisi && !entUidAttendu && entCopie }));
     if (entChoisi) localStorage.setItem(CLE_BR_ENT(entChoisi.uid), JSON.stringify({ le, seances: entSeances, note: $('entNote').value }));
   } catch (e) { /* rien */ }
   try { if (entChoisi) dessinerBrBarre(); } catch (e) { /* rien */ }
@@ -1756,6 +1759,9 @@ function restaurerCourantEnt() {
   const c = lireCourantEnt();
   if (!c || !aDesExos(c.seances)) return;
   entSeances = c.seances; $('entNote').value = c.note || ''; $('entClient').value = c.clientTxt || '';
+  // 28/11 : sans ce drapeau, apres un rechargement, le client touche gardait SON
+  // ancien brouillon et la copie disparaissait (puis partait a l'envoi).
+  if (c.copie && !c.uid) entCopie = true;
   if (c.uid) {
     // Le client revient des que la liste est chargee, SANS recharger son programme envoye.
     const d = tousDossiers.find((x) => x.uid === c.uid);
