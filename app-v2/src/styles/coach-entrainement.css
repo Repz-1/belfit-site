@@ -224,3 +224,6 @@
 
 /* 24/11 : annonce « programme d'entrainement recu » (reprend .ap-*). */
 .ae-txt { margin: 4px 0 18px; text-align: center; color: #5B554C; font-size: 15px; }
+
+/* 28/11 : lien « Mes seances passees » en tete de la page seance. */
+.ce-passees { display: block; padding: 4px 0 10px; }

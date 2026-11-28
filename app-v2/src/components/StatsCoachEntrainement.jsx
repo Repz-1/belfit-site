@@ -116,7 +116,7 @@ export function CarteEntrainementCoach() {
 }
 
 /** Page plein ecran : une seance, ses exercices, 4 dernieres fois cote a cote. */
-function HistoriqueSeances({ fermer }) {
+export function HistoriqueSeances({ fermer }) {
   const ent = entrainementCoach.value;
   const seances = ent && ent.seances || [];
   const [choix, setChoix] = useState(seances[0] && seances[0].id);

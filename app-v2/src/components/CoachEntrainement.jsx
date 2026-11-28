@@ -7,7 +7,7 @@
 // coche ses series. Sans programme : la page se montre floutee,
 // « Non disponible pour ton compte ».
 // ============================================================
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { signal } from '@preact/signals';
 import { entrainementCoach, dossierCoach } from './BelfitPlus.jsx';
 import { QuestionnaireCoach, effacerBrouillon } from './QuestionnaireCoach.jsx';
@@ -17,6 +17,7 @@ import { signalerQuestionnaire } from '../services/mollie.js';
 import { carnetCoach, carnetCharge, noterSeance, dernierPour, derniereNote } from '../store/carnet-coach.js';
 import { DISQUES, totalBarre, texteDisques, pasCharge, kgTexte, repsParSerie, repsTexte } from '../data/charge-coach.js';
 import { t } from '../i18n/index.js';
+import { HistoriqueSeances } from './StatsCoachEntrainement.jsx';
 import { PhotoExo } from './PhotoExo.jsx';
 import { createPortal } from 'preact/compat';
 
@@ -327,7 +328,21 @@ export function CoachEntrainement() {
   // Changement de seance, nouveau programme, ou carnet charge apres coup : on repart du carnet.
   const livre = ent && ent.livreLe;
   const charge = carnetCharge.value;
-  useEffect(() => { setSaisie(etatInitial(seance, cle)); setEnregistre(false); }, [cle, livre, charge]);
+  // 28/11 : `aSauver` passe a vrai sur chaque geste du client (serie validee,
+  // charge, reps, note) ; le rechargement depuis le carnet ne declenche rien.
+  const aSauver = useRef(false);
+  useEffect(() => { aSauver.current = false; setSaisie(etatInitial(seance, cle)); setEnregistre(false); }, [cle, livre, charge]);
+  const [histo, setHisto] = useState(false);
+  // 28/11 Raci : SAUVEGARDE AUTOMATIQUE. Avant, rien n'etait garde tant que le
+  // client ne touchait pas le bouton du bas : il validait ses series, quittait,
+  // et la seance etait perdue. On n'ecrit qu'une seance qui a du contenu
+  // (une serie faite, une note) ou qui existe deja (pour suivre une correction).
+  useEffect(() => {
+    if (!aSauver.current || !seance) return;
+    aSauver.current = false;
+    const contenu = Object.values(saisie).some((e) => e && ((e.series || []).some((y) => y.fait) || String(e.note || '').trim()));
+    if (contenu || carnetCoach.peek()[cle]) sauverSaisie(saisie);
+  }, [saisie]);
   const [remplir, setRemplir] = useState(false);
   const [disques, setDisques] = useState(null);   // exercice dont les disques sont ouverts
   const etatQ = etatQuestEnt();
@@ -341,20 +356,21 @@ export function CoachEntrainement() {
 
   const jours = t('ce_jours').split(',');
   // Modifie la serie i de l'exercice id ; `actif` change la serie en cours.
-  const majSerie = (id, i, champ) => { setEnregistre(false); setSaisie((s) => {
+  const majSerie = (id, i, champ) => { aSauver.current = true; setEnregistre(false); setSaisie((s) => {
     const e = s[id]; const series = e.series.map((y, k) => (k === i ? { ...y, ...champ } : y));
     return { ...s, [id]: { ...e, series } };
   }); };
   const activer = (id, i) => setSaisie((s) => ({ ...s, [id]: { ...s[id], actif: i } }));
-  const cocher = (id, i) => { setEnregistre(false); setSaisie((s) => {
+  const cocher = (id, i) => { aSauver.current = true; setEnregistre(false); setSaisie((s) => {
     const e = s[id]; const fait = !e.series[i].fait;
     const series = e.series.map((y, k) => (k === i ? { ...y, fait } : y));
     // Serie cochee : on passe a la suivante, qui part de zero.
     const actif = fait && i === e.actif && i + 1 < series.length ? i + 1 : e.actif;
     return { ...s, [id]: { ...e, series, actif } };
   }); };
-  const majNote = (id, note) => { setEnregistre(false); setSaisie((s) => ({ ...s, [id]: { ...s[id], note: note.slice(0, 300) } })); };
-  const enregistrer = () => {
+  const majNote = (id, note) => { aSauver.current = true; setEnregistre(false); setSaisie((s) => ({ ...s, [id]: { ...s[id], note: note.slice(0, 300) } })); };
+  const enregistrer = () => { sauverSaisie(saisie); setEnregistre(true); };
+  function sauverSaisie(saisie) {
     const exos = {};
     seance.exos.forEach((x) => {
       const e = saisie[x.id] || { series: [] };
@@ -370,13 +386,15 @@ export function CoachEntrainement() {
         detail: kgs.length || avecReps ? series.map((y) => (y.kg ? kgTexte(y.kg) : (x.type === 'corps' ? '' : '–')) + (y.reps > 0 ? (y.kg ? '×' : '') + y.reps : '')).join(' / ') : '' };
     });
     noterSeance(cle, { date: isoJour(auj), seance: seance.nom, le: new Date().toISOString(), exos });
-    setEnregistre(true);
-  };
+  }
 
   return (
     <div class="ce-page">
       <p class="ce-h">{t('ce_titre')}</p>
       <p class="ce-sous">{t('ce_recu', { q: depuisTxt(ent.livreLe) })}</p>
+      {Object.keys(carnetCoach.value || {}).length > 0 && (
+        <button type="button" class="ce-st-lien ce-passees" onClick={() => setHisto(true)}>{t('ce_passees')} <span aria-hidden="true">›</span></button>
+      )}
       {etatQ.aRemplir && (
         <div class="ce-bandeau-quest" role="status">
           <p>{t('ce_quest_bandeau')}</p>
@@ -462,6 +480,7 @@ export function CoachEntrainement() {
       })}
 
       {grande && <PhotoGrande {...grande} fermer={() => setGrande(null)} />}
+      {histo && <HistoriqueSeances fermer={() => setHisto(false)} />}
 
       {ent.note && (
         <section class="ce-note"><b>{t('ce_mot')}</b><p>{ent.note}</p></section>
