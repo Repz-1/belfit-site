@@ -14,6 +14,10 @@ import { setLog } from '../src/components/SeanceTracker.jsx';
 import { App } from '../src/main.jsx';
 import { estPremium } from '../src/components/PremiumPage.jsx';
 import { ongletActif } from '../src/components/BottomNav.jsx';
+import { entrainementCoach } from '../src/components/BelfitPlus.jsx';
+import { carnetCoach } from '../src/store/carnet-coach.js';
+// 28/11 : « Mes seances passees » (tools/test-seances-passees.mjs seme le programme et le carnet).
+window.__banc = { entrainementCoach, carnetCoach };
 
 const iso = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
 
