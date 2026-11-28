@@ -11,7 +11,7 @@ import { histoJours, weightLog, ajouterPesee } from '../src/store/stats.js';
 import { App, AccueilGarde } from '../src/main.jsx';
 import { programmeActif } from '../src/store/programme.js';
 import { estPremium } from '../src/components/PremiumPage.jsx';
-import { programme, programmeBrut, programmeCharge, dossierCoach, poserLecteurProgramme } from '../src/components/BelfitPlus.jsx';
+import { programme, programmeBrut, programmeCharge, dossierCoach, poserLecteurProgramme, messageCoach } from '../src/components/BelfitPlus.jsx';
 import { paiementOuvert } from '../src/services/mollie.js';
 import * as accesNut from '../src/store/acces-nutrition.js';
 import * as jrn from '../src/store/journal.js';
@@ -77,7 +77,7 @@ setInterval(() => {
 }, 100);
 
 // Acces des tests Playwright (cloture de la veille, 21/10).
-window.__banc = { eau, weightLog, ajouterPesee, repasAffiches, journalDUnJourPasse, dateJour, repas, histoJours, programme, programmeBrut, programmeCharge, dossierCoach, objectifs, utilisateur, accesNut, jrn, perso, paiementOuvert };
+window.__banc = { eau, weightLog, ajouterPesee, repasAffiches, journalDUnJourPasse, dateJour, repas, histoJours, programme, programmeBrut, programmeCharge, dossierCoach, objectifs, utilisateur, accesNut, jrn, perso, paiementOuvert, messageCoach };
 
 // L'accueil du matin/soir (voile plein ecran) n'est monte que sur demande (?accueil) :
 // il recouvrirait l'ecran et fausserait les autres tests selon l'heure.

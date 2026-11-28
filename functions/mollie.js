@@ -13,6 +13,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const reduction = require("./reduction");
+const notifications = require("./notifications");
 const accesNutrition = require("./acces-nutrition");
 const alertes = require("./alertes-coach");
 
@@ -149,7 +150,8 @@ async function traiterPaiement(p) {
   if (r.nouveau) {
     await db().collection("users").doc(uid).set({
       commandeCoach: {type, payeLe: p.paidAt || new Date().toISOString(),
-        montant: p.amount.value + " EUR", commande: p.id, source: "mollie"},
+        montant: p.amount.value + " EUR", commande: p.id, source: "mollie",
+        ...(cmd0.exists && cmd0.data().entrainementOffert ? {entrainementOffert: true} : {})},
     }, {merge: true});
     const refQ = db().collection("quotasIA").doc(uid);
     const sq = await refQ.get();
@@ -158,6 +160,16 @@ async function traiterPaiement(p) {
     const fin44 = (Date.parse(p.paidAt) || Date.now()) + JOURS_ACCES * 864e5;
     await refQ.set({illimiteJusqu: new Date(Math.max(fin44, fin || 0)).toISOString()}, {merge: true});
     console.log("Commande Mollie payee :", uid, type, p.id);
+    // 28/11 Raci : code « + coaching entrainement offert » -> le questionnaire
+    // entrainement s'ouvre tout seul, comme apres un virement de 50 EUR recu.
+    if (cmd0.exists && cmd0.data().entrainementOffert) {
+      const le = new Date().toISOString();
+      await db().collection("users").doc(uid).set({
+        questEntOuvert: {le, par: "code", code: nomCode || null},
+      }, {merge: true});
+      await notifications.envoyer(uid, "questionnaire").catch((e) => console.error("Notif questionnaire (code) :", e));
+      console.log("Coaching entrainement offert par code :", uid, nomCode);
+    }
   }
   // Acces nutrition (blocage) : meme date que l'IA illimitee. Idempotent
   // (fin = max(existante, paiement + 44 j)) : on le repasse aussi pour un
@@ -199,7 +211,7 @@ exports.verifierCodeReduction = onRequest(
           if (reduction.MOTIFS_ESSAI_RATE.has(r.motif)) { await reduction.noterEchec(cles); await attenteEchec(); }
           refus(r.motif); return;
         }
-        res.json({ok: true, code: r.code, pourcent: r.pourcent, base: r.base, reduction: r.reduction, montant: r.montant});
+        res.json({ok: true, code: r.code, pourcent: r.pourcent, base: r.base, reduction: r.reduction, montant: r.montant, entrainementOffert: !!r.entrainementOffert});
       } catch (e) {
         console.error("verifierCodeReduction :", e);
         res.status(500).json({ok: false, motif: "serveur", message: reduction.MESSAGES.serveur});
@@ -258,7 +270,7 @@ exports.creerPaiementMollie = onRequest(
         await db().collection("commandes").doc(paiement.id).set({
           uid, email, type, montant, statut: paiement.status, langue: lg,
           source: "mollie", mode: paiement.mode, creeLe: new Date().toISOString(),
-          ...(leCode ? {code: leCode, pourcent: prixCode.pourcent, montantBase: p.montant, reduction: prixCode.reduction} : {}),
+          ...(leCode ? {code: leCode, pourcent: prixCode.pourcent, montantBase: p.montant, reduction: prixCode.reduction, entrainementOffert: !!prixCode.entrainementOffert} : {}),
         });
         if (leCode) await reduction.attacherCommande({uid, code: leCode, commande: paiement.id});
         res.json({ok: true, url: paiement._links.checkout.href, ...(leCode ? {montant, reduction: prixCode.reduction} : {})});

@@ -50,23 +50,26 @@ exports.adminCodesReduction = onRequest(
         if (action === "creer") {
           const code = nom || reduction.codeAleatoire(8);
           const pourcent = Number(corps.pourcent);
+          const offert = corps.entrainementOffert === true;
           const expire = corps.expire ? String(corps.expire) : null;
           if (!reduction.codeBienForme(code)) { res.status(400).json({ok: false, motif: "code", detail: "4 à 32 lettres ou chiffres"}); return; }
-          if (!Number.isInteger(pourcent) || pourcent < 1 || pourcent > reduction.POURCENT_MAX_ADMIN) {
-            res.status(400).json({ok: false, motif: "pourcent", detail: "entier de 1 à " + reduction.POURCENT_MAX_ADMIN}); return;
+          // 28/11 : 0 % accepte seulement si le code offre le coaching entrainement.
+          const min = offert ? 0 : 1;
+          if (!Number.isInteger(pourcent) || pourcent < min || pourcent > reduction.POURCENT_MAX_ADMIN) {
+            res.status(400).json({ok: false, motif: "pourcent", detail: "entier de " + min + " à " + reduction.POURCENT_MAX_ADMIN}); return;
           }
           // Le prix reduit doit rester payable en ligne (sinon : pas de code, voir « minimum »).
-          if (!reduction.calculerPrix(reduction.PRIX_BASE_CENTS.plan, pourcent).ok) { res.status(400).json({ok: false, motif: "minimum"}); return; }
+          if (!reduction.calculerPrix(reduction.PRIX_BASE_CENTS.plan, pourcent, offert).ok) { res.status(400).json({ok: false, motif: "minimum"}); return; }
           if (expire && !(Date.parse(expire) > Date.now())) { res.status(400).json({ok: false, motif: "expire"}); return; }
           const ref = col().doc(code);
           const cree = await require("firebase-admin").firestore().runTransaction(async (tx) => {
             if ((await tx.get(ref)).exists) return false;
-            tx.set(ref, reduction.nouveauDocument({pourcent, note: corps.note, expire}));
+            tx.set(ref, reduction.nouveauDocument({pourcent, note: corps.note, expire, entrainementOffert: offert}));
             return true;
           });
           if (!cree) { res.status(409).json({ok: false, motif: "existe"}); return; }
-          const p = reduction.calculerPrix(reduction.PRIX_BASE_CENTS.plan, pourcent);
-          res.json({ok: true, code, pourcent, montant: p.montant});
+          const p = reduction.calculerPrix(reduction.PRIX_BASE_CENTS.plan, pourcent, offert);
+          res.json({ok: true, code, pourcent, montant: p.montant, entrainementOffert: offert});
           return;
         }
         if (action === "desactiver" || action === "reactiver") {
@@ -87,7 +90,7 @@ exports.adminCodesReduction = onRequest(
           const docs = (await col().orderBy("cree", "desc").limit(100).get()).docs;
           res.json({ok: true, codes: docs.map((d) => {
             const x = d.data();
-            return {code: d.id, pourcent: x.pourcent, actif: x.actif !== false, etat: reduction.statutEffectif(x, maintenant),
+            return {code: d.id, pourcent: x.pourcent, entrainementOffert: !!x.entrainementOffert, actif: x.actif !== false, etat: reduction.statutEffectif(x, maintenant),
               note: x.note || "", cree: x.cree, expire: x.expire || null, utiliseLe: x.utiliseLe || null};
           })});
           return;

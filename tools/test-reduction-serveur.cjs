@@ -225,6 +225,28 @@ const PAYE = (id, uid, v) => ({id, status: "paid", mode: "test", paidAt: new Dat
   for (let i = 0; i < 8; i++) await run(adm.adminCodesReduction, reqAdmin({code: "x" + i, action: "lister"}, "7.7.7.7"));
   ra = await run(adm.adminCodesReduction, reqAdmin({code: "secret-de-test-local", action: "lister"}, "7.7.7.7")); ok(ra.code === 429, "8 mauvais secrets : l'adresse est bloquée, même avec le bon");
 
+  console.log("— code + coaching entraînement offert (28/11)");
+  vider();
+  ra = await run(adm.adminCodesReduction, reqAdmin({code: "secret-de-test-local", action: "creer", nomCode: "ENTOFFERT", pourcent: 0, entrainementOffert: true}));
+  ok(ra.code === 200 && ra.body.montant === "80.00" && ra.body.entrainementOffert === true && store["codesReduction/ENTOFFERT"].entrainementOffert === true, "création à 0 % acceptée quand l'entraînement est offert");
+  ra = await run(adm.adminCodesReduction, reqAdmin({code: "secret-de-test-local", action: "creer", nomCode: "ZEROSEUL", pourcent: 0}));
+  ok(ra.code === 400 && !store["codesReduction/ZEROSEUL"], "0 % sans entraînement offert : toujours refusé");
+  ra = await run(adm.adminCodesReduction, reqAdmin({code: "secret-de-test-local", action: "creer", nomCode: "DIXENT", pourcent: 10, entrainementOffert: true}));
+  ok(ra.code === 200 && ra.body.montant === "72.00", "10 % + entraînement offert : 72.00");
+  r = await verif("t1", "ENTOFFERT"); ok(r.code === 200 && r.body.entrainementOffert === true && r.body.montant === "80.00", "vérification : le client voit l'entraînement offert");
+  ra = await run(adm.adminCodesReduction, reqAdmin({code: "secret-de-test-local", action: "lister"}));
+  ok(ra.body.codes.some((c) => c.code === "ENTOFFERT" && c.entrainementOffert), "liste : l'option apparaît");
+  await payer("t1", {type: "plan", code: "DIXENT"}); const idE = "tr_t" + n;
+  ok(store["commandes/" + idE].entrainementOffert === true, "commande marquée « entraînement offert »");
+  paiementRetour = PAYE(idE, "u1", "72.00"); await webhook(idE);
+  ok(store["users/u1"].questEntOuvert && store["users/u1"].questEntOuvert.par === "code" && store["users/u1"].questEntOuvert.code === "DIXENT" && store["users/u1"].commandeCoach.entrainementOffert === true && store["users/u1"].commandeCoach.montant === "72.00 EUR", "paiement confirmé : questionnaire entraînement ouvert tout seul");
+  const qAvant = store["users/u1"].questEntOuvert.le; await webhook(idE);
+  ok(store["users/u1"].questEntOuvert.le === qAvant, "webhook rejoué : rien ne change");
+  vider(); poser("SANSENT", {pourcent: 10});
+  await payer("t1", {type: "plan", code: "SANSENT"}); const idS = "tr_t" + n;
+  paiementRetour = PAYE(idS, "u1", "72.00"); await webhook(idS);
+  ok(store["users/u1"] && !store["users/u1"].questEntOuvert, "code classique : rien d'ouvert côté entraînement");
+
   console.log("— règles Firestore");
   const regles = fs.readFileSync(path.join(RACINE, "firestore.rules"), "utf8");
   for (const col of ["codesReduction", "reductionsPersonne", "essaisCodes"]) ok(new RegExp("match /" + col + "/\\{\\w+\\} \\{\\s*allow read, write: if false;").test(regles), "règles : " + col + " fermée au client (lecture et écriture interdites)");

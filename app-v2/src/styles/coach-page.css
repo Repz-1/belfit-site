@@ -476,3 +476,4 @@
 .pg-coach .cp-offre.cp-recu::before{display:none}
 .pg-coach .cp-offre.cp-recu .cp-prix{font-size:32px;font-weight:900;color:#111}
 .pg-coach .cp-offre.cp-recu .cp-prix.cp-prix--promo{color:#1F6B42}
+.pg-coach .cp-code-ent { display: block; margin-top: 4px; color: #123C86; font-weight: 600; }

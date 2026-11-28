@@ -29,7 +29,9 @@ service cloud.firestore {
               // 21/11 : programme d'entrainement envoye par le coach.
               'entrainementCoach',
               // 23/11 : questionnaire entrainement ouvert par le coach (apres virement).
-              'questEntOuvert'];
+              'questEntOuvert',
+              // 28/11 : petit mot du coach (espaceCoach, action « message »).
+              'messageCoach'];
     }
     function nutriCles() {
       return ['repas', 'objectifs', 'calculBaseFait', 'poidsCalcul', 'profilBesoins',

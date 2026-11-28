@@ -226,6 +226,10 @@ button.second{display:block;width:100%;font:inherit;font-size:14px;font-weight:6
 .red-code button.danger{color:#A32D2D}
 .red-code button:disabled{opacity:.45;cursor:default}
 .red-nouveau{background:#E9F5EE;border-radius:12px;padding:10px 12px;margin-top:12px;font-size:13.5px;line-height:1.5;color:#1C5334;display:none}
+.red-offert{display:flex;gap:10px;align-items:flex-start;margin:12px 0 4px;padding:10px 12px;border-radius:12px;background:#EEF3FC;color:#123C86;font-size:14px;font-weight:600;cursor:pointer}
+.red-offert input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:#1F5FD1}
+.red-offert small{display:block;font-weight:400;font-size:12.5px;line-height:1.4;color:#3B5B95;margin-top:2px}
+.red-ent{display:inline-block;margin-left:6px;font-size:11.5px;font-weight:600;color:#123C86;background:#EEF3FC;border-radius:99px;padding:2px 8px}
 .red-nouveau b{font-family:'DM Mono',monospace;font-size:15px}
 
 /* Supprimer un client (21/11) : bouton discret en bas de la fiche, confirmation obligatoire */
@@ -455,6 +459,18 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
       <div id="entMsg" class="msg"></div>
     </div>
 
+    <!-- 28/11 Raci : petit mot a un client -> notification sur son telephone + bulle dans l'app. -->
+    <p class="lb">Petit mot à un client</p>
+    <div class="carte">
+      <label for="motClient">Client</label>
+      <input id="motClient" type="text" placeholder="e-mail ou pseudo" autocapitalize="off" spellcheck="false">
+      <label for="motTexte">Ton message</label>
+      <textarea id="motTexte" rows="3" maxlength="180" placeholder="Belle semaine, continue comme ça !"></textarea>
+      <button class="second" id="btnMot">Envoyer</button>
+      <p class="aide">Il le reçoit en notification (s'il les a activées) et dans l'app à la prochaine ouverture. 180 caractères au plus.</p>
+      <div id="msgMot" class="msg"></div>
+    </div>
+
     <details class="outils"><summary>Outils (invitations, accès)</summary>
     <p class="lb">Inviter un client</p>
     <div class="carte">
@@ -503,6 +519,22 @@ body.ent input:focus,body.ent textarea:focus{border-color:rgba(31,95,209,.4);box
       <div id="msgCode2" class="msg"></div>
     </div>
     <div class="carte" id="listeAcces" style="padding:6px 15px"></div>
+
+    <!-- 28/11 Raci : codes de reduction sur les 80 EUR, avec en option le coaching entrainement offert. -->
+    <p class="lb">Codes de réduction</p>
+    <div class="carte">
+      <label for="redNom">Nom du code (vide = code au hasard)</label>
+      <input id="redNom" type="text" placeholder="MARC10" autocapitalize="characters" spellcheck="false" style="font-family:'DM Mono',monospace;text-transform:uppercase">
+      <div class="red-ligne"><label for="redPc" style="margin:0;align-self:center">Réduction sur 80 € (%)</label><input id="redPc" type="number" min="0" max="90" value="10"></div>
+      <label class="red-offert"><input id="redEnt" type="checkbox"> <span>+ coaching entraînement offert<small>Au paiement, son questionnaire entraînement s'ouvre tout seul, sans virement de 50 €.</small></span></label>
+      <label for="redNote">Pour qui (note pour toi)</label>
+      <input id="redNote" type="text" placeholder="ex. Julie, salle Uccle" spellcheck="false">
+      <button class="second" id="btnRed">Créer le code</button>
+      <p class="aide">Un code ne sert qu'une seule fois. 0 % possible seulement avec l'entraînement offert.</p>
+      <div id="msgRed" class="msg"></div>
+      <div id="redNouveau" class="red-nouveau"></div>
+    </div>
+    <div class="carte" id="listeRed" style="padding:0 15px"></div>
 
     </details>
   </section>
@@ -1547,6 +1579,70 @@ $('btnCode2').addEventListener('click', () => {
 // (temps constant, freinage anti-devinette). Ce code reste en memoire (variable `code`
 // de la page, deja la) : rien n'est ecrit en plus, rien n'est affiche.
 const URL_RED = 'https://europe-west1-repz-baf60.cloudfunctions.net/adminCodesReduction';
+function appelRed(action, extra) {
+  return fetch(URL_RED, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, action, ...(extra || {}) }) }).then((r) => r.json().catch(() => ({ ok: false })));
+}
+function chargerCodesRed() {
+  appelRed('lister').then((r) => {
+    const h = $('listeRed'); h.innerHTML = '';
+    if (!r || !r.ok) return;
+    if (!r.codes.length) { h.append(el('p', 'vide', 'Aucun code pour le moment.')); return; }
+    r.codes.forEach((c) => {
+      const l = el('div', 'red-code');
+      const haut = el('div', 'red-haut');
+      const nom = el('span', 'red-nom', c.code);
+      if (c.entrainementOffert) nom.append(el('span', 'red-ent', '+ entraînement'));
+      haut.append(nom, el('span', 'red-pc', '−' + c.pourcent + ' %'));
+      const bas = el('div', 'red-bas');
+      const etat = c.etat === 'utilise' ? 'utilisé' : (!c.actif ? 'désactivé' : (c.etat === 'reserve' ? 'paiement en cours' : 'libre'));
+      bas.append(el('span', 'red-note', etat + (c.note ? ' · ' + c.note : '')));
+      if (c.etat !== 'utilise') {
+        const b = el('button', c.actif ? 'danger' : '', c.actif ? 'Désactiver' : 'Réactiver');
+        b.addEventListener('click', () => { b.disabled = true; appelRed(c.actif ? 'desactiver' : 'reactiver', { nomCode: c.code }).finally(chargerCodesRed); });
+        bas.append(b);
+      }
+      l.append(haut, bas); h.append(l);
+    });
+  }).catch(() => {});
+}
+$('btnRed').addEventListener('click', () => {
+  const b = $('btnRed'), m = $('msgRed');
+  const pourcent = Number($('redPc').value);
+  const offert = $('redEnt').checked;
+  $('redNouveau').style.display = 'none';
+  b.disabled = true;
+  appelRed('creer', { nomCode: $('redNom').value.trim(), pourcent, note: $('redNote').value.trim(), entrainementOffert: offert }).then((d) => {
+    if (d && d.ok) {
+      m.className = 'msg';
+      const n = $('redNouveau'); n.innerHTML = '';
+      n.append('Code ', el('b', '', d.code), ' créé : le client paie ' + String(d.montant).replace('.', ',') + ' €' + (d.entrainementOffert ? ' et reçoit le coaching entraînement offert.' : '.'));
+      n.style.display = 'block';
+      $('redNom').value = ''; $('redNote').value = ''; $('redEnt').checked = false; chargerCodesRed();
+    } else {
+      const t = d && d.motif === 'existe' ? 'Ce code existe déjà.' : d && d.motif === 'pourcent' ? 'Pourcentage : ' + (d.detail || 'invalide') + '.'
+        : d && d.motif === 'code' ? 'Nom invalide (4 à 32 lettres ou chiffres).' : d && d.motif === 'secret' ? 'Code coach refusé.' : 'Échec. Réessaie.';
+      afficher(m, t, false);
+    }
+  }).catch(() => afficher(m, 'Réseau indisponible.', false)).finally(() => { b.disabled = false; });
+});
+// ---------- Petit mot a un client (28/11) ----------
+$('btnMot').addEventListener('click', () => {
+  const b = $('btnMot'), m = $('msgMot');
+  const client = $('motClient').value.trim() || (choisi ? 'uid:' + choisi.uid : '');
+  const texte = $('motTexte').value.trim();
+  if (!client) { afficher(m, 'Indique le client.', false); return; }
+  if (!texte) { afficher(m, 'Écris ton message.', false); return; }
+  b.disabled = true;
+  appel('message', { client, texte }).then((d) => {
+    if (d && d.ok) {
+      const n = d.notif || {};
+      afficher(m, n.envoyes > 0 ? 'Envoyé. Notification reçue sur ' + n.envoyes + (n.envoyes > 1 ? ' téléphones.' : ' téléphone.')
+        : 'Envoyé. Il n\'a pas activé les notifications : il le verra à la prochaine ouverture de l\'app.', true);
+      $('motTexte').value = '';
+    } else afficher(m, d && d.motif === 'introuvable' ? 'Aucun compte à ce nom.' : 'Échec. Réessaie.', false);
+  }).catch((e) => { if (e.message !== 'code') afficher(m, 'Réseau indisponible.', false); }).finally(() => { b.disabled = false; });
+});
 // ---------- Invitations par lien (02/10) ----------
 function chargerInvitations() {
   appel('invitations').then((r) => {
@@ -1618,7 +1714,7 @@ $('btnCode').addEventListener('click', () => {
 $('code').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btnCode').click(); });
 $('btnQuitter').addEventListener('click', (e) => { e.preventDefault(); oublier(); });
 
-function ouvrir() { ecran('travail'); dessiner(); chargerDossiers(); chargerAcces(); chargerInvitations(); }
+function ouvrir() { ecran('travail'); dessiner(); chargerDossiers(); chargerAcces(); chargerInvitations(); chargerCodesRed(); }
 
 $('btnEnvoi').addEventListener('click', () => {
   const b = $('btnEnvoi'), msg = $('msg');

@@ -1128,3 +1128,8 @@ button{cursor:pointer}
 .lg-langues{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;z-index:3;display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(21,21,21,.07);backdrop-filter:blur(6px)}
 .lg-langue{min-width:38px;height:30px;padding:0 8px;border:0;border-radius:999px;background:none;color:rgba(21,21,21,.62);font-family:'Satoshi',system-ui,sans-serif;font-size:12.5px;font-weight:700;letter-spacing:.04em;cursor:pointer}
 .lg-langue.on{background:#151515;color:#F8F2E8}
+
+/* 28/11 : petit mot du coach (AnnonceMessage), dans la fenetre ap-*. */
+.am-logo { width: 64px; height: 64px; margin: 6px auto 12px; border-radius: 50%; background: linear-gradient(120deg, #F8F2E8, #FCE7A6 60%, #FBD3B3); border: 2px solid #F7E3B8; display: flex; align-items: center; justify-content: center; font: 700 22px 'Satoshi', sans-serif; color: #151515; letter-spacing: -.5px; }
+.am-logo span { color: #F86A0C; }
+.am-texte { margin: 4px 0 18px; text-align: center; color: rgba(255,255,255,.88); font-size: 16px; line-height: 1.5; }

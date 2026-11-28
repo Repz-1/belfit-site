@@ -50,6 +50,25 @@ function compte(e) {
   return { f, n };
 }
 
+/** Texte d'une serie : « 50 kg × 9 », « 12 reps », « faite » ; { pas } si non faite. */
+function texteSerie(y, type) {
+  if (!y) return null;
+  if (!y.fait) return { pas: true };
+  const kgT = type !== 'corps' && y.kg > 0 ? kgTexte(y.kg) + ' kg' : '';
+  const r = y.reps > 0 ? String(y.reps) : '';
+  return { txt: kgT && r ? kgT + ' × ' + r : (kgT || (r ? r + ' reps' : t('ce_pp_faite'))) };
+}
+/** Exercices d'une entree, dans l'ordre du programme : [{ id, nom, type, series }]. */
+function exosDe(e) {
+  const ent = entrainementCoach.value;
+  const sp = (ent && ent.seances || []).find((s) => s.id === e.idSeance);
+  const ids = sp ? sp.exos.map((x) => x.id).filter((id) => e.exos && e.exos[id]) : Object.keys(e.exos || {});
+  return ids.map((id) => {
+    const x = e.exos[id]; const d = sp && sp.exos.find((y) => y.id === id);
+    return { id, nom: x.nom, type: d ? d.type : '', series: Array.isArray(x.series) ? x.series : [] };
+  });
+}
+
 export function CarteSeancesPassees() {
   const [ouverte, setOuverte] = useState(null);
   const ent = entrainementCoach.value;
@@ -91,15 +110,34 @@ export function CarteSeancesPassees() {
           if (du.length) {
             return du.map((e) => {
               const c = compte(e);
+              // 28/11 (3e version, Raci : « je la vois pas sans toucher ») :
+              // charges et repetitions de chaque exercice visibles sous la seance.
               return (
-                <button type="button" class="ce-pp-tuile on" key={e.cle} onClick={() => setOuverte(e.cle)}>
-                  <span class="ce-pp-date"><small>{j === auj ? t('ce_pp_aujourdhui') : nomJ}</small><b>{dd.getDate()}</b></span>
-                  <span class="ce-pp-corps">
-                    <b>{e.seance}</b>
-                    {c.n > 0 && <span class="ce-pp-j">✓ {t('ce_pp_series', { f: c.f, n: c.n })}</span>}
-                  </span>
-                  <span class="ce-pp-fl" aria-hidden="true">›</span>
-                </button>
+                <div class="ce-pp-bloc" key={e.cle}>
+                  <button type="button" class="ce-pp-tuile on" onClick={() => setOuverte(e.cle)}>
+                    <span class="ce-pp-date"><small>{j === auj ? t('ce_pp_aujourdhui') : nomJ}</small><b>{dd.getDate()}</b></span>
+                    <span class="ce-pp-corps">
+                      <b>{e.seance}</b>
+                      {c.n > 0 && <span class="ce-pp-j">✓ {t('ce_pp_series', { f: c.f, n: c.n })}</span>}
+                    </span>
+                    <span class="ce-pp-cmp">{t('ce_pp_comparer')} ›</span>
+                  </button>
+                  <div class="ce-pp-detail">
+                    {exosDe(e).map((x) => (
+                      <div class="ce-pp-exo" key={x.id}>
+                        <b>{x.nom}</b>
+                        <div class="ce-pp-series">
+                          {x.series.map((y, k) => {
+                            const v = texteSerie(y, x.type);
+                            return v && v.pas
+                              ? <span key={k} class="ce-pp-s pas">{t('ce_pp_pasfaite')}</span>
+                              : <span key={k} class="ce-pp-s">{v ? v.txt : '—'}</span>;
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               );
             });
           }
@@ -161,15 +199,8 @@ function PageSeancePassee({ cleDepart, fermer }) {
   const ids = sp ? sp.exos.map((x) => x.id).filter((id) => e.exos && e.exos[id]) : Object.keys(e.exos || {});
   const typeDe = (id) => { const x = sp && sp.exos.find((y) => y.id === id); return x ? x.type : ''; };
   const c = compte(e);
-  const val = (x, k, type) => {
-    const y = x && Array.isArray(x.series) ? x.series[k] : null;
-    if (!y) return null;
-    if (!y.fait) return { pas: true };
-    const kgT = type !== 'corps' && y.kg > 0 ? kgTexte(y.kg) + ' kg' : '';
-    const r = y.reps > 0 ? String(y.reps) : '';
-    // 28/11 : ni charge ni reps notees -> « faite » (avant : « ✓ ✓ »).
-    return { txt: kgT && r ? kgT + ' × ' + r : (kgT || (r ? r + ' reps' : t('ce_pp_faite'))) };
-  };
+  // 28/11 : ni charge ni reps notees -> « faite » (avant : « ✓ ✓ »).
+  const val = (x, k, type) => texteSerie(x && Array.isArray(x.series) ? x.series[k] : null, type);
   return createPortal(
     <div class="ce-histo ce-ppp" role="dialog" aria-label={e.seance}>
       <div class="ce-ppp-tete">

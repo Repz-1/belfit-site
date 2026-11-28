@@ -24,6 +24,8 @@ import { ACCES_INVITE, ONGLET_VITRINE, demanderConnexion } from './acces-invite.
 import { VERSION_APP } from './version.js';
 import { BandeauConfirmation } from './components/BandeauConfirmation.jsx';
 import { AnnoncePlan } from './components/AnnoncePlan.jsx';
+import { AnnonceMessage } from './components/AnnonceMessage.jsx';
+import { rafraichirNotifs } from './services/notifications.js';
 import { AnnonceEntrainement } from './components/AnnonceEntrainement.jsx';
 import { repas, objectifs, donneesPretes, calculBaseFait, totauxJourAff, repasAffiches } from './store/journal.js';
 import { DayDashboard, ouvrirCalcDemande } from './components/DayDashboard.jsx';
@@ -844,6 +846,7 @@ export function App() {
       <AnnoncePlan />
       {/* 24/11 : programme d'entrainement recu, revient tant qu'il n'est pas ouvert. */}
       <AnnonceEntrainement />
+      <AnnonceMessage />
     </>
   );
 }
@@ -892,6 +895,8 @@ window.addEventListener('unhandledrejection', (e) => {
 // confirmation ne partait jamais a l'inscription (signale par Raci).
 if (racine) render(<><AvisAccesInvite /><BandeauConfirmation /><App /><AccueilGarde /><BandeauMaj /></>, racine);
 surveillerMiseAJour();
+// 28/11 : jeton de notifications rafraichi en silence (si le client les a activees).
+rafraichirNotifs();
 
 // Retrait du splash.
 //

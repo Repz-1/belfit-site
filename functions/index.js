@@ -10,6 +10,7 @@ const plansVersions = require("./plans-versions");
 const accesNutrition = require("./acces-nutrition");
 const invitationOfferte = require("./invitation-offerte");
 const entrainementCoach = require("./entrainement-coach");
+const notifications = require("./notifications");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -1430,6 +1431,8 @@ async function deposerChez(corps, parCoach) {
     ecrit.programmesHistorique = [copie, ...deja.filter((h) => h && h.livreLe !== copie.livreLe)].slice(0, 12);
   }
   await db.collection("users").doc(client.uid).set(ecrit, {merge: true});
+  // 28/11 : notification sur le telephone (si le client l'a activee).
+  const notif = await notifications.envoyer(client.uid, "plan");
 
   // 6. Courriel. Un echec d'envoi ne doit PAS annuler le depot :
   //    le plan est deja dans l'app, c'est le canal qui fait foi.
@@ -1472,7 +1475,7 @@ async function deposerChez(corps, parCoach) {
   return [200, {
     ok: true,
     client: {uid: client.uid, email: client.email || null},
-    mailEnvoye,
+    mailEnvoye, notif,
   }];
 }
 
@@ -2028,6 +2031,7 @@ exports.espaceCoach = onRequest(
         const avant = await ref.get();
         const deja = avant.exists && avant.data().entrainementCoach && avant.data().entrainementCoach.livreLe;
         await ref.set({entrainementCoach: n.entrainement}, {merge: true});
+        const notif = await notifications.envoyer(client.uid, "entrainement");
         let mailEnvoye = false;
         if (client.email) {
           try {
@@ -2044,7 +2048,7 @@ exports.espaceCoach = onRequest(
             if (!envoi.ok) console.error("Resend (entrainement) :", await envoi.text());
           } catch (e) { console.error("Envoi entrainement :", e); }
         }
-        res.json({ok: true, client: {uid: client.uid, email: client.email || null}, mailEnvoye, livreLe: n.entrainement.livreLe});
+        res.json({ok: true, client: {uid: client.uid, email: client.email || null}, mailEnvoye, notif, livreLe: n.entrainement.livreLe});
         return;
       }
 
@@ -2058,6 +2062,7 @@ exports.espaceCoach = onRequest(
         if (!client) { res.status(404).json({ok: false, motif: "introuvable"}); return; }
         const le = new Date().toISOString();
         await db.collection("users").doc(client.uid).set({questEntOuvert: {le, par: "espace-coach"}}, {merge: true});
+        const notif = await notifications.envoyer(client.uid, "questionnaire");
         let mailEnvoye = false;
         if (client.email) {
           try {
@@ -2079,7 +2084,22 @@ exports.espaceCoach = onRequest(
             if (!envoi.ok) console.error("Resend (questionnaire entrainement) :", await envoi.text());
           } catch (e) { console.error("Envoi questionnaire entrainement :", e); }
         }
-        res.json({ok: true, client: {uid: client.uid, email: client.email || null}, mailEnvoye, ouvertLe: le});
+        res.json({ok: true, client: {uid: client.uid, email: client.email || null}, mailEnvoye, notif, ouvertLe: le});
+        return;
+      }
+
+      // 28/11 Raci : un petit mot au client -> notification + bulle a l'ouverture de l'app.
+      if (action === "message") {
+        const cible = String(corps.client || "").trim();
+        const texte = String(corps.texte || "").replace(/\s+/g, " ").trim().slice(0, 180);
+        if (!cible) { res.status(400).json({ok: false, motif: "client"}); return; }
+        if (!texte) { res.status(400).json({ok: false, motif: "texte"}); return; }
+        const client = await trouverCompte(cible);
+        if (!client) { res.status(404).json({ok: false, motif: "introuvable"}); return; }
+        const le = new Date().toISOString();
+        await db.collection("users").doc(client.uid).set({messageCoach: {texte, le}}, {merge: true});
+        const notif = await notifications.envoyer(client.uid, "message", {texte});
+        res.json({ok: true, client: {uid: client.uid, email: client.email || null}, notif, le});
         return;
       }
 

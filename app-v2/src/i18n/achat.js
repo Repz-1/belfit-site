@@ -28,6 +28,7 @@ export const ACHAT = {
     cp_reverifier: 'Vérifier de nouveau', cp_fermer: 'Fermer', cp_annuler: 'Annuler',
     // ---- code de reduction
     cp_code_ok: 'Code {code} : −{pct} % appliqué. Tu paies {prix} € au lieu de 80 €.',
+    cp_code_ok0: 'Code {code} appliqué.', cp_code_ent: '+ Coaching entraînement offert (valeur 50 €).',
     cp_code_retirer: 'Retirer', cp_code_lib: 'Code de réduction', cp_code_ph: 'Ton code', cp_code_appliquer: 'Appliquer',
     cp_code_lien: 'J\'ai un code de réduction',
     cp_erreur_paiement: 'Le paiement n\'a pas pu démarrer. Réessaie ou écris à {mail}.',
@@ -125,6 +126,7 @@ export const ACHAT = {
     cp_ret_introuvable_t: 'Payment not found', cp_ret_introuvable: 'No confirmed payment for this account. Nothing is activated. Write to {mail} if you have paid.',
     cp_reverifier: 'Check again', cp_fermer: 'Close', cp_annuler: 'Cancel',
     cp_code_ok: 'Code {code}: −{pct}% applied. You pay €{prix} instead of €80.',
+    cp_code_ok0: 'Code {code} applied.', cp_code_ent: '+ Free training coaching (worth €50).',
     cp_code_retirer: 'Remove', cp_code_lib: 'Discount code', cp_code_ph: 'Your code', cp_code_appliquer: 'Apply',
     cp_code_lien: 'I have a discount code',
     cp_erreur_paiement: 'The payment could not start. Try again or write to {mail}.',
@@ -218,6 +220,7 @@ export const ACHAT = {
     cp_ret_introuvable_t: 'Betaling niet gevonden', cp_ret_introuvable: 'Geen bevestigde betaling voor deze account. Er is niets geactiveerd. Schrijf naar {mail} als je betaald hebt.',
     cp_reverifier: 'Opnieuw controleren', cp_fermer: 'Sluiten', cp_annuler: 'Annuleren',
     cp_code_ok: 'Code {code}: −{pct} % toegepast. Je betaalt € {prix} in plaats van € 80.',
+    cp_code_ok0: 'Code {code} toegepast.', cp_code_ent: '+ Trainingscoaching gratis (waarde € 50).',
     cp_code_retirer: 'Verwijderen', cp_code_lib: 'Kortingscode', cp_code_ph: 'Je code', cp_code_appliquer: 'Toepassen',
     cp_code_lien: 'Ik heb een kortingscode',
     cp_erreur_paiement: 'De betaling kon niet starten. Probeer opnieuw of schrijf naar {mail}.',

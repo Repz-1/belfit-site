@@ -82,7 +82,7 @@ export async function verifierCodeReduction(code) {
   try {
     const r = await appeler('verifierCodeReduction', { code: saisi, type: 'plan' });
     if (r && r.statut === 200 && r.d && r.d.ok) {
-      reduction.value = { code: r.d.code, pourcent: r.d.pourcent, base: r.d.base, reduction: r.d.reduction, montant: r.d.montant };
+      reduction.value = { code: r.d.code, pourcent: r.d.pourcent, base: r.d.base, reduction: r.d.reduction, montant: r.d.montant, entrainementOffert: !!r.d.entrainementOffert };
       return { ok: true };
     }
     reduction.value = null;
