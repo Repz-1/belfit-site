@@ -230,20 +230,39 @@
    carte blanche, accents bleus) + page d'une seance notee.
    Carte prefixee .pg-stats : le reset de stats.scoped.css (.pg-stats *)
    remettait padding et marges a zero. */
-.pg-stats .ce-pp { background: #fff; border-radius: 20px; padding: 16px; margin: 0 0 14px; box-shadow: 0 1px 2px rgba(28,24,18,.05); }
-.pg-stats .ce-pp-tete { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
-.pg-stats .ce-pp-tete h2 { margin: 0; font-size: 17px; font-weight: 600; color: #16130F; }
-.pg-stats .ce-pp-badge { font-size: 12px; font-weight: 600; color: #123C86; background: #EEF3FC; border-radius: 99px; padding: 4px 10px; white-space: nowrap; }
-.pg-stats .ce-pp-tuiles { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; }
-.pg-stats .ce-pp-tuiles::-webkit-scrollbar { display: none; }
-.pg-stats .ce-pp-tuile { flex: 1 0 96px; max-width: 140px; text-align: left; border-radius: 14px; padding: 10px; font: inherit; display: flex; flex-direction: column; gap: 1px; }
-.pg-stats .ce-pp-tuile b { font-size: 14.5px; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pg-stats .ce-pp-j { font-size: 11.5px; }
+.pg-stats .ce-pp { background: #fff; border-radius: 22px; padding: 18px 16px; margin: 0 0 14px; box-shadow: 0 1px 2px rgba(28,24,18,.05); }
+/* 28/11 (2e version) : carte agrandie, toute la semaine jour par jour. */
+.pg-stats .ce-pp-tete { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pg-stats .ce-pp-tete h2 { margin: 0; font-size: 14px; font-weight: 600; color: #1F5FD1; }
+.pg-stats .ce-pp-plage { font-size: 13px; color: #8A8279; }
+.pg-stats .ce-pp-compte { display: flex; align-items: baseline; gap: 8px; margin: 10px 0 8px; }
+.pg-stats .ce-pp-gros { font-family: 'DM Mono', monospace; font-size: 48px; font-weight: 500; line-height: 1; color: #16130F; }
+.pg-stats .ce-pp-gros span { color: #B4B2A9; }
+.pg-stats .ce-pp-legende { font-size: 15px; color: #5F5E5A; }
+.pg-stats .ce-pp-barre { display: flex; gap: 5px; margin-bottom: 14px; }
+.pg-stats .ce-pp-barre i { flex: 1; height: 9px; border-radius: 5px; background: #E6EEFB; }
+.pg-stats .ce-pp-barre i.on { background: #1F5FD1; }
+.pg-stats .ce-pp-jours { display: flex; flex-direction: column; gap: 6px; }
+.pg-stats .ce-pp-tuile { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border-radius: 14px; padding: 12px; font: inherit; }
 .pg-stats .ce-pp-tuile.on { border: 0; background: #1F5FD1; color: #fff; cursor: pointer; }
-.pg-stats .ce-pp-tuile.on .ce-pp-j { opacity: .88; }
-.pg-stats .ce-pp-tuile.on:active { transform: scale(.97); }
-.pg-stats .ce-pp-tuile.afaire { border: 1.5px dashed #9DBCEB; color: #1F5FD1; background: none; }
-.pg-stats .ce-pp-tout { display: block; margin: 12px 0 0 auto; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 600; color: #1F5FD1; padding: 4px 0; }
+.pg-stats .ce-pp-tuile.on:active { transform: scale(.98); }
+.pg-stats .ce-pp-date { width: 44px; flex: none; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.pg-stats .ce-pp-date small { font-size: 11px; opacity: .88; white-space: nowrap; }
+.pg-stats .ce-pp-date b { font-size: 19px; font-weight: 600; }
+.pg-stats .ce-pp-corps { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pg-stats .ce-pp-corps b { font-size: 16px; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-stats .ce-pp-j { font-size: 13px; opacity: .92; }
+.pg-stats .ce-pp-fl { font-size: 24px; line-height: 1; }
+.pg-stats .ce-pp-auj { display: flex; align-items: center; gap: 12px; border: 1.5px solid #1F5FD1; border-radius: 14px; padding: 10px 12px; }
+.pg-stats .ce-pp-auj .ce-pp-date { color: #1F5FD1; }
+.pg-stats .ce-pp-auj .ce-pp-date small { opacity: 1; }
+.pg-stats .ce-pp-rien { font-size: 14px; color: #5F5E5A; }
+.pg-stats .ce-pp-vide { display: flex; align-items: center; gap: 12px; padding: 5px 12px; font-size: 13px; color: #B4B2A9; }
+.pg-stats .ce-pp-date-l { width: 44px; flex: none; text-align: center; white-space: nowrap; }
+.pg-stats .ce-pp-tuile.afaire { margin-top: 10px; border: 1.5px dashed #9DBCEB; color: #1F5FD1; background: none; padding: 10px 12px; font-size: 14px; gap: 10px; }
+.pg-stats .ce-pp-tuile.afaire b { font-weight: 600; }
+.pg-stats .ce-pp-horloge { font-size: 18px; line-height: 1; }
+.pg-stats .ce-pp-tout { display: block; width: 100%; margin: 10px 0 0; border: 0; border-radius: 12px; background: #EEF3FC; font: inherit; font-size: 14px; font-weight: 600; color: #123C86; padding: 12px; text-align: center; }
 .ce-ppp-tete { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 12px; }
 .ce-ppp-retour { border: 0; background: none; font-size: 30px; line-height: .9; color: #16130F; padding: 0 8px 0 0; }
 .ce-ppp-titre { margin: 2px 0 0; font-size: 22px; font-weight: 700; color: #16130F; letter-spacing: -.01em; }

@@ -56,37 +56,78 @@ export function CarteSeancesPassees() {
   const prevues = ent && Array.isArray(ent.seances) ? ent.seances : [];
   if (!prevues.length) return null;
   const toutes = entreesTriees();
-  const l0 = isoJ(lundiDe(new Date()));
+  const lundi = lundiDe(new Date());
+  const l0 = isoJ(lundi);
+  const auj = isoJ(new Date());
   const semaine = toutes.filter((e) => e.date >= l0);
   const faitesIds = new Set(semaine.map((e) => e.idSeance));
   const restantes = prevues.filter((s) => !faitesIds.has(s.id));
+  // 28/11 (2e version, Raci) : la semaine entiere d'un coup d'oeil,
+  // un jour par ligne. Jour note = grosse ligne bleue ; jour passe
+  // sans seance = « Repos » en fin ; aujourd'hui entoure de bleu.
+  const jours = Array.from({ length: 7 }, (_, k) => { const d = new Date(lundi); d.setDate(d.getDate() + k); return isoJ(d); });
+  const dim = enDate(jours[6]);
+  const plage = lundi.getDate() + (lundi.getMonth() !== dim.getMonth() ? ' ' + lundi.toLocaleDateString(loc(), { month: 'short' }) : '')
+    + ' – ' + dim.getDate() + ' ' + dim.toLocaleDateString(loc(), { month: 'short' });
+  const nFaites = semaine.length;
   return (
-    <div class="ce-pp">
+    <div class="ce-pp ce-pp--semaine">
       <div class="ce-pp-tete">
         <h2>{t('ce_pp_titre')}</h2>
-        <span class="ce-pp-badge">{t('ce_pp_semaine', { n: semaine.length, p: prevues.length })}</span>
+        <span class="ce-pp-plage">{plage}</span>
       </div>
-      <div class="ce-pp-tuiles">
-        {semaine.map((e) => {
-          const c = compte(e);
+      <div class="ce-pp-compte">
+        <span class="ce-pp-gros">{nFaites}<span>/{prevues.length}</span></span>
+        <span class="ce-pp-legende">{t('ce_pp_cette_semaine')}</span>
+      </div>
+      <div class="ce-pp-barre" aria-hidden="true">
+        {prevues.map((s, k) => <i key={s.id} class={k < nFaites ? 'on' : ''} />)}
+      </div>
+      <div class="ce-pp-jours">
+        {jours.map((j) => {
+          const du = semaine.filter((e) => e.date === j);
+          const dd = enDate(j);
+          const nomJ = maj(dd.toLocaleDateString(loc(), { weekday: 'short' }).replace(/\.$/, '')) + '.';
+          if (du.length) {
+            return du.map((e) => {
+              const c = compte(e);
+              return (
+                <button type="button" class="ce-pp-tuile on" key={e.cle} onClick={() => setOuverte(e.cle)}>
+                  <span class="ce-pp-date"><small>{j === auj ? t('ce_pp_aujourdhui') : nomJ}</small><b>{dd.getDate()}</b></span>
+                  <span class="ce-pp-corps">
+                    <b>{e.seance}</b>
+                    {c.n > 0 && <span class="ce-pp-j">✓ {t('ce_pp_series', { f: c.f, n: c.n })}</span>}
+                  </span>
+                  <span class="ce-pp-fl" aria-hidden="true">›</span>
+                </button>
+              );
+            });
+          }
+          if (j === auj) {
+            return (
+              <div class="ce-pp-auj" key={j}>
+                <span class="ce-pp-date"><small>{t('ce_pp_aujourdhui')}</small><b>{dd.getDate()}</b></span>
+                <span class="ce-pp-rien">{t('ce_pp_rien')}</span>
+              </div>
+            );
+          }
           return (
-            <button type="button" class="ce-pp-tuile on" key={e.cle} onClick={() => setOuverte(e.cle)}>
-              <span class="ce-pp-j">{jourCourt(e.date)}</span>
-              <b>{e.seance}</b>
-              {c.n > 0 && <span class="ce-pp-j">✓ {c.f}/{c.n}</span>}
-            </button>
+            <div class="ce-pp-vide" key={j}>
+              <span class="ce-pp-date-l">{nomJ} {dd.getDate()}</span>
+              <span>{j < auj ? t('ce_pp_repos') : '—'}</span>
+            </div>
           );
         })}
-        {restantes.map((s) => (
-          <div class="ce-pp-tuile afaire" key={s.id}>
-            <span class="ce-pp-j">{t('ce_pp_afaire')}</span>
-            <b>{s.nom}</b>
-          </div>
-        ))}
       </div>
+      {restantes.length > 0 && (
+        <div class="ce-pp-tuile afaire">
+          <span aria-hidden="true" class="ce-pp-horloge">◷</span>
+          <span><b>{t('ce_pp_encore')}</b> {restantes.map((s) => s.nom).join(', ')}</span>
+        </div>
+      )}
       {toutes.length > 0 && (
         <button type="button" class="ce-pp-tout" onClick={() => setOuverte(toutes[toutes.length - 1].cle)}>
-          {t('ce_pp_tout')} <span aria-hidden="true">›</span>
+          {t('ce_pp_tout')}
         </button>
       )}
       {ouverte && <PageSeancePassee cleDepart={ouverte} fermer={() => setOuverte(null)} />}
