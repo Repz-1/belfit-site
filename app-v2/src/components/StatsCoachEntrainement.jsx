@@ -7,13 +7,10 @@
 // « Historique par seance » : la meme seance, semaine apres semaine, poids
 // serie par serie — sans fleche ni record (on n'incite pas a monter).
 // ============================================================
-import { useState, useEffect } from 'preact/hooks';
-import { createPortal } from 'preact/compat';
 import { entrainementCoach } from './BelfitPlus.jsx';
 import { carnetCoach } from '../store/carnet-coach.js';
 import { choisirEspaceJour } from './CoachEntrainement.jsx';
 import { allerOnglet } from './BottomNav.jsx';
-import { kgTexte, repsTexte } from '../data/charge-coach.js';
 import { t } from '../i18n/index.js';
 import '../styles/coach-entrainement.css';
 
@@ -49,7 +46,6 @@ export function joursCoach() {
 }
 
 export function CarteEntrainementCoach() {
-  const [histo, setHisto] = useState(false);
   const ent = entrainementCoach.value;
   const carnet = carnetCoach.value || {};
   const entrees = Object.values(carnet).filter((e) => e && e.date);
@@ -102,7 +98,6 @@ export function CarteEntrainementCoach() {
               </div>
             ))}
           </div></div>
-          <button type="button" class="ce-st-lien" onClick={() => setHisto(true)}>{t('ce_st_histo')} <span aria-hidden="true">›</span></button>
         </>
       ) : (
         <div class="ce-st-vide">
@@ -110,65 +105,7 @@ export function CarteEntrainementCoach() {
           <button type="button" class="ce-st-lien" onClick={ouvrir}>{t('ce_st_cta')} <span aria-hidden="true">›</span></button>
         </div>
       )}
-      {histo && <HistoriqueSeances fermer={() => setHisto(false)} />}
     </div>
   );
 }
-
-/** Page plein ecran : une seance, ses exercices, 4 dernieres fois cote a cote. */
-export function HistoriqueSeances({ fermer }) {
-  const ent = entrainementCoach.value;
-  const seances = ent && ent.seances || [];
-  const [choix, setChoix] = useState(seances[0] && seances[0].id);
-  useEffect(() => {
-    const k = (e) => { if (e.key === 'Escape') fermer(); };
-    document.addEventListener('keydown', k);
-    return () => document.removeEventListener('keydown', k);
-  }, []);
-  const seance = seances.find((s) => s.id === choix) || seances[0];
-  const carnet = carnetCoach.value || {};
-  // Les 4 dernieres fois ou CETTE seance a ete notee (cle « date|idSeance »).
-  const fois = Object.keys(carnet).filter((k) => seance && k.endsWith('|' + seance.id)).sort().reverse().slice(0, 4).map((k) => carnet[k]);
-  const dateCourte = (d) => { const [, m, j] = d.split('-'); return (+j) + '/' + (+m); };
-  const val = (e, x, i) => {
-    const v = e && e.exos && e.exos[x.id];
-    if (!v) return '—';
-    if (Array.isArray(v.series)) {
-      const y = v.series[i]; if (!y) return '—';
-      if (x.type === 'corps') return y.fait ? '✓' : '—';
-      return y.kg > 0 ? kgTexte(y.kg) : (y.fait ? '✓' : '—');
-    }
-    return i === 0 && v.kg ? kgTexte(v.kg) : '—';  // ancien format : un seul poids
-  };
-  return createPortal(
-    <div class="ce-histo" role="dialog" aria-label={t('ce_st_histo')}>
-      <div class="ce-histo-tete">
-        <button type="button" class="ce-histo-retour" onClick={fermer}>‹ {t('ce_retour')}</button>
-        <p class="ce-h">{t('ce_st_histo')}</p>
-      </div>
-      <div class="ce-seances" role="tablist">
-        {seances.map((s) => (
-          <button type="button" role="tab" aria-selected={s.id === seance.id} class={s.id === seance.id ? 'on' : ''} onClick={() => setChoix(s.id)}><b>{s.nom}</b></button>
-        ))}
-      </div>
-      {!fois.length && <p class="ce-sous">{t('ce_histo_vide')}</p>}
-      {fois.length > 0 && seance.exos.map((x) => {
-        const n = Math.max(+x.series || 1, ...fois.map((e) => (e.exos && e.exos[x.id] && e.exos[x.id].series || []).length));
-        return (
-          <section class="ce-carte" key={x.id}>
-            <header><div><b>{x.nom}</b><span>{t('ce_series', { n: x.series, r: repsTexte(x.reps, x.series) })}{x.type !== 'corps' ? ' · kg' : ''}</span></div></header>
-            <table class="ce-tab">
-              <thead><tr><th />{fois.map((e) => <th key={e.date}>{dateCourte(e.date)}</th>)}</tr></thead>
-              <tbody>
-                {Array.from({ length: n }, (_, i) => (
-                  <tr key={i}><td class="ce-tab-s">{t('ce_serie_n', { n: i + 1 })}</td>{fois.map((e) => <td key={e.date}>{val(e, x, i)}</td>)}</tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-        );
-      })}
-    </div>,
-    document.body,
-  );
-}
+// 28/11 : « Historique par seance » remplace par « Mes seances passees » (SeancesPassees.jsx).

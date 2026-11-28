@@ -17,7 +17,6 @@ import { signalerQuestionnaire } from '../services/mollie.js';
 import { carnetCoach, carnetCharge, noterSeance, dernierPour, derniereNote } from '../store/carnet-coach.js';
 import { DISQUES, totalBarre, texteDisques, pasCharge, kgTexte, repsParSerie, repsTexte } from '../data/charge-coach.js';
 import { t } from '../i18n/index.js';
-import { HistoriqueSeances } from './StatsCoachEntrainement.jsx';
 import { PhotoExo } from './PhotoExo.jsx';
 import { createPortal } from 'preact/compat';
 
@@ -332,7 +331,6 @@ export function CoachEntrainement() {
   // charge, reps, note) ; le rechargement depuis le carnet ne declenche rien.
   const aSauver = useRef(false);
   useEffect(() => { aSauver.current = false; setSaisie(etatInitial(seance, cle)); setEnregistre(false); }, [cle, livre, charge]);
-  const [histo, setHisto] = useState(false);
   // 28/11 Raci : SAUVEGARDE AUTOMATIQUE. Avant, rien n'etait garde tant que le
   // client ne touchait pas le bouton du bas : il validait ses series, quittait,
   // et la seance etait perdue. On n'ecrit qu'une seance qui a du contenu
@@ -392,9 +390,6 @@ export function CoachEntrainement() {
     <div class="ce-page">
       <p class="ce-h">{t('ce_titre')}</p>
       <p class="ce-sous">{t('ce_recu', { q: depuisTxt(ent.livreLe) })}</p>
-      {Object.keys(carnetCoach.value || {}).length > 0 && (
-        <button type="button" class="ce-st-lien ce-passees" onClick={() => setHisto(true)}>{t('ce_passees')} <span aria-hidden="true">›</span></button>
-      )}
       {etatQ.aRemplir && (
         <div class="ce-bandeau-quest" role="status">
           <p>{t('ce_quest_bandeau')}</p>
@@ -480,7 +475,6 @@ export function CoachEntrainement() {
       })}
 
       {grande && <PhotoGrande {...grande} fermer={() => setGrande(null)} />}
-      {histo && <HistoriqueSeances fermer={() => setHisto(false)} />}
 
       {ent.note && (
         <section class="ce-note"><b>{t('ce_mot')}</b><p>{ent.note}</p></section>

@@ -16,6 +16,7 @@ import { etatCadran } from '../store/cadran-attente.js';
 import { lectureSeule, calculReserveCoach } from '../store/acces-nutrition.js';
 import { planCoachActif, programme } from './BelfitPlus.jsx';
 import { CarteEntrainementCoach, joursCoach } from './StatsCoachEntrainement.jsx';
+import { CarteSeancesPassees } from './SeancesPassees.jsx';
 import { choisirEspaceJour } from './CoachEntrainement.jsx';
 import '../legacy/stats.scoped.css';
 
@@ -512,6 +513,9 @@ export function Stats() {
             S'entrainer : le nom de l'onglet est deja dans la
             navigation du bas. */}
         <Entete />
+
+        {/* 28/11 Raci : « Mes seances passees » en tete de Stats (coaching entrainement). */}
+        <CarteSeancesPassees />
 
         {/* NOTE DE PROGRESSION GLOBALE */}
         {!rienDuTout && (
