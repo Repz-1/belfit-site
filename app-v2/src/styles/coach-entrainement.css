@@ -255,7 +255,11 @@
 .pg-stats .ce-pp-fl { font-size: 24px; line-height: 1; }
 .pg-stats .ce-pp-bloc { border: 1.5px solid #1F5FD1; border-radius: 15px; overflow: hidden; }
 .pg-stats .ce-pp-bloc .ce-pp-tuile.on { border-radius: 0; }
-.pg-stats .ce-pp-cmp { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.pg-stats .ce-pp-bloc .ce-pp-fl { transition: transform .2s; }
+.pg-stats .ce-pp-bloc.ouvert .ce-pp-fl { transform: rotate(90deg); }
+.pg-stats .ce-pp-note { margin: 6px 0 0; font-size: 13px; color: #6B655D; }
+.pg-stats .ce-pp-exo .ce-pp-note b { display: inline; margin: 0; font-size: 13px; }
+.pg-stats .ce-pp-avant { margin-top: 10px; }
 .pg-stats .ce-pp-detail { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 10px; }
 .pg-stats .ce-pp-exo b { display: block; font-size: 14px; font-weight: 600; color: #16130F; margin-bottom: 5px; }
 .pg-stats .ce-pp-series { display: flex; flex-wrap: wrap; gap: 6px; }
