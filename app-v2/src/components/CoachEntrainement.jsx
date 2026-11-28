@@ -114,6 +114,20 @@ function etatInitial(seance, cle) {
   return e;
 }
 
+/** 28/11 Raci (« quand je fais Terminer, ca ne se remet pas a zero ») :
+ *  une seance TERMINEE part dans « Mes seances passees » et la page repart
+ *  vierge. Si la meme seance est refaite le meme jour, elle s'ecrit a cote
+ *  (cle date|id|2, |3...) : la seance terminee n'est jamais ecrasee. */
+export function cleEnCours(base, carnet) {
+  const c = carnet || {};
+  if (!c[base] || !c[base].termine) return base;
+  for (let n = 2; n < 100; n++) {
+    const k = base + '|' + n;
+    if (!c[k] || !c[k].termine) return k;
+  }
+  return base + '|100';
+}
+
 /** Charge d'une serie, lisible : « 50 kg · 1 × 10 + 1 × 5 » ou « — ». */
 // 23/11 Raci : le client note aussi les REPETITIONS faites a chaque serie.
 const repsFaites = (v) => (v.reps !== null && v.reps !== undefined && v.reps > 0 ? v.reps + ' reps' : '');
@@ -319,9 +333,11 @@ export function CoachEntrainement() {
   const parDefaut = () => { const s = seances.find((x) => x.jour === jourAuj); return (s || seances[0] || {}).id || null; };
   const [choix, setChoix] = useState(parDefaut);
   const seance = seances.find((s) => s.id === choix) || seances[0] || null;
-  const cle = seance ? isoJour(auj) + '|' + seance.id : '';
+  const cle = seance ? cleEnCours(isoJour(auj) + '|' + seance.id, carnetCoach.value) : '';
   const [saisie, setSaisie] = useState(() => etatInitial(seance, cle));
-  const [enregistre, setEnregistre] = useState(() => !!(carnetCoach.peek()[cle] || {}).termine);
+  // Vrai juste apres « Terminer ma seance » (la page est deja remise a zero) ;
+  // retombe au premier geste sur la nouvelle seance.
+  const [enregistre, setEnregistre] = useState(false);
   const [photo, setPhoto] = useState(null);
   const [grande, setGrande] = useState(null); // { imgId, n, nom }
   // Changement de seance, nouveau programme, ou carnet charge apres coup : on repart du carnet.
@@ -332,7 +348,8 @@ export function CoachEntrainement() {
   const aSauver = useRef(false);
   // 28/11 Raci (« je l'ai enregistree, mais elle reste toujours activee ») : une seance
   // terminee le reste a la reouverture (drapeau `termine` dans le carnet).
-  useEffect(() => { aSauver.current = false; setSaisie(etatInitial(seance, cle)); setEnregistre(!!(carnetCoach.peek()[cle] || {}).termine); }, [cle, livre, charge]);
+  useEffect(() => { aSauver.current = false; setSaisie(etatInitial(seance, cle)); }, [cle, livre, charge]);
+  useEffect(() => { setEnregistre(false); }, [seance && seance.id]);
   // 28/11 Raci : SAUVEGARDE AUTOMATIQUE. Avant, rien n'etait garde tant que le
   // client ne touchait pas le bouton du bas : il validait ses series, quittait,
   // et la seance etait perdue. On n'ecrit qu'une seance qui a du contenu
@@ -375,7 +392,9 @@ export function CoachEntrainement() {
   }); };
   const cibleDe = (id) => { const x = seance && seance.exos.find((y) => y.id === id); return x ? x.reps : ''; };
   const majNote = (id, note) => { aSauver.current = true; setEnregistre(false); setSaisie((s) => ({ ...s, [id]: { ...s[id], note: note.slice(0, 300) } })); };
-  const enregistrer = () => { sauverSaisie(saisie, true); setEnregistre(true); };
+  // Une seance vide (rien coche, aucune note) ne part pas dans les seances passees.
+  const aContenu = Object.values(saisie).some((e) => e && ((e.series || []).some((y) => y.fait) || String(e.note || '').trim()));
+  const enregistrer = () => { if (!aContenu) return; sauverSaisie(saisie, true); setEnregistre(true); };
   function sauverSaisie(saisie, termine = false) {
     const exos = {};
     seance.exos.forEach((x) => {

@@ -38,8 +38,17 @@ try {
   ok(c2 && c2.termine === true, 'Terminer : séance marquée terminée');
   ok(/Séance enregistrée/.test(await p.locator('.ce-enregistrer').innerText()), 'bouton : séance enregistrée');
   await p.screenshot({ path: '/tmp/m/seance-finie.png' });
-  await p.locator('.ce-a-ligne').nth(1).tap(); await p.waitForTimeout(300);
-  ok(/Série 1 en cours/.test(await p.locator('.ce-a').innerText()), 'toucher une ligne rouvre la saisie');
+  // 28/11 Raci : apres « Terminer », la page repart a zero (la seance est dans Stats).
+  const carte2 = await p.locator('.ce-a').innerText();
+  ok(/Série 1 en cours/.test(carte2) && !/Toutes les séries sont faites/.test(carte2), 'page remise à zéro après Terminer');
+  await p.locator('.ce-enregistrer').tap(); await p.waitForTimeout(300);
+  ok(Object.keys(await p.evaluate(() => window.__banc.carnetCoach.value)).length === 1, 'Terminer sur une page vide : rien n\'est ajouté');
+  await p.locator('.ce-coche').first().tap(); await p.waitForTimeout(300);
+  const c3 = await p.evaluate(() => window.__banc.carnetCoach.value);
+  const cles = Object.keys(c3).sort();
+  ok(cles.length === 2 && c3[cles[0]].termine && c3[cles[0]].exos.e1.series.every((y) => y.fait) && /\|sA\|2$/.test(cles[1]) && !c3[cles[1]].termine,
+    'même séance refaite le même jour : nouvelle entrée, la séance terminée reste intacte');
+  ok(!/Séance enregistrée/.test(await p.locator('.ce-enregistrer').innerText()), 'premier geste : le bouton redevient « Terminer ma séance »');
 } catch (e) { ok(false, e.message.split('\n')[0]); }
 await nav.close(); try { process.kill(-srv.pid); } catch {}
 process.exit(code);
