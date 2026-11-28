@@ -517,47 +517,7 @@ export function Stats() {
         {/* 28/11 Raci : « Mes seances passees » en tete de Stats (coaching entrainement). */}
         <CarteSeancesPassees />
 
-        {/* NOTE DE PROGRESSION GLOBALE */}
-        {!rienDuTout && (
-          <div class="score-card" style={{ '--halo': `rgba(${cGlobal[0]},${cGlobal[1]},${cGlobal[2]},.30)` }}>
-            <div class="score-head"><div>
-              <div class="score-title">{t('st_score_title')}</div>
-              <div class="score-val">
-                <span>{global}</span><small> %</small>
-                <span class="score-arc">
-                  <svg viewBox="0 0 26 26">
-                    <circle class="piste" cx="13" cy="13" r={R_ARC} />
-                    <circle class="trace" cx="13" cy="13" r={R_ARC}
-                            stroke={rgbScore(cGlobal)}
-                            stroke-dasharray={`${C_ARC * global / 100} ${C_ARC}`} />
-                  </svg>
-                </span>
-              </div>
-            </div></div>
-            <div class="score-note">
-              {global >= 85 ? t('st_note_a') : global >= 70 ? t('st_note_b') : global >= 40 ? t('st_note_c') : t('st_note_d')}
-            </div>
-            {/* Chaque ligne porte son chiffre brut : on voit d'ou vient la
-                note au lieu de la subir (Raci, 9/08). */}
-            <div class="score-rows">
-              {/* Chaque barre mene la ou on l'ameliore (23/09). */}
-              {[[t('st_row_nutrition'), nutrition, `${joursEncodes}/7 ${t('st_det_jours')}`, () => allerOnglet('journal')],
-                [t('st_row_training'), entrainement, `${trainJours} ${trainJours === 1 ? t('st_det_seances').replace(/s$/, '') : t('st_det_seances')}`, () => { choisirEspaceJour('ent'); allerOnglet('journal'); }],
-                [t('st_row_weight'), scorePoids, `${pesees14} ${pesees14 === 1 ? t('st_det_pesees').replace(/^(\S+?)s\b/, '$1') : t('st_det_pesees')}`, () => setModalePoids(true)],
-                [t('st_row_regularity'), regularite, `${joursActifs}/7 ${t('st_det_actifs')}`, () => allerOnglet('journal')]].map(([l, v, d, aller]) => (
-                <button type="button" class="score-bloc score-bloc--lien" key={l} onClick={aller}>
-                  <div class="score-row">
-                    <div class="sr-lbl">{l}</div>
-                    <div class="sr-bar"><div class="sr-fill" style={{ width: v + '%', background: degradeScore(v) }} /></div>
-                    <div class="sr-val">{v}%</div>
-                  </div>
-                  <div class="sr-det">{d}<span class="sr-fl" aria-hidden="true">&rsaquo;</span></div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
+        {/* 28/11 Raci : ordre Seances passees, Poids, Note, Calories, Entrainement. */}
         {/* POIDS */}
         <div class="stat-card acc-green">
           <h2><span>{t('st_weight')}</span></h2>
@@ -621,6 +581,47 @@ export function Stats() {
             <button class="weight-add-btn" onClick={() => setModalePoids(true)}>{t('st_weight_add')}</button>
           )}
         </div>
+
+        {/* NOTE DE PROGRESSION GLOBALE */}
+        {!rienDuTout && (
+          <div class="score-card" style={{ '--halo': `rgba(${cGlobal[0]},${cGlobal[1]},${cGlobal[2]},.30)` }}>
+            <div class="score-head"><div>
+              <div class="score-title">{t('st_score_title')}</div>
+              <div class="score-val">
+                <span>{global}</span><small> %</small>
+                <span class="score-arc">
+                  <svg viewBox="0 0 26 26">
+                    <circle class="piste" cx="13" cy="13" r={R_ARC} />
+                    <circle class="trace" cx="13" cy="13" r={R_ARC}
+                            stroke={rgbScore(cGlobal)}
+                            stroke-dasharray={`${C_ARC * global / 100} ${C_ARC}`} />
+                  </svg>
+                </span>
+              </div>
+            </div></div>
+            <div class="score-note">
+              {global >= 85 ? t('st_note_a') : global >= 70 ? t('st_note_b') : global >= 40 ? t('st_note_c') : t('st_note_d')}
+            </div>
+            {/* Chaque ligne porte son chiffre brut : on voit d'ou vient la
+                note au lieu de la subir (Raci, 9/08). */}
+            <div class="score-rows">
+              {/* Chaque barre mene la ou on l'ameliore (23/09). */}
+              {[[t('st_row_nutrition'), nutrition, `${joursEncodes}/7 ${t('st_det_jours')}`, () => allerOnglet('journal')],
+                [t('st_row_training'), entrainement, `${trainJours} ${trainJours === 1 ? t('st_det_seances').replace(/s$/, '') : t('st_det_seances')}`, () => { choisirEspaceJour('ent'); allerOnglet('journal'); }],
+                [t('st_row_weight'), scorePoids, `${pesees14} ${pesees14 === 1 ? t('st_det_pesees').replace(/^(\S+?)s\b/, '$1') : t('st_det_pesees')}`, () => setModalePoids(true)],
+                [t('st_row_regularity'), regularite, `${joursActifs}/7 ${t('st_det_actifs')}`, () => allerOnglet('journal')]].map(([l, v, d, aller]) => (
+                <button type="button" class="score-bloc score-bloc--lien" key={l} onClick={aller}>
+                  <div class="score-row">
+                    <div class="sr-lbl">{l}</div>
+                    <div class="sr-bar"><div class="sr-fill" style={{ width: v + '%', background: degradeScore(v) }} /></div>
+                    <div class="sr-val">{v}%</div>
+                  </div>
+                  <div class="sr-det">{d}<span class="sr-fl" aria-hidden="true">&rsaquo;</span></div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* CALORIES */}
         <div class="stat-card acc-orange">

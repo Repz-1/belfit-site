@@ -33,11 +33,16 @@ try {
   const plusTard = p.getByText('Plus tard'); if (await plusTard.count()) { await plusTard.first().tap(); await p.waitForTimeout(400); }
   ok(await p.locator('.ce-pp').count() === 1, 'carte « Mes séances passées » affichée');
   const txt = await p.locator('.ce-pp').innerText();
-  ok(/1\/2 cette semaine/.test(txt), 'compte de la semaine (1/2)');
+  ok(/1\/2/.test(txt) && /séances cette semaine/.test(txt), 'compte de la semaine (1/2)');
+  ok(await p.locator('.ce-pp-barre i').count() === 2 && await p.locator('.ce-pp-barre i.on').count() === 1, 'barre de semaine 1 sur 2');
+  ok(await p.locator('.ce-pp-vide, .ce-pp-auj, .ce-pp-jours .ce-pp-tuile').count() === 7, 'toute la semaine : 7 jours');
+  ok(await p.locator('.ce-pp-auj, .ce-pp-jours .ce-pp-tuile small', { hasText: "Aujourd'hui" }).count() >= 1, 'aujourd\'hui marqué');
   ok(await p.locator('.ce-pp-tuile.on').count() === 1 && await p.locator('.ce-pp-tuile.afaire', { hasText: 'Séance B' }).count() === 1, 'séance faite + séance B à faire');
   ok(/✓ 4\/5/.test(txt), 'séries faites 4/5');
   const y0 = await p.locator('.ce-pp').boundingBox(); const y1 = await p.locator('.score-card').boundingBox().catch(() => null);
   ok(!y1 || y0.y < y1.y, 'carte en tête de Stats');
+  const yp = await p.locator('.stat-card.acc-green').boundingBox(); const yk = await p.locator('.stat-card.acc-orange').boundingBox();
+  ok(y0.y < yp.y && (!y1 || (yp.y < y1.y && y1.y < yk.y)), 'ordre : séances, poids, note, calories');
   await p.screenshot({ path: '/tmp/m/stats-pp.png' });
   await p.locator('.ce-pp-tuile.on').tap(); await p.waitForTimeout(500);
   const page = await p.locator('.ce-ppp').innerText();
